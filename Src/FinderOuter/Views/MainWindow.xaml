@@ -1,0 +1,60 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignHeight="650" d:DesignWidth="900"
+        Height="650" Width="950"
+        x:Class="FinderOuter.Views.MainWindow"
+        Icon="/Assets/Icon.ico"
+        Title="{Binding WindowTitle}" FontSize="14">
+
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="200,*" RowDefinitions="auto,*,30">
+
+    <Menu Grid.ColumnSpan="2" Grid.Row="0">
+      <MenuItem Header="Help">
+        <MenuItem Header="Help" Command="{Binding OpenHelp}" HotKey="F1"/>
+        <MenuItem Header="About" Command="{Binding OpenAbout}"/>
+      </MenuItem>
+    </Menu>
+
+    <Grid Margin="5" RowDefinitions="*,auto,auto,auto" Grid.Column="0" Grid.Row="1">
+      <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
+               Grid.Row="0">
+        <ListBox.DataTemplates>
+          <DataTemplate>
+            <TextBlock Text="{Binding OptionName}"/>
+          </DataTemplate>
+        </ListBox.DataTemplates>
+      </ListBox>
+
+      <Image Source="/Assets/Icon.ico" Height="150" Width="150" Margin="2" Grid.Row="1"/>
+      <Image Source="/Assets/Avalonia.jpg" Height="150" Width="150" Margin="2" Grid.Row="2"/>
+
+      <Border BorderThickness="1" BorderBrush="Blue" Margin="3" Grid.Row="3">
+        <TextBlock Text="{Binding VerString, Mode=OneTime}" FontWeight="Bold" FontFamily="Comic Sans MS"
+                   TextAlignment="Center" Background="#FFADD8EC"/>
+      </Border>
+    </Grid>
+
+    <Grid RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="1">
+      <Button Content="Find!" Command="{Binding SelectedOption.FindCommand}" IsVisible="{Binding IsFindButtonVisible}"
+              Margin="3" Grid.Row="0"/>
+      <TextBlock Text="{Binding SelectedOption.Description}" TextWrapping="Wrap"
+                 Margin="3" Grid.Row="1"/>
+
+      <ContentControl Content="{Binding SelectedOption}" Margin="2" Grid.Row="2"/>
+
+      <TextBox Text="{Binding SelectedOption.Result.Message, Mode=OneWay}" TextWrapping="Wrap" AcceptsReturn="True"
+               ScrollViewer.VerticalScrollBarVisibility="Auto" IsReadOnly="True"
+               Margin="3" Grid.Row="3"/>
+    </Grid>
+
+    <TextBlock Text="{Binding SelectedOption.Result.CurrentState}" Margin="3" Grid.ColumnSpan="2" Grid.Row="2"/>
+  </Grid>
+
+</Window>

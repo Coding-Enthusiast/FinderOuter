@@ -1,0 +1,35 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.Bip32PathView">
+
+  <Design.DataContext>
+    <vm:Bip32PathViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
+    <TextBox Text="{Binding Mnemonic}" Watermark="Mnemonic (seed phrase), separate each word with a space"
+             UseFloatingWatermark="True" TextWrapping="Wrap" AcceptsReturn="True"
+             ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="3" Height="70"
+             Grid.Column="0" Grid.Row="0"/>
+    <ComboBox Items="{Binding WordListsList}" SelectedItem="{Binding SelectedWordListType}"
+              Margin="3" Height="40" Width="90"
+              Grid.Column="1" Grid.Row="0"/>
+
+    <TextBox Text="{Binding AdditionalInfo}"
+             Watermark="Additional info (preferably a private key or public key, if not enter an address)"
+             UseFloatingWatermark="True" Margin="3"
+             Grid.Column="0" Grid.Row="1"/>
+    <ComboBox Items="{Binding MnemonicTypesList}" SelectedItem="{Binding SelectedMnemonicType}"
+              Margin="3" Height="40" Width="90"
+              Grid.Column="1" Grid.Row="1"/>
+
+    <TextBox Text="{Binding PassPhrase}"
+                 Watermark="PassPhrase (optional)"
+                 UseFloatingWatermark="True" Margin="3"
+                 Grid.Column="0" Grid.Row="2"/>
+  </Grid>
+</UserControl>

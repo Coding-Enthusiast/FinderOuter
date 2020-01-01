@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <PackageProjectUrl>https://github.com/Coding-Enthusiast/FinderOuter</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Coding-Enthusiast/FinderOuter</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright (c) 2020 Coding Enthusiast</Copyright>
+    <Version>0.1.0.0</Version>
+    <Company>Autarkysoft</Company>
+    <Authors>Coding-Enthusiast</Authors>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Update="**\*.xaml.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <AvaloniaResource Include="**\*.xaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Remove="Views\AboutView.xaml" />
+    <AvaloniaResource Remove="Views\Bip32PathView.xaml" />
+    <AvaloniaResource Remove="Views\HelpView.xaml" />
+    <AvaloniaResource Remove="Views\MessageSignatureView.xaml" />
+    <AvaloniaResource Remove="Views\MissingBase58View.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
+    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\French.txt" />
+    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\Italian.txt" />
+    <None Remove="Views\AboutView.xaml" />
+    <None Remove="Views\Bip32PathView.xaml" />
+    <None Remove="Views\HelpView.xaml" />
+    <None Remove="Views\MessageSignatureView.xaml" />
+    <None Remove="Views\MissingBase58View.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
+    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\French.txt" />
+    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\Italian.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.9.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.9.0" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\MessageSignatureView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\MissingBase58View.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\Bip32PathView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\AboutView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\HelpView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Views\Bip32PathView.xaml.cs">
+      <DependentUpon>Bip32PathView.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\MissingBase58View.xaml.cs">
+      <DependentUpon>MissingBase58View.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>

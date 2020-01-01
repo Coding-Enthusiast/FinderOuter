@@ -1,0 +1,25 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.MessageSignatureView">
+
+  <Design.DataContext>
+    <vm:MessageSignatureViewModel/>
+  </Design.DataContext>
+
+  <StackPanel Spacing="5">
+    <TextBox Text="{Binding Message}" Watermark="Message" UseFloatingWatermark="True"
+             TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    <TextBox Text="{Binding Address}" Watermark="Address" UseFloatingWatermark="True"/>
+    <TextBox Text="{Binding Signature}" Watermark="Signature" UseFloatingWatermark="True"
+             TextWrapping="Wrap" AcceptsReturn="True"/>
+
+    <Button Content="Try to find the problem!" Command="{Binding FindProblemCommand}"
+            IsVisible="{Binding IsFindProblemVisible}"
+            Margin="3" Width="170"/>
+  </StackPanel>
+
+</UserControl>

@@ -1,0 +1,68 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="FinderOuter.Views.AboutView"
+             FontFamily="Comic Sans MS" FontSize="16">
+
+  <Design.DataContext>
+    <vm:AboutViewModel/>
+  </Design.DataContext>
+
+  <UserControl.Styles>
+    <Style Selector="Button.Hyperlink">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Margin" Value="-5"/>
+      <Setter Property="Foreground" Value="#147bdb"/>
+      <Setter Property="Command" Value="{Binding OpenBrowser}"/>
+      <Setter Property="Content" Value="{Binding $self.CommandParameter}"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="TextBlock">
+      <Setter Property="Margin" Value="5,0,0,0"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid Background="#7bed18" RowDefinitions="*,auto">
+    <Canvas>
+      <Ellipse Fill="White" Height="340" Width="340" Canvas.Right="-170" Canvas.Top="-170" Opacity="0.2"/>
+      <Ellipse Fill="White" Height="280" Width="280" Canvas.Right="-140" Canvas.Top="-140" Opacity="0.4"/>
+      <Ellipse Fill="White" Height="220" Width="220" Canvas.Right="-110" Canvas.Top="-110" Opacity="0.6"/>
+      <Ellipse Fill="White" Height="160" Width="160" Canvas.Right="-80" Canvas.Top="-80" Opacity="0.8"/>
+      <Ellipse Fill="White" Height="100" Width="100" Canvas.Right="-50" Canvas.Top="-50" Opacity="1"/>
+    </Canvas>
+
+    <StackPanel Orientation="Vertical" Spacing="5">
+      <TextBlock Text="{Binding NameAndVersion}" HorizontalAlignment="Center"
+                 FontSize="30" FontWeight="Bold" Margin="15"/>
+
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Project source code:"/>
+        <Button Classes="Hyperlink" CommandParameter="{Binding SourceLink}"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Donation:"/>
+        <Button Classes="Hyperlink" Content="{Binding DonationAddr1}" CommandParameter="{Binding DonationUri1}"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Donation:"/>
+        <Button Classes="Hyperlink" Content="{Binding DonationAddr2}" CommandParameter="{Binding DonationUri2}"/>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Margin="0,50,0,0">
+        <TextBlock Text="Powered by Avalonia"/>
+        <Button Classes="Hyperlink" CommandParameter="{Binding AvaloniaLink}"/>
+      </StackPanel>
+
+    </StackPanel>
+
+    <TextBlock Text="(c) 2020 Coding Enthusiast" HorizontalAlignment="Center" Grid.Row="1"/>
+  </Grid>
+</UserControl>
