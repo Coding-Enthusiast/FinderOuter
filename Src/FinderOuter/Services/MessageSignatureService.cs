@@ -21,6 +21,7 @@ namespace FinderOuter.Services
         {
             calc = new EllipticCurveCalculator(new SecP256k1());
             addressBuilder = new Address();
+            inputService = new InputService(rep);
         }
 
 
@@ -29,6 +30,7 @@ namespace FinderOuter.Services
         private readonly Sha256 hash = new Sha256(true);
         private readonly EllipticCurveCalculator calc;
         private readonly Address addressBuilder;
+        private InputService inputService;
 
 
         private bool CheckAddress(string addr, out Address.AddressType addrType)
@@ -46,7 +48,7 @@ namespace FinderOuter.Services
                 byte[] toHash = ByteArray.ConcatArrays(
                     new byte[] { (byte)MessageSignConstant.Length },
                     Encoding.UTF8.GetBytes(MessageSignConstant),
-                    new CompactInt((ulong)message.Length).ToByteArray(),
+                    new CompactInt((ulong)msgBa.Length).ToByteArray(),
                     msgBa);
 
                 toSign = hash.ComputeHash(toHash);
@@ -134,6 +136,11 @@ namespace FinderOuter.Services
         {
             InitReport();
 
+            if(inputService.NormalizeNFKD(message, out string norm))
+            {
+                message = norm;
+                AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");
+            }
             if (!CheckMessage(message, out byte[] toSign))
                 return Fail("Invalid message UTF8 format.");
             if (!CheckAddress(address, out Address.AddressType addrType))
@@ -301,6 +308,11 @@ namespace FinderOuter.Services
         {
             InitReport();
 
+            if (inputService.NormalizeNFKD(message, out string norm))
+            {
+                message = norm;
+                AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");
+            }
             if (!CheckMessage(message, out _) ||
                 !CheckAddress(address, out Address.AddressType addrType) ||
                 !CheckSignature(signature, out byte[] sigBa))

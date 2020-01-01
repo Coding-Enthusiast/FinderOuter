@@ -28,5 +28,12 @@ namespace FinderOuter.Services
                         (key[0] == Constants.UncompPrivKeyChar));
         }
 
+
+        public bool NormalizeNFKD(string s, out string norm)
+        {
+            norm = s.Normalize(NormalizationForm.FormKD);
+            return !s.IsNormalized(NormalizationForm.FormKD);
+        }
+
     }
 }
