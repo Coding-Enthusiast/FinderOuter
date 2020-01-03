@@ -4,5 +4,5 @@ mono: none
 dotnet: 3.1
 
 script:
-- dotnet build
+- dotnet build ./Src/Tests/Tests.csproj
 - dotnet test ./Src/Tests/Tests.csproj
