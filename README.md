@@ -7,7 +7,7 @@ Currently the project is still new and under development. New features will slow
 This project is written fully in c# and is stand alone with only GUI related components as its dependancies.  
 Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) this tool can run on all operating systems. 
 
-## Curremt available options
+## Available options
 #### 1. Message signature verification  
 User can enter a message signature (currently only for bitcoin) here to verify it. In case there is a problem with the message (except being an actually invalid signature), the code can search to find the common issues that some signing tools have.
 
