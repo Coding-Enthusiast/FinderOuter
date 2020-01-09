@@ -42,7 +42,7 @@ If you are compiling from source, you can build and then use the `FinderOuter.ex
 Make sure you using a [released build](https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2019) (not debug) for optimization.
 
 ## Contributing
-Please check out [conventions](https://github.com/Autarkysoft/Convention) for information about coding styles, versioning, making pull requests, and more.
+Please check out [conventions](https://github.com/Autarkysoft/Conventions) for information about coding styles, versioning, making pull requests, and more.
 
 ## Donations
 If You found this tool helpful consider making a donation:  
