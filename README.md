@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/Coding-Enthusiast/FinderOuter.svg?branch=master)](https://travis-ci.com/Coding-Enthusiast/FinderOuter)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/License)
 
 # The FinderOuter
 The FinderOuter aims to make recovery process easy for everyone by using a user friendly GUI. It will focus on simplicity so that the user doesn't have to read many pages of how-to-use in order to learn how to work with the command line. Instead user will only have to fill in a textbox or two and click a button!  
