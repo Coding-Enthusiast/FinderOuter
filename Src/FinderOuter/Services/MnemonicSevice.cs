@@ -279,8 +279,10 @@ namespace FinderOuter.Services
             AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
             if (success)
             {
-                Final.Clear();
+                // TODO: remove this branch after addition of more checks versus address 
+                // we should end up with only one correct result.
                 AddQueue($"Found {Final.Count:n0} correct mnemonics.");
+                Final.Clear();
             }
             return CopyQueueToMessage(success);
         }
