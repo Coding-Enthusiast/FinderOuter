@@ -2,8 +2,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <AssemblyVersion>0.1.0.1</AssemblyVersion>
-    <FileVersion>0.1.0.1</FileVersion>
+    <AssemblyVersion>0.1.1.1</AssemblyVersion>
+    <FileVersion>0.1.1.1</FileVersion>
     <PackageProjectUrl>https://github.com/Coding-Enthusiast/FinderOuter</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Coding-Enthusiast/FinderOuter</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -35,6 +35,7 @@
     <AvaloniaResource Remove="Views\HelpView.xaml" />
     <AvaloniaResource Remove="Views\MessageSignatureView.xaml" />
     <AvaloniaResource Remove="Views\MissingBase58View.xaml" />
+    <AvaloniaResource Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
@@ -45,6 +46,7 @@
     <None Remove="Views\HelpView.xaml" />
     <None Remove="Views\MessageSignatureView.xaml" />
     <None Remove="Views\MissingBase58View.xaml" />
+    <None Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
@@ -78,6 +80,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\HelpView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\MissingMnemonicView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </EmbeddedResource>
   </ItemGroup>

@@ -19,6 +19,7 @@ namespace FinderOuter.ViewModels
             {
                 new MessageSignatureViewModel(),
                 new MissingBase58ViewModel(),
+                new MissingMnemonicViewModel(),
             };
 
             WinMan = new WindowManager();

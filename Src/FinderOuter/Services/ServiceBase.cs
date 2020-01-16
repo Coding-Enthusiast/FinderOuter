@@ -5,6 +5,7 @@
 
 using FinderOuter.Models;
 using System;
+using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Services
@@ -62,6 +63,18 @@ namespace FinderOuter.Services
             AddMessage(queue.ToString());
 
             return hasPassed;
+        }
+
+        protected string GetKeyPerSec(BigInteger total, double totalSecond)
+        {
+            if (totalSecond < 1)
+            {
+                return "k/s= ∞";
+            }
+            else
+            {
+                return $"k/s= {(int)total / totalSecond:n0}";
+            }
         }
 
     }
