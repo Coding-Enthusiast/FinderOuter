@@ -134,7 +134,7 @@ namespace FinderOuter.Services
 
                     sha.Compress32(hPt, wPt);
 
-                    if ((byte)wrd[23] == (byte)(hPt[0] >> 24))
+                    if ((byte)wrd[23] == hPt[0] >> 24)
                     {
                         SetResult(item);
                     }
@@ -144,28 +144,154 @@ namespace FinderOuter.Services
             return Final.Count != 0;
         }
 
-        private bool Loop21()
+        private unsafe bool Loop21()
         {
-            AddQueue("Not implemented yet.");
-            return false;
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                wPt[7] = 0b10000000_00000000_00000000_00000000U;
+                wPt[15] = 224;
+
+                foreach (var item in cartesian)
+                {
+                    int j = 0;
+                    foreach (var k in item)
+                    {
+                        wrd[mi[j]] = (uint)k;
+                        j++;
+                    }
+
+                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                    wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
+
+                    sha.Compress28(hPt, wPt);
+
+                    if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
+                    {
+                        SetResult(item);
+                    }
+                }
+            }
+
+            return Final.Count != 0;
         }
 
-        private bool Loop18()
+        private unsafe bool Loop18()
         {
-            AddQueue("Not implemented yet.");
-            return false;
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                wPt[6] = 0b10000000_00000000_00000000_00000000U;
+                wPt[15] = 192;
+
+                foreach (var item in cartesian)
+                {
+                    int j = 0;
+                    foreach (var k in item)
+                    {
+                        wrd[mi[j]] = (uint)k;
+                        j++;
+                    }
+
+                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+
+                    sha.Compress24(hPt, wPt);
+
+                    if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
+                    {
+                        SetResult(item);
+                    }
+                }
+            }
+
+            return Final.Count != 0;
         }
 
-        private bool Loop15()
+        private unsafe bool Loop15()
         {
-            AddQueue("Not implemented yet.");
-            return false;
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                wPt[5] = 0b10000000_00000000_00000000_00000000U;
+                wPt[15] = 160;
+
+                foreach (var item in cartesian)
+                {
+                    int j = 0;
+                    foreach (var k in item)
+                    {
+                        wrd[mi[j]] = (uint)k;
+                        j++;
+                    }
+
+                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+
+                    sha.Compress20(hPt, wPt);
+
+                    if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
+                    {
+                        SetResult(item);
+                    }
+                }
+            }
+
+            return Final.Count != 0;
         }
 
-        private bool Loop12()
+        private unsafe bool Loop12()
         {
-            AddQueue("Not implemented yet.");
-            return false;
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                wPt[4] = 0b10000000_00000000_00000000_00000000U;
+                wPt[15] = 128;
+
+                foreach (var item in cartesian)
+                {
+                    int j = 0;
+                    foreach (var k in item)
+                    {
+                        wrd[mi[j]] = (uint)k;
+                        j++;
+                    }
+
+                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+
+                    sha.Compress16(hPt, wPt);
+
+                    if ((wrd[11] & 0b1111) == hPt[0] >> 28)
+                    {
+                        SetResult(item);
+                    }
+                }
+            }
+
+            return Final.Count != 0;
         }
 
 

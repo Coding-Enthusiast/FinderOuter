@@ -225,8 +225,245 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
+
+        // TODO: write tests for each CompressX case below:
+        public unsafe void Compress16(uint* hPt, uint* wPt)
+        {
+            // w4 = 0b10000000_00000000_00000000_00000000U 
+            // w5 to w14 = 0
+            // w15 = 128
+            wPt[16] = SSIG0(wPt[1]) + wPt[0];
+            wPt[17] = 5242880 + SSIG0(wPt[2]) + wPt[1];
+            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
+            wPt[19] = SSIG1(wPt[17]) + 285220864 + wPt[3];
+            wPt[20] = SSIG1(wPt[18]) + 0b10000000_00000000_00000000_00000000U;
+            wPt[21] = SSIG1(wPt[19]);
+            wPt[22] = SSIG1(wPt[20]) + 128;
+            wPt[23] = SSIG1(wPt[21]) + wPt[16];
+            wPt[24] = SSIG1(wPt[22]) + wPt[17];
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 2097169;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 128;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+
+            Init(hPt);
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+        public unsafe void Compress20(uint* hPt, uint* wPt)
+        {
+            // w5 = 0b10000000_00000000_00000000_00000000U 
+            // w6 to w14 = 0
+            // w15 = 160
+            wPt[16] = SSIG0(wPt[1]) + wPt[0];
+            wPt[17] = 4456448 + SSIG0(wPt[2]) + wPt[1];
+            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
+            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
+            wPt[20] = SSIG1(wPt[18]) + 285220864 + wPt[4];
+            wPt[21] = SSIG1(wPt[19]) + 0b10000000_00000000_00000000_00000000U;
+            wPt[22] = SSIG1(wPt[20]) + 160;
+            wPt[23] = SSIG1(wPt[21]) + wPt[16];
+            wPt[24] = SSIG1(wPt[22]) + wPt[17];
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 1076363285;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 160;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+
+            Init(hPt);
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+        public unsafe void Compress24(uint* hPt, uint* wPt)
+        {
+            // w6 = 0b10000000_00000000_00000000_00000000U 
+            // w7 to w14 = 0
+            // w15 = 192
+            wPt[16] = SSIG0(wPt[1]) + wPt[0];
+            wPt[17] = 7864320 + SSIG0(wPt[2]) + wPt[1];
+            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
+            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
+            wPt[20] = SSIG1(wPt[18]) + SSIG0(wPt[5]) + wPt[4];
+            wPt[21] = SSIG1(wPt[19]) + 285220864 + wPt[5];
+            wPt[22] = SSIG1(wPt[20]) + 0x800000c0U;
+            wPt[23] = SSIG1(wPt[21]) + wPt[16];
+            wPt[24] = SSIG1(wPt[22]) + wPt[17];
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 2150629401;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 192;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+
+            Init(hPt);
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+        public unsafe void Compress28(uint* hPt, uint* wPt)
+        {
+            // w7 = 0b10000000_00000000_00000000_00000000U 
+            // w8 to w14 = 0
+            // w15 = 224
+            wPt[16] = SSIG0(wPt[1]) + wPt[0];
+            wPt[17] = 7077888 + SSIG0(wPt[2]) + wPt[1];
+            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
+            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
+            wPt[20] = SSIG1(wPt[18]) + SSIG0(wPt[5]) + wPt[4];
+            wPt[21] = SSIG1(wPt[19]) + SSIG0(wPt[6]) + wPt[5];
+            wPt[22] = SSIG1(wPt[20]) + 285221088 + wPt[6];
+            wPt[23] = SSIG1(wPt[21]) + wPt[16] + 0b10000000_00000000_00000000_00000000U;
+            wPt[24] = SSIG1(wPt[22]) + wPt[17];
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 3224895517;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 224;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+
+            Init(hPt);
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
         public unsafe void Compress32(uint* hPt, uint* wPt)
         {
+            // w8 = 0b10000000_00000000_00000000_00000000U 
+            // w9 to w14 = 0
+            // w15 = 256
             wPt[16] = SSIG0(wPt[1]) + wPt[0];
             wPt[17] = 10485760 + SSIG0(wPt[2]) + wPt[1];
             wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
