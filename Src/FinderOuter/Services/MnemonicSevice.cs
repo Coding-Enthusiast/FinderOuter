@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -50,12 +51,67 @@ namespace FinderOuter.Services
 
         private int missCount;
         private string[] words;
+        private string passPhrase;
 
 
         readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
         private void SetResult(IEnumerable<int> item)
         {
             Final.Add(item);
+        }
+
+
+        private unsafe void SetBip32(byte[] mnemonic)
+        {
+            HmacSha512 hmac = new HmacSha512(mnemonic);
+
+            byte[] salt = Encoding.UTF8.GetBytes($"mnemonic{passPhrase?.Normalize(NormalizationForm.FormKD)}");
+            byte[] saltForHmac = new byte[salt.Length + 4];
+            Buffer.BlockCopy(salt, 0, saltForHmac, 0, salt.Length);
+
+            byte[] seed = new byte[64];
+
+            fixed (byte* saltPt = &saltForHmac[salt.Length])
+            {
+                // F()
+                byte[] resultOfF = new byte[hmac.OutputSize];
+
+                // Concatinate i after salt
+                //saltPt[0] = (byte)(1 >> 24);
+                //saltPt[1] = (byte)(1 >> 16);
+                //saltPt[2] = (byte)(1 >> 8);
+                saltPt[3] = 1;
+
+                // compute u1
+                byte[] u1 = hmac.ComputeHash(saltForHmac);
+
+                Buffer.BlockCopy(u1, 0, resultOfF, 0, u1.Length);
+
+                // compute u2 to u(c-1) where c is iteration and each u is the hmac of previous u
+                for (int j = 1; j < 2048; j++)
+                {
+                    u1 = hmac.ComputeHash(u1);
+
+                    // result of F() is XOR sum of all u arrays
+                    int len = u1.Length;
+                    fixed (byte* first = resultOfF, second = u1)
+                    {
+                        byte* fp = first;
+                        byte* sp = second;
+
+                        *(ulong*)fp ^= *(ulong*)sp;
+                        *(ulong*)(fp + 8) ^= *(ulong*)(sp + 8);
+                        *(ulong*)(fp + 16) ^= *(ulong*)(sp + 16);
+                        *(ulong*)(fp + 24) ^= *(ulong*)(sp + 24);
+                        *(ulong*)(fp + 32) ^= *(ulong*)(sp + 32);
+                        *(ulong*)(fp + 40) ^= *(ulong*)(sp + 40);
+                        *(ulong*)(fp + 48) ^= *(ulong*)(sp + 48);
+                        *(ulong*)(fp + 56) ^= *(ulong*)(sp + 56);
+                    }
+                }
+
+                Buffer.BlockCopy(resultOfF, 0, seed, 0, resultOfF.Length);
+            }
         }
 
 
@@ -136,7 +192,16 @@ namespace FinderOuter.Services
 
                     if ((byte)wrd[23] == hPt[0] >> 24)
                     {
-                        SetResult(item);
+                        StringBuilder sb = new StringBuilder(24);
+                        for (int i = 0; i < 23; i++)
+                        {
+                            sb.Append($"{allWords[wrd[i]]} ");
+                        }
+
+                        // no space at the end.
+                        sb.Append($"{allWords[wrd[23]]}");
+
+                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                     }
                 }
             }
@@ -175,7 +240,16 @@ namespace FinderOuter.Services
 
                     if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
                     {
-                        SetResult(item);
+                        StringBuilder sb = new StringBuilder(21);
+                        for (int i = 0; i < 20; i++)
+                        {
+                            sb.Append($"{allWords[wrd[i]]} ");
+                        }
+
+                        // no space at the end.
+                        sb.Append($"{allWords[wrd[20]]}");
+
+                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                     }
                 }
             }
@@ -213,7 +287,16 @@ namespace FinderOuter.Services
 
                     if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
                     {
-                        SetResult(item);
+                        StringBuilder sb = new StringBuilder(18);
+                        for (int i = 0; i < 17; i++)
+                        {
+                            sb.Append($"{allWords[wrd[i]]} ");
+                        }
+
+                        // no space at the end.
+                        sb.Append($"{allWords[wrd[17]]}");
+
+                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                     }
                 }
             }
@@ -250,7 +333,16 @@ namespace FinderOuter.Services
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
                     {
-                        SetResult(item);
+                        StringBuilder sb = new StringBuilder(15);
+                        for (int i = 0; i < 14; i++)
+                        {
+                            sb.Append($"{allWords[wrd[i]]} ");
+                        }
+
+                        // no space at the end.
+                        sb.Append($"{allWords[wrd[14]]}");
+
+                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                     }
                 }
             }
@@ -286,7 +378,16 @@ namespace FinderOuter.Services
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
                     {
-                        SetResult(item);
+                        StringBuilder sb = new StringBuilder(12);
+                        for (int i = 0; i < 11; i++)
+                        {
+                            sb.Append($"{allWords[wrd[i]]} ");
+                        }
+
+                        // no space at the end.
+                        sb.Append($"{allWords[wrd[11]]}");
+
+                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                     }
                 }
             }
