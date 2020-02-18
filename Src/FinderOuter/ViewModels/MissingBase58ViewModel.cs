@@ -52,11 +52,27 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mis, value);
         }
 
+        private bool _isSpecial;
+        public bool IsSpecialCase
+        {
+            get => _isSpecial;
+            set => this.RaiseAndSetIfChanged(ref _isSpecial, value);
+        }
+
         public string MissingToolTip => $"Choose one of these symbols {Constants.Symbols} to use instead of the missing characters";
+        public string SpecialToolTip => "Select this for a special case where you have a compressed private key that is missing " +
+            "exactly 3 characters and you don't know their locations.";
 
         public override void Find()
         {
-            _ = b58Service.Find(Input, MissingChar);
+            if (IsSpecialCase)
+            {
+                _ = b58Service.FindUnknownLocation(Input);
+            }
+            else
+            {
+                _ = b58Service.Find(Input, MissingChar);
+            }
         }
     }
 }

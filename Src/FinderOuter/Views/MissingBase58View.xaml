@@ -13,8 +13,15 @@
     <TextBox Text="{Binding Input}" Watermark="Base-58 encoded string" UseFloatingWatermark="True"
              TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
              Margin="3" Grid.Column="0"/>
-    <TextBox Text="{Binding MissingChar}" TextAlignment="Center" VerticalAlignment="Top"
-             ToolTip.Tip="{Binding MissingToolTip}"
-             Height="40" Width="40" Margin="3" Grid.Column="1"/>
+    
+    <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1">
+      <TextBox Text="{Binding MissingChar}" TextAlignment="Center" VerticalAlignment="Top"
+               ToolTip.Tip="{Binding MissingToolTip}"
+               Height="40" Width="40" Margin="3"/>
+      <TextBlock Text="Special case:" Margin="0,15,0,0"/>
+      <CheckBox IsChecked="{Binding IsSpecialCase}" ToolTip.Tip="{Binding SpecialToolTip}"
+                HorizontalAlignment="Center"/>
+    </StackPanel>
+
   </Grid>
 </UserControl>
