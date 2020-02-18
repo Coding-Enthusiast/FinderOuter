@@ -73,7 +73,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                return $"k/s= {(int)total / totalSecond:n0}";
+                return $"k/s= {total / new BigInteger(totalSecond):n0}";
             }
         }
 
