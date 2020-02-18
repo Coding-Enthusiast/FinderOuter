@@ -432,7 +432,6 @@ namespace FinderOuter.Services
                         var options = new ParallelOptions
                         {
                             CancellationToken = cancelToken.Token,
-                            MaxDegreeOfParallelism = 4
                         };
 
                         try
