@@ -605,24 +605,47 @@ namespace FinderOuter.Services
                 {
                     AddMessage("No character is missing, checking validity of the key itself.");
                     // TODO: use Backend.KeyPairs.PrivateKey instead
-                    if (!encoder.IsValid(key))
+                    if (!encoder.HasValidChars(key))
                     {
-                        return Fail("The given key is not a valid base-58 encoded string.");
+                        return Fail("The given key contains invalid base-58 characters.");
+                    }
+                    if (!encoder.HasValidCheckSum(key))
+                    {
+                        return Fail("The given key has an invalid checksum.");
                     }
 
                     byte[] keyBa = encoder.DecodeWithCheckSum(key);
-                    if (keyBa.Length == 33 && keyBa[0] == Constants.CompPrivKeyFirstByte)
+                    if (keyBa[0] != Constants.PrivKeyFirstByte)
                     {
-                        return Pass("The given key is a valid compressed private key.");
+                        return Fail($"Invalid first key byte (actual={keyBa[0]}, expected={Constants.PrivKeyFirstByte})");
                     }
-                    else if (keyBa.Length == 34 &&
-                        keyBa[0] == Constants.UncompPrivKeyFirstByte && keyBa[33] == Constants.UncompPrivKeyLastByte)
+                    if (keyBa.Length == 33)
                     {
+                        if (!inputService.IsPrivateKeyInRange(keyBa.SubArray(1)))
+                        {
+                            return Fail("Invalid key integer value (outside of the range defined by secp256k1 curve).");
+                        }
+
                         return Pass("The given key is a valid uncompressed private key.");
+                    }
+                    else if (keyBa.Length == 34)
+                    {
+                        if (keyBa[^1] != Constants.CompPrivKeyLastByte)
+                        {
+                            return Fail($"Invalid compressed key last byte (actual={keyBa[^1]}, " +
+                                $"expected={Constants.CompPrivKeyLastByte})");
+                        }
+                        if (!inputService.IsPrivateKeyInRange(keyBa.SubArray(1, 32)))
+                        {
+                            return Fail("Invalid key integer value (outside of the range defined by secp256k1 curve).");
+                        }
+
+                        return Pass("The given key is a valid compressed private key.");
                     }
                     else
                     {
-                        return Fail("The given key is not a valid private key.");
+                        return Fail($"The given key length is invalid. actual = {keyBa.Length}, " +
+                            $"expected = 33 (uncomp) or 34 (comp))");
                     }
                 }
 

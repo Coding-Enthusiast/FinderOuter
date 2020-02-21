@@ -5,8 +5,7 @@
 
 using FinderOuter.Backend;
 using FinderOuter.Models;
-using System;
-using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Services
@@ -26,6 +25,18 @@ namespace FinderOuter.Services
                 ||
                 (key.Length == Constants.UncompPrivKeyLen &&
                         (key[0] == Constants.UncompPrivKeyChar));
+        }
+
+
+        public bool IsPrivateKeyInRange(byte[] key)
+        {
+            if (key.Length > 32)
+            {
+                return false;
+            }
+            BigInteger val = key.ToBigInt(true, true);
+            BigInteger max = BigInteger.Parse("115792089237316195423570985008687907852837564279074904382605163141518161494336");
+            return val >= BigInteger.One && val <= max;
         }
 
 

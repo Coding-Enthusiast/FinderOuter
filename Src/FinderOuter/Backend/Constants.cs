@@ -15,8 +15,7 @@ namespace FinderOuter.Backend
         public const char UncompPrivKeyChar = '5';
         public const int CompPrivKeyLen = 52;
         public const int UncompPrivKeyLen = 51;
-        public const byte CompPrivKeyFirstByte = 0x80;
-        public const byte UncompPrivKeyFirstByte = 0x80;
-        public const byte UncompPrivKeyLastByte = 1;
+        public const byte PrivKeyFirstByte = 0x80;
+        public const byte CompPrivKeyLastByte = 1;
     }
 }

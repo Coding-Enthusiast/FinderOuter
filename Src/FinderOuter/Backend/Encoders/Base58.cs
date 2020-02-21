@@ -50,7 +50,7 @@ namespace FinderOuter.Backend.Encoders
         }
 
 
-        private bool HasValidChars(string val)
+        internal bool HasValidChars(string val)
         {
             if (val == null) // We consider empty string to be valid (white space will be caught in next condition)
             {
@@ -65,7 +65,7 @@ namespace FinderOuter.Backend.Encoders
             return true;
         }
 
-        private bool HasValidCheckSum(string val)
+        internal bool HasValidCheckSum(string val)
         {
             byte[] data = DecodeWithoutValidation(val);
             if (data.Length < CheckSumSize)
