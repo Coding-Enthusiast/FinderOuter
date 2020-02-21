@@ -22,10 +22,14 @@ This option helps those who have a damaged paper wallet with the base-58 encoded
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 
 ## Downloading
-Compiled binaries of each version can be found under [releases](https://github.com/Coding-Enthusiast/FinderOuter/releases). There will only be self-contained deployment targetting 64-bit Linux operating systems. There is two main reasons for this decision:  
+Compiled binaries of each version can be found under [releases](https://github.com/Coding-Enthusiast/FinderOuter/releases)<sup>1</sup>. There will only be self-contained deployment targetting 64-bit Linux operating systems. There is two main reasons for this decision:  
 1. SCD releases are bigger in size and targetting one OS can slightly decrease the size.
 2. Since many features of this tool deal with sensitive information such as private keys, mnemonics,... that need to be kept secure, we strongly recommend that a Live linux is used with its network disabled. 
 However if you want to run this on another platform, you still can compile the source code yourself.
+
+<sup>1</sup> There are 3 files found in "releases" page, the bigger file on top is the compiled version and the other two named
+`Source code.zip` and `Source code.tar.gz` are the project's source code that GitHub automatically adds. There is no need to
+download the last two files if you are looking for compiled version.
 
 ## Build from source code
 1. Get Git: https://git-scm.com/downloads
