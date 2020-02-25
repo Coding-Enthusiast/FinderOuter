@@ -21,7 +21,7 @@ namespace FinderOuter.Services
         {
             calc = new EllipticCurveCalculator(new SecP256k1());
             addressBuilder = new Address();
-            inputService = new InputService(rep);
+            inputService = new InputService();
         }
 
 

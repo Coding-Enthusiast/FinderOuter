@@ -4,19 +4,13 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Backend;
-using FinderOuter.Models;
 using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Services
 {
-    public class InputService : ServiceBase
+    public class InputService
     {
-        public InputService(Report rep) : base(rep)
-        {
-        }
-
-
         public bool CanBePrivateKey(string key)
         {
             return
@@ -45,6 +39,5 @@ namespace FinderOuter.Services
             norm = s.Normalize(NormalizationForm.FormKD);
             return !s.IsNormalized(NormalizationForm.FormKD);
         }
-
     }
 }

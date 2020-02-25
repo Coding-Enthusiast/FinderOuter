@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Models;
 using FinderOuter.Services;
 using Xunit;
 
@@ -19,7 +18,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtf*HZH7cAibzG9oK19X(iFzxHgAkz6JK")]
         public void CanBePrivateKeyTest(string key)
         {
-            InputService serv = new InputService(new Report());
+            InputService serv = new InputService();
             bool actual = serv.CanBePrivateKey(key);
             Assert.True(actual);
         }
@@ -36,7 +35,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK1")]
         public void CanBePrivateKey_FalseTest(string key)
         {
-            InputService serv = new InputService(new Report());
+            InputService serv = new InputService();
             bool actual = serv.CanBePrivateKey(key);
             Assert.False(actual);
         }

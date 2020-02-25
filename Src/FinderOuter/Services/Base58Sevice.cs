@@ -21,7 +21,7 @@ namespace FinderOuter.Services
     {
         public Base58Sevice(Report rep) : base(rep)
         {
-            inputService = new InputService(rep);
+            inputService = new InputService();
             encoder = new Base58();
             sha = new Sha256(true);
         }
