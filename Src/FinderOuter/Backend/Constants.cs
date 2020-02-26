@@ -8,6 +8,7 @@ namespace FinderOuter.Backend
     public struct Constants
     {
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        public const string Base16Chars = "0123456789abcdef";
         public const string Symbols = "!@#$%^&*-+=?";
 
         public const char CompPrivKeyChar1 = 'K';

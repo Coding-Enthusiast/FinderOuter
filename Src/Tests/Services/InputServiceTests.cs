@@ -39,5 +39,34 @@ namespace Tests.Services
             bool actual = serv.CanBePrivateKey(key);
             Assert.False(actual);
         }
+
+        [Theory]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2", true, "77bff20c60e522dfaa3350c39b030a5d004e839a")]
+        [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", true, "e8df018c7e326cc253faac7e46cdc51e68542c42")]
+        public void IsValidAddressTest(string addr, bool ignore, string expectedHash)
+        {
+            InputService serv = new InputService();
+            bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
+            Assert.True(actual);
+            Assert.Equal(Helper.HexToBytes(expectedHash), actualHash);
+        }
+
+        [Theory]
+        [InlineData(null, true)]
+        [InlineData("", true)]
+        [InlineData(" ", true)]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN1", true)] // Invalid checksum
+        [InlineData("1#vBMSEYstWetqTFn5Au4m4GFg7xJaNVN2", true)] // Invalid char
+        [InlineData("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy", true)] // Valid P2SH address
+        [InlineData("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNL1", false)] // Invalid P2SH address (checksum)
+        [InlineData("tb1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", true)]
+        [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5md2", true)]
+        public void IsValidAddress_FalseTest(string addr, bool ignore)
+        {
+            InputService serv = new InputService();
+            bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
+            Assert.False(actual);
+            Assert.Null(actualHash);
+        }
     }
 }
