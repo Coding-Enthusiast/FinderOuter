@@ -1,0 +1,26 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.MissingBase16View">
+  <Design.DataContext>
+    <vm:MissingBase16ViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="*,*">
+    <TextBox Text="{Binding Input}" Watermark="Base-16 (hexadecimal) private key" UseFloatingWatermark="True"
+             TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
+             Margin="3" Grid.Column="0" Grid.Row="0"/>
+    <TextBox Text="{Binding AdditionalInput}" Watermark="Additional data to check against (address)" UseFloatingWatermark="True"
+                 TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 Margin="3" Grid.Column="0" Grid.Row="1"/>
+    
+    <TextBox Text="{Binding MissingChar}" TextAlignment="Center" VerticalAlignment="Top"
+             ToolTip.Tip="{Binding MissingToolTip}"
+             Height="38" Width="40" Margin="3" Grid.Column="1" Grid.Row="0"/>
+    <CheckBox Content="Is compressed" IsChecked="{Binding IsCompressed}" VerticalAlignment="Top"
+              Margin="3" Grid.Column="1" Grid.Row="1"/>
+  </Grid>
+</UserControl>

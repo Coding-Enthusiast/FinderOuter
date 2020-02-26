@@ -12,6 +12,10 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
 {
     public class EllipticCurveCalculator
     {
+        public EllipticCurveCalculator() : this(new SecP256k1())
+        {
+        }
+
         public EllipticCurveCalculator(IECurveFp curve)
         {
             this.curve = curve;
@@ -88,6 +92,29 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
             return new EllipticCurvePoint(x3, y3);
         }
 
+        internal EllipticCurvePoint DoubleChecked(EllipticCurvePoint point1)
+        {
+            if (point1 == EllipticCurvePoint.InfinityPoint)
+                return point1;
+
+            BigInteger m = 3 * point1.X * point1.X * (2 * point1.Y).ModInverse(curve.P);
+            BigInteger x3 = ((m * m) - (2 * point1.X)).Mod(curve.P);
+            BigInteger y3 = (m * (point1.X - x3) - point1.Y).Mod(curve.P);
+
+            return new EllipticCurvePoint(x3, y3);
+        }
+
+        /// <summary>
+        /// Returtns the result of multiplying the curve's generator with the given integer.
+        /// Assumes point is on curve and k>0 and &#60;<see cref="IECurveFp.N"/>.
+        /// </summary>
+        /// <param name="k">The integer to multiply the point with</param>
+        /// <returns>Result of multiplication</returns>
+        public EllipticCurvePoint MultiplyByG(BigInteger k)
+        {
+            return MultiplyChecked(k, curve.G);
+        }
+
         public EllipticCurvePoint Multiply(BigInteger k, EllipticCurvePoint point)
         {
             CheckOnCurve(point);
@@ -110,7 +137,7 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
                     result = AddChecked(result, addend);
                 }
 
-                addend = AddChecked(addend, addend);
+                addend = DoubleChecked(addend);
 
                 k >>= 1;
             }
