@@ -227,7 +227,7 @@ namespace Tests.Backend.Cryptography.Hashing
             Assert.Equal(0, first[2]);
         }
 
-        private byte[] GetRandomByte(int len)
+        private byte[] GetRandomBytes(int len)
         {
             byte[] res = new byte[len];
             new Random().NextBytes(res);
@@ -243,7 +243,7 @@ namespace Tests.Backend.Cryptography.Hashing
         public unsafe void CompressDouble33Test()
         {
             int dataLen = 33;
-            byte[] data = GetRandomByte(dataLen);
+            byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
@@ -267,7 +267,7 @@ namespace Tests.Backend.Cryptography.Hashing
         public unsafe void CompressDouble34Test()
         {
             int dataLen = 34;
-            byte[] data = GetRandomByte(dataLen);
+            byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
