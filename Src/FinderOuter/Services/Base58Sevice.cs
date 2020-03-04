@@ -102,10 +102,7 @@ namespace FinderOuter.Services
             return !string.IsNullOrEmpty(key) && key.All(c => c == missingChar || Constants.Base58Chars.Contains(c));
         }
 
-        private BigInteger GetTotalCount(int missCount)
-        {
-            return BigInteger.Pow(58, missCount);
-        }
+        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
         readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
         private void SetResult(IEnumerable<int> item)
@@ -152,66 +149,9 @@ namespace FinderOuter.Services
                     wPt[8] = (tmp[8] << 16) | 0b00000000_00000000_10000000_00000000U;
                     // from 9 to 14 =0
                     wPt[15] = 272; // 34 *8 = 272
-
-                    //for (int i = 16; i < w.Length; i++)
-                    //{
-                    //    wPt[i] = SSIG1(wPt[i - 2]) + wPt[i - 7] + SSIG0(wPt[i - 15]) + wPt[i - 16];
-                    //}
-
-                    wPt[16] = sha.SSIG0(wPt[1]) + wPt[0];
-                    wPt[17] = 11141120 + sha.SSIG0(wPt[2]) + wPt[1];
-                    wPt[18] = sha.SSIG1(wPt[16]) + sha.SSIG0(wPt[3]) + wPt[2];
-                    wPt[19] = sha.SSIG1(wPt[17]) + sha.SSIG0(wPt[4]) + wPt[3];
-                    wPt[20] = sha.SSIG1(wPt[18]) + sha.SSIG0(wPt[5]) + wPt[4];
-                    wPt[21] = sha.SSIG1(wPt[19]) + sha.SSIG0(wPt[6]) + wPt[5];
-                    wPt[22] = sha.SSIG1(wPt[20]) + 272 + sha.SSIG0(wPt[7]) + wPt[6];
-                    wPt[23] = sha.SSIG1(wPt[21]) + wPt[16] + sha.SSIG0(wPt[8]) + wPt[7];
-                    wPt[24] = sha.SSIG1(wPt[22]) + wPt[17] + wPt[8];
-                    wPt[25] = sha.SSIG1(wPt[23]) + wPt[18];
-                    wPt[26] = sha.SSIG1(wPt[24]) + wPt[19];
-                    wPt[27] = sha.SSIG1(wPt[25]) + wPt[20];
-                    wPt[28] = sha.SSIG1(wPt[26]) + wPt[21];
-                    wPt[29] = sha.SSIG1(wPt[27]) + wPt[22];
-                    wPt[30] = sha.SSIG1(wPt[28]) + wPt[23] + 541327392;
-                    wPt[31] = sha.SSIG1(wPt[29]) + wPt[24] + sha.SSIG0(wPt[16]) + 272;
-                    wPt[32] = sha.SSIG1(wPt[30]) + wPt[25] + sha.SSIG0(wPt[17]) + wPt[16];
-                    wPt[33] = sha.SSIG1(wPt[31]) + wPt[26] + sha.SSIG0(wPt[18]) + wPt[17];
-                    wPt[34] = sha.SSIG1(wPt[32]) + wPt[27] + sha.SSIG0(wPt[19]) + wPt[18];
-                    wPt[35] = sha.SSIG1(wPt[33]) + wPt[28] + sha.SSIG0(wPt[20]) + wPt[19];
-                    wPt[36] = sha.SSIG1(wPt[34]) + wPt[29] + sha.SSIG0(wPt[21]) + wPt[20];
-                    wPt[37] = sha.SSIG1(wPt[35]) + wPt[30] + sha.SSIG0(wPt[22]) + wPt[21];
-                    wPt[38] = sha.SSIG1(wPt[36]) + wPt[31] + sha.SSIG0(wPt[23]) + wPt[22];
-                    wPt[39] = sha.SSIG1(wPt[37]) + wPt[32] + sha.SSIG0(wPt[24]) + wPt[23];
-                    wPt[40] = sha.SSIG1(wPt[38]) + wPt[33] + sha.SSIG0(wPt[25]) + wPt[24];
-                    wPt[41] = sha.SSIG1(wPt[39]) + wPt[34] + sha.SSIG0(wPt[26]) + wPt[25];
-                    wPt[42] = sha.SSIG1(wPt[40]) + wPt[35] + sha.SSIG0(wPt[27]) + wPt[26];
-                    wPt[43] = sha.SSIG1(wPt[41]) + wPt[36] + sha.SSIG0(wPt[28]) + wPt[27];
-                    wPt[44] = sha.SSIG1(wPt[42]) + wPt[37] + sha.SSIG0(wPt[29]) + wPt[28];
-                    wPt[45] = sha.SSIG1(wPt[43]) + wPt[38] + sha.SSIG0(wPt[30]) + wPt[29];
-                    wPt[46] = sha.SSIG1(wPt[44]) + wPt[39] + sha.SSIG0(wPt[31]) + wPt[30];
-                    wPt[47] = sha.SSIG1(wPt[45]) + wPt[40] + sha.SSIG0(wPt[32]) + wPt[31];
-                    wPt[48] = sha.SSIG1(wPt[46]) + wPt[41] + sha.SSIG0(wPt[33]) + wPt[32];
-                    wPt[49] = sha.SSIG1(wPt[47]) + wPt[42] + sha.SSIG0(wPt[34]) + wPt[33];
-                    wPt[50] = sha.SSIG1(wPt[48]) + wPt[43] + sha.SSIG0(wPt[35]) + wPt[34];
-                    wPt[51] = sha.SSIG1(wPt[49]) + wPt[44] + sha.SSIG0(wPt[36]) + wPt[35];
-                    wPt[52] = sha.SSIG1(wPt[50]) + wPt[45] + sha.SSIG0(wPt[37]) + wPt[36];
-                    wPt[53] = sha.SSIG1(wPt[51]) + wPt[46] + sha.SSIG0(wPt[38]) + wPt[37];
-                    wPt[54] = sha.SSIG1(wPt[52]) + wPt[47] + sha.SSIG0(wPt[39]) + wPt[38];
-                    wPt[55] = sha.SSIG1(wPt[53]) + wPt[48] + sha.SSIG0(wPt[40]) + wPt[39];
-                    wPt[56] = sha.SSIG1(wPt[54]) + wPt[49] + sha.SSIG0(wPt[41]) + wPt[40];
-                    wPt[57] = sha.SSIG1(wPt[55]) + wPt[50] + sha.SSIG0(wPt[42]) + wPt[41];
-                    wPt[58] = sha.SSIG1(wPt[56]) + wPt[51] + sha.SSIG0(wPt[43]) + wPt[42];
-                    wPt[59] = sha.SSIG1(wPt[57]) + wPt[52] + sha.SSIG0(wPt[44]) + wPt[43];
-                    wPt[60] = sha.SSIG1(wPt[58]) + wPt[53] + sha.SSIG0(wPt[45]) + wPt[44];
-                    wPt[61] = sha.SSIG1(wPt[59]) + wPt[54] + sha.SSIG0(wPt[46]) + wPt[45];
-                    wPt[62] = sha.SSIG1(wPt[60]) + wPt[55] + sha.SSIG0(wPt[47]) + wPt[46];
-                    wPt[63] = sha.SSIG1(wPt[61]) + wPt[56] + sha.SSIG0(wPt[48]) + wPt[47];
-
+                    
                     sha.Init(hPt);
-                    sha.CompressBlockWithWSet(hPt, wPt);
-
-                    // Perform second hash
-                    sha.DoSecondHash(hPt, wPt);
+                    sha.CompressDouble34(hPt, wPt);
 
                     if (hPt[0] == tmp[9])
                     {
@@ -263,65 +203,8 @@ namespace FinderOuter.Services
                     // from 9 to 14 = 0
                     wPt[15] = 264; // 33 *8 = 264
 
-                    //for (int i = 16; i < w.Length; i++)
-                    //{
-                    //    wPt[i] = SSIG1(wPt[i - 2]) + wPt[i - 7] + SSIG0(wPt[i - 15]) + wPt[i - 16];
-                    //}
-
-                    wPt[16] = sha.SSIG0(wPt[1]) + wPt[0];
-                    wPt[17] = 10813440 + sha.SSIG0(wPt[2]) + wPt[1];
-                    wPt[18] = sha.SSIG1(wPt[16]) + sha.SSIG0(wPt[3]) + wPt[2];
-                    wPt[19] = sha.SSIG1(wPt[17]) + sha.SSIG0(wPt[4]) + wPt[3];
-                    wPt[20] = sha.SSIG1(wPt[18]) + sha.SSIG0(wPt[5]) + wPt[4];
-                    wPt[21] = sha.SSIG1(wPt[19]) + sha.SSIG0(wPt[6]) + wPt[5];
-                    wPt[22] = sha.SSIG1(wPt[20]) + 264 + sha.SSIG0(wPt[7]) + wPt[6];
-                    wPt[23] = sha.SSIG1(wPt[21]) + wPt[16] + sha.SSIG0(wPt[8]) + wPt[7];
-                    wPt[24] = sha.SSIG1(wPt[22]) + wPt[17] + wPt[8];
-                    wPt[25] = sha.SSIG1(wPt[23]) + wPt[18];
-                    wPt[26] = sha.SSIG1(wPt[24]) + wPt[19];
-                    wPt[27] = sha.SSIG1(wPt[25]) + wPt[20];
-                    wPt[28] = sha.SSIG1(wPt[26]) + wPt[21];
-                    wPt[29] = sha.SSIG1(wPt[27]) + wPt[22];
-                    wPt[30] = sha.SSIG1(wPt[28]) + wPt[23] + 272760867;
-                    wPt[31] = sha.SSIG1(wPt[29]) + wPt[24] + sha.SSIG0(wPt[16]) + 264;
-                    wPt[32] = sha.SSIG1(wPt[30]) + wPt[25] + sha.SSIG0(wPt[17]) + wPt[16];
-                    wPt[33] = sha.SSIG1(wPt[31]) + wPt[26] + sha.SSIG0(wPt[18]) + wPt[17];
-                    wPt[34] = sha.SSIG1(wPt[32]) + wPt[27] + sha.SSIG0(wPt[19]) + wPt[18];
-                    wPt[35] = sha.SSIG1(wPt[33]) + wPt[28] + sha.SSIG0(wPt[20]) + wPt[19];
-                    wPt[36] = sha.SSIG1(wPt[34]) + wPt[29] + sha.SSIG0(wPt[21]) + wPt[20];
-                    wPt[37] = sha.SSIG1(wPt[35]) + wPt[30] + sha.SSIG0(wPt[22]) + wPt[21];
-                    wPt[38] = sha.SSIG1(wPt[36]) + wPt[31] + sha.SSIG0(wPt[23]) + wPt[22];
-                    wPt[39] = sha.SSIG1(wPt[37]) + wPt[32] + sha.SSIG0(wPt[24]) + wPt[23];
-                    wPt[40] = sha.SSIG1(wPt[38]) + wPt[33] + sha.SSIG0(wPt[25]) + wPt[24];
-                    wPt[41] = sha.SSIG1(wPt[39]) + wPt[34] + sha.SSIG0(wPt[26]) + wPt[25];
-                    wPt[42] = sha.SSIG1(wPt[40]) + wPt[35] + sha.SSIG0(wPt[27]) + wPt[26];
-                    wPt[43] = sha.SSIG1(wPt[41]) + wPt[36] + sha.SSIG0(wPt[28]) + wPt[27];
-                    wPt[44] = sha.SSIG1(wPt[42]) + wPt[37] + sha.SSIG0(wPt[29]) + wPt[28];
-                    wPt[45] = sha.SSIG1(wPt[43]) + wPt[38] + sha.SSIG0(wPt[30]) + wPt[29];
-                    wPt[46] = sha.SSIG1(wPt[44]) + wPt[39] + sha.SSIG0(wPt[31]) + wPt[30];
-                    wPt[47] = sha.SSIG1(wPt[45]) + wPt[40] + sha.SSIG0(wPt[32]) + wPt[31];
-                    wPt[48] = sha.SSIG1(wPt[46]) + wPt[41] + sha.SSIG0(wPt[33]) + wPt[32];
-                    wPt[49] = sha.SSIG1(wPt[47]) + wPt[42] + sha.SSIG0(wPt[34]) + wPt[33];
-                    wPt[50] = sha.SSIG1(wPt[48]) + wPt[43] + sha.SSIG0(wPt[35]) + wPt[34];
-                    wPt[51] = sha.SSIG1(wPt[49]) + wPt[44] + sha.SSIG0(wPt[36]) + wPt[35];
-                    wPt[52] = sha.SSIG1(wPt[50]) + wPt[45] + sha.SSIG0(wPt[37]) + wPt[36];
-                    wPt[53] = sha.SSIG1(wPt[51]) + wPt[46] + sha.SSIG0(wPt[38]) + wPt[37];
-                    wPt[54] = sha.SSIG1(wPt[52]) + wPt[47] + sha.SSIG0(wPt[39]) + wPt[38];
-                    wPt[55] = sha.SSIG1(wPt[53]) + wPt[48] + sha.SSIG0(wPt[40]) + wPt[39];
-                    wPt[56] = sha.SSIG1(wPt[54]) + wPt[49] + sha.SSIG0(wPt[41]) + wPt[40];
-                    wPt[57] = sha.SSIG1(wPt[55]) + wPt[50] + sha.SSIG0(wPt[42]) + wPt[41];
-                    wPt[58] = sha.SSIG1(wPt[56]) + wPt[51] + sha.SSIG0(wPt[43]) + wPt[42];
-                    wPt[59] = sha.SSIG1(wPt[57]) + wPt[52] + sha.SSIG0(wPt[44]) + wPt[43];
-                    wPt[60] = sha.SSIG1(wPt[58]) + wPt[53] + sha.SSIG0(wPt[45]) + wPt[44];
-                    wPt[61] = sha.SSIG1(wPt[59]) + wPt[54] + sha.SSIG0(wPt[46]) + wPt[45];
-                    wPt[62] = sha.SSIG1(wPt[60]) + wPt[55] + sha.SSIG0(wPt[47]) + wPt[46];
-                    wPt[63] = sha.SSIG1(wPt[61]) + wPt[56] + sha.SSIG0(wPt[48]) + wPt[47];
-
                     sha.Init(hPt);
-                    sha.CompressBlockWithWSet(hPt, wPt);
-
-                    // Perform second hash
-                    sha.DoSecondHash(hPt, wPt);
+                    sha.CompressDouble33(hPt, wPt);
 
                     if (hPt[0] == tmp[9])
                     {
