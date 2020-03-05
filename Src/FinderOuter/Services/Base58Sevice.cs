@@ -149,7 +149,7 @@ namespace FinderOuter.Services
                     wPt[8] = (tmp[8] << 16) | 0b00000000_00000000_10000000_00000000U;
                     // from 9 to 14 =0
                     wPt[15] = 272; // 34 *8 = 272
-                    
+
                     sha.Init(hPt);
                     sha.CompressDouble34(hPt, wPt);
 
@@ -250,141 +250,143 @@ namespace FinderOuter.Services
 
             uint[] precomputed = new uint[uLen];
 
-            // i starts from 1 becaue it is compressed (K or L)
-            for (int i = 1; i < Constants.CompPrivKeyLen - 2; i++)
+            fixed (uint* pre = &precomputed[0], pow = &powers58[0])
             {
-                for (int j = i + 1; j < Constants.CompPrivKeyLen - 1; j++)
+                // i starts from 1 becaue it is compressed (K or L)
+                for (int i = 1; i < Constants.CompPrivKeyLen - 2; i++)
                 {
-                    for (int k = j + 1; k < Constants.CompPrivKeyLen; k++)
+                    for (int j = i + 1; j < Constants.CompPrivKeyLen - 1; j++)
                     {
-                        Array.Clear(precomputed, 0, precomputed.Length);
-
-                        for (int index = 0; index < i; index++)
+                        for (int k = j + 1; k < Constants.CompPrivKeyLen; k++)
                         {
-                            ulong carry = 0;
-                            ulong val = (ulong)values[index];
-                            int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
-                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                            ((Span<uint>)precomputed).Clear();
+
+                            for (int index = 0; index < i; index++)
                             {
-                                ulong result = checked((powers58[powIndex] * val) + precomputed[m] + carry);
-                                precomputed[m] = (uint)result;
-                                carry = (uint)(result >> 32);
-                            }
-                        }
-
-                        for (int index = i + 1; index < j; index++)
-                        {
-                            ulong carry = 0;
-                            ulong val = (ulong)values[index - 1];
-                            int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
-                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                            {
-                                ulong result = checked((powers58[powIndex] * val) + precomputed[m] + carry);
-                                precomputed[m] = (uint)result;
-                                carry = (uint)(result >> 32);
-                            }
-                        }
-
-                        for (int index = j + 1; index < k; index++)
-                        {
-                            ulong carry = 0;
-                            ulong val = (ulong)values[index - 2];
-                            int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
-                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                            {
-                                ulong result = checked((powers58[powIndex] * val) + precomputed[m] + carry);
-                                precomputed[m] = (uint)result;
-                                carry = (uint)(result >> 32);
-                            }
-                        }
-
-                        for (int index = k + 1; index < Constants.CompPrivKeyLen; index++)
-                        {
-                            ulong carry = 0;
-                            ulong val = (ulong)values[index - 3];
-                            int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
-                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                            {
-                                ulong result = checked((powers58[powIndex] * val) + precomputed[m] + carry);
-                                precomputed[m] = (uint)result;
-                                carry = (uint)(result >> 32);
-                            }
-                        }
-
-                        var cancelToken = new CancellationTokenSource();
-                        var options = new ParallelOptions
-                        {
-                            CancellationToken = cancelToken.Token,
-                        };
-
-                        try
-                        {
-                            Parallel.For(0, 58, options, (c1, loopState) =>
-                            {
-                                for (int c2 = 0; c2 < 58; c2++)
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index];
+                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
-                                    for (int c3 = 0; c3 < 58; c3++)
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = i + 1; index < j; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 1];
+                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = j + 1; index < k; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 2];
+                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = k + 1; index < Constants.CompPrivKeyLen; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 3];
+                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            var cancelToken = new CancellationTokenSource();
+                            var options = new ParallelOptions
+                            {
+                                CancellationToken = cancelToken.Token,
+                            };
+
+                            try
+                            {
+                                Parallel.For(0, 58, options, (c1, loopState) =>
+                                {
+                                    for (int c2 = 0; c2 < 58; c2++)
                                     {
-                                        options.CancellationToken.ThrowIfCancellationRequested();
-
-                                        uint[] temp = new uint[precomputed.Length];
-                                        Array.Copy(precomputed, temp, precomputed.Length);
-
-                                        ulong carry = 0;
-                                        ulong val = (ulong)c1;
-                                        int powIndex = (Constants.CompPrivKeyLen - 1 - i) * uLen;
-                                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                        for (int c3 = 0; c3 < 58; c3++)
                                         {
-                                            ulong result = checked((powers58[powIndex] * val) + temp[m] + carry);
-                                            temp[m] = (uint)result;
-                                            carry = (uint)(result >> 32);
-                                        }
+                                            options.CancellationToken.ThrowIfCancellationRequested();
 
-                                        carry = 0;
-                                        val = (ulong)c2;
-                                        powIndex = (Constants.CompPrivKeyLen - 1 - j) * uLen;
-                                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                        {
-                                            ulong result = checked((powers58[powIndex] * val) + temp[m] + carry);
-                                            temp[m] = (uint)result;
-                                            carry = (uint)(result >> 32);
-                                        }
+                                            Span<uint> temp = new uint[uLen];
+                                            ((ReadOnlySpan<uint>)precomputed).CopyTo(temp);
 
-                                        carry = 0;
-                                        val = (ulong)c3;
-                                        powIndex = (Constants.CompPrivKeyLen - 1 - k) * uLen;
-                                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                        {
-                                            ulong result = checked((powers58[powIndex] * val) + temp[m] + carry);
-                                            temp[m] = (uint)result;
-                                            carry = (uint)(result >> 32);
-                                        }
+                                            ulong carry = 0;
+                                            ulong val = (ulong)c1;
+                                            int powIndex = (Constants.CompPrivKeyLen - 1 - i) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
 
-                                        if (Compute(temp))
-                                        {
-                                            string foundRes = key.Insert(i, $"{Constants.Base58Chars[c1]}")
-                                                                 .Insert(j, $"{Constants.Base58Chars[c2]}")
-                                                                 .Insert(k, $"{Constants.Base58Chars[c3]}");
-                                            AddQueue($"Found a key: {foundRes}");
-                                            Task.Run(() => cancelToken.Cancel());
+                                            carry = 0;
+                                            val = (ulong)c2;
+                                            powIndex = (Constants.CompPrivKeyLen - 1 - j) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
+
+                                            carry = 0;
+                                            val = (ulong)c3;
+                                            powIndex = (Constants.CompPrivKeyLen - 1 - k) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
+
+                                            if (Compute(temp))
+                                            {
+                                                string foundRes = key.Insert(i, $"{Constants.Base58Chars[c1]}")
+                                                                     .Insert(j, $"{Constants.Base58Chars[c2]}")
+                                                                     .Insert(k, $"{Constants.Base58Chars[c3]}");
+                                                AddQueue($"Found a key: {foundRes}");
+                                                Task.Run(() => cancelToken.Cancel());
+                                            }
                                         }
                                     }
-                                }
-                            });
-                        }
-                        catch (Exception)
-                        {
-                            return true;
+                                });
+                            }
+                            catch (Exception)
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
             }
-
             return false;
         }
 
 
-        private unsafe bool Compute(uint[] keyValueInts)
+        private unsafe bool Compute(Span<uint> keyValueInts)
         {
             if (((keyValueInts[0] & 0xffffff00) | (keyValueInts[^2] & 0x000000ff)) != 0x00008001)
             {
