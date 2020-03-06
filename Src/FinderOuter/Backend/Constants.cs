@@ -9,7 +9,7 @@ namespace FinderOuter.Backend
     {
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
-        public const string Symbols = "!@#$%^&*-+=?";
+        public const string Symbols = "!@#$%^&*_-+=?";
 
         public const char CompPrivKeyChar1 = 'K';
         public const char CompPrivKeyChar2 = 'L';
