@@ -15,13 +15,14 @@ namespace FinderOuter.ViewModels
         public MissingBase58ViewModel()
         {
             // Don't move this line, service must be instantiated here
+            InputService inServ = new InputService();
             b58Service = new Base58Sevice(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input, x => x.MissingChar,
                 x => x.Result.CurrentState, (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
-                            b58Service.IsMissingCharValid(c) &&
+                            inServ.IsMissingCharValid(c) &&
                             state != Models.State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);

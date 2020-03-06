@@ -362,7 +362,7 @@ namespace FinderOuter.Services
                                                 carry = (uint)(result >> 32);
                                             }
 
-                                            if (Compute(temp))
+                                            if (ComputeSpecialHash(temp))
                                             {
                                                 string foundRes = key.Insert(i, $"{Constants.Base58Chars[c1]}")
                                                                      .Insert(j, $"{Constants.Base58Chars[c2]}")
@@ -385,8 +385,7 @@ namespace FinderOuter.Services
             return false;
         }
 
-
-        private unsafe bool Compute(Span<uint> keyValueInts)
+        private unsafe bool ComputeSpecialHash(Span<uint> keyValueInts)
         {
             if (((keyValueInts[0] & 0xffffff00) | (keyValueInts[^2] & 0x000000ff)) != 0x00008001)
             {
@@ -424,11 +423,9 @@ namespace FinderOuter.Services
         {
             InitReport();
 
-            if (!IsMissingCharValid(missingChar))
-                return Fail("Missing character can not be among base-58 characters.");
-            if (!IsInputValid(key, missingChar))
-                return Fail("Input contains invalid base-58 character(s).");
-
+            if (!inputService.CheckIncompletePrivateKey(key, missingChar, out string error))
+                return Fail(error);
+            
 
             bool success = false;
             if (inputService.CanBePrivateKey(key))

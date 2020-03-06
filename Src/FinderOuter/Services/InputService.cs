@@ -5,6 +5,7 @@
 
 using FinderOuter.Backend;
 using FinderOuter.Backend.Encoders;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -26,6 +27,82 @@ namespace FinderOuter.Services
                         (key[0] == Constants.UncompPrivKeyChar));
         }
 
+        public bool CheckIncompletePrivateKey(string key, char missingChar, out string error)
+        {
+            if (!IsMissingCharValid(missingChar))
+            {
+                error = $"Invalid missing character. Choose one from {Constants.Symbols}";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                error = "Key can not be null or empty.";
+                return false;
+            }
+            if (!key.All(c => c == missingChar || Constants.Base58Chars.Contains(c)))
+            {
+                error = $"Key contains invalid base-58 characters (ignoring the missing char = {missingChar}).";
+                return false;
+            }
+
+            if (key.Contains(missingChar))
+            {
+                // Both key length and its first character must be valid
+                if (key.Length == Constants.CompPrivKeyLen)
+                {
+                    if (key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2)
+                    {
+                        error = "Invalid first character for a compressed private key considering length.";
+                        return false;
+                    }
+                }
+                else if (key.Length == Constants.UncompPrivKeyLen)
+                {
+                    if (key[0] != Constants.UncompPrivKeyChar)
+                    {
+                        error = "Invalid first character for an uncompressed private key considering length.";
+                        return false;
+                    }
+                }
+                else
+                {
+                    error = "Invalid key length.";
+                    return false;
+                }
+            }
+            else
+            {
+                // If the key doesn't have the missing char it is either a complete key that needs to be checked properly 
+                // by the caller, or it has missing characters at unkown locations which needs to be found by the caller.
+                if (key.Length > Constants.CompPrivKeyLen)
+                {
+                    error = "Key length is too big.";
+                    return false;
+                }
+                else if (key.Length == Constants.CompPrivKeyLen &&
+                    key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2)
+                {
+                    error = "Invalid first key character considering its length.";
+                    return false;
+                }
+                else if (key.Length == Constants.UncompPrivKeyLen && key[0] != Constants.UncompPrivKeyChar)
+                {
+                    error = "Invalid first key character considering its length.";
+                    return false;
+                }
+                else if (key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2 &&
+                    key[0] != Constants.UncompPrivKeyChar)
+                {
+                    error = "The first character of the given private key is not valid.";
+                    return false;
+                }
+            }
+
+            error = null;
+            return true;
+        }
+
+        public bool IsMissingCharValid(char c) => Constants.Symbols.Contains(c);
 
         public bool IsPrivateKeyInRange(byte[] key)
         {
@@ -36,13 +113,6 @@ namespace FinderOuter.Services
             BigInteger val = key.ToBigInt(true, true);
             BigInteger max = BigInteger.Parse("115792089237316195423570985008687907852837564279074904382605163141518161494336");
             return val >= BigInteger.One && val <= max;
-        }
-
-
-        public bool NormalizeNFKD(string s, out string norm)
-        {
-            norm = s.Normalize(NormalizationForm.FormKD);
-            return !s.IsNormalized(NormalizationForm.FormKD);
         }
 
 
@@ -74,6 +144,13 @@ namespace FinderOuter.Services
             {
                 return false;
             }
+        }
+
+
+        public bool NormalizeNFKD(string s, out string norm)
+        {
+            norm = s.Normalize(NormalizationForm.FormKD);
+            return !s.IsNormalized(NormalizationForm.FormKD);
         }
     }
 }
