@@ -95,13 +95,6 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsMissingCharValid(char c) => Constants.Symbols.Contains(c);
-
-        public bool IsInputValid(string key, char missingChar)
-        {
-            return !string.IsNullOrEmpty(key) && key.All(c => c == missingChar || Constants.Base58Chars.Contains(c));
-        }
-
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
         readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
