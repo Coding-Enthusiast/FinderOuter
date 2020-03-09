@@ -13,13 +13,21 @@ Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://g
 User can enter a message signature (currently only for bitcoin) here to verify it. In case there is a problem with the message (except being an actually invalid signature), the code can search to find the common issues that some signing tools have.
 
 #### 2. Missing Base-58 characters
-This option helps those who have a damaged paper wallet with the base-58 encoded private key (WIF) missing a couple of characters. It currently only supports private keys but in the future more string types such as master private key (xprv...) will be added.
+This option helps those who have a damaged paper wallet with the base-58 encoded private key (WIF) missing a couple of characters. It currently only supports private keys but in the future more string types such as master private key (xprv...) will be added.  
+This also supports a "special case" where a compressed private key is missing 3 characters at unknown positions.
+
+#### 3. Missing Base-16 characters
+This option is similar to previous feature but works for base-16 (hexadecimal) private keys. It currently requires an address
+and only checks compressed public keys. Unlike the other options, this one is very slow since it depens on ECC and that is not
+yet optimized.
 
 ## Future plans
 * Optimization is always at the top of the to-do list
 * Mnemonic recovery (seed phrases missing a couple of words, having wrong order,...)
 * BIP-32 path finder (user has master key and at least one child key but doesn't know the derivation path)
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
+* Recovering damaged Base-58 encoded mini-private-keys
+* Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
 
 ## Downloading
 Compiled binaries of each version can be found under [releases](https://github.com/Coding-Enthusiast/FinderOuter/releases)<sup>1</sup>. There will only be self-contained deployment targetting 64-bit Linux operating systems. There is two main reasons for this decision:  
@@ -33,7 +41,7 @@ download the last two files if you are looking for compiled version.
 
 ## Build from source code
 1. Get Git: https://git-scm.com/downloads
-2. Get .NET Core 3.0 SDK: https://www.microsoft.com/net/download (see `TargetFramework` [here](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj))
+2. Get .NET Core 3.1 SDK: https://www.microsoft.com/net/download (see `TargetFramework` [here](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj))
 3. clone FinderOuter `git clone https://github.com/Coding-Enthusiast/FinderOuter.git`
 4. Build using `dotnet build`
 
