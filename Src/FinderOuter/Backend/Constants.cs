@@ -11,12 +11,14 @@ namespace FinderOuter.Backend
         public const string Base16Chars = "0123456789abcdef";
         public const string Symbols = "!@#$%^&*_-+=?";
 
-        public const char CompPrivKeyChar1 = 'K';
-        public const char CompPrivKeyChar2 = 'L';
-        public const char UncompPrivKeyChar = '5';
-        public const int CompPrivKeyLen = 52;
-        public const int UncompPrivKeyLen = 51;
+        public const char PrivKeyCompChar1 = 'K';
+        public const char PrivKeyCompChar2 = 'L';
+        public const char PrivKeyUncompChar = '5';
+        public const int PrivKeyCompWifLen = 52;
+        public const int PrivKeyUncompWifLen = 51;
         public const byte PrivKeyFirstByte = 0x80;
-        public const byte CompPrivKeyLastByte = 1;
+        public const byte PrivKeyCompLastByte = 1;
+
+        public const int PrivKeyHexLen = 64;
     }
 }

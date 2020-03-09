@@ -20,11 +20,57 @@ namespace FinderOuter.Services
         public bool CanBePrivateKey(string key)
         {
             return
-                (key.Length == Constants.CompPrivKeyLen &&
-                        (key[0] == Constants.CompPrivKeyChar1 || key[0] == Constants.CompPrivKeyChar2))
+                (key.Length == Constants.PrivKeyCompWifLen &&
+                        (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2))
                 ||
-                (key.Length == Constants.UncompPrivKeyLen &&
-                        (key[0] == Constants.UncompPrivKeyChar));
+                (key.Length == Constants.PrivKeyUncompWifLen &&
+                        (key[0] == Constants.PrivKeyUncompChar));
+        }
+
+        public string CheckPrivateKey(string key)
+        {
+            if (!b58End.HasValidChars(key))
+            {
+                return "The given key contains invalid base-58 characters.";
+            }
+            if (!b58End.HasValidCheckSum(key))
+            {
+                return "The given key has an invalid checksum.";
+            }
+
+            byte[] keyBa = b58End.DecodeWithCheckSum(key);
+            if (keyBa[0] != Constants.PrivKeyFirstByte)
+            {
+                return $"Invalid first key byte (actual={keyBa[0]}, expected={Constants.PrivKeyFirstByte}).";
+            }
+
+            if (keyBa.Length == 33)
+            {
+                if (!IsPrivateKeyInRange(keyBa.SubArray(1)))
+                {
+                    return "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                }
+
+                return "The given key is a valid uncompressed private key.";
+            }
+            else if (keyBa.Length == 34)
+            {
+                if (keyBa[^1] != Constants.PrivKeyCompLastByte)
+                {
+                    return $"Invalid compressed key last byte (actual={keyBa[^1]}, expected={Constants.PrivKeyCompLastByte}).";
+                }
+
+                if (!IsPrivateKeyInRange(keyBa.SubArray(1, 32)))
+                {
+                    return "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                }
+
+                return "The given key is a valid compressed private key.";
+            }
+            else
+            {
+                return $"The given key length is invalid. actual = {keyBa.Length}, expected = 33 (uncompressed) or 34 (compressed)).";
+            }
         }
 
         public bool CheckIncompletePrivateKey(string key, char missingChar, out string error)
@@ -48,17 +94,17 @@ namespace FinderOuter.Services
             if (key.Contains(missingChar))
             {
                 // Both key length and its first character must be valid
-                if (key.Length == Constants.CompPrivKeyLen)
+                if (key.Length == Constants.PrivKeyCompWifLen)
                 {
-                    if (key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2)
+                    if (key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2)
                     {
                         error = "Invalid first character for a compressed private key considering length.";
                         return false;
                     }
                 }
-                else if (key.Length == Constants.UncompPrivKeyLen)
+                else if (key.Length == Constants.PrivKeyUncompWifLen)
                 {
-                    if (key[0] != Constants.UncompPrivKeyChar)
+                    if (key[0] != Constants.PrivKeyUncompChar)
                     {
                         error = "Invalid first character for an uncompressed private key considering length.";
                         return false;
@@ -74,24 +120,24 @@ namespace FinderOuter.Services
             {
                 // If the key doesn't have the missing char it is either a complete key that needs to be checked properly 
                 // by the caller, or it has missing characters at unkown locations which needs to be found by the caller.
-                if (key.Length > Constants.CompPrivKeyLen)
+                if (key.Length > Constants.PrivKeyCompWifLen)
                 {
                     error = "Key length is too big.";
                     return false;
                 }
-                else if (key.Length == Constants.CompPrivKeyLen &&
-                    key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2)
+                else if (key.Length == Constants.PrivKeyCompWifLen &&
+                    key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2)
                 {
                     error = "Invalid first key character considering its length.";
                     return false;
                 }
-                else if (key.Length == Constants.UncompPrivKeyLen && key[0] != Constants.UncompPrivKeyChar)
+                else if (key.Length == Constants.PrivKeyUncompWifLen && key[0] != Constants.PrivKeyUncompChar)
                 {
                     error = "Invalid first key character considering its length.";
                     return false;
                 }
-                else if (key[0] != Constants.CompPrivKeyChar1 && key[0] != Constants.CompPrivKeyChar2 &&
-                    key[0] != Constants.UncompPrivKeyChar)
+                else if (key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2 &&
+                    key[0] != Constants.PrivKeyUncompChar)
                 {
                     error = "The first character of the given private key is not valid.";
                     return false;

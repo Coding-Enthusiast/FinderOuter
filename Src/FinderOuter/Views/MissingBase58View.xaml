@@ -15,12 +15,12 @@
              Margin="3" Grid.Column="0"/>
     
     <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1">
-      <TextBox Text="{Binding MissingChar}" TextAlignment="Center" VerticalAlignment="Top"
-               ToolTip.Tip="{Binding MissingToolTip}"
+      <TextBlock Text="Missing char:" HorizontalAlignment="Center"/>
+      <TextBox Text="{Binding MissingChar}" TextAlignment="Center" ToolTip.Tip="{Binding MissingToolTip}"
                Height="38" Width="40" Margin="3"/>
-      <TextBlock Text="Special case:" Margin="0,15,0,0"/>
-      <CheckBox IsChecked="{Binding IsSpecialCase}" ToolTip.Tip="{Binding SpecialToolTip}"
-                HorizontalAlignment="Center"/>
+      
+      <TextBlock Text="Input type:" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+      <DropDown Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"/>
     </StackPanel>
 
   </Grid>

@@ -36,13 +36,19 @@ namespace FinderOuter.Services
         private int missCount;
 
 
+        public enum InputType
+        {
+            PrivateKey,
+            //MiniPrivateKey
+        }
+
         private void Initialize(char[] key, char missingChar)
         {
             // Compute 58^n from n from 0 to inputLength as uint[]
 
             byte[] padded;
             int uLen;
-            if (key.Length <= Constants.CompPrivKeyLen)
+            if (key.Length <= Constants.PrivKeyCompWifLen)
             {
                 // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
                 uLen = 10;
@@ -218,10 +224,10 @@ namespace FinderOuter.Services
 
             // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
             uLen = 10;
-            uint[] powers58 = new uint[Constants.CompPrivKeyLen * uLen];
+            uint[] powers58 = new uint[Constants.PrivKeyCompWifLen * uLen];
             padded = new byte[4 * uLen];
 
-            for (int i = 0, j = 0; i < Constants.CompPrivKeyLen; i++)
+            for (int i = 0, j = 0; i < Constants.PrivKeyCompWifLen; i++)
             {
                 BigInteger val = BigInteger.Pow(58, i);
                 byte[] temp = val.ToByteArray(true, false);
@@ -246,11 +252,11 @@ namespace FinderOuter.Services
             fixed (uint* pre = &precomputed[0], pow = &powers58[0])
             {
                 // i starts from 1 becaue it is compressed (K or L)
-                for (int i = 1; i < Constants.CompPrivKeyLen - 2; i++)
+                for (int i = 1; i < Constants.PrivKeyCompWifLen - 2; i++)
                 {
-                    for (int j = i + 1; j < Constants.CompPrivKeyLen - 1; j++)
+                    for (int j = i + 1; j < Constants.PrivKeyCompWifLen - 1; j++)
                     {
-                        for (int k = j + 1; k < Constants.CompPrivKeyLen; k++)
+                        for (int k = j + 1; k < Constants.PrivKeyCompWifLen; k++)
                         {
                             ((Span<uint>)precomputed).Clear();
 
@@ -258,7 +264,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index];
-                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -271,7 +277,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 1];
-                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -284,7 +290,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 2];
-                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -293,11 +299,11 @@ namespace FinderOuter.Services
                                 }
                             }
 
-                            for (int index = k + 1; index < Constants.CompPrivKeyLen; index++)
+                            for (int index = k + 1; index < Constants.PrivKeyCompWifLen; index++)
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 3];
-                                int powIndex = (Constants.CompPrivKeyLen - 1 - index) * uLen;
+                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -327,7 +333,7 @@ namespace FinderOuter.Services
 
                                             ulong carry = 0;
                                             ulong val = (ulong)c1;
-                                            int powIndex = (Constants.CompPrivKeyLen - 1 - i) * uLen;
+                                            int powIndex = (Constants.PrivKeyCompWifLen - 1 - i) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -337,7 +343,7 @@ namespace FinderOuter.Services
 
                                             carry = 0;
                                             val = (ulong)c2;
-                                            powIndex = (Constants.CompPrivKeyLen - 1 - j) * uLen;
+                                            powIndex = (Constants.PrivKeyCompWifLen - 1 - j) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -347,7 +353,7 @@ namespace FinderOuter.Services
 
                                             carry = 0;
                                             val = (ulong)c3;
-                                            powIndex = (Constants.CompPrivKeyLen - 1 - k) * uLen;
+                                            powIndex = (Constants.PrivKeyCompWifLen - 1 - k) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -412,145 +418,11 @@ namespace FinderOuter.Services
 
 
 
-        public async Task<bool> Find(string key, char missingChar)
+        public async Task<bool> FindUnknownLocation3(string key)
         {
-            InitReport();
-
-            if (!inputService.CheckIncompletePrivateKey(key, missingChar, out string error))
-                return Fail(error);
-            
-
-            bool success = false;
-            if (inputService.CanBePrivateKey(key))
-            {
-                missCount = key.Count(c => c == missingChar);
-                if (missCount == 0)
-                {
-                    AddMessage("No character is missing, checking validity of the key itself.");
-                    // TODO: use Backend.KeyPairs.PrivateKey instead
-                    if (!encoder.HasValidChars(key))
-                    {
-                        return Fail("The given key contains invalid base-58 characters.");
-                    }
-                    if (!encoder.HasValidCheckSum(key))
-                    {
-                        return Fail("The given key has an invalid checksum.");
-                    }
-
-                    byte[] keyBa = encoder.DecodeWithCheckSum(key);
-                    if (keyBa[0] != Constants.PrivKeyFirstByte)
-                    {
-                        return Fail($"Invalid first key byte (actual={keyBa[0]}, expected={Constants.PrivKeyFirstByte})");
-                    }
-                    if (keyBa.Length == 33)
-                    {
-                        if (!inputService.IsPrivateKeyInRange(keyBa.SubArray(1)))
-                        {
-                            return Fail("Invalid key integer value (outside of the range defined by secp256k1 curve).");
-                        }
-
-                        return Pass("The given key is a valid uncompressed private key.");
-                    }
-                    else if (keyBa.Length == 34)
-                    {
-                        if (keyBa[^1] != Constants.CompPrivKeyLastByte)
-                        {
-                            return Fail($"Invalid compressed key last byte (actual={keyBa[^1]}, " +
-                                $"expected={Constants.CompPrivKeyLastByte})");
-                        }
-                        if (!inputService.IsPrivateKeyInRange(keyBa.SubArray(1, 32)))
-                        {
-                            return Fail("Invalid key integer value (outside of the range defined by secp256k1 curve).");
-                        }
-
-                        return Pass("The given key is a valid compressed private key.");
-                    }
-                    else
-                    {
-                        return Fail($"The given key length is invalid. actual = {keyBa.Length}, " +
-                            $"expected = 33 (uncomp) or 34 (comp))");
-                    }
-                }
-
-                missingIndexes = new int[missCount];
-                bool isComp = key.Length == Constants.CompPrivKeyLen;
-                AddMessage($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} characters was detected.");
-                AddMessage($"Total number of keys to test: {GetTotalCount(missCount):n0}");
-
-                Initialize(key.ToCharArray(), missingChar);
-
-                Stopwatch watch = Stopwatch.StartNew();
-
-                success = await Task.Run(() =>
-                {
-                    if (isComp)
-                    {
-                        AddQueue("Running compressed loop.");
-                        return LoopComp();
-                    }
-                    else
-                    {
-                        AddQueue("Running uncompressed loop.");
-                        return LoopUncomp();
-                    }
-                }
-                );
-
-                watch.Stop();
-                AddQueue($"Elapsed time: {watch.Elapsed}");
-                AddQueue($"k/s= {(int)GetTotalCount(missCount) / watch.Elapsed.TotalSeconds:n0}");
-            }
-            else
-            {
-                success = false;
-                AddQueue("Not yet defined.");
-            }
-
-            if (success)
-            {
-                await Task.Run(() =>
-                {
-                    AddQueue($"Found {Final.Count} key{(Final.Count > 1 ? "s" : "")}:");
-
-                    foreach (var item in Final)
-                    {
-                        char[] temp = key.ToCharArray();
-                        int i = 0;
-                        foreach (var index in item)
-                        {
-                            temp[temp.Length - missingIndexes[i++] - 1] = Constants.Base58Chars[index];
-                        }
-
-                        AddQueue(new string(temp));
-                    }
-
-                    Final.Clear();
-                    return;
-                }
-                );
-            }
-
-            return CopyQueueToMessage(success);
-        }
-
-
-        public async Task<bool> FindUnknownLocation(string key)
-        {
-            InitReport();
-
-            if (string.IsNullOrEmpty(key) || key.Any(c => !Constants.Base58Chars.Contains(c)))
-                return Fail("Input contains invalid base-58 character(s).");
-            if (key.Length != Constants.CompPrivKeyLen - 3 ||
-                (!key.StartsWith(Constants.CompPrivKeyChar2) && key.StartsWith(Constants.CompPrivKeyChar2)))
-            {
-                // Only this special case is supported for now
-                return Fail("This option is only defined for compressed private keys that " +
-                            "have 3 missing characters with unknown locations.");
-            }
-
             // 51! / 3! *((51-3)!)
             BigInteger total = ((51 * 50 * 49) / (3 * 2 * 1)) * BigInteger.Pow(58, 3);
-            AddMessage($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
+            AddQueue($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
 
             Stopwatch watch = Stopwatch.StartNew();
             bool success = await Task.Run(() =>
@@ -562,6 +434,137 @@ namespace FinderOuter.Services
             watch.Stop();
             AddQueue($"Elapsed time: {watch.Elapsed}");
             AddQueue(GetKeyPerSec(total, watch.Elapsed.TotalSeconds));
+
+            return success;
+        }
+
+
+        private async Task<bool> FindPrivateKey(string key, char missingChar)
+        {
+            bool success = false;
+
+            if (key.Contains(missingChar)) // Length must be correct then
+            {
+                missCount = key.Count(c => c == missingChar);
+                if (inputService.CanBePrivateKey(key))
+                {
+                    missingIndexes = new int[missCount];
+                    bool isComp = key.Length == Constants.PrivKeyCompWifLen;
+                    AddQueue($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
+                             $"characters was detected.");
+                    AddQueue($"Total number of keys to test: {GetTotalCount(missCount):n0}");
+
+                    Initialize(key.ToCharArray(), missingChar);
+
+                    Stopwatch watch = Stopwatch.StartNew();
+
+                    success = await Task.Run(() =>
+                    {
+                        if (isComp)
+                        {
+                            AddQueue("Running compressed loop.");
+                            return LoopComp();
+                        }
+                        else
+                        {
+                            AddQueue("Running uncompressed loop.");
+                            return LoopUncomp();
+                        }
+                    }
+                    );
+
+                    watch.Stop();
+                    AddQueue($"Elapsed time: {watch.Elapsed}");
+                    AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+                }
+
+                if (success)
+                {
+                    await Task.Run(() =>
+                    {
+                        AddQueue($"Found {Final.Count} key{(Final.Count > 1 ? "s" : "")}:");
+
+                        foreach (var item in Final)
+                        {
+                            char[] temp = key.ToCharArray();
+                            int i = 0;
+                            foreach (var index in item)
+                            {
+                                temp[temp.Length - missingIndexes[i++] - 1] = Constants.Base58Chars[index];
+                            }
+
+                            AddQueue(new string(temp));
+                        }
+
+                        Final.Clear();
+                        return;
+                    }
+                    );
+                }
+
+                return success;
+            }
+            else // Doesn't have any missing chars so length must be <= max key len
+            {
+                if (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2)
+                {
+                    if (key.Length == Constants.PrivKeyCompWifLen)
+                    {
+                        AddMessage("No character is missing, checking validity of the key itself.");
+                        AddQueue(inputService.CheckPrivateKey(key));
+                        return true;
+                    }
+                    else if (key.Length == Constants.PrivKeyCompWifLen - 3)
+                    {
+                        return await FindUnknownLocation3(key);
+                    }
+                    else
+                    {
+                        AddQueue("Only 3 missing characters at unkown locations is supported for now.");
+                        return false;
+                    }
+                }
+                else if (key[0] == Constants.PrivKeyUncompChar)
+                {
+                    if (key.Length == Constants.PrivKeyUncompWifLen)
+                    {
+                        AddMessage("No character is missing, checking validity of the key itself.");
+                        AddQueue(inputService.CheckPrivateKey(key));
+                        return true;
+                    }
+                    else
+                    {
+                        AddQueue("Recovering uncompressed private keys with missing characters at unknown locations " +
+                            "is not supported yet.");
+                        return false;
+                    }
+                }
+                else
+                {
+                    AddQueue("The given key has an invalid first character.");
+                    return false;
+                }
+            }
+        }
+
+        public async Task<bool> Find(string key, char missingChar, InputType t)
+        {
+            InitReport();
+
+            if (!inputService.IsMissingCharValid(missingChar))
+                return Fail("Invalid missing character.");
+            if (string.IsNullOrWhiteSpace(key) || !key.All(c => Constants.Base58Chars.Contains(c) || c == missingChar))
+                return Fail("Input contains invalid base-58 character(s).");
+
+            bool success;
+            switch (t)
+            {
+                case InputType.PrivateKey:
+                    success = await FindPrivateKey(key, missingChar);
+                    break;
+                default:
+                    return Fail("Given input type is not defined.");
+            }
 
             return CopyQueueToMessage(success);
         }

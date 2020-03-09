@@ -7,6 +7,8 @@ using FinderOuter.Backend;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
@@ -26,6 +28,7 @@ namespace FinderOuter.ViewModels
                             state != Models.State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
+            InputTypeList = Enum.GetValues(typeof(Base58Sevice.InputType)).Cast<Base58Sevice.InputType>();
         }
 
 
@@ -38,6 +41,15 @@ namespace FinderOuter.ViewModels
 
 
         private readonly Base58Sevice b58Service;
+
+        public IEnumerable<Base58Sevice.InputType> InputTypeList { get; private set; }
+
+        private Base58Sevice.InputType _selInpT;
+        public Base58Sevice.InputType SelectedInputType
+        {
+            get => _selInpT;
+            set => this.RaiseAndSetIfChanged(ref _selInpT, value);
+        }
 
         private string _input;
         public string Input
@@ -53,27 +65,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mis, value);
         }
 
-        private bool _isSpecial;
-        public bool IsSpecialCase
-        {
-            get => _isSpecial;
-            set => this.RaiseAndSetIfChanged(ref _isSpecial, value);
-        }
-
         public string MissingToolTip => $"Choose one of these symbols {Constants.Symbols} to use instead of the missing characters";
-        public string SpecialToolTip => "Select this for a special case where you have a compressed private key that is missing " +
-            "exactly 3 characters and you don't know their locations.";
 
         public override void Find()
         {
-            if (IsSpecialCase)
-            {
-                _ = b58Service.FindUnknownLocation(Input);
-            }
-            else
-            {
-                _ = b58Service.Find(Input, MissingChar);
-            }
+            _ = b58Service.Find(Input, MissingChar, SelectedInputType);
         }
     }
 }
