@@ -18,7 +18,7 @@ This also supports a "special case" where a compressed private key is missing 3 
 
 #### 3. Missing Base-16 characters
 This option is similar to previous feature but works for base-16 (hexadecimal) private keys. It currently requires an address
-and only checks compressed public keys. Unlike the other options, this one is very slow since it depens on ECC and that is not
+and only checks compressed public keys. Unlike the other options, this one is very slow since it depends on ECC and that is not
 yet optimized.
 
 ## Future plans
