@@ -30,7 +30,7 @@ namespace FinderOuter.Services
         private readonly Sha256 hash = new Sha256(true);
         private readonly EllipticCurveCalculator calc;
         private readonly Address addressBuilder;
-        private InputService inputService;
+        private readonly InputService inputService;
 
 
         private bool CheckAddress(string addr, out Address.AddressType addrType)
@@ -154,8 +154,7 @@ namespace FinderOuter.Services
 
             Signature sig = new Signature(sigBa, Signature.SigEncoding.WithRecId);
             bool success = CheckPubkeys(sig, toSign, address, addrType);
-            CopyQueueToMessage(success);
-            return success;
+            return FinishReport(success);
         }
 
 
@@ -340,7 +339,7 @@ namespace FinderOuter.Services
             }
             );
 
-            return CopyQueueToMessage(success);
+            return FinishReport(success);
         }
     }
 }

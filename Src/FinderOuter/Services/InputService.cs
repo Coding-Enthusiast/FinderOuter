@@ -17,14 +17,40 @@ namespace FinderOuter.Services
         private readonly Bech32 b32Enc = new Bech32();
 
 
-        public bool CanBePrivateKey(string key)
+        public bool CanBePrivateKey(string key, out string error)
         {
-            return
-                (key.Length == Constants.PrivKeyCompWifLen &&
-                        (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2))
-                ||
-                (key.Length == Constants.PrivKeyUncompWifLen &&
-                        (key[0] == Constants.PrivKeyUncompChar));
+            if (key.Length == Constants.PrivKeyCompWifLen)
+            {
+                if (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2)
+                {
+                    error = null;
+                    return true;
+                }
+                else
+                {
+                    error = $"A key with {key.Length} length is expected to start with {Constants.PrivKeyCompChar1} " +
+                            $"or {Constants.PrivKeyCompChar2}.";
+                    return false;
+                }
+            }
+            else if (key.Length == Constants.PrivKeyUncompWifLen)
+            {
+                if (key[0] == Constants.PrivKeyUncompChar)
+                {
+                    error = null;
+                    return true;
+                }
+                else
+                {
+                    error = $"A key with {key.Length} length is expected to start with {Constants.PrivKeyUncompChar}.";
+                    return false;
+                }
+            }
+            else
+            {
+                error = "Given key has an invalid length";
+                return false;
+            }
         }
 
         public string CheckPrivateKey(string key)

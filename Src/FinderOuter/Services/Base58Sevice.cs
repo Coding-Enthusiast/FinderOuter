@@ -446,7 +446,7 @@ namespace FinderOuter.Services
             if (key.Contains(missingChar)) // Length must be correct then
             {
                 missCount = key.Count(c => c == missingChar);
-                if (inputService.CanBePrivateKey(key))
+                if (inputService.CanBePrivateKey(key, out string error))
                 {
                     missingIndexes = new int[missCount];
                     bool isComp = key.Length == Constants.PrivKeyCompWifLen;
@@ -476,6 +476,10 @@ namespace FinderOuter.Services
                     watch.Stop();
                     AddQueue($"Elapsed time: {watch.Elapsed}");
                     AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+                }
+                else
+                {
+                    AddQueue(error);
                 }
 
                 if (success)
@@ -566,7 +570,7 @@ namespace FinderOuter.Services
                     return Fail("Given input type is not defined.");
             }
 
-            return CopyQueueToMessage(success);
+            return FinishReport(success);
         }
     }
 }

@@ -3,10 +3,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Avalonia.Threading;
 using FinderOuter.Models;
 using System;
 using System.Numerics;
-using System.Text;
 
 namespace FinderOuter.Services
 {
@@ -21,16 +21,19 @@ namespace FinderOuter.Services
         }
 
 
-
         private readonly Report report;
-        private readonly StringBuilder queue = new StringBuilder();
 
 
         protected void InitReport()
         {
             report.CurrentState = State.Working;
             report.Message = string.Empty;
-            queue.Clear();
+        }
+
+        protected bool FinishReport(bool success)
+        {
+            report.CurrentState = success ? State.FinishedSuccess : State.FinishedFail;
+            return success;
         }
 
         protected void AddMessage(string msg)
@@ -54,15 +57,8 @@ namespace FinderOuter.Services
 
         protected void AddQueue(string msg)
         {
-            queue.AppendLine(msg);
-        }
-
-        protected bool CopyQueueToMessage(bool hasPassed)
-        {
-            report.CurrentState = hasPassed ? State.FinishedSuccess : State.FinishedFail;
-            AddMessage(queue.ToString());
-
-            return hasPassed;
+            Dispatcher.UIThread.InvokeAsync(() => 
+                report.Message += string.IsNullOrEmpty(report.Message) ? msg : $"{Environment.NewLine}{msg}");
         }
 
         protected string GetKeyPerSec(BigInteger total, double totalSecond)
@@ -76,6 +72,5 @@ namespace FinderOuter.Services
                 return $"k/s= {total / new BigInteger(totalSecond):n0}";
             }
         }
-
     }
 }

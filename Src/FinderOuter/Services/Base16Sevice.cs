@@ -186,7 +186,7 @@ namespace FinderOuter.Services
             AddQueue($"Elapsed time: {watch.Elapsed}");
             AddQueue(GetKeyPerSec(total, watch.Elapsed.TotalSeconds));
 
-            return CopyQueueToMessage(success);
+            return FinishReport(success);
         }
     }
 }

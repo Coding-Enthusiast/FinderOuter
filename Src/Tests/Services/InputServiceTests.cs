@@ -24,8 +24,9 @@ namespace Tests.Services
         public void CanBePrivateKeyTest(string key)
         {
             InputService serv = new InputService();
-            bool actual = serv.CanBePrivateKey(key);
-            Assert.True(actual);
+            bool actual = serv.CanBePrivateKey(key, out string error);
+            Assert.True(actual, error);
+            Assert.Null(error);
         }
 
         [Theory]
@@ -41,7 +42,7 @@ namespace Tests.Services
         public void CanBePrivateKey_FalseTest(string key)
         {
             InputService serv = new InputService();
-            bool actual = serv.CanBePrivateKey(key);
+            bool actual = serv.CanBePrivateKey(key, out _);
             Assert.False(actual);
         }
 

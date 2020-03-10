@@ -511,7 +511,7 @@ namespace FinderOuter.Services
                 AddQueue($"Found {Final.Count:n0} correct mnemonics.");
                 Final.Clear();
             }
-            return CopyQueueToMessage(success);
+            return FinishReport(success);
         }
 
 
