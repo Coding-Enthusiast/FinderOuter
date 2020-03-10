@@ -1,6 +1,14 @@
 ### Release 0.2.0 (upcoming)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.1.0...master)
-* **New option**: missing mnemonic words
+* **New feature**: missing mnemonic words
+
+### Release 0.1.2 (2020-03-10)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.1.0...v0.1.2.0)
+* **New feature**: missing characters in a base-16 encoded private key
+* The missing base58 option can now accepte a full private key and check if it is correct while returning 
+useful error message explaining why the given key was invalid.
+* Simplify user input in missing base-58 (no checkbox anymore)
+* Small code improvements and optimization
 
 ### Release 0.1.1 (2020-02-19)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.0.0...v0.1.1.0)
