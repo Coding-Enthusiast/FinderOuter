@@ -34,10 +34,14 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Base58";
-        public override string Description => $"Helps you recover missing base-58 characters in any base-58 encoded strings that " +
-            $"has a checksum. Examples are private keys, extended pub/priv keys, addresses,...{Environment.NewLine}" +
-            $"Enter the base-58 string and replace its missing characters with the symbol defined by {nameof(MissingChar)} " +
-            $"parameter and press Find.";
+        public override string Description => $"If you have a base-58 encoded string with a checksum (such as private key WIFs) " +
+            $"that is missing some characters and you know the location of these missing characters (eg. a damaged paper wallet) " +
+            $"you can use this option to recover it.{Environment.NewLine}" +
+            $"All you have to do is to enter the base-58 string below and replace its missing characters with the symbol " +
+            $"defined by {nameof(MissingChar)} parameter and press Find.{Environment.NewLine}" +
+            $"Exception: if you have a compressed private key missing 3 characters, there is no need to use " +
+            $"{nameof(MissingChar)} parameter anymore, just enter the {Constants.PrivKeyCompWifLen - 3} characters you have" +
+            $" and press find.";
 
 
         private readonly Base58Sevice b58Service;
