@@ -1,5 +1,5 @@
 ### Release 0.2.0 (upcoming)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.1.0...master)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.2.0...master)
 * **New feature**: missing mnemonic words
 
 ### Release 0.1.2 (2020-03-10)
