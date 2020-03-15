@@ -51,6 +51,15 @@ If you are using the released [SCD](https://docs.microsoft.com/en-us/dotnet/core
 2. Execute application `./FinderOuter`
 [more info](https://stackoverflow.com/questions/46843863/how-to-run-net-core-console-app-on-linux)  
 
+**Note:** Since this project deals with _sensative information_ such as private keys and mnemonics, the safest approach is to run it 
+on an air-gapped computer. Example: 
+1. Download FinderOuter release or source and build it yourself (deterministic builds and PGP signature will be added in near future)
+2. Download [Ubuntu](https://ubuntu.com/download/desktop)
+3. Verify Ubuntu's iso ([link](https://ubuntu.com/tutorials/tutorial-how-to-verify-ubuntu#1-overview))
+4. Disconnect network cable (to remain offline)
+5. Boot from a DVD or USB ([link](https://ubuntu.com/tutorials/try-ubuntu-before-you-install#1-getting-started))
+6. Run FinderOuter
+
 If you are compiling from source, you can build and then use the `FinderOuter.exe` file on Windows or use `dotnet FinderOuter.dll` in command line on all platforms to run the application.  
 Make sure you using a [released build](https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2019) (not debug) for optimization.
 
