@@ -20,5 +20,12 @@ namespace FinderOuter.Backend
         public const byte PrivKeyCompLastByte = 1;
 
         public const int PrivKeyHexLen = 64;
+
+        public const int B58AddressMinLen = 26;
+        public const int B58AddressMaxLen = 35;
+        public const char B58AddressChar1 = '1';
+        public const char B58AddressChar2 = '3';
+        public const byte P2pkhAddrFirstByte = 0;
+        public const byte P2shAddrFirstByte = 5;
     }
 }

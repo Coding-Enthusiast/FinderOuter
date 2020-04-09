@@ -34,33 +34,30 @@ namespace FinderOuter.Services
         private int[] missingIndexes;
         private readonly Sha256 sha;
         private int missCount;
+        private string keyToCheck;
 
 
         public enum InputType
         {
             PrivateKey,
+            Address,
             //MiniPrivateKey
         }
 
-        private void Initialize(char[] key, char missingChar)
+        private void Initialize(char[] key, char missingChar, InputType keyType)
         {
             // Compute 58^n from n from 0 to inputLength as uint[]
 
             byte[] padded;
-            int uLen;
-            if (key.Length <= Constants.PrivKeyCompWifLen)
+            int uLen = keyType switch
             {
-                // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
-                uLen = 10;
-                powers58 = new uint[key.Length * uLen];
-                padded = new byte[4 * uLen];
-                precomputed = new uint[uLen];
-            }
-            else
-            {
-                throw new ArgumentException("Input length for setting Pow58 is not yet deifined");
-            }
-
+                InputType.PrivateKey => 10, // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+                InputType.Address => 7, // Maximum result (58^35) is 26 bytes = 26/4 = 7 uint
+                _ => throw new ArgumentException("Input type is not defined yet."),
+            };
+            powers58 = new uint[key.Length * uLen];
+            padded = new byte[4 * uLen];
+            precomputed = new uint[uLen];
 
             for (int i = 0, j = 0; i < key.Length; i++)
             {
@@ -417,6 +414,77 @@ namespace FinderOuter.Services
         }
 
 
+        private unsafe bool Loop21()
+        {
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
+
+            bool success = false;
+
+            uint[] temp = new uint[precomputed.Length];
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (uint* pow = &powers58[0], res = &precomputed[0], tmp = &temp[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                foreach (var item in cartesian)
+                {
+                    Buffer.MemoryCopy(res, tmp, 28, 28);
+                    int mis = 0;
+                    foreach (var keyItem in item)
+                    {
+                        ulong carry = 0;
+                        for (int k = 6, j = 0; k >= 0; k--, j++)
+                        {
+                            ulong result = (pow[(mi[mis] * 7) + j] * (ulong)keyItem) + tmp[k] + carry;
+                            tmp[k] = (uint)result;
+                            carry = (uint)(result >> 32);
+                        }
+                        mis++;
+                    }
+
+                    wPt[0] = (tmp[0] << 24) | (tmp[1] >> 8);
+                    wPt[1] = (tmp[1] << 24) | (tmp[2] >> 8);
+                    wPt[2] = (tmp[2] << 24) | (tmp[3] >> 8);
+                    wPt[3] = (tmp[3] << 24) | (tmp[4] >> 8);
+                    wPt[4] = (tmp[4] << 24) | (tmp[5] >> 8);
+                    wPt[5] = (tmp[5] << 24) | 0b00000000_10000000_00000000_00000000U;
+                    wPt[6] = 0;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    // from 6 to 14 = 0
+                    wPt[15] = 168; // 21 *8 = 168
+
+                    sha.Init(hPt);
+                    sha.CompressDouble21(hPt, wPt);
+
+                    if (hPt[0] == tmp[6])
+                    {
+                        SetAddrResult(item);
+                        success = true;
+                    }
+                }
+            }
+
+            return success;
+        }
+        private void SetAddrResult(IEnumerable<int> item)
+        {
+            Task.Run(() =>
+            {
+                AddQueue($"Found a possible result (still running):");
+
+                char[] temp = keyToCheck.ToCharArray();
+                int i = 0;
+                foreach (var index in item)
+                {
+                    temp[temp.Length - missingIndexes[i++] - 1] = Constants.Base58Chars[index];
+                }
+
+                AddQueue(new string(temp));
+                return;
+            });
+        }
+
+
 
         public async Task<bool> FindUnknownLocation3(string key)
         {
@@ -454,7 +522,7 @@ namespace FinderOuter.Services
                              $"characters was detected.");
                     AddQueue($"Total number of keys to test: {GetTotalCount(missCount):n0}");
 
-                    Initialize(key.ToCharArray(), missingChar);
+                    Initialize(key.ToCharArray(), missingChar, InputType.PrivateKey);
 
                     Stopwatch watch = Stopwatch.StartNew();
 
@@ -462,12 +530,12 @@ namespace FinderOuter.Services
                     {
                         if (isComp)
                         {
-                            AddQueue("Running compressed loop.");
+                            AddQueue("Running compressed loop. Please wait.");
                             return LoopComp();
                         }
                         else
                         {
-                            AddQueue("Running uncompressed loop.");
+                            AddQueue("Running uncompressed loop. Please wait.");
                             return LoopUncomp();
                         }
                     }
@@ -551,6 +619,57 @@ namespace FinderOuter.Services
             }
         }
 
+        private async Task<bool> FindAddress(string address, char missingChar)
+        {
+            missCount = address.Count(c => c == missingChar);
+            if (missCount == 0)
+            {
+                AddQueue("The given key has no missing characters, verifying it as a complete address.");
+                AddQueue(inputService.CheckBase58Address(address));
+                return true;
+            }
+
+            bool success = false;
+            if (!address.StartsWith(Constants.B58AddressChar1) && !address.StartsWith(Constants.B58AddressChar2))
+            {
+                AddQueue($"Base-58 address should start with {Constants.B58AddressChar1} or {Constants.B58AddressChar2}.");
+                return false;
+            }
+            else if (address.Length < Constants.B58AddressMinLen || address.Length > Constants.B58AddressMaxLen)
+            {
+                AddQueue($"Address length must be between {Constants.B58AddressMinLen} and " +
+                         $"{Constants.B58AddressMaxLen} (but it is {address.Length}).");
+                return false;
+            }
+            else
+            {
+                keyToCheck = address;
+                missingIndexes = new int[missCount];
+                Initialize(address.ToCharArray(), missingChar, InputType.Address);
+
+                Stopwatch watch = Stopwatch.StartNew();
+
+                success = await Task.Run(() =>
+                {
+                    AddQueue($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
+                    AddQueue("Going throgh each case. Please wait...");
+                    return Loop21();
+                }
+                );
+
+                watch.Stop();
+                AddQueue($"Elapsed time: {watch.Elapsed}");
+                AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+            }
+
+            if (!success)
+            {
+                AddQueue("Couldn't find any valid addresses with the given input.");
+            }
+
+            return success;
+        }
+
         public async Task<bool> Find(string key, char missingChar, InputType t)
         {
             InitReport();
@@ -565,6 +684,9 @@ namespace FinderOuter.Services
             {
                 case InputType.PrivateKey:
                     success = await FindPrivateKey(key, missingChar);
+                    break;
+                case InputType.Address:
+                    success = await FindAddress(key, missingChar);
                     break;
                 default:
                     return Fail("Given input type is not defined.");
