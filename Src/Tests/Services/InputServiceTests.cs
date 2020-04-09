@@ -13,6 +13,24 @@ namespace Tests.Services
         private const string ValidCompKey = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ";
         private const string ValidUnCompKey1 = "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617";
         private const string ValidUnCompKey2 = "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK";
+        
+        private const string ValidP2pkhAddr = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
+        private const string ValidP2shAddr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
+
+        [Theory]
+        [InlineData(ValidP2pkhAddr, "The given address is a valid base-58 encoded address used for P2PKH scripts.")]
+        [InlineData(ValidP2shAddr, "The given address is a valid base-58 encoded address used for P2SH scripts.")]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4$Fg7xJaNVN2", "The given address contains invalid base-58 characters.")]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3", "The given address has an invalid checksum.")]
+        [InlineData("12eESoee9vDq6tQtZ6RQfdf3SsHWBQYpd", "The given address byte length is invalid.")]
+        [InlineData("34q4KRuJeVGJ79f8jRkexoEnFKP1fRjqp", "The given address starts with an invalid byte.")]
+        public void CheckBase58AddressTest(string addr, string expectedMsg)
+        {
+            InputService serv = new InputService();
+            string actualMsg = serv.CheckBase58Address(addr);
+            Assert.Equal(expectedMsg, actualMsg);
+        }
+
 
         [Theory]
         [InlineData(ValidCompKey)]

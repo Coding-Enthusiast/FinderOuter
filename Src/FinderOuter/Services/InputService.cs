@@ -13,8 +13,35 @@ namespace FinderOuter.Services
 {
     public class InputService
     {
-        private readonly Base58 b58End = new Base58();
+        private readonly Base58 b58Enc = new Base58();
         private readonly Bech32 b32Enc = new Bech32();
+
+
+        public string CheckBase58Address(string address)
+        {
+            if (!b58Enc.HasValidChars(address))
+            {
+                return "The given address contains invalid base-58 characters.";
+            }
+            if (!b58Enc.HasValidCheckSum(address))
+            {
+                return "The given address has an invalid checksum.";
+            }
+
+            byte[] addrBa = b58Enc.DecodeWithCheckSum(address);
+
+            if (addrBa[0] != Constants.P2pkhAddrFirstByte && addrBa[0] != Constants.P2shAddrFirstByte)
+            {
+                return "The given address starts with an invalid byte.";
+            }
+            if (addrBa.Length != 21)
+            {
+                return "The given address byte length is invalid.";
+            }
+
+            return $"The given address is a valid base-58 encoded address used for " +
+                   $"{(addrBa[0] == Constants.P2pkhAddrFirstByte ? "P2PKH" : "P2SH")} scripts.";
+        }
 
 
         public bool CanBePrivateKey(string key, out string error)
@@ -55,16 +82,16 @@ namespace FinderOuter.Services
 
         public string CheckPrivateKey(string key)
         {
-            if (!b58End.HasValidChars(key))
+            if (!b58Enc.HasValidChars(key))
             {
                 return "The given key contains invalid base-58 characters.";
             }
-            if (!b58End.HasValidCheckSum(key))
+            if (!b58Enc.HasValidCheckSum(key))
             {
                 return "The given key has an invalid checksum.";
             }
 
-            byte[] keyBa = b58End.DecodeWithCheckSum(key);
+            byte[] keyBa = b58Enc.DecodeWithCheckSum(key);
             if (keyBa[0] != Constants.PrivKeyFirstByte)
             {
                 return $"Invalid first key byte (actual={keyBa[0]}, expected={Constants.PrivKeyFirstByte}).";
@@ -196,9 +223,9 @@ namespace FinderOuter.Services
             if (address.StartsWith("3") && ignoreP2SH)
                 return false;
 
-            if ((address.StartsWith("1") || address.StartsWith("3")) && b58End.IsValid(address))
+            if ((address.StartsWith("1") || address.StartsWith("3")) && b58Enc.IsValid(address))
             {
-                byte[] decoded = b58End.DecodeWithCheckSum(address);
+                byte[] decoded = b58Enc.DecodeWithCheckSum(address);
                 if (decoded[0] != 0 || decoded.Length != 21)
                     return false;
                 hash = decoded.SubArray(1);
