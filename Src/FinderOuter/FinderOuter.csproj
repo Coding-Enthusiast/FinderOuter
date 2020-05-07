@@ -13,6 +13,10 @@
     <Authors>Coding-Enthusiast</Authors>
     <PackageTags>bitcoin</PackageTags>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
