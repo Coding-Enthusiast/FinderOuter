@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Arithmetic;
 using System;
 using System.Collections.Generic;
@@ -10,13 +11,13 @@ using System.Numerics;
 
 namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
 {
-    public class EllipticCurveCalculator
+    public class ECCalc
     {
-        public EllipticCurveCalculator() : this(new SecP256k1())
+        public ECCalc() : this(new SecP256k1())
         {
         }
 
-        public EllipticCurveCalculator(IECurveFp curve)
+        public ECCalc(IECurveFp curve)
         {
             this.curve = curve;
         }
@@ -191,7 +192,7 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
 
         private BigInteger CalculateE(byte[] data)
         {
-            if (curve.NSizeInBits >= (8 * data.Length))
+            if (curve.SizeInBits >= (8 * data.Length))
             {
                 return data.ToBigInt(true, true);
             }
@@ -199,7 +200,7 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
             {
                 // TODO: select leftmost log(n,2) *bits* of data instead of bytes.
                 // this should never happen (for bitcoin) since hashlen is equal to or smaller than log(n,2)
-                return data.SubArray(0, curve.NSizeInBits / 8).ToBigInt(true, true);
+                return data.SubArray(0, curve.SizeInBits / 8).ToBigInt(true, true);
             }
         }
 

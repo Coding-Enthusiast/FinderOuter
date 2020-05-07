@@ -3,17 +3,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Encoders;
+using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using System;
-using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
-using System.Collections.Generic;
-using FinderOuter.Backend.Cryptography.Hashing;
 
 namespace FinderOuter.Services
 {
@@ -61,7 +61,7 @@ namespace FinderOuter.Services
             }
 
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 16), missingCount));
-            EllipticCurveCalculator calc = new EllipticCurveCalculator();
+            ECCalc calc = new ECCalc();
 
             
 
@@ -155,7 +155,7 @@ namespace FinderOuter.Services
                 return Fail("Input contains invalid base-16 character(s).");
             if (key.Length != 64)
                 return Fail("Key length must be 64.");
-            if (!inputService.IsPrivateKeyInRange(Base16.ToByteArray(key.Replace(missingChar, 'f'))))
+            if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
                 return Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
             if (!inputService.IsValidAddress(AdditionalInput, true, out byte[] hash))
                 return Fail("Input is not a valid address.");

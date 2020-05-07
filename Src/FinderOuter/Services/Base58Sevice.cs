@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
-using FinderOuter.Backend.Encoders;
 using FinderOuter.Models;
 using System;
 using System.Collections.Generic;

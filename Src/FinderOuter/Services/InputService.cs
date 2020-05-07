@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Encoders;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -23,7 +23,7 @@ namespace FinderOuter.Services
             {
                 return "The given address contains invalid base-58 characters.";
             }
-            if (!b58Enc.HasValidCheckSum(address))
+            if (!b58Enc.IsValid(address))
             {
                 return "The given address has an invalid checksum.";
             }
@@ -86,7 +86,7 @@ namespace FinderOuter.Services
             {
                 return "The given key contains invalid base-58 characters.";
             }
-            if (!b58Enc.HasValidCheckSum(key))
+            if (!b58Enc.IsValid(key))
             {
                 return "The given key has an invalid checksum.";
             }
