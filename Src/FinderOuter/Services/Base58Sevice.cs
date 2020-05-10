@@ -41,6 +41,7 @@ namespace FinderOuter.Services
         {
             PrivateKey,
             Address,
+            Bip38
             //MiniPrivateKey
         }
 
@@ -53,6 +54,7 @@ namespace FinderOuter.Services
             {
                 InputType.PrivateKey => 10, // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
                 InputType.Address => 7, // Maximum result (58^35) is 26 bytes = 26/4 = 7 uint
+                InputType.Bip38 => 11, // Maximum result (58^58) is 43 bytes = 43/4 = 11 uint
                 _ => throw new ArgumentException("Input type is not defined yet."),
             };
             powers58 = new uint[key.Length * uLen];
@@ -484,6 +486,60 @@ namespace FinderOuter.Services
             });
         }
 
+        private unsafe bool Loop58()
+        {
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
+
+            bool success = false;
+
+            uint[] temp = new uint[precomputed.Length];
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (uint* pow = &powers58[0], res = &precomputed[0], tmp = &temp[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                foreach (var item in cartesian)
+                {
+                    Buffer.MemoryCopy(res, tmp, 44, 44);
+                    int mis = 0;
+                    foreach (var keyItem in item)
+                    {
+                        ulong carry = 0;
+                        for (int k = 10, j = 0; k >= 0; k--, j++)
+                        {
+                            ulong result = (pow[(mi[mis] * 11) + j] * (ulong)keyItem) + tmp[k] + carry;
+                            tmp[k] = (uint)result;
+                            carry = (uint)(result >> 32);
+                        }
+                        mis++;
+                    }
+
+                    wPt[0] = (tmp[0] << 8) | (tmp[1] >> 24);
+                    wPt[1] = (tmp[1] << 8) | (tmp[2] >> 24);
+                    wPt[2] = (tmp[2] << 8) | (tmp[3] >> 24);
+                    wPt[3] = (tmp[3] << 8) | (tmp[4] >> 24);
+                    wPt[4] = (tmp[4] << 8) | (tmp[5] >> 24);
+                    wPt[5] = (tmp[5] << 8) | (tmp[6] >> 24);
+                    wPt[6] = (tmp[6] << 8) | (tmp[7] >> 24);
+                    wPt[7] = (tmp[7] << 8) | (tmp[8] >> 24);
+                    wPt[8] = (tmp[8] << 8) | (tmp[9] >> 24);
+                    wPt[9] = (tmp[9] << 8) | 0b00000000_00000000_00000000_10000000U;
+                    // from 10 to 14 = 0
+                    wPt[15] = 312; // 39 *8 = 168
+
+                    sha.Init(hPt);
+                    sha.CompressDouble39(hPt, wPt);
+
+                    if (hPt[0] == tmp[10])
+                    {
+                        SetAddrResult(item);
+                        success = true;
+                    }
+                }
+            }
+
+            return success;
+        }
+
 
 
         public async Task<bool> FindUnknownLocation3(string key)
@@ -670,6 +726,56 @@ namespace FinderOuter.Services
             return success;
         }
 
+        private async Task<bool> FindBip38(string bip38, char missingChar)
+        {
+            missCount = bip38.Count(c => c == missingChar);
+            if (missCount == 0)
+            {
+                AddQueue("The given BIP38 key has no missing characters, verifying it as a complete key.");
+                AddQueue(inputService.CheckBase58Bip38(bip38));
+                return true;
+            }
+
+            bool success = false;
+            if (!bip38.StartsWith(ConstantsFO.Bip38Start))
+            {
+                AddQueue($"Base-58 encoded BIP-38 should start with {ConstantsFO.Bip38Start}.");
+                return false;
+            }
+            else if (bip38.Length != ConstantsFO.Bip38Base58Len)
+            {
+                AddQueue($"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.");
+                return false;
+            }
+            else
+            {
+                keyToCheck = bip38;
+                missingIndexes = new int[missCount];
+                Initialize(bip38.ToCharArray(), missingChar, InputType.Bip38);
+
+                Stopwatch watch = Stopwatch.StartNew();
+
+                success = await Task.Run(() =>
+                {
+                    AddQueue($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
+                    AddQueue("Going throgh each case. Please wait...");
+                    return Loop58();
+                }
+                );
+
+                watch.Stop();
+                AddQueue($"Elapsed time: {watch.Elapsed}");
+                AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+            }
+
+            if (!success)
+            {
+                AddQueue("Couldn't find any valid addresses with the given input.");
+            }
+
+            return success;
+        }
+
         public async Task<bool> Find(string key, char missingChar, InputType t)
         {
             InitReport();
@@ -687,6 +793,9 @@ namespace FinderOuter.Services
                     break;
                 case InputType.Address:
                     success = await FindAddress(key, missingChar);
+                    break;
+                case InputType.Bip38:
+                    success = await FindBip38(key, missingChar);
                     break;
                 default:
                     return Fail("Given input type is not defined.");
