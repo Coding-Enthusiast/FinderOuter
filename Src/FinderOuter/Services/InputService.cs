@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using System.Linq;
@@ -17,6 +18,30 @@ namespace FinderOuter.Services
         private readonly Bech32 b32Enc = new Bech32();
 
 
+        public string CheckBase58Bip38(string bip38)
+        {
+            if (!b58Enc.HasValidChars(bip38))
+            {
+                return "The given BIP-38 string contains invalid base-58 characters.";
+            }
+            if (!b58Enc.IsValid(bip38))
+            {
+                return "The given BIP-38 string has an invalid checksum.";
+            }
+
+            byte[] data = b58Enc.DecodeWithCheckSum(bip38);
+            if (data.Length != ConstantsFO.Bip38ByteLen)
+            {
+                return "The given BIP-38 string has an invalid byte length.";
+            }
+            if (data[0] != 1 || (data[1] != 0x42 && data[1] != 0x43))
+            {
+                return "The given BIP-38 string has invalid starting bytes.";
+            }
+
+            return "The given BIP-38 string is valid.";
+        }
+
         public string CheckBase58Address(string address)
         {
             if (!b58Enc.HasValidChars(address))
@@ -30,7 +55,7 @@ namespace FinderOuter.Services
 
             byte[] addrBa = b58Enc.DecodeWithCheckSum(address);
 
-            if (addrBa[0] != Constants.P2pkhAddrFirstByte && addrBa[0] != Constants.P2shAddrFirstByte)
+            if (addrBa[0] != ConstantsFO.P2pkhAddrFirstByte && addrBa[0] != ConstantsFO.P2shAddrFirstByte)
             {
                 return "The given address starts with an invalid byte.";
             }
@@ -40,36 +65,36 @@ namespace FinderOuter.Services
             }
 
             return $"The given address is a valid base-58 encoded address used for " +
-                   $"{(addrBa[0] == Constants.P2pkhAddrFirstByte ? "P2PKH" : "P2SH")} scripts.";
+                   $"{(addrBa[0] == ConstantsFO.P2pkhAddrFirstByte ? "P2PKH" : "P2SH")} scripts.";
         }
 
 
         public bool CanBePrivateKey(string key, out string error)
         {
-            if (key.Length == Constants.PrivKeyCompWifLen)
+            if (key.Length == ConstantsFO.PrivKeyCompWifLen)
             {
-                if (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2)
+                if (key[0] == ConstantsFO.PrivKeyCompChar1 || key[0] == ConstantsFO.PrivKeyCompChar2)
                 {
                     error = null;
                     return true;
                 }
                 else
                 {
-                    error = $"A key with {key.Length} length is expected to start with {Constants.PrivKeyCompChar1} " +
-                            $"or {Constants.PrivKeyCompChar2}.";
+                    error = $"A key with {key.Length} length is expected to start with {ConstantsFO.PrivKeyCompChar1} " +
+                            $"or {ConstantsFO.PrivKeyCompChar2}.";
                     return false;
                 }
             }
-            else if (key.Length == Constants.PrivKeyUncompWifLen)
+            else if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
             {
-                if (key[0] == Constants.PrivKeyUncompChar)
+                if (key[0] == ConstantsFO.PrivKeyUncompChar)
                 {
                     error = null;
                     return true;
                 }
                 else
                 {
-                    error = $"A key with {key.Length} length is expected to start with {Constants.PrivKeyUncompChar}.";
+                    error = $"A key with {key.Length} length is expected to start with {ConstantsFO.PrivKeyUncompChar}.";
                     return false;
                 }
             }
@@ -92,9 +117,9 @@ namespace FinderOuter.Services
             }
 
             byte[] keyBa = b58Enc.DecodeWithCheckSum(key);
-            if (keyBa[0] != Constants.PrivKeyFirstByte)
+            if (keyBa[0] != ConstantsFO.PrivKeyFirstByte)
             {
-                return $"Invalid first key byte (actual={keyBa[0]}, expected={Constants.PrivKeyFirstByte}).";
+                return $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";
             }
 
             if (keyBa.Length == 33)
@@ -108,9 +133,9 @@ namespace FinderOuter.Services
             }
             else if (keyBa.Length == 34)
             {
-                if (keyBa[^1] != Constants.PrivKeyCompLastByte)
+                if (keyBa[^1] != ConstantsFO.PrivKeyCompLastByte)
                 {
-                    return $"Invalid compressed key last byte (actual={keyBa[^1]}, expected={Constants.PrivKeyCompLastByte}).";
+                    return $"Invalid compressed key last byte (actual={keyBa[^1]}, expected={ConstantsFO.PrivKeyCompLastByte}).";
                 }
 
                 if (!IsPrivateKeyInRange(keyBa.SubArray(1, 32)))
@@ -130,7 +155,7 @@ namespace FinderOuter.Services
         {
             if (!IsMissingCharValid(missingChar))
             {
-                error = $"Invalid missing character. Choose one from {Constants.Symbols}";
+                error = $"Invalid missing character. Choose one from {ConstantsFO.Symbols}";
                 return false;
             }
             if (string.IsNullOrWhiteSpace(key))
@@ -138,7 +163,7 @@ namespace FinderOuter.Services
                 error = "Key can not be null or empty.";
                 return false;
             }
-            if (!key.All(c => c == missingChar || Constants.Base58Chars.Contains(c)))
+            if (!key.All(c => c == missingChar || ConstantsFO.Base58Chars.Contains(c)))
             {
                 error = $"Key contains invalid base-58 characters (ignoring the missing char = {missingChar}).";
                 return false;
@@ -147,17 +172,17 @@ namespace FinderOuter.Services
             if (key.Contains(missingChar))
             {
                 // Both key length and its first character must be valid
-                if (key.Length == Constants.PrivKeyCompWifLen)
+                if (key.Length == ConstantsFO.PrivKeyCompWifLen)
                 {
-                    if (key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2)
+                    if (key[0] != ConstantsFO.PrivKeyCompChar1 && key[0] != ConstantsFO.PrivKeyCompChar2)
                     {
                         error = "Invalid first character for a compressed private key considering length.";
                         return false;
                     }
                 }
-                else if (key.Length == Constants.PrivKeyUncompWifLen)
+                else if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
                 {
-                    if (key[0] != Constants.PrivKeyUncompChar)
+                    if (key[0] != ConstantsFO.PrivKeyUncompChar)
                     {
                         error = "Invalid first character for an uncompressed private key considering length.";
                         return false;
@@ -173,24 +198,24 @@ namespace FinderOuter.Services
             {
                 // If the key doesn't have the missing char it is either a complete key that needs to be checked properly 
                 // by the caller, or it has missing characters at unkown locations which needs to be found by the caller.
-                if (key.Length > Constants.PrivKeyCompWifLen)
+                if (key.Length > ConstantsFO.PrivKeyCompWifLen)
                 {
                     error = "Key length is too big.";
                     return false;
                 }
-                else if (key.Length == Constants.PrivKeyCompWifLen &&
-                    key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2)
+                else if (key.Length == ConstantsFO.PrivKeyCompWifLen &&
+                    key[0] != ConstantsFO.PrivKeyCompChar1 && key[0] != ConstantsFO.PrivKeyCompChar2)
                 {
                     error = "Invalid first key character considering its length.";
                     return false;
                 }
-                else if (key.Length == Constants.PrivKeyUncompWifLen && key[0] != Constants.PrivKeyUncompChar)
+                else if (key.Length == ConstantsFO.PrivKeyUncompWifLen && key[0] != ConstantsFO.PrivKeyUncompChar)
                 {
                     error = "Invalid first key character considering its length.";
                     return false;
                 }
-                else if (key[0] != Constants.PrivKeyCompChar1 && key[0] != Constants.PrivKeyCompChar2 &&
-                    key[0] != Constants.PrivKeyUncompChar)
+                else if (key[0] != ConstantsFO.PrivKeyCompChar1 && key[0] != ConstantsFO.PrivKeyCompChar2 &&
+                    key[0] != ConstantsFO.PrivKeyUncompChar)
                 {
                     error = "The first character of the given private key is not valid.";
                     return false;
@@ -201,7 +226,7 @@ namespace FinderOuter.Services
             return true;
         }
 
-        public bool IsMissingCharValid(char c) => Constants.Symbols.Contains(c);
+        public bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
 
         public bool IsPrivateKeyInRange(byte[] key)
         {

@@ -40,7 +40,7 @@ namespace FinderOuter.ViewModels
             $"All you have to do is to enter the base-58 string below and replace its missing characters with the symbol " +
             $"defined by {nameof(MissingChar)} parameter and press Find.{Environment.NewLine}" +
             $"Exception: if you have a compressed private key missing 3 characters, there is no need to use " +
-            $"{nameof(MissingChar)} parameter anymore, just enter the {Constants.PrivKeyCompWifLen - 3} characters you have" +
+            $"{nameof(MissingChar)} parameter anymore, just enter the {ConstantsFO.PrivKeyCompWifLen - 3} characters you have" +
             $" and press find.";
 
 
@@ -69,7 +69,7 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mis, value);
         }
 
-        public string MissingToolTip => $"Choose one of these symbols {Constants.Symbols} to use instead of the missing characters";
+        public string MissingToolTip => $"Choose one of these symbols {ConstantsFO.Symbols} to use instead of the missing characters";
 
         public override void Find()
         {

@@ -5,7 +5,7 @@
 
 namespace FinderOuter.Backend
 {
-    public struct Constants
+    public struct ConstantsFO
     {
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
@@ -27,5 +27,9 @@ namespace FinderOuter.Backend
         public const char B58AddressChar2 = '3';
         public const byte P2pkhAddrFirstByte = 0;
         public const byte P2shAddrFirstByte = 5;
+
+        public const int Bip38ByteLen = 39;
+        public const int Bip38Base58Len = 58;
+        public const string Bip38Start = "6P";
     }
 }

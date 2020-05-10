@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
@@ -45,15 +46,14 @@ namespace FinderOuter.Services
         {
             try
             {
+                FastStream stream = new FastStream();
                 byte[] msgBa = Encoding.UTF8.GetBytes(message);
+                stream.Write((byte)MessageSignConstant.Length);
+                stream.Write(Encoding.UTF8.GetBytes(MessageSignConstant));
+                new CompactInt((ulong)msgBa.Length).WriteToStream(stream);
+                stream.Write(msgBa);
 
-                byte[] toHash = ByteArray.ConcatArrays(
-                    new byte[] { (byte)MessageSignConstant.Length },
-                    Encoding.UTF8.GetBytes(MessageSignConstant),
-                    new CompactInt((ulong)msgBa.Length).ToByteArray(),
-                    msgBa);
-
-                toSign = hash.ComputeHash(toHash);
+                toSign = hash.ComputeHash(stream.ToByteArray());
 
                 return true;
             }

@@ -139,10 +139,10 @@ namespace FinderOuter.Services
             };
         }
 
-        public bool IsMissingCharValid(char c) => Constants.Symbols.Contains(c);
+        public bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
         public bool IsInputValid(string key, char missingChar)
         {
-            return !string.IsNullOrEmpty(key) && key.All(c => c == missingChar || Constants.Base16Chars.Contains(char.ToLower(c)));
+            return !string.IsNullOrEmpty(key) && key.All(c => c == missingChar || ConstantsFO.Base16Chars.Contains(char.ToLower(c)));
         }
 
         public async Task<bool> Find(string key, char missingChar, string AdditionalInput, bool isComp)

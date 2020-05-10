@@ -3,50 +3,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using System;
 using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Backend
 {
-    /// <summary>
-    /// The exception that is thrown when something very unlikely happens. Usually used in cryptography.
-    /// </summary>
-    public class UnlikelyException : Exception
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="UnlikelyException"/> with a specified error message 
-        /// and will add additioanl message to the start of it.
-        /// </summary>
-        /// <param name="message">
-        /// The error message that explains the reason for the exception and should contain additional data for error reporting.
-        /// An additional message will be appended to the beginning of it explaining what to do.
-        /// </param>
-        public UnlikelyException(string message) : base($"{MessageBase}{message}") { }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="UnlikelyException"/> with a specified error message 
-        /// and a reference to the inner exception. 
-        /// An additional message will be appended to the beginning of it explaining what to do.
-        /// </summary>
-        /// <param name="message">
-        /// The error message that explains the reason for the exception and should contain additional data for error reporting.
-        /// An additional message will be appended to the beginning of it explaining what to do.
-        /// </param>
-        /// <param name="innerException">The exception that is the cause of the current exception</param>
-        public UnlikelyException(string message, Exception innerException) : base($"{MessageBase}{message}", innerException) { }
-
-
-        private static readonly string MessageBase =
-            $"A highly unlikely exception occured!{Environment.NewLine}" +
-            $"Please make sure to report the conditions on GitHub (https://github.com/Coding-Enthusiast){Environment.NewLine}" +
-            $"Additional information (if it contains secret information you must consider them compromised):{Environment.NewLine}";
-
-    }
-
-
-
-
-
     /// <summary>
     /// Helper class for working with byte arrays
     /// </summary>
@@ -94,66 +57,6 @@ namespace FinderOuter.Backend
 
     public static class ByteArrayExtension
     {
-        /// <summary>
-        /// Appends a new byte to the beginning of the given byte array and returns a new array with a bigger length.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="arr">Source array to append to.</param>
-        /// <param name="newItem">The value to append to source.</param>
-        /// <returns>The extended array of bytes.</returns>
-        public static byte[] AppendToBeginning(this byte[] arr, byte newItem)
-        {
-            if (arr == null)
-                throw new ArgumentNullException(nameof(arr), "Byte array can not be null!");
-
-
-            byte[] result = new byte[arr.Length + 1];
-            result[0] = newItem;
-            Buffer.BlockCopy(arr, 0, result, 1, arr.Length);
-            return result;
-        }
-
-
-        /// <summary>
-        /// Appends a new byte to the end of the given byte array and returns a new array with a bigger length.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="arr">Source array to append to.</param>
-        /// <param name="newItem">The value to append to source.</param>
-        /// <returns>The extended array of bytes.</returns>
-        public static byte[] AppendToEnd(this byte[] arr, byte newItem)
-        {
-            if (arr == null)
-                throw new ArgumentNullException(nameof(arr), "Byte array can not be null!");
-
-
-            byte[] result = new byte[arr.Length + 1];
-            result[^1] = newItem;
-            Buffer.BlockCopy(arr, 0, result, 0, arr.Length);
-            return result;
-        }
-
-
-        /// <summary>
-        /// Creates a copy (clone) of the given byte array, will return null if the source was null instead of throwing an exception.
-        /// </summary>
-        /// <param name="ba">Byte array to clone</param>
-        /// <returns>Copy (clone) of the given byte array</returns>
-        public static byte[] CloneByteArray(this byte[] ba)
-        {
-            if (ba == null)
-            {
-                return null;
-            }
-            else
-            {
-                byte[] result = new byte[ba.Length];
-                Buffer.BlockCopy(ba, 0, result, 0, ba.Length);
-                return result;
-            }
-        }
-
-
         /// <summary>
         /// Concatinates two given byte arrays and returns a new byte array containing all the elements. 
         /// </summary>
@@ -278,71 +181,7 @@ namespace FinderOuter.Backend
             if (second == null)
                 throw new ArgumentNullException(nameof(second), "Second byte array can not be null!");
 
-
-            // TODO: use Span<byte>.SequenceEqual() it is even faster than this method!
-            if (first.Length != second.Length)
-            {
-                return false;
-            }
-            if (first.Length == 0) // lengths are equal if we are here
-            {
-                return true;
-            }
-            unsafe
-            {
-                fixed (byte* f = &first[0], s = &second[0])
-                {
-                    int len = first.Length;
-                    byte* cfPt = f; // cfPt is changing first pointer
-                    byte* csPt = s;
-                    while (len >= 8)
-                    {
-                        if (*(ulong*)csPt != *(ulong*)cfPt)
-                        {
-                            return false;
-                        }
-                        cfPt += 8;
-                        csPt += 8;
-                        len -= 8;
-                    }
-
-                    // Here len can be anything from 0 to 7 and we take 4 of it if possible if>=4
-                    if (len >= 4)
-                    {
-                        if (*(uint*)cfPt != *(uint*)csPt)
-                        {
-                            return false;
-                        }
-                        cfPt += 4;
-                        csPt += 4;
-                        len -= 4;
-                    }
-
-                    // Here len can be anything from 0 to 3
-                    if (len >= 2)
-                    {
-                        if (*(ushort*)cfPt != *(ushort*)csPt)
-                        {
-                            return false;
-                        }
-                        cfPt += 2;
-                        csPt += 2;
-                        len -= 2;
-                    }
-
-                    // Here len can only be 0 or 1
-                    if (len == 1)
-                    {
-                        if (*csPt != *cfPt)
-                        {
-                            return false;
-                        }
-                        // no need to change pointer and len anymore, this was the last item.
-                    }
-                }
-            }
-
-            return true;
+            return ((ReadOnlySpan<byte>)first).SequenceEqual(second);
         }
 
 
@@ -436,195 +275,6 @@ namespace FinderOuter.Backend
             byte[] result = new byte[finalSize];
             Buffer.BlockCopy(ba, 0, result, 0, ba.Length);
             return result;
-        }
-
-
-        /// <summary>
-        /// Creates a new array from the given array by taking a specified number of items starting from a given index.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="IndexOutOfRangeException"/>
-        /// <param name="sourceArray">The array containing bytes to take.</param>
-        /// <param name="index">Starting index in <paramref name="sourceArray"/>.</param>
-        /// <param name="count">Number of elements to take.</param>
-        /// <returns>An array of bytes.</returns>
-        public static byte[] SubArray(this byte[] sourceArray, int index, int count)
-        {
-            if (sourceArray == null)
-                throw new ArgumentNullException(nameof(sourceArray), "Input can not be null!");
-            if (index < 0 || count < 0)
-                throw new IndexOutOfRangeException("Index or count can not be negative.");
-            if (sourceArray.Length != 0 && index > sourceArray.Length - 1 || sourceArray.Length == 0 && index != 0)
-                throw new IndexOutOfRangeException("Index can not be bigger than array length.");
-            if (count > sourceArray.Length - index)
-                throw new IndexOutOfRangeException("Array is not long enough.");
-
-
-            byte[] result = new byte[count];
-            Buffer.BlockCopy(sourceArray, index, result, 0, count);
-            return result;
-        }
-
-
-        /// <summary>
-        /// Creates a new array from the given array by taking items starting from a given index.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="IndexOutOfRangeException"/>
-        /// <param name="sourceArray">The array containing bytes to take.</param>
-        /// <param name="index">Starting index in <paramref name="sourceArray"/>.</param>
-        /// <returns>An array of bytes.</returns>
-        public static byte[] SubArray(this byte[] sourceArray, int index)
-        {
-            if (sourceArray == null)
-                throw new ArgumentNullException(nameof(sourceArray), "Input can not be null!");
-            if (sourceArray.Length != 0 && index > sourceArray.Length - 1 || sourceArray.Length == 0 && index != 0)
-                throw new IndexOutOfRangeException("Index can not be bigger than array length.");
-
-            return SubArray(sourceArray, index, sourceArray.Length - index);
-        }
-
-
-        /// <summary>
-        /// Creates a new array from the given array by taking the specified number of items from the end of the array.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="IndexOutOfRangeException"/>
-        /// <param name="sourceArray">The array containing bytes to take.</param>
-        /// <param name="count">Number of elements to take.</param>
-        /// <returns>An array of bytes.</returns>
-        public static byte[] SubArrayFromEnd(this byte[] sourceArray, int count)
-        {
-            if (sourceArray == null)
-                throw new ArgumentNullException(nameof(sourceArray), $"Input can not be null!");
-            if (count < 0)
-                throw new IndexOutOfRangeException("Count can not be negative.");
-            if (count > sourceArray.Length)
-                throw new IndexOutOfRangeException("Array is not long enough.");
-
-            return (count == 0) ? new byte[0] : sourceArray.SubArray(sourceArray.Length - count, count);
-        }
-
-
-        /// <summary>
-        /// Converts the given byte array to base-16 (Hexadecimal) encoded string.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">The array of bytes to convert.</param>
-        /// <returns>Base-16 (Hexadecimal) encoded string.</returns>
-        public static string ToBase16(this byte[] ba)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null.");
-
-
-            char[] ca = new char[ba.Length * 2];
-            int b;
-            for (int i = 0; i < ba.Length; i++)
-            {
-                b = ba[i] >> 4;
-                ca[i * 2] = (char)(87 + b + (((b - 10) >> 31) & -39));
-                b = ba[i] & 0xF;
-                ca[i * 2 + 1] = (char)(87 + b + (((b - 10) >> 31) & -39));
-            }
-            return new string(ca);
-        }
-
-
-        /// <summary>
-        /// Converts a byte array to base-64 encoded string.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">The array of bytes to convert.</param>
-        /// <returns>Base-64 encoded string.</returns>
-        public static string ToBase64(this byte[] ba)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null.");
-
-            return Convert.ToBase64String(ba);
-        }
-
-
-        /// <summary>
-        /// Converts a byte array to an ASCII encoded string.
-        /// <para/>* Can remove null padding.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">The array of bytes.</param>
-        /// <param name="removeNullPadding">If true, will try to remove null padding (from end).</param>
-        /// <returns>ASCII encoded string.</returns>
-        public static string ToStringAscii(this byte[] ba, bool removeNullPadding = false)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null.");
-
-
-            if (removeNullPadding)
-            {
-                ba = ba.TrimEnd();
-            }
-            return Encoding.ASCII.GetString(ba);
-        }
-
-
-        /// <summary>
-        /// Converts a byte array to a UTF-8 encoded string.
-        /// <para/>* Can remove null padding.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">The array of bytes.</param>
-        /// <param name="removeNullPadding">If true, will try to remove null padding (from end).</param>
-        /// <returns>ASCII encoded string.</returns>
-        public static string ToStringUtf8(this byte[] ba, bool removeNullPadding = false)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null.");
-
-
-            if (removeNullPadding)
-            {
-                ba = ba.TrimEnd();
-            }
-            return Encoding.UTF8.GetString(ba);
-        }
-
-
-        /// <summary>
-        /// Converts the given arbitrary length bytes to a its equivalant <see cref="BigInteger"/>.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">The array of bytes to convert.</param>
-        /// <param name="isBigEndian">Endianness of given bytes.</param>
-        /// <param name="treatAsPositive">If true will treat the given bytes as always a positive integer.</param>
-        /// <returns>A BigInteger.</returns>
-        public static BigInteger ToBigInt(this byte[] ba, bool isBigEndian, bool treatAsPositive)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null.");
-
-
-            if (ba.Length == 0)
-            {
-                return BigInteger.Zero;
-            }
-
-            // Make a copy of the array to avoid changing original array in case a reverse was needed.
-            byte[] bytesToUse = new byte[ba.Length];
-            Buffer.BlockCopy(ba, 0, bytesToUse, 0, ba.Length);
-
-            // BigInteger constructor takes little-endian bytes
-            if (isBigEndian)
-            {
-                Array.Reverse(bytesToUse);
-            }
-
-            if (treatAsPositive && (bytesToUse[^1] & 0x80) > 0)
-            {
-                bytesToUse = bytesToUse.AppendToEnd(0);
-            }
-
-            return new BigInteger(bytesToUse);
         }
 
 
@@ -798,7 +448,6 @@ namespace FinderOuter.Backend
             }
             return (index == 0) ? ba : (index == ba.Length) ? new byte[0] : ba.SubArray(index);
         }
-
     }
 
 

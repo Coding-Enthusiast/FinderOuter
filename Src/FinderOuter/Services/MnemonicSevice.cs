@@ -430,7 +430,7 @@ namespace FinderOuter.Services
         }
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
-        private bool IsMissingCharValid(char c) => Constants.Symbols.Contains(c);
+        private bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
 
         private bool TrySplitMnemonic(string mnemonic, char missingChar, out string[] result)
         {

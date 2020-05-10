@@ -46,7 +46,7 @@ namespace FinderOuter.Services
 
         private void Initialize(char[] key, char missingChar, InputType keyType)
         {
-            // Compute 58^n from n from 0 to inputLength as uint[]
+            // Compute 58^n for n from 0 to inputLength as uint[]
 
             byte[] padded;
             int uLen = keyType switch
@@ -80,7 +80,7 @@ namespace FinderOuter.Services
                 if (key[i] != missingChar)
                 {
                     ulong carry = 0;
-                    ulong val = (ulong)Constants.Base58Chars.IndexOf(key[i]);
+                    ulong val = (ulong)ConstantsFO.Base58Chars.IndexOf(key[i]);
                     for (int k = uLen - 1; k >= 0; k--, j++)
                     {
                         ulong result = checked((powers58[j] * val) + precomputed[k] + carry);
@@ -221,10 +221,10 @@ namespace FinderOuter.Services
 
             // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
             uLen = 10;
-            uint[] powers58 = new uint[Constants.PrivKeyCompWifLen * uLen];
+            uint[] powers58 = new uint[ConstantsFO.PrivKeyCompWifLen * uLen];
             padded = new byte[4 * uLen];
 
-            for (int i = 0, j = 0; i < Constants.PrivKeyCompWifLen; i++)
+            for (int i = 0, j = 0; i < ConstantsFO.PrivKeyCompWifLen; i++)
             {
                 BigInteger val = BigInteger.Pow(58, i);
                 byte[] temp = val.ToByteArray(true, false);
@@ -241,7 +241,7 @@ namespace FinderOuter.Services
             int[] values = new int[key.Length];
             for (int i = 0; i < values.Length; i++)
             {
-                values[i] = Constants.Base58Chars.IndexOf(key[i]);
+                values[i] = ConstantsFO.Base58Chars.IndexOf(key[i]);
             }
 
             uint[] precomputed = new uint[uLen];
@@ -249,11 +249,11 @@ namespace FinderOuter.Services
             fixed (uint* pre = &precomputed[0], pow = &powers58[0])
             {
                 // i starts from 1 becaue it is compressed (K or L)
-                for (int i = 1; i < Constants.PrivKeyCompWifLen - 2; i++)
+                for (int i = 1; i < ConstantsFO.PrivKeyCompWifLen - 2; i++)
                 {
-                    for (int j = i + 1; j < Constants.PrivKeyCompWifLen - 1; j++)
+                    for (int j = i + 1; j < ConstantsFO.PrivKeyCompWifLen - 1; j++)
                     {
-                        for (int k = j + 1; k < Constants.PrivKeyCompWifLen; k++)
+                        for (int k = j + 1; k < ConstantsFO.PrivKeyCompWifLen; k++)
                         {
                             ((Span<uint>)precomputed).Clear();
 
@@ -261,7 +261,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index];
-                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -274,7 +274,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 1];
-                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -287,7 +287,7 @@ namespace FinderOuter.Services
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 2];
-                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -296,11 +296,11 @@ namespace FinderOuter.Services
                                 }
                             }
 
-                            for (int index = k + 1; index < Constants.PrivKeyCompWifLen; index++)
+                            for (int index = k + 1; index < ConstantsFO.PrivKeyCompWifLen; index++)
                             {
                                 ulong carry = 0;
                                 ulong val = (ulong)values[index - 3];
-                                int powIndex = (Constants.PrivKeyCompWifLen - 1 - index) * uLen;
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
                                 for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                 {
                                     ulong result = (pow[powIndex] * val) + pre[m] + carry;
@@ -330,7 +330,7 @@ namespace FinderOuter.Services
 
                                             ulong carry = 0;
                                             ulong val = (ulong)c1;
-                                            int powIndex = (Constants.PrivKeyCompWifLen - 1 - i) * uLen;
+                                            int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - i) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -340,7 +340,7 @@ namespace FinderOuter.Services
 
                                             carry = 0;
                                             val = (ulong)c2;
-                                            powIndex = (Constants.PrivKeyCompWifLen - 1 - j) * uLen;
+                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - j) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -350,7 +350,7 @@ namespace FinderOuter.Services
 
                                             carry = 0;
                                             val = (ulong)c3;
-                                            powIndex = (Constants.PrivKeyCompWifLen - 1 - k) * uLen;
+                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - k) * uLen;
                                             for (int m = uLen - 1; m >= 0; m--, powIndex++)
                                             {
                                                 ulong result = (powers58[powIndex] * val) + temp[m] + carry;
@@ -360,9 +360,9 @@ namespace FinderOuter.Services
 
                                             if (ComputeSpecialHash(temp))
                                             {
-                                                string foundRes = key.Insert(i, $"{Constants.Base58Chars[c1]}")
-                                                                     .Insert(j, $"{Constants.Base58Chars[c2]}")
-                                                                     .Insert(k, $"{Constants.Base58Chars[c3]}");
+                                                string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}")
+                                                                     .Insert(j, $"{ConstantsFO.Base58Chars[c2]}")
+                                                                     .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
                                                 AddQueue($"Found a key: {foundRes}");
                                                 Task.Run(() => cancelToken.Cancel());
                                             }
@@ -476,7 +476,7 @@ namespace FinderOuter.Services
                 int i = 0;
                 foreach (var index in item)
                 {
-                    temp[temp.Length - missingIndexes[i++] - 1] = Constants.Base58Chars[index];
+                    temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[index];
                 }
 
                 AddQueue(new string(temp));
@@ -517,7 +517,7 @@ namespace FinderOuter.Services
                 if (inputService.CanBePrivateKey(key, out string error))
                 {
                     missingIndexes = new int[missCount];
-                    bool isComp = key.Length == Constants.PrivKeyCompWifLen;
+                    bool isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
                     AddQueue($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
                              $"characters was detected.");
                     AddQueue($"Total number of keys to test: {GetTotalCount(missCount):n0}");
@@ -562,7 +562,7 @@ namespace FinderOuter.Services
                             int i = 0;
                             foreach (var index in item)
                             {
-                                temp[temp.Length - missingIndexes[i++] - 1] = Constants.Base58Chars[index];
+                                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[index];
                             }
 
                             AddQueue(new string(temp));
@@ -578,15 +578,15 @@ namespace FinderOuter.Services
             }
             else // Doesn't have any missing chars so length must be <= max key len
             {
-                if (key[0] == Constants.PrivKeyCompChar1 || key[0] == Constants.PrivKeyCompChar2)
+                if (key[0] == ConstantsFO.PrivKeyCompChar1 || key[0] == ConstantsFO.PrivKeyCompChar2)
                 {
-                    if (key.Length == Constants.PrivKeyCompWifLen)
+                    if (key.Length == ConstantsFO.PrivKeyCompWifLen)
                     {
                         AddMessage("No character is missing, checking validity of the key itself.");
                         AddQueue(inputService.CheckPrivateKey(key));
                         return true;
                     }
-                    else if (key.Length == Constants.PrivKeyCompWifLen - 3)
+                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
                     {
                         return await FindUnknownLocation3(key);
                     }
@@ -596,9 +596,9 @@ namespace FinderOuter.Services
                         return false;
                     }
                 }
-                else if (key[0] == Constants.PrivKeyUncompChar)
+                else if (key[0] == ConstantsFO.PrivKeyUncompChar)
                 {
-                    if (key.Length == Constants.PrivKeyUncompWifLen)
+                    if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
                     {
                         AddMessage("No character is missing, checking validity of the key itself.");
                         AddQueue(inputService.CheckPrivateKey(key));
@@ -624,21 +624,21 @@ namespace FinderOuter.Services
             missCount = address.Count(c => c == missingChar);
             if (missCount == 0)
             {
-                AddQueue("The given key has no missing characters, verifying it as a complete address.");
+                AddQueue("The given input has no missing characters, verifying it as a complete address.");
                 AddQueue(inputService.CheckBase58Address(address));
                 return true;
             }
 
             bool success = false;
-            if (!address.StartsWith(Constants.B58AddressChar1) && !address.StartsWith(Constants.B58AddressChar2))
+            if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
             {
-                AddQueue($"Base-58 address should start with {Constants.B58AddressChar1} or {Constants.B58AddressChar2}.");
+                AddQueue($"Base-58 address should start with {ConstantsFO.B58AddressChar1} or {ConstantsFO.B58AddressChar2}.");
                 return false;
             }
-            else if (address.Length < Constants.B58AddressMinLen || address.Length > Constants.B58AddressMaxLen)
+            else if (address.Length < ConstantsFO.B58AddressMinLen || address.Length > ConstantsFO.B58AddressMaxLen)
             {
-                AddQueue($"Address length must be between {Constants.B58AddressMinLen} and " +
-                         $"{Constants.B58AddressMaxLen} (but it is {address.Length}).");
+                AddQueue($"Address length must be between {ConstantsFO.B58AddressMinLen} and " +
+                         $"{ConstantsFO.B58AddressMaxLen} (but it is {address.Length}).");
                 return false;
             }
             else
@@ -676,7 +676,7 @@ namespace FinderOuter.Services
 
             if (!inputService.IsMissingCharValid(missingChar))
                 return Fail("Invalid missing character.");
-            if (string.IsNullOrWhiteSpace(key) || !key.All(c => Constants.Base58Chars.Contains(c) || c == missingChar))
+            if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
                 return Fail("Input contains invalid base-58 character(s).");
 
             bool success;
