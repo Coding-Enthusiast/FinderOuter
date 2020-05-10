@@ -13,9 +13,26 @@ namespace Tests.Services
         private const string ValidCompKey = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ";
         private const string ValidUnCompKey1 = "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617";
         private const string ValidUnCompKey2 = "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK";
-        
+
         private const string ValidP2pkhAddr = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
         private const string ValidP2shAddr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
+
+
+        [Theory]
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", "The given BIP-38 string is valid.")]
+        [InlineData("6PnZki3vKspApf2zym6Anp2jd5hiZbuaZArPfa2ePcgVf196PLGrQNyVUh", "The given BIP-38 string is valid.")]
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs$", "The given BIP-38 string contains invalid base-58 characters.")]
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs1", "The given BIP-38 string has an invalid checksum.")]
+        [InlineData("2DnRqfF9cUPrMxRSAbprPfviNN37TLoH7Zmgq5uS4CcTQymH9nfcFXvXX", "The given BIP-38 string has an invalid byte length.")]
+        [InlineData("AfEEGJ8HqcGUofEyL7Cr6R73LJbus3tuKFMHEiBmT6X1H8npuj94cMrcai", "The given BIP-38 string has invalid starting bytes.")]
+        [InlineData("6RMoGm8dMt4BH2WLE6jLYNeF6B4SZ4WHmg6PRggwCQYqJPPwU32uVBH8Be", "The given BIP-38 string has invalid starting bytes.")]
+        public void CheckBase58Bip38Test(string bip38, string expectedMsg)
+        {
+            InputService serv = new InputService();
+            string actualMsg = serv.CheckBase58Bip38(bip38);
+            Assert.Equal(expectedMsg, actualMsg);
+        }
+
 
         [Theory]
         [InlineData(ValidP2pkhAddr, "The given address is a valid base-58 encoded address used for P2PKH scripts.")]
