@@ -310,5 +310,29 @@ namespace Tests.Backend.Cryptography.Hashing
 
             Assert.Equal(expected, actual);
         }
+
+        [Fact]
+        public unsafe void CompressDouble39Test()
+        {
+            int dataLen = 39;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeDoubleSha(data);
+
+            using Sha256 sha = new Sha256();
+            uint* hPt = sha.GethPt();
+            uint* wPt = sha.GetwPt();
+            int dIndex = 0;
+            for (int i = 0; i < 9; i++, dIndex += 4)
+            {
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            }
+            wPt[9] = (uint)((data[36] << 24) | (data[37] << 16) | (data[38] << 8) | 0b00000000_00000000_00000000_10000000U);
+            wPt[15] = (uint)dataLen * 8;
+            sha.Init(hPt);
+            sha.CompressDouble39(hPt, wPt);
+            byte[] actual = sha.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
+        }
     }
 }
