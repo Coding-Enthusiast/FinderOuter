@@ -1,6 +1,15 @@
-### Release 0.2.0 (upcoming)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.2.0...master)
-* **New feature**: missing mnemonic words
+### Release ?.?.? (future ideas)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...master)
+* Missing mnemonic words
+* Missing Base-58 mini private key
+* Password recovery
+
+### Release 0.2.0 (2020-05-11)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...v0.1.1.0)
+* **New feature**: Missing Base-58 can now find missing chars in addresses
+* **New feature**: Missing Base-58 can now find missing chars in BIP-38 encrypted keys
+* Various code improvements, bug fixes and additional tests
+* Project is now using the well tested [Bitcoin.Net](https://github.com/Autarkysoft/Denovo#bitcoinnet) library as its backend
 
 ### Release 0.1.2 (2020-03-10)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.1.0...v0.1.2.0)
