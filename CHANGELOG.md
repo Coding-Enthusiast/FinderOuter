@@ -5,7 +5,7 @@
 * Password recovery
 
 ### Release 0.2.0 (2020-05-11)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...v0.1.1.0)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.2.0...v0.2.0.0)
 * **New feature**: Missing Base-58 can now find missing chars in addresses
 * **New feature**: Missing Base-58 can now find missing chars in BIP-38 encrypted keys
 * Various code improvements, bug fixes and additional tests
