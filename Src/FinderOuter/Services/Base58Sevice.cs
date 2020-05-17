@@ -17,22 +17,21 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    public class Base58Sevice : ServiceBase
+    public class Base58Sevice
     {
-        public Base58Sevice(Report rep) : base(rep)
+        public Base58Sevice(IReport rep)
         {
             inputService = new InputService();
             encoder = new Base58();
-            sha = new Sha256(true);
+            report = rep;
         }
 
 
-
+        private readonly IReport report;
         private readonly InputService inputService;
         private readonly Base58 encoder;
         private uint[] powers58, precomputed;
         private int[] missingIndexes;
-        private readonly Sha256 sha;
         private int missCount;
         private string keyToCheck;
 
@@ -102,17 +101,11 @@ namespace FinderOuter.Services
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
-        readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
-        private void SetResult(IEnumerable<int> item)
-        {
-            // TODO: add lock?
-            Final.Add(item);
-        }
 
         private unsafe bool LoopComp()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-
+            using Sha256 sha = new Sha256();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -153,7 +146,7 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[9])
                     {
-                        SetResult(item);
+                        SetAddrResult(item);
                         success = true;
                     }
                 }
@@ -165,7 +158,7 @@ namespace FinderOuter.Services
         private unsafe bool LoopUncomp()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-
+            using Sha256 sha = new Sha256();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -206,13 +199,12 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[9])
                     {
-                        SetResult(item);
+                        SetAddrResult(item);
                         success = true;
                     }
                 }
             }
 
-            AddQueue(success ? "Found some keys" : "Could not find anything");
             return success;
         }
 
@@ -365,7 +357,7 @@ namespace FinderOuter.Services
                                                 string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}")
                                                                      .Insert(j, $"{ConstantsFO.Base58Chars[c2]}")
                                                                      .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
-                                                AddQueue($"Found a key: {foundRes}");
+                                                report.AddMessageSafe($"Found a key: {foundRes}");
                                                 Task.Run(() => cancelToken.Cancel());
                                             }
                                         }
@@ -391,7 +383,7 @@ namespace FinderOuter.Services
             }
 
             // SHA must be defined here for this method to be thread safe
-            Sha256 sha = new Sha256();
+            using Sha256 sha = new Sha256();
 
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (uint* keyPt = &keyValueInts[0])
@@ -419,7 +411,7 @@ namespace FinderOuter.Services
         private unsafe bool Loop21()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-
+            using Sha256 sha = new Sha256();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -472,7 +464,7 @@ namespace FinderOuter.Services
         {
             Task.Run(() =>
             {
-                AddQueue($"Found a possible result (still running):");
+                report.AddMessageSafe($"Found a possible result (still running):");
 
                 char[] temp = keyToCheck.ToCharArray();
                 int i = 0;
@@ -481,7 +473,7 @@ namespace FinderOuter.Services
                     temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[index];
                 }
 
-                AddQueue(new string(temp));
+                report.AddMessageSafe(new string(temp));
                 return;
             });
         }
@@ -489,7 +481,7 @@ namespace FinderOuter.Services
         private unsafe bool Loop58()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-
+            using Sha256 sha = new Sha256();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -546,7 +538,7 @@ namespace FinderOuter.Services
         {
             // 51! / 3! *((51-3)!)
             BigInteger total = ((51 * 50 * 49) / (3 * 2 * 1)) * BigInteger.Pow(58, 3);
-            AddQueue($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
+            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
 
             Stopwatch watch = Stopwatch.StartNew();
             bool success = await Task.Run(() =>
@@ -556,8 +548,8 @@ namespace FinderOuter.Services
             );
 
             watch.Stop();
-            AddQueue($"Elapsed time: {watch.Elapsed}");
-            AddQueue(GetKeyPerSec(total, watch.Elapsed.TotalSeconds));
+            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
 
             return success;
         }
@@ -574,9 +566,9 @@ namespace FinderOuter.Services
                 {
                     missingIndexes = new int[missCount];
                     bool isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
-                    AddQueue($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
-                             $"characters was detected.");
-                    AddQueue($"Total number of keys to test: {GetTotalCount(missCount):n0}");
+                    report.AddMessageSafe($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
+                                          $"characters was detected.");
+                    report.AddMessageSafe($"Total number of keys to test: {GetTotalCount(missCount):n0}");
 
                     Initialize(key.ToCharArray(), missingChar, InputType.PrivateKey);
 
@@ -586,48 +578,29 @@ namespace FinderOuter.Services
                     {
                         if (isComp)
                         {
-                            AddQueue("Running compressed loop. Please wait.");
+                            report.AddMessageSafe("Running compressed loop. Please wait.");
                             return LoopComp();
                         }
                         else
                         {
-                            AddQueue("Running uncompressed loop. Please wait.");
+                            report.AddMessageSafe("Running uncompressed loop. Please wait.");
                             return LoopUncomp();
                         }
                     }
                     );
 
                     watch.Stop();
-                    AddQueue($"Elapsed time: {watch.Elapsed}");
-                    AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+                    report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                    report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
                 }
                 else
                 {
-                    AddQueue(error);
+                    report.AddMessageSafe(error);
                 }
 
-                if (success)
+                if (!success)
                 {
-                    await Task.Run(() =>
-                    {
-                        AddQueue($"Found {Final.Count} key{(Final.Count > 1 ? "s" : "")}:");
-
-                        foreach (var item in Final)
-                        {
-                            char[] temp = key.ToCharArray();
-                            int i = 0;
-                            foreach (var index in item)
-                            {
-                                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[index];
-                            }
-
-                            AddQueue(new string(temp));
-                        }
-
-                        Final.Clear();
-                        return;
-                    }
-                    );
+                    report.AddMessageSafe("Could not find any results.");
                 }
 
                 return success;
@@ -638,8 +611,8 @@ namespace FinderOuter.Services
                 {
                     if (key.Length == ConstantsFO.PrivKeyCompWifLen)
                     {
-                        AddMessage("No character is missing, checking validity of the key itself.");
-                        AddQueue(inputService.CheckPrivateKey(key));
+                        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
+                        report.AddMessageSafe(inputService.CheckPrivateKey(key));
                         return true;
                     }
                     else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
@@ -648,7 +621,7 @@ namespace FinderOuter.Services
                     }
                     else
                     {
-                        AddQueue("Only 3 missing characters at unkown locations is supported for now.");
+                        report.AddMessageSafe("Only 3 missing characters at unkown locations is supported for now.");
                         return false;
                     }
                 }
@@ -656,20 +629,20 @@ namespace FinderOuter.Services
                 {
                     if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
                     {
-                        AddMessage("No character is missing, checking validity of the key itself.");
-                        AddQueue(inputService.CheckPrivateKey(key));
+                        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
+                        report.AddMessageSafe(inputService.CheckPrivateKey(key));
                         return true;
                     }
                     else
                     {
-                        AddQueue("Recovering uncompressed private keys with missing characters at unknown locations " +
-                            "is not supported yet.");
+                        report.AddMessageSafe("Recovering uncompressed private keys with missing characters at unknown locations " +
+                                              "is not supported yet.");
                         return false;
                     }
                 }
                 else
                 {
-                    AddQueue("The given key has an invalid first character.");
+                    report.AddMessageSafe("The given key has an invalid first character.");
                     return false;
                 }
             }
@@ -680,26 +653,26 @@ namespace FinderOuter.Services
             missCount = address.Count(c => c == missingChar);
             if (missCount == 0)
             {
-                AddQueue("The given input has no missing characters, verifying it as a complete address.");
-                AddQueue(inputService.CheckBase58Address(address));
+                report.AddMessageSafe("The given input has no missing characters, verifying it as a complete address.");
+                report.AddMessageSafe(inputService.CheckBase58Address(address));
                 return true;
             }
 
             bool success = false;
             if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
             {
-                AddQueue($"Base-58 address should start with {ConstantsFO.B58AddressChar1} or {ConstantsFO.B58AddressChar2}.");
+                report.AddMessageSafe($"Base-58 address should start with {ConstantsFO.B58AddressChar1} or " +
+                                      $"{ConstantsFO.B58AddressChar2}.");
                 return false;
             }
             else if (address.Length < ConstantsFO.B58AddressMinLen || address.Length > ConstantsFO.B58AddressMaxLen)
             {
-                AddQueue($"Address length must be between {ConstantsFO.B58AddressMinLen} and " +
-                         $"{ConstantsFO.B58AddressMaxLen} (but it is {address.Length}).");
+                report.AddMessageSafe($"Address length must be between {ConstantsFO.B58AddressMinLen} and " +
+                                      $"{ConstantsFO.B58AddressMaxLen} (but it is {address.Length}).");
                 return false;
             }
             else
             {
-                keyToCheck = address;
                 missingIndexes = new int[missCount];
                 Initialize(address.ToCharArray(), missingChar, InputType.Address);
 
@@ -707,20 +680,20 @@ namespace FinderOuter.Services
 
                 success = await Task.Run(() =>
                 {
-                    AddQueue($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
-                    AddQueue("Going throgh each case. Please wait...");
+                    report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
+                    report.AddMessageSafe("Going throgh each case. Please wait...");
                     return Loop21();
                 }
                 );
 
                 watch.Stop();
-                AddQueue($"Elapsed time: {watch.Elapsed}");
-                AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
 
             if (!success)
             {
-                AddQueue("Couldn't find any valid addresses with the given input.");
+                report.AddMessageSafe("Couldn't find any valid addresses with the given input.");
             }
 
             return success;
@@ -731,25 +704,24 @@ namespace FinderOuter.Services
             missCount = bip38.Count(c => c == missingChar);
             if (missCount == 0)
             {
-                AddQueue("The given BIP38 key has no missing characters, verifying it as a complete key.");
-                AddQueue(inputService.CheckBase58Bip38(bip38));
+                report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
+                report.AddMessageSafe(inputService.CheckBase58Bip38(bip38));
                 return true;
             }
 
             bool success = false;
             if (!bip38.StartsWith(ConstantsFO.Bip38Start))
             {
-                AddQueue($"Base-58 encoded BIP-38 should start with {ConstantsFO.Bip38Start}.");
+                report.AddMessageSafe($"Base-58 encoded BIP-38 should start with {ConstantsFO.Bip38Start}.");
                 return false;
             }
             else if (bip38.Length != ConstantsFO.Bip38Base58Len)
             {
-                AddQueue($"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.");
+                report.AddMessageSafe($"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.");
                 return false;
             }
             else
             {
-                keyToCheck = bip38;
                 missingIndexes = new int[missCount];
                 Initialize(bip38.ToCharArray(), missingChar, InputType.Bip38);
 
@@ -757,20 +729,20 @@ namespace FinderOuter.Services
 
                 success = await Task.Run(() =>
                 {
-                    AddQueue($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
-                    AddQueue("Going throgh each case. Please wait...");
+                    report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
+                    report.AddMessageSafe("Going throgh each case. Please wait...");
                     return Loop58();
                 }
                 );
 
                 watch.Stop();
-                AddQueue($"Elapsed time: {watch.Elapsed}");
-                AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
 
             if (!success)
             {
-                AddQueue("Couldn't find any valid addresses with the given input.");
+                report.AddMessageSafe("Couldn't find any valid addresses with the given input.");
             }
 
             return success;
@@ -778,12 +750,14 @@ namespace FinderOuter.Services
 
         public async Task<bool> Find(string key, char missingChar, InputType t)
         {
-            InitReport();
+            report.Init();
 
             if (!inputService.IsMissingCharValid(missingChar))
-                return Fail("Invalid missing character.");
+                return report.Fail("Invalid missing character.");
             if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
-                return Fail("Input contains invalid base-58 character(s).");
+                return report.Fail("Input contains invalid base-58 character(s).");
+
+            keyToCheck = key;
 
             bool success;
             switch (t)
@@ -798,10 +772,10 @@ namespace FinderOuter.Services
                     success = await FindBip38(key, missingChar);
                     break;
                 default:
-                    return Fail("Given input type is not defined.");
+                    return report.Fail("Given input type is not defined.");
             }
 
-            return FinishReport(success);
+            return report.Finalize(success);
         }
     }
 }

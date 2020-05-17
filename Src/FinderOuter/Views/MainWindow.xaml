@@ -54,7 +54,10 @@
                Margin="3" Grid.Row="3"/>
     </Grid>
 
-    <TextBlock Text="{Binding SelectedOption.Result.CurrentState}" Margin="3" Grid.ColumnSpan="2" Grid.Row="2"/>
+    <TextBlock Text="{Binding SelectedOption.Result.CurrentState}"
+               Margin="3" Grid.Column="0" Grid.Row="2"/>
+    <ProgressBar IsVisible="{Binding SelectedOption.Result.IsProgressVisible}"
+                 Value="{Binding SelectedOption.Result.Progress}"
+                 Grid.Column="1" Grid.Row="2"/>
   </Grid>
-
 </Window>
