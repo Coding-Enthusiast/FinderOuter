@@ -5,7 +5,6 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.KeyPairs;
 using FinderOuter.Models;
@@ -23,7 +22,6 @@ namespace FinderOuter.Services
             calc = new EllipticCurveCalculator();
             addressBuilder = new Address();
             inputService = new InputService();
-            sigHelper = new SignatureService();
         }
 
 
@@ -33,8 +31,17 @@ namespace FinderOuter.Services
         private readonly EllipticCurveCalculator calc;
         private readonly Address addressBuilder;
         private readonly InputService inputService;
-        private readonly SignatureService sigHelper;
 
+
+        private Signature CreateFromRecId(byte[] sigBa)
+        {
+            if (!Signature.TryReadWithRecId(sigBa, out Signature result, out string error))
+            {
+                throw new FormatException(error);
+            }
+
+            return result;
+        }
 
         private bool CheckAddress(string addr, out Address.AddressType addrType)
         {
@@ -154,7 +161,7 @@ namespace FinderOuter.Services
             if (sigBa.Length != 1 + 32 + 32) // 65 bytes
                 return Fail($"Invalid signature length (it must be 65 bytes, it is {sigBa.Length} bytes instead).");
 
-            Signature sig = sigHelper.CreateFromRecId(sigBa);
+            Signature sig = CreateFromRecId(sigBa);
             bool success = CheckPubkeys(sig, toSign, address, addrType);
             return FinishReport(success);
         }
@@ -206,7 +213,7 @@ namespace FinderOuter.Services
                     Signature temp = new Signature(r, s, sigBa[0]);
                     if (CheckPubkeys(temp, toSign, address, addrType))
                     {
-                        AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(temp)}");
+                        AddQueue($"Modified signature is: {temp.ToByteArrayWithRecId().ToBase64()}");
                         return true;
                     }
 
@@ -231,7 +238,7 @@ namespace FinderOuter.Services
             if (sigBa.Length == 1 + 32 + 32)
             {
                 AddQueue("Checking with original signature.");
-                Signature sig = sigHelper.CreateFromRecId(sigBa);
+                Signature sig = CreateFromRecId(sigBa);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
                     return true;
@@ -244,7 +251,7 @@ namespace FinderOuter.Services
                 sig = new Signature(rBa.ToBigInt(false, true), sBa.ToBigInt(false, true), sigBa[0]);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                 }
                 else
                 {
@@ -255,10 +262,10 @@ namespace FinderOuter.Services
             {
                 AddQueue("Signature length is shorter than 65 bytes.");
                 AddQueue("Adding an initial byte in place of missing recovery ID.");
-                Signature sig = sigHelper.CreateFromRecId(sigBa.AppendToBeginning(0));
+                Signature sig = CreateFromRecId(sigBa.AppendToBeginning(0));
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                     return true;
                 }
 
@@ -270,7 +277,7 @@ namespace FinderOuter.Services
                 sig = new Signature(rBa.ToBigInt(true, true), sBa.ToBigInt(true, true), sigBa[0]);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                     return true;
                 }
 
@@ -278,7 +285,7 @@ namespace FinderOuter.Services
                 sig = new Signature(rBa.ToBigInt(false, true), sBa.ToBigInt(false, true), sigBa[0]);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                     return true;
                 }
 
@@ -289,7 +296,7 @@ namespace FinderOuter.Services
                 sig = new Signature(rBa.ToBigInt(true, true), sBa.ToBigInt(true, true), sigBa[0]);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                     return true;
                 }
 
@@ -297,7 +304,7 @@ namespace FinderOuter.Services
                 sig = new Signature(rBa.ToBigInt(false, true), sBa.ToBigInt(false, true), sigBa[0]);
                 if (CheckPubkeys(sig, toSign, address, addrType))
                 {
-                    AddQueue($"Modified signature is: {sigHelper.EncodeWithRedId(sig)}");
+                    AddQueue($"Modified signature is: {sig.ToByteArrayWithRecId().ToBase64()}");
                     return true;
                 }
             }
