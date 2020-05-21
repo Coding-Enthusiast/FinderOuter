@@ -104,6 +104,7 @@ namespace FinderOuter.Services
 
         private unsafe bool LoopComp()
         {
+            report.ChangeProgressVisibilitySafe(false);
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
             using Sha256 sha = new Sha256();
             bool success = false;
@@ -358,7 +359,7 @@ namespace FinderOuter.Services
                                                                      .Insert(j, $"{ConstantsFO.Base58Chars[c2]}")
                                                                      .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
                                                 report.AddMessageSafe($"Found a key: {foundRes}");
-                                                Task.Run(() => cancelToken.Cancel());
+                                                //Task.Run(() => cancelToken.Cancel());
                                             }
                                         }
                                     }

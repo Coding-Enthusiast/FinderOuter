@@ -27,5 +27,6 @@ namespace FinderOuter.Models
         void SetKeyPerSecSafe(BigInteger totalKeys, double totalSecond);
 
         void SetProgressSafe(BigInteger total, BigInteger current);
+        void ChangeProgressVisibilitySafe(bool isVisible);
     }
 }

@@ -110,5 +110,7 @@ namespace FinderOuter.Models
             double val = (double)(current / total * 100);
             Dispatcher.UIThread.InvokeAsync(() => Progress = (double)(current / total * 100));
         }
+
+        public void ChangeProgressVisibilitySafe(bool isVisible) => Dispatcher.UIThread.InvokeAsync(() => IsProgressVisible = isVisible);
     }
 }
