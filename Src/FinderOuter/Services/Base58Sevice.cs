@@ -41,7 +41,6 @@ namespace FinderOuter.Services
             PrivateKey,
             Address,
             Bip38
-            //MiniPrivateKey
         }
 
         private void Initialize(char[] key, char missingChar, InputType keyType)
@@ -147,7 +146,7 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[9])
                     {
-                        SetAddrResult(item);
+                        SetResult(item);
                         success = true;
                     }
                 }
@@ -200,7 +199,7 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[9])
                     {
-                        SetAddrResult(item);
+                        SetResult(item);
                         success = true;
                     }
                 }
@@ -453,7 +452,7 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[6])
                     {
-                        SetAddrResult(item);
+                        SetResult(item);
                         success = true;
                     }
                 }
@@ -461,7 +460,7 @@ namespace FinderOuter.Services
 
             return success;
         }
-        private void SetAddrResult(IEnumerable<int> item)
+        private void SetResult(IEnumerable<int> item)
         {
             Task.Run(() =>
             {
@@ -524,7 +523,7 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[10])
                     {
-                        SetAddrResult(item);
+                        SetResult(item);
                         success = true;
                     }
                 }

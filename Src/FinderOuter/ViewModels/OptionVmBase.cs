@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using ReactiveUI;
 
@@ -22,6 +23,8 @@ namespace FinderOuter.ViewModels
             get => _res;
             set => this.RaiseAndSetIfChanged(ref _res, value);
         }
+
+        public string MissingToolTip => ConstantsFO.MissingToolTip;
 
         public IReactiveCommand FindCommand { get; protected set; }
         public abstract void Find();

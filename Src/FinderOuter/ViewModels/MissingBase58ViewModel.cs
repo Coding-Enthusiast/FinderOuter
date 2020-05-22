@@ -69,7 +69,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mis, value);
         }
 
-        public string MissingToolTip => $"Choose one of these symbols {ConstantsFO.Symbols} to use instead of the missing characters";
 
         public override void Find()
         {

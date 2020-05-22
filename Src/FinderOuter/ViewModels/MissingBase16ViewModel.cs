@@ -69,8 +69,6 @@ namespace FinderOuter.ViewModels
         }
 
 
-        public string MissingToolTip => $"Choose one of these symbols {ConstantsFO.Symbols} to use instead of the missing characters";
-
         public override void Find()
         {
             _ = b16Service.Find(Input, MissingChar, AdditionalInput, IsCompressed);

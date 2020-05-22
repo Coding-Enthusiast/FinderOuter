@@ -10,6 +10,7 @@ namespace FinderOuter.Backend
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
         public const string Symbols = "!@#$%^&*_-+=?";
+        public const string MissingToolTip = "Onlye these symbols are accepted as a missing character: !@#$%^&*_-+=?";
 
         public const char PrivKeyCompChar1 = 'K';
         public const char PrivKeyCompChar2 = 'L';
@@ -27,6 +28,10 @@ namespace FinderOuter.Backend
         public const char B58AddressChar2 = '3';
         public const byte P2pkhAddrFirstByte = 0;
         public const byte P2shAddrFirstByte = 5;
+
+        public const char MiniKeyStart = 'S';
+        public const int MiniKeyLen1 = 22;
+        public const int MiniKeyLen2 = 30;
 
         public const int Bip38ByteLen = 39;
         public const int Bip38Base58Len = 58;
