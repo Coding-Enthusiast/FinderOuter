@@ -17,15 +17,16 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    public class Base16Sevice : ServiceBase
+    public class Base16Sevice
     {
-        public Base16Sevice(Report rep) : base(rep)
+        public Base16Sevice(IReport rep)
         {
             inputService = new InputService();
+            report = rep;
         }
 
 
-
+        private readonly IReport report;
         private readonly InputService inputService;
 
 
@@ -63,11 +64,10 @@ namespace FinderOuter.Services
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 16), missingCount));
             ECCalc calc = new ECCalc();
 
-            
 
             BigInteger smallVal = new BigInteger(ba, true, true);
             EllipticCurvePoint smallPub = calc.MultiplyByG(smallVal);
-            Ripemd160Sha256 hash = new Ripemd160Sha256();
+            bool foundAny = false;
 
             Parallel.ForEach(cartesian, (item, loopState) =>
             {
@@ -96,6 +96,7 @@ namespace FinderOuter.Services
                 byte[] xBytes = pub.X.ToByteArray(true, true);
                 Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
+                Ripemd160Sha256 hash = new Ripemd160Sha256();
                 ReadOnlySpan<byte> actual = hash.ComputeHash(toHash);
                 if (actual.SequenceEqual(expectedHash))
                 {
@@ -105,14 +106,17 @@ namespace FinderOuter.Services
                     {
                         origHex[missingIndexes[index++]] = GetHex(keyItem);
                     }
-                    AddQueue($"Found a key: {new string(origHex)}");
+                    report.AddMessageSafe($"Found a key: {new string(origHex)}");
+                    foundAny = true;
                     loopState.Break();
                 }
             });
 
-
-            AddQueue("Failed to find any key.");
-            return false;
+            if (!foundAny)
+            {
+                report.AddMessageSafe("Failed to find any key.");
+            }
+            return foundAny;
         }
 
         private char GetHex(int val)
@@ -147,46 +151,46 @@ namespace FinderOuter.Services
 
         public async Task<bool> Find(string key, char missingChar, string AdditionalInput, bool isComp)
         {
-            InitReport();
+            report.Init();
 
             if (!IsMissingCharValid(missingChar))
-                return Fail("Missing character is not valid.");
+                return report.Fail("Missing character is not valid.");
             if (!IsInputValid(key, missingChar))
-                return Fail("Input contains invalid base-16 character(s).");
+                return report.Fail("Input contains invalid base-16 character(s).");
             if (key.Length != 64)
-                return Fail("Key length must be 64.");
+                return report.Fail("Key length must be 64.");
             if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
-                return Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
+                return report.Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
             if (!inputService.IsValidAddress(AdditionalInput, true, out byte[] hash))
-                return Fail("Input is not a valid address.");
+                return report.Fail("Input is not a valid address.");
             int missingCount = key.Count(c => c == missingChar);
             if (missingCount == 0)
-                return Pass("The given key has no missing characters and it is inside the range defined by secp256k1 curve.");
+                return report.Fail("The given key has no missing characters and it is inside the range defined by secp256k1 curve.");
 
             BigInteger total = BigInteger.Pow(16, missingCount);
-            AddMessage($"There are {total:n0} keys to check.");
+            report.AddMessage($"There are {total:n0} keys to check.");
             Stopwatch watch = Stopwatch.StartNew();
 
             bool success = await Task.Run(() =>
             {
                 if (isComp)
                 {
-                    AddQueue("Running compressed loop.");
+                    report.AddMessageSafe("Running compressed loop.");
                     return LoopComp(key, missingCount, missingChar, hash);
                 }
                 else
                 {
-                    AddQueue("Not yet defined.");
+                    report.AddMessageSafe("Not yet defined.");
                     return false;
                 }
             }
             );
 
             watch.Stop();
-            AddQueue($"Elapsed time: {watch.Elapsed}");
-            AddQueue(GetKeyPerSec(total, watch.Elapsed.TotalSeconds));
+            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+            report.SetKeyPerSec(total, watch.Elapsed.TotalSeconds);
 
-            return FinishReport(success);
+            return report.Finalize(success);
         }
     }
 }

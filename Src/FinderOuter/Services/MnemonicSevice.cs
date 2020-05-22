@@ -35,14 +35,15 @@ namespace FinderOuter.Services
         Electrum,
     }
 
-    public class MnemonicSevice : ServiceBase
+    public class MnemonicSevice
     {
-        public MnemonicSevice(Report rep) : base(rep)
+        public MnemonicSevice(IReport rep)
         {
+            report = rep;
         }
 
 
-
+        private readonly IReport report;
         private readonly Sha256 sha = new Sha256();
         private readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
         private uint[] wordIndexes;
@@ -402,10 +403,10 @@ namespace FinderOuter.Services
         {
             if (string.IsNullOrWhiteSpace(mnemonic))
             {
-                return Fail("Mnemonic can not be null or empty.");
+                return report.Fail("Mnemonic can not be null or empty.");
             }
 
-            return Fail("Not yet implemented.");
+            return report.Fail("Not yet implemented.");
         }
 
 
@@ -422,7 +423,7 @@ namespace FinderOuter.Services
                 }
                 else
                 {
-                    return Fail($"Could not find {wl.ToString()} word list among resources."); ;
+                    return report.Fail($"Could not find {wl} word list among resources."); ;
                 }
             }
 
@@ -437,21 +438,21 @@ namespace FinderOuter.Services
             if (string.IsNullOrWhiteSpace(mnemonic))
             {
                 result = null;
-                return Fail("Mnemonic can not be null or empty.");
+                return report.Fail("Mnemonic can not be null or empty.");
             }
             else
             {
                 result = mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 if (!allowedWordLengths.Contains(result.Length))
                 {
-                    return Fail("Invalid mnemonic length.");
+                    return report.Fail("Invalid mnemonic length.");
                 }
 
                 string miss = new string(new char[] { missingChar });
                 if (result.Any(s => s != miss && !allWords.Contains(s)))
                 {
                     result = null;
-                    return Fail("Mnemonic input contains invalid words.");
+                    return report.Fail("Mnemonic input contains invalid words.");
                 }
                 missCount = result.Count(s => s == miss);
                 wordIndexes = new uint[result.Length];
@@ -469,8 +470,8 @@ namespace FinderOuter.Services
                     }
                 }
 
-                AddMessage($"There are {result.Length} words in the given mnemonic with {missCount} missing.");
-                AddMessage($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
+                report.AddMessage($"There are {result.Length} words in the given mnemonic with {missCount} missing.");
+                report.AddMessage($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
                 return true;
             }
         }
@@ -478,12 +479,12 @@ namespace FinderOuter.Services
 
         public async Task<bool> FindMissing(string mnemonic, char missingChar, MnemonicTypes mnType, WordLists wl)
         {
-            InitReport();
+            report.Init();
 
             if (!TrySetWordList(wl))
                 return false;
             if (!IsMissingCharValid(missingChar))
-                return Fail("Missing character is not accepted.");
+                return report.Fail("Missing character is not accepted.");
             if (!TrySplitMnemonic(mnemonic, missingChar, out words))
                 return false;
 
@@ -502,22 +503,22 @@ namespace FinderOuter.Services
             });
 
             watch.Stop();
-            AddQueue($"Elapsed time: {watch.Elapsed}");
-            AddQueue(GetKeyPerSec(GetTotalCount(missCount), watch.Elapsed.TotalSeconds));
+            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+            report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             if (success)
             {
                 // TODO: remove this branch after addition of more checks versus address 
                 // we should end up with only one correct result.
-                AddQueue($"Found {Final.Count:n0} correct mnemonics.");
+                report.AddMessageSafe($"Found {Final.Count:n0} correct mnemonics.");
                 Final.Clear();
             }
-            return FinishReport(success);
+            return report.Finalize(success);
         }
 
 
         public async Task<bool> FindPath(string mnemonic, string extra, MnemonicTypes mnType, WordLists wl, string passPhrase)
         {
-            InitReport();
+            report.Init();
 
             if (!TrySetEntropy(mnemonic, mnType) && !TrySetWordList(wl))
             {
@@ -525,14 +526,14 @@ namespace FinderOuter.Services
             }
             if (string.IsNullOrWhiteSpace(extra))
             {
-                return Fail("Additioan info can not be null or empty.");
+                return report.Fail("Additioan info can not be null or empty.");
             }
             else
             {
 
             }
 
-            return Fail("Not yet implemented");
+            return report.Fail("Not yet implemented");
         }
 
     }
