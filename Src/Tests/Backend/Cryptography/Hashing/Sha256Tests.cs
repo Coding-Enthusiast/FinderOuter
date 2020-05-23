@@ -426,6 +426,51 @@ namespace Tests.Backend.Cryptography.Hashing
             }
         }
 
+        [Fact]
+        public unsafe void Compress33Test()
+        {
+            int dataLen = 33;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 8; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[8] = (uint)data[32] << 24 | 0b00000000_10000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress33(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress65Test()
+        {
+            int dataLen = 65;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (byte* dPt = &data[0])
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                sha.Init(hPt);
+                sha.Compress65(dPt, hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
 
         [Fact]
         public unsafe void CompressDouble21Test()
