@@ -38,7 +38,7 @@ namespace FinderOuter.Backend.KeyPairs
         private readonly Base58 b58Encoder;
         private readonly Bech32 b32Encoder;
         private readonly IHashFunction hashFunc;
-        private readonly IHashFunction witHashFunc;
+        private readonly Sha256 witHashFunc;
         private readonly byte versionByte_P2pkh_MainNet, versionByte_P2pkh_TestNet, versionByte_P2pkh_RegTest;
         private readonly byte versionByte_P2sh_MainNet, versionByte_P2sh_TestNet, versionByte_P2sh_RegTest;
         private readonly string hrp_MainNet, hrp_TestNet, hrp_RegTest;

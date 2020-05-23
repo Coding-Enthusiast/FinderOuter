@@ -233,11 +233,199 @@ namespace Tests.Backend.Cryptography.Hashing
             new Random().NextBytes(res);
             return res;
         }
+        private byte[] ComputeSingleSha(byte[] data)
+        {
+            using var sysSha = System.Security.Cryptography.SHA256.Create();
+            return sysSha.ComputeHash(data);
+        }
         private byte[] ComputeDoubleSha(byte[] data)
         {
             using var sysSha = System.Security.Cryptography.SHA256.Create();
             return sysSha.ComputeHash(sysSha.ComputeHash(data));
         }
+
+        [Fact]
+        public unsafe void Compress16Test()
+        {
+            int dataLen = 16;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 4; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[4] = 0b10000000_00000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress16(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress20Test()
+        {
+            int dataLen = 20;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 5; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[5] = 0b10000000_00000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress20(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress23Test()
+        {
+            int dataLen = 23;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 5; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | 0b00000000_00000000_00000000_10000000U);
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress23(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress24Test()
+        {
+            int dataLen = 24;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 6; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[6] = 0b10000000_00000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress24(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress28Test()
+        {
+            int dataLen = 28;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 7; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[7] = 0b10000000_00000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress28(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress31Test()
+        {
+            int dataLen = 31;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 7; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[7] = (uint)((data[28] << 24) | (data[29] << 16) | (data[30] << 8) | 0b00000000_00000000_00000000_10000000U);
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress31(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress32Test()
+        {
+            int dataLen = 32;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 8; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[8] = 0b10000000_00000000_00000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress32(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
 
         [Fact]
         public unsafe void CompressDouble21Test()
@@ -247,20 +435,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 5; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[5] = (uint)((data[20] << 24) | 0b00000000_10000000_00000000_00000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble21(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 5; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[5] = (uint)((data[20] << 24) | 0b00000000_10000000_00000000_00000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble21(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
 
         [Fact]
@@ -271,20 +460,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 5; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | 0b00000000_00000000_10000000_00000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble22(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 5; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | 0b00000000_00000000_10000000_00000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble22(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
 
         [Fact]
@@ -295,20 +485,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 5; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | 0b00000000_00000000_00000000_10000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble23(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 5; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | 0b00000000_00000000_00000000_10000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble23(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
 
         [Fact]
@@ -319,20 +510,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 8; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[8] = (uint)((data[32] << 24) | 0b00000000_10000000_00000000_00000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble33(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 8; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[8] = (uint)((data[32] << 24) | 0b00000000_10000000_00000000_00000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble33(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
 
         [Fact]
@@ -343,20 +535,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 8; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[8] = (uint)((data[32] << 24) | (data[33] << 16) | 0b00000000_00000000_10000000_00000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble34(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 8; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[8] = (uint)((data[32] << 24) | (data[33] << 16) | 0b00000000_00000000_10000000_00000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble34(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
 
         [Fact]
@@ -367,20 +560,21 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] expected = ComputeDoubleSha(data);
 
             using Sha256 sha = new Sha256();
-            uint* hPt = sha.GethPt();
-            uint* wPt = sha.GetwPt();
-            int dIndex = 0;
-            for (int i = 0; i < 9; i++, dIndex += 4)
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-            }
-            wPt[9] = (uint)((data[36] << 24) | (data[37] << 16) | (data[38] << 8) | 0b00000000_00000000_00000000_10000000U);
-            wPt[15] = (uint)dataLen * 8;
-            sha.Init(hPt);
-            sha.CompressDouble39(hPt, wPt);
-            byte[] actual = sha.GetBytes(hPt);
+                int dIndex = 0;
+                for (int i = 0; i < 9; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[9] = (uint)((data[36] << 24) | (data[37] << 16) | (data[38] << 8) | 0b00000000_00000000_00000000_10000000U);
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.CompressDouble39(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
 
-            Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual);
+            }
         }
     }
 }
