@@ -4,8 +4,10 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -17,6 +19,25 @@ namespace FinderOuter.Services
         private readonly Base58 b58Enc = new Base58();
         private readonly Bech32 b32Enc = new Bech32();
 
+
+        public string CheckMiniKey(string key)
+        {
+            try
+            {
+                using MiniPrivateKey mini = new MiniPrivateKey(key);
+                Address addr = new Address();
+                return $"Compressed:{Environment.NewLine}" +
+                       $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
+                       $"   Address: {addr.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
+                       $"Uncompressed:{Environment.NewLine}" +
+                       $"         WIF: {mini.ToWif(false)}{Environment.NewLine}" +
+                       $"     Address: {addr.GetP2pkh(mini.ToPublicKey(), false)}";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
 
         public string CheckBase58Bip38(string bip38)
         {

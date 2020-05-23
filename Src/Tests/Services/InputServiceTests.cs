@@ -19,6 +19,16 @@ namespace Tests.Services
 
 
         [Theory]
+        [InlineData("", "can not be null")]
+        [InlineData("SzavMBLoXU6kDrqtUVmffv", "Compressed:")]
+        public void CheckMiniKeyTest(string key, string expectedMsg)
+        {
+            InputService serv = new InputService();
+            string actualMsg = serv.CheckMiniKey(key);
+            Assert.Contains(expectedMsg, actualMsg);
+        }
+
+        [Theory]
         [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", "The given BIP-38 string is valid.")]
         [InlineData("6PnZki3vKspApf2zym6Anp2jd5hiZbuaZArPfa2ePcgVf196PLGrQNyVUh", "The given BIP-38 string is valid.")]
         [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs$", "The given BIP-38 string contains invalid base-58 characters.")]
