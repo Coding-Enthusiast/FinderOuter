@@ -41,6 +41,7 @@
     <AvaloniaResource Remove="Views\MessageSignatureView.xaml" />
     <AvaloniaResource Remove="Views\MissingBase16View.xaml" />
     <AvaloniaResource Remove="Views\MissingBase58View.xaml" />
+    <AvaloniaResource Remove="Views\MissingMiniPrivateKeyView.xaml" />
     <AvaloniaResource Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +54,7 @@
     <None Remove="Views\MessageSignatureView.xaml" />
     <None Remove="Views\MissingBase16View.xaml" />
     <None Remove="Views\MissingBase58View.xaml" />
+    <None Remove="Views\MissingMiniPrivateKeyView.xaml" />
     <None Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +100,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\MissingBase16View.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\MissingMiniPrivateKeyView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </EmbeddedResource>
   </ItemGroup>

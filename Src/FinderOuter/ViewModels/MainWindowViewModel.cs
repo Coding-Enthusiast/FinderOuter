@@ -20,6 +20,7 @@ namespace FinderOuter.ViewModels
                 new MessageSignatureViewModel(),
                 new MissingBase58ViewModel(),
                 new MissingBase16ViewModel(),
+                new MissingMiniPrivateKeyViewModel(),
                 //new MissingMnemonicViewModel(),
             };
 
