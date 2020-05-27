@@ -48,7 +48,6 @@ namespace FinderOuter.Backend
 
             return result;
         }
-
     }
 
 
@@ -57,31 +56,6 @@ namespace FinderOuter.Backend
 
     public static class ByteArrayExtension
     {
-        /// <summary>
-        /// Concatinates two given byte arrays and returns a new byte array containing all the elements. 
-        /// </summary>
-        /// <remarks>
-        /// This is a lot faster than Linq (~30 times)
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="firstArray">First set of bytes in the final array.</param>
-        /// <param name="secondArray">Second set of bytes in the final array.</param>
-        /// <returns>The concatinated array of bytes.</returns>
-        public static byte[] ConcatFast(this byte[] firstArray, byte[] secondArray)
-        {
-            if (firstArray == null)
-                throw new ArgumentNullException(nameof(firstArray), "First array can not be null!");
-            if (secondArray == null)
-                throw new ArgumentNullException(nameof(secondArray), "Second array can not be null!");
-
-
-            byte[] result = new byte[firstArray.Length + secondArray.Length];
-            Buffer.BlockCopy(firstArray, 0, result, 0, firstArray.Length);
-            Buffer.BlockCopy(secondArray, 0, result, firstArray.Length, secondArray.Length);
-            return result;
-        }
-
-
         /// <summary>
         /// Compares a given byte arrays to another and returns 1 if bigger, -1 if smaller and 0 if equal.
         /// <para/>* Considers byte arrays as representing integral values so both byte arrays should be in big endian 
@@ -161,27 +135,6 @@ namespace FinderOuter.Backend
             }
 
             return 0;
-        }
-
-
-        /// <summary>
-        /// Determines whether two byte arrays are equal.
-        /// </summary>
-        /// <remarks>
-        /// This is A LOT faster than Linq.
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="first">First byte array for comparing.</param>
-        /// <param name="second">Second byte array for comparing.</param>
-        /// <returns>True if two sequences were equal, false if otherwise.</returns>
-        public static bool IsEqualTo(this byte[] first, byte[] second)
-        {
-            if (first == null)
-                throw new ArgumentNullException(nameof(first), "First byte array can not be null!");
-            if (second == null)
-                throw new ArgumentNullException(nameof(second), "Second byte array can not be null!");
-
-            return ((ReadOnlySpan<byte>)first).SequenceEqual(second);
         }
 
 
@@ -403,103 +356,6 @@ namespace FinderOuter.Backend
                             ((ulong)ba[4] << 32) | ((ulong)ba[5] << 40) | ((ulong)ba[6] << 48) | ((ulong)ba[7] << 56);
             }
         }
-
-
-        /// <summary>
-        /// Removes zeros from the end of the given byte array.
-        /// <para/>NOTE: If there is no zeros to trim, the same byte array will be return (careful about changing the reference)
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">Byte array to trim.</param>
-        /// <returns>Trimmed bytes.</returns>
-        public static byte[] TrimEnd(this byte[] ba)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null!");
-
-
-            int index = ba.Length - 1;
-            int count = 0;
-            while (index >= 0 && ba[index] == 0)
-            {
-                index--;
-                count++;
-            }
-            return (count == 0) ? ba : (count == ba.Length) ? new byte[0] : ba.SubArray(0, ba.Length - count);
-        }
-
-        /// <summary>
-        /// Removes zeros from the beginning of the given byte array.
-        /// <para/>NOTE: If there is no zeros to trim, the same byte array will be return (careful about changing the reference)
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <param name="ba">Byte array to trim.</param>
-        /// <returns>Trimmed bytes.</returns>
-        public static byte[] TrimStart(this byte[] ba)
-        {
-            if (ba == null)
-                throw new ArgumentNullException(nameof(ba), "Byte array can not be null!");
-
-
-            int index = 0;// index acts both as "index" and "count"
-            while (index != ba.Length && ba[index] == 0)
-            {
-                index++;
-            }
-            return (index == 0) ? ba : (index == ba.Length) ? new byte[0] : ba.SubArray(index);
-        }
-    }
-
-
-
-
-
-    public static class IntExtension
-    {
-        /// <summary>
-        /// Converts the given 32-bit signed integer to a base-16 (hexadecimal) encoded string.
-        /// </summary>
-        /// <param name="i">The 32-bit signed integer to convert.</param>
-        /// <param name="bigEndian">Endianness of the byte array to use for encoding.</param>
-        /// <returns>A base-16 encoded string.</returns>
-        public static string ToBase16(this int i, bool bigEndian)
-        {
-            return i.ToByteArray(bigEndian).ToBase16();
-        }
-
-        /// <summary>
-        /// Converts the given 32-bit signed integer to an array of bytes with a desired endianness.
-        /// </summary>
-        /// <param name="i">The 32-bit signed integer to convert.</param>
-        /// <param name="bigEndian">Endianness of the returned byte array.</param>
-        /// <returns>An array of bytes.</returns>
-        public static byte[] ToByteArray(this int i, bool bigEndian)
-        {
-            unchecked
-            {
-                if (bigEndian)
-                {
-                    return new byte[]
-                    {
-                        (byte)(i >> 24),
-                        (byte)(i >> 16),
-                        (byte)(i >> 8),
-                        (byte)i
-                    };
-                }
-                else
-                {
-                    return new byte[]
-                    {
-                        (byte)i,
-                        (byte)(i >> 8),
-                        (byte)(i >> 16),
-                        (byte)(i >> 24)
-                    };
-                }
-            }
-        }
-
     }
 
 
@@ -792,73 +648,6 @@ namespace FinderOuter.Backend
         }
 
 
-
-        /// <summary>
-        /// Calculates integer modulo n and always returns a positive result between 0 and <paramref name="n"/>-1.
-        /// </summary>
-        /// <exception cref="ArithmeticException"/>
-        /// <exception cref="DivideByZeroException"/>
-        /// <param name="big">BigInteger value to use</param>
-        /// <param name="n">A positive BigInteger used as divisor.</param>
-        /// <returns>Result of mod in [0, n-1] range</returns>
-        public static BigInteger Mod(this BigInteger big, BigInteger n)
-        {
-            if (n == 0)
-                throw new DivideByZeroException("Can't divide by zero!");
-            if (n < 0)
-                throw new ArithmeticException("Divisor can not be negative");
-
-
-            BigInteger reminder = big % n;
-            return reminder.Sign >= 0 ? reminder : reminder + n;
-        }
-
-
-        /// <summary>
-        /// Finds modular multiplicative inverse of the integer a such that ax ≡ 1 (mod m) 
-        /// using Extended Euclidean algorithm. If gcd(a,m) != 1 an <see cref="ArithmeticException"/> will be thrown.
-        /// </summary>
-        /// <exception cref="DivideByZeroException"/>
-        /// <exception cref="ArithmeticException"/>
-        /// <param name="a">The integer a in ax ≡ 1 (mod m)</param>
-        /// <param name="m">The modulus m in ax ≡ 1 (mod m)</param>
-        /// <returns></returns>
-        public static BigInteger ModInverse(this BigInteger a, BigInteger m)
-        {
-            if (a == 0)
-                throw new DivideByZeroException("a can't be 0!");
-
-            if (a == 1) return 1;
-            if (a < 0) a = a.Mod(m);
-
-            BigInteger s = 0;
-            BigInteger oldS = 1;
-            BigInteger r = m;
-            BigInteger oldR = a % m;
-
-            while (r != 0)
-            {
-                BigInteger quotient = oldR / r;
-
-                BigInteger prov = r;
-                r = oldR - quotient * prov;
-                oldR = prov;
-
-                prov = s;
-                s = oldS - quotient * prov;
-                oldS = prov;
-            }
-
-            // The resulting oldR is the Greatest Common Divisor of (a,m) and it needs to be 1.
-            if (oldR != 1)
-            {
-                throw new ArithmeticException($"Modular multiplicative inverse doesn't exist because greatest common divisor of {nameof(a)} and {nameof(m)} is not 1.");
-            }
-
-            return oldS.Mod(m);
-        }
-
-
         /// <summary>
         /// Returns square root of the given positive <see cref="BigInteger"/> using Babylonian (aka Heron's) method.
         /// </summary>
@@ -896,19 +685,6 @@ namespace FinderOuter.Backend
             BigInteger upperBound = (root + 1) * (root + 1);
 
             return (lowerBound <= n) && (n < upperBound);
-        }
-
-
-        /// <summary>
-        /// Converts a <see cref="BigInteger"/> value to a base-16 (hexadecimal) encoded string 
-        /// and can remove positive byte sign if available.
-        /// </summary>
-        /// <param name="big">Big Integer value to convert.</param>
-        /// <param name="removePositiveSign">If true will remove the byte indicating positive numbers if available.</param>
-        /// <returns>A base16 encoded string.</returns>
-        public static string ToBase16(this BigInteger big, bool removePositiveSign)
-        {
-            return big.ToByteArrayExt(true, removePositiveSign).ToBase16();
         }
 
 
@@ -960,5 +736,4 @@ namespace FinderOuter.Backend
             return ba;
         }
     }
-
 }
