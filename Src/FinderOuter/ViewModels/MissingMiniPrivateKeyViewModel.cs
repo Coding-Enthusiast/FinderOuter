@@ -18,9 +18,12 @@ namespace FinderOuter.ViewModels
             miniService = new MiniKeyService(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input, x => x.MissingChar,
-                x => x.Result.CurrentState, (b58, c, state) =>
-                            !string.IsNullOrEmpty(b58) &&
+                x => x.Input,
+                x => x.ExtraInput,
+                x => x.MissingChar,
+                x => x.Result.CurrentState, (miniKey, addr, c, state) =>
+                            !string.IsNullOrEmpty(miniKey) &&
+                            !string.IsNullOrEmpty(addr) &&
                             inServ.IsMissingCharValid(c) &&
                             state != Models.State.Working);
 
@@ -29,7 +32,12 @@ namespace FinderOuter.ViewModels
 
         public override string OptionName => "Missing mini private key";
 
-        public override string Description => "This option can recover missing characters in a mini private key.";
+        public override string Description => 
+            $"This option can recover missing characters in a mini private key." +
+            $"{Environment.NewLine}" +
+            $"Enter the mini key (22 or 30 characters long starting with S) in first box while replacing its missing " +
+            $"characters with the specified {nameof(MissingChar)} and enter the " +
+            $"corresponding address in second box and click Find button.";
 
 
         private readonly MiniKeyService miniService;

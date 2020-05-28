@@ -21,6 +21,7 @@ namespace FinderOuter.Services
         public MiniKeyService(IReport rep)
         {
             inputService = new InputService();
+            comparer = new PrivateKeyToAddressComparer();
             report = rep;
         }
 
@@ -31,6 +32,7 @@ namespace FinderOuter.Services
         private int[] missingIndexes;
         private int missCount;
         private string keyToCheck;
+        private ICompareService comparer;
 
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
@@ -46,29 +48,28 @@ namespace FinderOuter.Services
                     temp[missingIndexes[i++]] = (char)index;
                 }
 
-                report.AddMessageSafe($"Found a possible result (still running): {new string(temp)}");
+                report.AddMessageSafe($"Found a possible result: {new string(temp)}");
                 return;
             });
         }
 
         private unsafe bool Loop23()
         {
-            // The actual data that is changing is 22 bytes (22 char long mini key)
-            // plus an additional byte added to the end (char(?)=0x3f).
+            // The actual data that is changing is 22 bytes (22 char long mini key) with a fixed starting character ('S')
+            // plus an additional byte added to the end (char('?')=0x3f) during checking loop.
             // Checksum is replaced by checking if first byte of hash result is zero.
+            // The actual key itself is the hash of the same 22 bytes (without '?') using a single SHA256
+            // Note characters are decoded using UTF-8
 
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
             using Sha256 sha = new Sha256();
-            uint[] secondW = new uint[sha.w.Length];
             bool success = false;
 
             byte[] temp = new byte[precomputed.Length];
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0], w2Pt = &secondW[0])
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (byte* pre = &precomputed[0], tmp = &temp[0])
             fixed (int* mi = &missingIndexes[0])
             {
-                wPt[15] = 184; // 23 *8 = 184
-
                 foreach (var item in cartesian)
                 {
                     Buffer.MemoryCopy(pre, tmp, 22, 22);
@@ -88,18 +89,28 @@ namespace FinderOuter.Services
                     // The added value below is the SHA padding and the last added ? char equal to 0x3f shifted right 8 places
                     wPt[5] = (uint)tmp[20] << 24 | (uint)tmp[21] << 16 | 0b00000000_00000000_00111111_10000000U;
                     // from 6 to 14 = 0
-                    // 15 is already set above
+                    wPt[15] = 184; // 23 *8 = 184
 
                     sha.Init(hPt);
                     sha.Compress23(hPt, wPt);
 
                     if ((hPt[0] & 0b11111111_00000000_00000000_00000000U) == 0)
                     {
-                        // TODO: perform another hash using the same wPt but change the char(?) value to SHA pad and
-                        // prev SHA pad to zero
-                        // this will give the actual 32 bytes key then perform the checks versus address,...
-                        SetResult(item);
-                        success = true;
+                        // The actual key is SHA256 of 22 char key (without '?')
+                        // SHA working vector is already set, only the last 2 bytes ('?' and pad) and the length have to change
+                        wPt[5] ^= 0b00000000_00000000_10111111_10000000U;
+                        // from 6 to 14 (remain) = 0
+                        wPt[15] = 176; // 22 *8 = 176
+
+                        sha.Init(hPt);
+                        sha.Compress22(hPt, wPt);
+
+                        if (comparer.Compare(sha.GetBytes(hPt)))
+                        {
+                            SetResult(item);
+                            success = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -112,16 +123,13 @@ namespace FinderOuter.Services
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
             using Sha256 sha = new Sha256();
-            uint[] secondW = new uint[sha.w.Length];
             bool success = false;
 
             byte[] temp = new byte[precomputed.Length];
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0], w2Pt = &secondW[0])
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (byte* pre = &precomputed[0], tmp = &temp[0])
             fixed (int* mi = &missingIndexes[0])
             {
-                wPt[15] = 248; // 31 *8 = 184
-
                 foreach (var item in cartesian)
                 {
                     Buffer.MemoryCopy(pre, tmp, 30, 30);
@@ -143,16 +151,27 @@ namespace FinderOuter.Services
                     // The added value below is the SHA padding and the last added ? char equal to 0x3f shifted right 8 places
                     wPt[7] = (uint)tmp[28] << 24 | (uint)tmp[29] << 16 | 0b00000000_00000000_00111111_10000000U;
                     // from 8 to 14 = 0
-                    // 15 is already set above
+                    wPt[15] = 248; // 31 *8 = 184
 
                     sha.Init(hPt);
                     sha.Compress31(hPt, wPt);
 
                     if ((hPt[0] & 0b11111111_00000000_00000000_00000000U) == 0)
                     {
-                        // TODO: same as above
-                        SetResult(item);
-                        success = true;
+                        // Same as above
+                        wPt[7] ^= 0b00000000_00000000_10111111_10000000U;
+                        // from 8 to 14 (remain) = 0
+                        wPt[15] = 240; // 30 *8 = 240
+
+                        sha.Init(hPt);
+                        sha.Compress30(hPt, wPt);
+
+                        if (comparer.Compare(sha.GetBytes(hPt)))
+                        {
+                            SetResult(item);
+                            success = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -171,6 +190,11 @@ namespace FinderOuter.Services
                 return report.Fail("Input contains invalid base-58 character(s).");
             if (!key.StartsWith(ConstantsFO.MiniKeyStart))
                 return report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
+
+            if (!((PrivateKeyToAddressComparer)comparer).TrySetHash(extra))
+            {
+                return report.Fail("Invalid address.");
+            }
 
             missCount = key.Count(c => c == missingChar);
             if (missCount == 0)
