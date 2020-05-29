@@ -375,6 +375,58 @@ namespace Tests.Backend.Cryptography.Hashing
         }
 
         [Fact]
+        public unsafe void Compress26Test()
+        {
+            int dataLen = 26;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 6; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[6] = (uint)data[24] << 24 | (uint)data[25] << 16 | 0b00000000_00000000_10000000_00000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress26(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compress27Test()
+        {
+            int dataLen = 27;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha256 sha = new Sha256();
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                int dIndex = 0;
+                for (int i = 0; i < 6; i++, dIndex += 4)
+                {
+                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+                }
+                wPt[6] = (uint)data[24] << 24 | (uint)data[25] << 16 | (uint)data[26] << 8 | 0b00000000_00000000_00000000_10000000U;
+
+                wPt[15] = (uint)dataLen * 8;
+                sha.Init(hPt);
+                sha.Compress27(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
         public unsafe void Compress28Test()
         {
             int dataLen = 28;
