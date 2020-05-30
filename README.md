@@ -33,12 +33,15 @@ This option is similar to previous feature but works for base-16 (hexadecimal) p
 and only checks compressed public keys. Unlike the other options, this one is very slow since it depends on ECC and that is not
 yet optimized.
 
+#### 4. Missing mini-privatekey characters
+This option is similar to 2 and 3 but works for mini-privatekeys (eg. SzavMBLoXU6kDrqtUVmffv). It requires an address to check
+each possible key against, as a result it is also slower since it depends on ECC and has 2 additional hashes.
+
 ## Future plans
 * Optimization is always at the top of the to-do list
 * Mnemonic recovery (seed phrases missing a couple of words, having wrong order,...)
 * BIP-32 path finder (user has master key and at least one child key but doesn't know the derivation path)
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
-* Recovering damaged Base-58 encoded mini-private-keys
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
 
 ## Downloading

@@ -1,8 +1,15 @@
 ### Release ?.?.? (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...master)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.3.0.0...master)
 * Missing mnemonic words
-* Missing Base-58 mini private key
+* Finding bip32 key path
 * Password recovery
+
+### Release 0.3.0 (2020-05-30)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...v0.3.0.0)
+* **New feature**: Missing mini-privatekey characters
+* Fix some bugs with missing base-58 cases
+* Improve generated reports and the way they are created
+* Various code improvements, bug fixes and additional tests
 
 ### Release 0.2.0 (2020-05-11)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.1.2.0...v0.2.0.0)
