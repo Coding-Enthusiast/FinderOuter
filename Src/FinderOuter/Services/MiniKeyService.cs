@@ -119,6 +119,64 @@ namespace FinderOuter.Services
         }
 
 
+        private unsafe bool Loop27()
+        {
+            // Same as above but key is 26 chars
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
+            using Sha256 sha = new Sha256();
+            bool success = false;
+
+            byte[] temp = new byte[precomputed.Length];
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (byte* pre = &precomputed[0], tmp = &temp[0])
+            fixed (int* mi = &missingIndexes[0])
+            {
+                foreach (var item in cartesian)
+                {
+                    Buffer.MemoryCopy(pre, tmp, 26, 26);
+                    int mis = 0;
+                    foreach (var keyItem in item)
+                    {
+                        tmp[mi[mis]] = keyItem;
+                        mis++;
+                    }
+
+                    wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
+                    wPt[1] = (uint)tmp[4] << 24 | (uint)tmp[5] << 16 | (uint)tmp[6] << 8 | tmp[7];
+                    wPt[2] = (uint)tmp[8] << 24 | (uint)tmp[9] << 16 | (uint)tmp[10] << 8 | tmp[11];
+                    wPt[3] = (uint)tmp[12] << 24 | (uint)tmp[13] << 16 | (uint)tmp[14] << 8 | tmp[15];
+                    wPt[4] = (uint)tmp[16] << 24 | (uint)tmp[17] << 16 | (uint)tmp[18] << 8 | tmp[19];
+                    wPt[5] = (uint)tmp[20] << 24 | (uint)tmp[21] << 16 | (uint)tmp[22] << 8 | tmp[23];
+                    wPt[6] = (uint)tmp[24] << 24 | (uint)tmp[25] << 16 | 0b00000000_00000000_00111111_10000000U;
+                    // from 7 to 14 = 0
+                    wPt[15] = 216; // 27 *8 = 216
+
+                    sha.Init(hPt);
+                    sha.Compress27(hPt, wPt);
+
+                    if ((hPt[0] & 0b11111111_00000000_00000000_00000000U) == 0)
+                    {
+                        wPt[6] ^= 0b00000000_00000000_10111111_10000000U;
+                        // from 7 to 14 (remain) = 0
+                        wPt[15] = 208; // 26 *8 = 208
+
+                        sha.Init(hPt);
+                        sha.Compress26(hPt, wPt);
+
+                        if (comparer.Compare(sha.GetBytes(hPt)))
+                        {
+                            SetResult(item);
+                            success = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return success;
+        }
+
+
         private unsafe bool Loop31()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
@@ -180,6 +238,22 @@ namespace FinderOuter.Services
         }
 
 
+        private void PreCompute(char missingChar)
+        {
+            int mis = 0;
+            for (int i = 0; i < keyToCheck.Length; i++)
+            {
+                if (keyToCheck[i] == missingChar)
+                {
+                    missingIndexes[mis++] = i;
+                }
+                else
+                {
+                    precomputed[i] = (byte)keyToCheck[i];
+                }
+            }
+        }
+
         public async Task<bool> Find(string key, string extra, char missingChar)
         {
             report.Init();
@@ -215,50 +289,24 @@ namespace FinderOuter.Services
             if (key.Length == ConstantsFO.MiniKeyLen1)
             {
                 precomputed = new byte[ConstantsFO.MiniKeyLen1];
-                int mis = 0;
-                for (int i = 0; i < key.Length; i++)
-                {
-                    if (key[i] == missingChar)
-                    {
-                        missingIndexes[mis++] = i;
-                    }
-                    else
-                    {
-                        precomputed[i] = (byte)key[i];
-                    }
-                }
-
-                success = await Task.Run(() =>
-                {
-                    return Loop23();
-                }
-                );
+                PreCompute(missingChar);
+                success = await Task.Run(Loop23);
             }
             else if (key.Length == ConstantsFO.MiniKeyLen2)
             {
                 precomputed = new byte[ConstantsFO.MiniKeyLen2];
-                int mis = 0;
-                for (int i = 0; i < key.Length; i++)
-                {
-                    if (key[i] == missingChar)
-                    {
-                        missingIndexes[mis++] = i;
-                    }
-                    else
-                    {
-                        precomputed[i] = (byte)key[i];
-                    }
-                }
-
-                success = await Task.Run(() =>
-                {
-                    return Loop31();
-                }
-                );
+                PreCompute(missingChar);
+                success = await Task.Run(Loop27);
+            }
+            else if (key.Length == ConstantsFO.MiniKeyLen3)
+            {
+                precomputed = new byte[ConstantsFO.MiniKeyLen3];
+                PreCompute(missingChar);
+                success = await Task.Run(Loop31);
             }
             else
             {
-                return report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen2}.");
+                return report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen3}.");
             }
 
             watch.Stop();

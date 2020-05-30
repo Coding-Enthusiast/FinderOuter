@@ -31,7 +31,8 @@ namespace FinderOuter.Backend
 
         public const char MiniKeyStart = 'S';
         public const int MiniKeyLen1 = 22;
-        public const int MiniKeyLen2 = 30;
+        public const int MiniKeyLen2 = 26;
+        public const int MiniKeyLen3 = 30;
 
         public const int Bip38ByteLen = 39;
         public const int Bip38Base58Len = 58;
