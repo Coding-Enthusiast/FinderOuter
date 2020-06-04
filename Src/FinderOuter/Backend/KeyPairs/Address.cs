@@ -17,7 +17,7 @@ namespace FinderOuter.Backend.KeyPairs
         {
             b58Encoder = new Base58();
             b32Encoder = new Bech32();
-            hashFunc = new Ripemd160Sha256();
+            hashFunc = new Hash160();
             witHashFunc = new Sha256();
 
             versionByte_P2pkh_MainNet = 0;
@@ -37,7 +37,7 @@ namespace FinderOuter.Backend.KeyPairs
 
         private readonly Base58 b58Encoder;
         private readonly Bech32 b32Encoder;
-        private readonly Ripemd160Sha256 hashFunc;
+        private readonly Hash160 hashFunc;
         private readonly Sha256 witHashFunc;
         private readonly byte versionByte_P2pkh_MainNet, versionByte_P2pkh_TestNet, versionByte_P2pkh_RegTest;
         private readonly byte versionByte_P2sh_MainNet, versionByte_P2sh_TestNet, versionByte_P2sh_RegTest;
@@ -81,7 +81,7 @@ namespace FinderOuter.Backend.KeyPairs
             try
             {
                 byte[] decoded = b58Encoder.DecodeWithCheckSum(address);
-                if (decoded.Length == Ripemd160Sha256.HashByteSize + 1)
+                if (decoded.Length == Hash160.HashByteSize + 1)
                 {
                     if (decoded[0] == versionByte_P2pkh_MainNet ||
                         decoded[0] == versionByte_P2pkh_TestNet ||
@@ -108,7 +108,7 @@ namespace FinderOuter.Backend.KeyPairs
                 if (witVer == 0 &&
                     hrp == hrp_MainNet || hrp == hrp_TestNet || hrp == hrp_RegTest)
                 {
-                    if (decoded.Length == Ripemd160Sha256.HashByteSize)
+                    if (decoded.Length == Hash160.HashByteSize)
                     {
                         return AddressType.P2WPKH;
                     }

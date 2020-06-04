@@ -12,12 +12,12 @@ namespace FinderOuter.Backend.Cryptography.Hashing
     /// <para/> This is more optimized and a lot faster than using .Net functions individually 
     /// specially when computing hash for small byte arrays such as 33 bytes (bitcoin public keys used in P2PKH scripts)
     /// </summary>
-    public class Ripemd160Sha256 : IDisposable
+    public class Hash160 : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Ripemd160Sha256"/>.
+        /// Initializes a new instance of the <see cref="Hash160"/>.
         /// </summary>
-        public Ripemd160Sha256()
+        public Hash160()
         {
             rip = new Ripemd160(false);
             sha = new Sha256(false);
@@ -202,7 +202,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         /// <summary>
-        /// Releases all resources used by the current instance of the <see cref="Ripemd160Sha256"/> class.
+        /// Releases all resources used by the current instance of the <see cref="Hash160"/> class.
         /// </summary>
         public void Dispose() => Dispose(true);
     }

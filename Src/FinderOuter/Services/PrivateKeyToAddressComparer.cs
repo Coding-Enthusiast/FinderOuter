@@ -15,7 +15,7 @@ namespace FinderOuter.Services
         private readonly SecP256k1 curve = new SecP256k1();
         private readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
         private byte[] hash;
-        private Ripemd160Sha256 hash160 = new Ripemd160Sha256();
+        private readonly Hash160 hash160 = new Hash160();
 
 
         public bool TrySetHash(string address)

@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tests.Backend.Cryptography.Hashing
 {
-    public class Ripemd160Sha256Tests
+    public class Hash160Tests
     {
         private const string CompPub = "03306EEB63417D2E50C49BD5CB6256296116D6474C14853D64E008D281E392109A";
         private const string CompPubHex = "3edd2f8b85027645ddb5aec9ad59b3b60c396c7e";
@@ -18,7 +18,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public void ComputeHashTest()
         {
-            using Ripemd160Sha256 hash = new Ripemd160Sha256();
+            using Hash160 hash = new Hash160();
             byte[] data1 = Helper.HexToBytes(CompPub);
             byte[] actual1 = hash.ComputeHash(data1);
             byte[] expected1 = Helper.HexToBytes(CompPubHex);
@@ -34,7 +34,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public unsafe void Compress33Test()
         {
-            using Ripemd160Sha256 hash = new Ripemd160Sha256();
+            using Hash160 hash = new Hash160();
             byte[] data = Helper.HexToBytes(CompPub);
             byte[] actual = hash.Compress33(data);
             byte[] expected = Helper.HexToBytes(CompPubHex);
@@ -46,7 +46,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public unsafe void Compress65Test()
         {
-            using Ripemd160Sha256 hash = new Ripemd160Sha256();
+            using Hash160 hash = new Hash160();
             byte[] data = Helper.HexToBytes(UncompPub);
             byte[] actual = hash.Compress65(data);
             byte[] expected = Helper.HexToBytes(UncompPubHex);

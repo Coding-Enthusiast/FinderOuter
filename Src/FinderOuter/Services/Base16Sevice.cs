@@ -96,7 +96,7 @@ namespace FinderOuter.Services
                 byte[] xBytes = pub.X.ToByteArray(true, true);
                 Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
-                Ripemd160Sha256 hash = new Ripemd160Sha256();
+                Hash160 hash = new Hash160();
                 ReadOnlySpan<byte> actual = hash.ComputeHash(toHash);
                 if (actual.SequenceEqual(expectedHash))
                 {
