@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -13,34 +12,25 @@ namespace FinderOuter.Backend.Cryptography.Hashing
     /// Implementation of 512-bit Secure Hash Algorithm (SHA) based on RFC-6234
     /// <para/> https://tools.ietf.org/html/rfc6234
     /// </summary>
-    public class Sha512 : IHashFunction, IDisposable
+    public class Sha512 : IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Sha512"/>.
         /// </summary>
-        /// <param name="isDouble">Determines whether the hash should be performed twice.</param>
-        public Sha512(bool isDouble = false)
+        public Sha512()
         {
-            IsDouble = isDouble;
         }
 
-
-
-        /// <summary>
-        /// Indicates whether the hash function should be performed twice on message.
-        /// For example Double SHA256 that bitcoin uses.
-        /// </summary>
-        public bool IsDouble { get; set; }
 
         /// <summary>
         /// Size of the hash result in bytes (=64 bytes).
         /// </summary>
-        public virtual int HashByteSize => 64;
+        public const int HashByteSize = 64;
 
         /// <summary>
         /// Size of the blocks used in each round (=128 bytes).
         /// </summary>
-        public virtual int BlockByteSize => 128;
+        public const int BlockByteSize = 128;
 
 
         internal ulong[] hashState = new ulong[8];
@@ -81,7 +71,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <returns>The computed hash</returns>
         public byte[] ComputeHash(byte[] data)
         {
-            if (disposedValue)
+            if (isDisposed)
                 throw new ObjectDisposedException("Instance was disposed.");
             if (data == null)
                 throw new ArgumentNullException(nameof(data), "Data can not be null.");
@@ -92,23 +82,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
             return GetBytes();
         }
-
-
-        /// <summary>
-        /// Computes the hash value for the specified region of the specified byte array.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="IndexOutOfRangeException"/>
-        /// <exception cref="ObjectDisposedException"/>
-        /// <param name="buffer">The byte array to compute hash for</param>
-        /// <param name="offset">The offset into the byte array from which to begin using data.</param>
-        /// <param name="count">The number of bytes in the array to use as data.</param>
-        /// <returns>The computed hash</returns>
-        public byte[] ComputeHash(byte[] buffer, int offset, int count)
-        {
-            return ComputeHash(buffer.SubArray(offset, count));
-        }
-
 
 
         internal virtual unsafe void Init()
@@ -246,44 +219,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 }
 
                 CompressBlock(hPt, wPt);
-
-
-                if (IsDouble)
-                {
-                    DoSecondHash(hPt, wPt);
-                }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual unsafe void DoSecondHash(ulong* hPt, ulong* wPt)
-        {
-            // Result of previous hash (hashState[]) is now our new block. So copy it here:
-            wPt[0] = hPt[0];
-            wPt[1] = hPt[1];
-            wPt[2] = hPt[2];
-            wPt[3] = hPt[3];
-            wPt[4] = hPt[4];
-            wPt[5] = hPt[5];
-            wPt[6] = hPt[6];
-            wPt[7] = hPt[7]; // 8*8 = 64 byte hash result
-
-            wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL; // 1 followed by 0 bits: pad1
-            wPt[9] = 0;
-            wPt[10] = 0;
-            wPt[11] = 0;
-            wPt[12] = 0;
-            wPt[13] = 0;
-
-            wPt[14] = 0; // Message length for pad2, since message is the 64 byte result of previous hash, length is 512 bit
-            wPt[15] = 512;
-
-            // Now initialize hashState to compute next round
-            Init(hPt);
-
-            // We only have 1 block so there is no need for a loop.
-            CompressBlock(hPt, wPt);
-
         }
 
 
@@ -364,65 +300,30 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong CH(ulong x, ulong y, ulong z)
-        {
-            // (x & y) ^ ((~x) & z);
-            return z ^ (x & (y ^ z)); //TODO: find mathematical proof for this change
-        }
+        private ulong CH(ulong x, ulong y, ulong z) => z ^ (x & (y ^ z)); //TODO: find mathematical proof for this change
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong MAJ(ulong x, ulong y, ulong z)
-        {
-            // (x & y) ^ (x & z) ^ (y & z);
-            return (x & y) | (z & (x | y)); //TODO: find mathematical proof for this change
-        }
+        private ulong MAJ(ulong x, ulong y, ulong z) => (x & y) | (z & (x | y)); //TODO: find mathematical proof for this change
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong BSIG0(ulong x)
-        {
-            // ROTR(x, 28) ^ ROTR(x, 34) ^ ROTR(x, 39);
-            return (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
-        }
+        private ulong BSIG0(ulong x) => (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong BSIG1(ulong x)
-        {
-            // ROTR(x, 14) ^ ROTR(x, 18) ^ ROTR(x, 41);
-            return (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
-        }
+        private ulong BSIG1(ulong x) => (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong SSIG0(ulong x)
-        {
-            // ROTR(x, 1) ^ ROTR(x, 8) ^ (x >> 7);
-            return (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
-        }
+        private ulong SSIG0(ulong x) => (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong SSIG1(ulong x)
-        {
-            // ROTR(x, 19) ^ ROTR(x, 61) ^ (x >> 6);
-            return (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
-        }
-
-        //private ulong ROTR(ulong x, int n)
-        //{
-        //    return (x >> n) | (x << (64 - n));
-        //}
-
-        //private ulong ROTL(ulong x, int n)
-        //{
-        //    return (x << n) | (x >> (64 - n));
-        //}
+        private ulong SSIG1(ulong x) => (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
 
 
 
-        #region IDisposable Support
-        private bool disposedValue = false;
+        private bool isDisposed = false;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!isDisposed)
             {
                 if (disposing)
                 {
@@ -435,17 +336,13 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                     w = null;
                 }
 
-                disposedValue = true;
+                isDisposed = true;
             }
         }
 
         /// <summary>
         /// Releases all resources used by the current instance of the <see cref="Sha512"/> class.
         /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-        #endregion
+        public void Dispose() => Dispose(true);
     }
 }

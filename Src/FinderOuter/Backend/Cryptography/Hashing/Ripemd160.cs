@@ -3,39 +3,30 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin;
 using System;
 using System.Runtime.CompilerServices;
 
 namespace FinderOuter.Backend.Cryptography.Hashing
 {
-    public class Ripemd160 : IHashFunction
+    public class Ripemd160 : IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Ripemd160"/>.
         /// </summary>
-        /// <param name="isDouble">Determines whether the hash should be performed twice.</param>
-        public Ripemd160(bool isDouble = false)
+        public Ripemd160()
         {
-            IsDouble = isDouble;
         }
 
-
-
-        /// <summary>
-        /// Indicates whether the hash function should be performed twice on message.
-        /// </summary>
-        public bool IsDouble { get; set; }
 
         /// <summary>
         /// Size of the hash result in bytes.
         /// </summary>
-        public int HashByteSize => 20;
+        public const int HashByteSize = 20;
 
         /// <summary>
         /// Size of the blocks used in each round.
         /// </summary>
-        public int BlockByteSize => 64;
+        public const int BlockByteSize = 64;
 
         internal uint[] block = new uint[16];
         internal uint[] hashState = new uint[5];
@@ -51,7 +42,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <returns>The computed hash</returns>
         public byte[] ComputeHash(byte[] data)
         {
-            if (disposedValue)
+            if (isDisposed)
                 throw new ObjectDisposedException("Instance was disposed.");
             if (data == null)
                 throw new ArgumentNullException(nameof(data), "Data can not be null.");
@@ -63,21 +54,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             return GetBytes();
         }
 
-
-        /// <summary>
-        /// Computes the hash value for the specified region of the specified byte array.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="IndexOutOfRangeException"/>
-        /// <exception cref="ObjectDisposedException"/>
-        /// <param name="buffer">The byte array to compute hash for</param>
-        /// <param name="offset">The offset into the byte array from which to begin using data.</param>
-        /// <param name="count">The number of bytes in the array to use as data.</param>
-        /// <returns>The computed hash</returns>
-        public byte[] ComputeHash(byte[] buffer, int offset, int count)
-        {
-            return ComputeHash(buffer.SubArray(offset, count));
-        }
 
         internal unsafe byte[] GetBytes()
         {
@@ -155,31 +131,8 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                     }
                 }
             }
-
-            if (IsDouble)
-            {
-                DoSecondHash();
-            }
         }
 
-        internal virtual unsafe void DoSecondHash()
-        {
-            // TODO: change this like Sha256, etc.
-            block = new uint[16]
-            {
-                hashState[0], hashState[1], hashState[2], hashState[3], hashState[4], // 5*4=20 byte
-                0b00000000_00000000_00000000_10000000U, 0, 0, 0, 0, 0, 0, 0, 0, // 9*4=36 byte pad1 starting with 1
-                160, 0 // 2*4=8 byte pad2 equal to length (20byte=160bit)
-            };
-
-            Init();
-
-            fixed (uint* xPt = &block[0], hPt = &hashState[0])
-            {
-                // We only have 1 block so there is no need for a loop.
-                CompressBlock(xPt, hPt);
-            }
-        }
 
         internal unsafe void Init()
         {
@@ -724,12 +677,11 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
 
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool isDisposed = false;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!isDisposed)
             {
                 if (disposing)
                 {
@@ -742,18 +694,13 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                     hashState = null;
                 }
 
-                disposedValue = true;
+                isDisposed = true;
             }
         }
 
         /// <summary>
         /// Releases all resources used by the current instance of the <see cref="Ripemd160"/> class.
         /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-        #endregion
-
+        public void Dispose() => Dispose(true);
     }
 }

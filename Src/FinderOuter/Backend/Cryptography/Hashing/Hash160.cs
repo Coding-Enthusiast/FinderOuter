@@ -19,8 +19,8 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public Hash160()
         {
-            rip = new Ripemd160(false);
-            sha = new Sha256(false);
+            rip = new Ripemd160();
+            sha = new Sha256();
         }
 
 

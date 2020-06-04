@@ -65,7 +65,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                     throw new ArgumentNullException("Key can not be null.");
 
 
-                if (value.Length > hashFunc.BlockByteSize)
+                if (value.Length > Sha512.BlockByteSize)
                 {
                     _keyValue = hashFunc.ComputeHash(value);
                 }
@@ -78,8 +78,8 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 {
                     // In order to set pads we have to XOR key with pad values. 
                     // Since we don't know the length of the key, it is harder to loop using UInt32 so we use 2 temp pad bytes:
-                    byte[] opadB = new byte[hashFunc.BlockByteSize];
-                    byte[] ipadB = new byte[hashFunc.BlockByteSize];
+                    byte[] opadB = new byte[Sha512.BlockByteSize];
+                    byte[] ipadB = new byte[Sha512.BlockByteSize];
 
                     // Note (kp = _keyValue) can't assign to first item because key might be empty array which will throw an excpetion
                     fixed (byte* kp = _keyValue, temp_opB = &opadB[0], temp_ipB = &ipadB[0])
@@ -161,7 +161,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             fixed (ulong* oPt = &opad[0], iPt = &ipad[0])
             fixed (ulong* hPt = &hashFunc.hashState[0], wPt = &hashFunc.w[0])
             {
-                if (key.Length > hashFunc.BlockByteSize)
+                if (key.Length > Sha512.BlockByteSize)
                 {
                     hashFunc.Init(hPt);
                     hashFunc.DoHash(key, key.Length);
@@ -181,7 +181,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 {
                     InitPads(iPt, oPt);
 
-                    byte[] temp = new byte[hashFunc.BlockByteSize];
+                    byte[] temp = new byte[Sha512.BlockByteSize];
                     Buffer.BlockCopy(key, 0, temp, 0, key.Length);
                     int kIndex = 0;
                     fixed (byte* tPt = &temp[0])
