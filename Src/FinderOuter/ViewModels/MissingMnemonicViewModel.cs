@@ -82,7 +82,7 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            _ = MnService.FindMissing(Mnemonic, MissingChar, SelectedMnemonicType, SelectedWordListType);
+            _ = MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, SelectedMnemonicType, SelectedWordListType);
         }
     }
 }

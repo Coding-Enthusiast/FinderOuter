@@ -21,7 +21,7 @@ namespace FinderOuter.ViewModels
                 new MissingBase58ViewModel(),
                 new MissingBase16ViewModel(),
                 new MissingMiniPrivateKeyViewModel(),
-                //new MissingMnemonicViewModel(),
+                new MissingMnemonicViewModel(),
             };
 
             WinMan = new WindowManager();

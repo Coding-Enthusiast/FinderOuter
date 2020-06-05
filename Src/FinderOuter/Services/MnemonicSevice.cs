@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend;
+using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
 using System;
@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -40,15 +41,20 @@ namespace FinderOuter.Services
         public MnemonicSevice(IReport rep)
         {
             report = rep;
+            inputService = new InputService();
         }
 
 
+        HmacSha512 hmac = new HmacSha512();
         private readonly IReport report;
-        private readonly Sha256 sha = new Sha256();
+        private readonly InputService inputService;
         private readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
         private uint[] wordIndexes;
         private int[] missingIndexes;
         private string[] allWords;
+        private BIP0032Path path;
+        private uint keyIndex;
+        private readonly PrivateKeyToAddressComparer comparer;
 
         private int missCount;
         private string[] words;
@@ -64,7 +70,7 @@ namespace FinderOuter.Services
 
         private unsafe void SetBip32(byte[] mnemonic)
         {
-            HmacSha512 hmac = new HmacSha512(mnemonic);
+            hmac.Key = mnemonic;
 
             byte[] salt = Encoding.UTF8.GetBytes($"mnemonic{passPhrase?.Normalize(NormalizationForm.FormKD)}");
             byte[] saltForHmac = new byte[salt.Length + 4];
@@ -97,27 +103,43 @@ namespace FinderOuter.Services
                     int len = u1.Length;
                     fixed (byte* first = resultOfF, second = u1)
                     {
-                        byte* fp = first;
-                        byte* sp = second;
+                        if (Avx2.IsSupported)
+                        {
+                            var part1 = Avx2.Xor(Avx2.LoadVector256(first), Avx2.LoadVector256(second));
+                            var part2 = Avx2.Xor(Avx2.LoadVector256(first + 32), Avx2.LoadVector256(second + 32));
 
-                        *(ulong*)fp ^= *(ulong*)sp;
-                        *(ulong*)(fp + 8) ^= *(ulong*)(sp + 8);
-                        *(ulong*)(fp + 16) ^= *(ulong*)(sp + 16);
-                        *(ulong*)(fp + 24) ^= *(ulong*)(sp + 24);
-                        *(ulong*)(fp + 32) ^= *(ulong*)(sp + 32);
-                        *(ulong*)(fp + 40) ^= *(ulong*)(sp + 40);
-                        *(ulong*)(fp + 48) ^= *(ulong*)(sp + 48);
-                        *(ulong*)(fp + 56) ^= *(ulong*)(sp + 56);
+                            Avx2.Store(first, part1);
+                            Avx2.Store(first + 32, part2);
+                        }
+                        else
+                        {
+                            *(ulong*)first ^= *(ulong*)second;
+                            *(ulong*)(first + 8) ^= *(ulong*)(second + 8);
+                            *(ulong*)(first + 16) ^= *(ulong*)(second + 16);
+                            *(ulong*)(first + 24) ^= *(ulong*)(second + 24);
+                            *(ulong*)(first + 32) ^= *(ulong*)(second + 32);
+                            *(ulong*)(first + 40) ^= *(ulong*)(second + 40);
+                            *(ulong*)(first + 48) ^= *(ulong*)(second + 48);
+                            *(ulong*)(first + 56) ^= *(ulong*)(second + 56);
+                        }
                     }
                 }
 
                 Buffer.BlockCopy(resultOfF, 0, seed, 0, resultOfF.Length);
+
+                using BIP0032 bip = new BIP0032(seed);
+                if (comparer.Compare(bip.GetPrivateKeys(path, keyIndex)[0].ToBytes()))
+                {
+                    report.AddMessageSafe("Found a key.");
+                }
             }
         }
 
 
         private unsafe bool Loop24()
         {
+            using Sha256 sha = new Sha256();
+
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -189,6 +211,7 @@ namespace FinderOuter.Services
                     //                                         -> LLLL_LLLM MMMM_MMMM MMNN_NNNN NNNN_NOOO
                     wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
+                    sha.Init(hPt);
                     sha.Compress32(hPt, wPt);
 
                     if ((byte)wrd[23] == hPt[0] >> 24)
@@ -212,6 +235,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop21()
         {
+            using Sha256 sha = new Sha256();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -237,6 +261,7 @@ namespace FinderOuter.Services
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
                     wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
+                    sha.Init(hPt);
                     sha.Compress28(hPt, wPt);
 
                     if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
@@ -260,6 +285,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop18()
         {
+            using Sha256 sha = new Sha256();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -284,6 +310,7 @@ namespace FinderOuter.Services
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
+                    sha.Init(hPt);
                     sha.Compress24(hPt, wPt);
 
                     if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
@@ -307,6 +334,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop15()
         {
+            using Sha256 sha = new Sha256();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -330,6 +358,7 @@ namespace FinderOuter.Services
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
+                    sha.Init(hPt);
                     sha.Compress20(hPt, wPt);
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
@@ -353,6 +382,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop12()
         {
+            using Sha256 sha = new Sha256();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -375,6 +405,7 @@ namespace FinderOuter.Services
                     wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
+                    sha.Init(hPt);
                     sha.Compress16(hPt, wPt);
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
@@ -398,6 +429,7 @@ namespace FinderOuter.Services
 
 
 
+        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
 
         private bool TrySetEntropy(string mnemonic, MnemonicTypes mnType)
         {
@@ -412,50 +444,53 @@ namespace FinderOuter.Services
 
         private bool TrySetWordList(WordLists wl)
         {
-            string fPath = $"FinderOuter.Backend.ImprovementProposals.BIP0039WordLists.{wl.ToString()}.txt";
-            Assembly asm = Assembly.GetExecutingAssembly();
-            using (Stream stream = asm.GetManifestResourceStream(fPath))
+            try
             {
-                if (stream != null)
+                string fPath = $"FinderOuter.Backend.ImprovementProposals.BIP0039WordLists.{wl}.txt";
+                Assembly asm = Assembly.GetExecutingAssembly();
+                using (Stream stream = asm.GetManifestResourceStream(fPath))
                 {
-                    using StreamReader reader = new StreamReader(stream);
-                    allWords = reader.ReadToEnd().Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    if (stream != null)
+                    {
+                        using StreamReader reader = new StreamReader(stream);
+                        allWords = reader.ReadToEnd().Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
-                else
-                {
-                    return report.Fail($"Could not find {wl} word list among resources."); ;
-                }
-            }
 
-            return true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
-        private bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
-
-        private bool TrySplitMnemonic(string mnemonic, char missingChar, out string[] result)
+        private bool TrySplitMnemonic(string mnemonic, char missingChar)
         {
             if (string.IsNullOrWhiteSpace(mnemonic))
             {
-                result = null;
                 return report.Fail("Mnemonic can not be null or empty.");
             }
             else
             {
-                result = mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (!allowedWordLengths.Contains(result.Length))
+                words = mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!allowedWordLengths.Contains(words.Length))
                 {
                     return report.Fail("Invalid mnemonic length.");
                 }
 
                 string miss = new string(new char[] { missingChar });
-                if (result.Any(s => s != miss && !allWords.Contains(s)))
+                if (words.Any(s => s != miss && !allWords.Contains(s)))
                 {
-                    result = null;
-                    return report.Fail("Mnemonic input contains invalid words.");
+                    words = null;
+                    return report.Fail("Given mnemonic contains invalid words.");
                 }
-                missCount = result.Count(s => s == miss);
-                wordIndexes = new uint[result.Length];
+                missCount = words.Count(s => s == miss);
+                wordIndexes = new uint[words.Length];
                 missingIndexes = new int[missCount];
                 for (int i = 0, j = 0; i < words.Length; i++)
                 {
@@ -470,23 +505,25 @@ namespace FinderOuter.Services
                     }
                 }
 
-                report.AddMessage($"There are {result.Length} words in the given mnemonic with {missCount} missing.");
-                report.AddMessage($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
                 return true;
             }
         }
 
 
-        public async Task<bool> FindMissing(string mnemonic, char missingChar, MnemonicTypes mnType, WordLists wl)
+        public async Task<bool> FindMissing(string mnemonic, char missChar, string pass, MnemonicTypes mnType, WordLists wl)
         {
             report.Init();
 
             if (!TrySetWordList(wl))
-                return false;
-            if (!IsMissingCharValid(missingChar))
+                return report.Fail($"Could not find {wl} word list among resources."); ;
+            if (!inputService.IsMissingCharValid(missChar))
                 return report.Fail("Missing character is not accepted.");
-            if (!TrySplitMnemonic(mnemonic, missingChar, out words))
+            if (!TrySplitMnemonic(mnemonic, missChar))
                 return false;
+            passPhrase = pass;
+
+            report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");
+            report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
 
             Stopwatch watch = Stopwatch.StartNew();
 
@@ -503,15 +540,10 @@ namespace FinderOuter.Services
             });
 
             watch.Stop();
+
             report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
             report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
-            if (success)
-            {
-                // TODO: remove this branch after addition of more checks versus address 
-                // we should end up with only one correct result.
-                report.AddMessageSafe($"Found {Final.Count:n0} correct mnemonics.");
-                Final.Clear();
-            }
+
             return report.Finalize(success);
         }
 
