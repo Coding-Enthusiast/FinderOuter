@@ -90,9 +90,9 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                 rip.Init(rip_hPt);
                 rip.CompressBlock(rip_blkPt, rip_hPt);
-            }
 
-            return rip.GetBytes();
+                return rip.GetBytes(rip_hPt);
+            }
         }
 
         public unsafe byte[] Compress33(byte[] data)
@@ -140,9 +140,9 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                 rip.Init(rip_hPt);
                 rip.CompressBlock(rip_blkPt, rip_hPt);
-            }
 
-            return rip.GetBytes();
+                return rip.GetBytes(rip_hPt);
+            }
         }
 
         public unsafe byte[] Compress65(byte[] data)
@@ -174,9 +174,9 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                 rip.Init(rip_hPt);
                 rip.CompressBlock(rip_blkPt, rip_hPt);
-            }
 
-            return rip.GetBytes();
+                return rip.GetBytes(rip_hPt);
+            }
         }
 
 
