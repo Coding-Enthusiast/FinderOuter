@@ -138,7 +138,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop24()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
 
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
@@ -235,7 +235,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop21()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -285,7 +285,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop18()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -334,7 +334,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop15()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
@@ -382,7 +382,7 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop12()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
             fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])

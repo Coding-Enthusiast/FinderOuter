@@ -18,7 +18,7 @@ namespace FinderOuter.Backend.KeyPairs
             b58Encoder = new Base58();
             b32Encoder = new Bech32();
             hashFunc = new Hash160();
-            witHashFunc = new Sha256();
+            witHashFunc = new Sha256Fo();
 
             versionByte_P2pkh_MainNet = 0;
             versionByte_P2pkh_TestNet = 111;
@@ -38,7 +38,7 @@ namespace FinderOuter.Backend.KeyPairs
         private readonly Base58 b58Encoder;
         private readonly Bech32 b32Encoder;
         private readonly Hash160 hashFunc;
-        private readonly Sha256 witHashFunc;
+        private readonly Sha256Fo witHashFunc;
         private readonly byte versionByte_P2pkh_MainNet, versionByte_P2pkh_TestNet, versionByte_P2pkh_RegTest;
         private readonly byte versionByte_P2sh_MainNet, versionByte_P2sh_TestNet, versionByte_P2sh_RegTest;
         private readonly string hrp_MainNet, hrp_TestNet, hrp_RegTest;

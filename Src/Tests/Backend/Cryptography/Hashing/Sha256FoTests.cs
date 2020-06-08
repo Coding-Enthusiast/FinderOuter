@@ -11,13 +11,13 @@ using Xunit;
 
 namespace Tests.Backend.Cryptography.Hashing
 {
-    public class Sha256Tests
+    public class Sha256FoTests
     {
         [Theory]
         [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "SHA256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHashTest(byte[] message, byte[] expectedHash)
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             byte[] actualHash = sha.ComputeHash(message);
             Assert.Equal(expectedHash, actualHash);
         }
@@ -25,7 +25,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public void ComputeHash_AMillionATest()
         {
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             byte[] actualHash = sha.ComputeHash(HashTestCaseHelper.GetAMillionA());
             byte[] expectedHash = Helper.HexToBytes("cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
 
@@ -40,7 +40,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] exp1 = Helper.HexToBytes("d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592");
             byte[] exp2 = Helper.HexToBytes("e4c4d8f3bf76b692de791a173e05321150f7a345b46484fe427f6acc7ecc81be");
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             byte[] act1 = sha.ComputeHash(msg1);
             byte[] act2 = sha.ComputeHash(msg2);
 
@@ -52,7 +52,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public void ComputeHash_DoubleTest()
         {
-            using Sha256 sha = new Sha256(true);
+            using Sha256Fo sha = new Sha256Fo(true);
             var data = Helper.HexToBytes("fb8049137747e712628240cf6d7056ea2870170cb7d9bc713d91e901b514c6ae7d7dda3cd03ea1b99cf85046a505f3590541123d3f8f2c22c4d7d6e65de65c4ebb9251f09619");
             byte[] actualHash = sha.ComputeHash(data);
             byte[] expectedHash = Helper.HexToBytes("d2cee8d3cfaf1819c55cce1214d01cdef1d97446719ccfaad4d76d912a8126f9");
@@ -65,7 +65,7 @@ namespace Tests.Backend.Cryptography.Hashing
         public void ComputeHash_ExceptionsTest()
         {
             byte[] goodBa = { 1, 2, 3 };
-            Sha256 sha = new Sha256();
+            Sha256Fo sha = new Sha256Fo();
 
             Assert.Throws<ArgumentNullException>(() => sha.ComputeHash(null));
 
@@ -78,7 +78,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistShortTest(byte[] message, byte[] expected)
         {
-            using Sha256 sha = new Sha256(false);
+            using Sha256Fo sha = new Sha256Fo(false);
             byte[] actual = sha.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
@@ -87,7 +87,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistLongTest(byte[] message, byte[] expected)
         {
-            using Sha256 sha = new Sha256(false);
+            using Sha256Fo sha = new Sha256Fo(false);
             byte[] actual = sha.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
@@ -105,7 +105,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] M1 = seed;
             byte[] M2 = seed;
 
-            Sha256 sha = new Sha256(false);
+            Sha256Fo sha = new Sha256Fo(false);
 
             foreach (var item in jObjs["MonteCarlo"])
             {
@@ -251,7 +251,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -277,7 +277,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -303,7 +303,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -329,7 +329,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -355,7 +355,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -381,7 +381,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -407,7 +407,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -433,7 +433,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -459,7 +459,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -485,7 +485,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -511,7 +511,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -537,7 +537,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -563,7 +563,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (byte* dPt = &data[0])
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
@@ -583,7 +583,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -608,7 +608,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -633,7 +633,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -658,7 +658,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -683,7 +683,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;
@@ -708,7 +708,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeDoubleSha(data);
 
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 int dIndex = 0;

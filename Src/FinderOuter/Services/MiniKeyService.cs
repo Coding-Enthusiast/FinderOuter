@@ -62,7 +62,7 @@ namespace FinderOuter.Services
             // Note characters are decoded using UTF-8
 
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             byte[] temp = new byte[precomputed.Length];
@@ -123,7 +123,7 @@ namespace FinderOuter.Services
         {
             // Same as above but key is 26 chars
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             byte[] temp = new byte[precomputed.Length];
@@ -180,7 +180,7 @@ namespace FinderOuter.Services
         private unsafe bool Loop31()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             byte[] temp = new byte[precomputed.Length];

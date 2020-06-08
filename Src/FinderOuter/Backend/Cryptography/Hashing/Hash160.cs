@@ -20,7 +20,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         public Hash160()
         {
             rip = new Ripemd160();
-            sha = new Sha256();
+            sha = new Sha256Fo();
         }
 
 
@@ -30,7 +30,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         public const int HashByteSize = 20;
 
         private Ripemd160 rip;
-        private Sha256 sha;
+        private Sha256Fo sha;
 
 
         /// <summary>

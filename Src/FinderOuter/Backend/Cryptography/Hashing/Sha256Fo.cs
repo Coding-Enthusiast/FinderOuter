@@ -12,13 +12,13 @@ namespace FinderOuter.Backend.Cryptography.Hashing
     /// Implementation of 256-bit Secure Hash Algorithm (SHA) base on RFC-6234
     /// <para/> https://tools.ietf.org/html/rfc6234
     /// </summary>
-    public class Sha256 : IDisposable
+    public class Sha256Fo : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sha256"/>.
+        /// Initializes a new instance of the <see cref="Sha256Fo"/>.
         /// </summary>
         /// <param name="isDouble">Determines whether the hash should be performed twice.</param>
-        public Sha256(bool isDouble = false)
+        public Sha256Fo(bool isDouble = false)
         {
             IsDouble = isDouble;
         }
@@ -1730,7 +1730,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         /// <summary>
-        /// Releases all resources used by the current instance of the <see cref="Sha256"/> class.
+        /// Releases all resources used by the current instance of the <see cref="Sha256Fo"/> class.
         /// </summary>
         public void Dispose()
         {

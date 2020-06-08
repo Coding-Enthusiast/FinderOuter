@@ -105,7 +105,7 @@ namespace FinderOuter.Services
         {
             report.ChangeProgressVisibilitySafe(false);
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -158,7 +158,7 @@ namespace FinderOuter.Services
         private unsafe bool LoopUncomp()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -383,7 +383,7 @@ namespace FinderOuter.Services
             }
 
             // SHA must be defined here for this method to be thread safe
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
 
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (uint* keyPt = &keyValueInts[0])
@@ -411,7 +411,7 @@ namespace FinderOuter.Services
         private unsafe bool Loop21()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
@@ -481,7 +481,7 @@ namespace FinderOuter.Services
         private unsafe bool Loop58()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-            using Sha256 sha = new Sha256();
+            using Sha256Fo sha = new Sha256Fo();
             bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
