@@ -60,6 +60,10 @@ namespace FinderOuter.Services
         private string[] words;
         private string passPhrase;
 
+        // Biggest word has 8 chars, biggest mnemonic has 24 words + 23 spaces
+        // TODO: replace StringBuilder with a byte[] for an even faster result
+        private const int SbCap = (8 * 24) + 23;
+
 
         readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
         private void SetResult(IEnumerable<int> item)
@@ -216,7 +220,7 @@ namespace FinderOuter.Services
 
                     if ((byte)wrd[23] == hPt[0] >> 24)
                     {
-                        StringBuilder sb = new StringBuilder(24);
+                        StringBuilder sb = new StringBuilder(SbCap);
                         for (int i = 0; i < 23; i++)
                         {
                             sb.Append($"{allWords[wrd[i]]} ");
@@ -266,7 +270,7 @@ namespace FinderOuter.Services
 
                     if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
                     {
-                        StringBuilder sb = new StringBuilder(21);
+                        StringBuilder sb = new StringBuilder(SbCap);
                         for (int i = 0; i < 20; i++)
                         {
                             sb.Append($"{allWords[wrd[i]]} ");
@@ -315,7 +319,7 @@ namespace FinderOuter.Services
 
                     if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
                     {
-                        StringBuilder sb = new StringBuilder(18);
+                        StringBuilder sb = new StringBuilder(SbCap);
                         for (int i = 0; i < 17; i++)
                         {
                             sb.Append($"{allWords[wrd[i]]} ");
@@ -363,7 +367,7 @@ namespace FinderOuter.Services
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
                     {
-                        StringBuilder sb = new StringBuilder(15);
+                        StringBuilder sb = new StringBuilder(SbCap);
                         for (int i = 0; i < 14; i++)
                         {
                             sb.Append($"{allWords[wrd[i]]} ");
@@ -410,7 +414,7 @@ namespace FinderOuter.Services
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
                     {
-                        StringBuilder sb = new StringBuilder(12);
+                        StringBuilder sb = new StringBuilder(SbCap);
                         for (int i = 0; i < 11; i++)
                         {
                             sb.Append($"{allWords[wrd[i]]} ");
