@@ -6,6 +6,7 @@
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,7 +22,7 @@ namespace FinderOuter.Services
         public MiniKeyService(IReport rep)
         {
             inputService = new InputService();
-            comparer = new PrivateKeyToAddressComparer();
+            comparer = new PrvToAddrBothComparer();
             report = rep;
         }
 
@@ -265,7 +266,7 @@ namespace FinderOuter.Services
             if (!key.StartsWith(ConstantsFO.MiniKeyStart))
                 return report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
 
-            if (!((PrivateKeyToAddressComparer)comparer).TrySetHash(extra))
+            if (!((PrvToAddrBothComparer)comparer).TrySetHash(extra))
             {
                 return report.Fail("Invalid address.");
             }

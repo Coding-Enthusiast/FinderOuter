@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -54,7 +55,7 @@ namespace FinderOuter.Services
         private string[] allWords;
         private BIP0032Path path;
         private uint keyIndex;
-        private readonly PrivateKeyToAddressComparer comparer;
+        private readonly PrvToAddrBothComparer comparer;
 
         private int missCount;
         private string[] words;

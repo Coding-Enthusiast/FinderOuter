@@ -8,9 +8,12 @@ using FinderOuter.Backend.Cryptography.Hashing;
 using System;
 using System.Numerics;
 
-namespace FinderOuter.Services
+namespace FinderOuter.Services.Comparers
 {
-    public class PrivateKeyToAddressComparer : ICompareService
+    /// <summary>
+    /// Converts private key to address using both compressed and uncompressed public keys
+    /// </summary>
+    public class PrvToAddrBothComparer : ICompareService, IDisposable
     {
         private readonly SecP256k1 curve = new SecP256k1();
         private readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
@@ -28,7 +31,7 @@ namespace FinderOuter.Services
         public bool Compare(byte[] key)
         {
             BigInteger kVal = new BigInteger(key, true, true);
-            if (kVal >= curve.N)
+            if (kVal >= curve.N || kVal == 0)
             {
                 return false;
             }
@@ -51,12 +54,11 @@ namespace FinderOuter.Services
             Buffer.BlockCopy(yBytes, 0, toHash, 65 - yBytes.Length, yBytes.Length);
 
             ReadOnlySpan<byte> uncompHash = hash160.Compress65(toHash);
-            if (uncompHash.SequenceEqual(hash))
-            {
-                return true;
-            }
 
-            return false;
+            return uncompHash.SequenceEqual(hash);
         }
+
+
+        public void Dispose() => hash160.Dispose();
     }
 }
