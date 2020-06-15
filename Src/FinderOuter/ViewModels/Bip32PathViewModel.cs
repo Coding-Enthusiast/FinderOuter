@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
@@ -50,8 +51,8 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selMnemonic, value);
         }
 
-        private WordLists _selWordLst;
-        public WordLists SelectedWordListType
+        private BIP0039.WordLists _selWordLst;
+        public BIP0039.WordLists SelectedWordListType
         {
             get => _selWordLst;
             set => this.RaiseAndSetIfChanged(ref _selWordLst, value);

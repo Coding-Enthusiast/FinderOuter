@@ -53,18 +53,23 @@ namespace FinderOuter.Services
         private uint[] wordIndexes;
         private int[] missingIndexes;
         private string[] allWords;
+        private byte[] pbkdf2Salt;
         private BIP0032Path path;
         private uint keyIndex;
-        private readonly PrvToAddrBothComparer comparer;
+        private ICompareService comparer;
 
         private int missCount;
         private string[] words;
-        private string passPhrase;
 
         // Biggest word has 8 chars, biggest mnemonic has 24 words + 23 spaces
         // TODO: replace StringBuilder with a byte[] for an even faster result
         private const int SbCap = (8 * 24) + 23;
 
+
+        public enum InputType
+        {
+            Address
+        }
 
         readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
         private void SetResult(IEnumerable<int> item)
@@ -75,68 +80,56 @@ namespace FinderOuter.Services
 
         private unsafe void SetBip32(byte[] mnemonic)
         {
+            // This is PBKDF2 and since there is only 1 block (dkLen/HmacLen=1) there is no loop here
+            // and the salt is the "mnemonic+passPhrase" + blockNumber so it is fixed and has to be pre-computed.
+
             hmac.Key = mnemonic;
-
-            byte[] salt = Encoding.UTF8.GetBytes($"mnemonic{passPhrase?.Normalize(NormalizationForm.FormKD)}");
-            byte[] saltForHmac = new byte[salt.Length + 4];
-            Buffer.BlockCopy(salt, 0, saltForHmac, 0, salt.Length);
-
             byte[] seed = new byte[64];
 
-            fixed (byte* saltPt = &saltForHmac[salt.Length])
+            // F()
+            byte[] resultOfF = new byte[hmac.OutputSize];
+            // compute u1
+            byte[] u1 = hmac.ComputeHash(pbkdf2Salt);
+
+            Buffer.BlockCopy(u1, 0, resultOfF, 0, u1.Length);
+
+            // compute u2 to u(c-1) where c is iteration and each u is the hmac of previous u
+            for (int j = 1; j < 2048; j++)
             {
-                // F()
-                byte[] resultOfF = new byte[hmac.OutputSize];
+                u1 = hmac.ComputeHash(u1);
 
-                // Concatinate i after salt
-                //saltPt[0] = (byte)(1 >> 24);
-                //saltPt[1] = (byte)(1 >> 16);
-                //saltPt[2] = (byte)(1 >> 8);
-                saltPt[3] = 1;
-
-                // compute u1
-                byte[] u1 = hmac.ComputeHash(saltForHmac);
-
-                Buffer.BlockCopy(u1, 0, resultOfF, 0, u1.Length);
-
-                // compute u2 to u(c-1) where c is iteration and each u is the hmac of previous u
-                for (int j = 1; j < 2048; j++)
+                // result of F() is XOR sum of all u arrays
+                int len = u1.Length;
+                fixed (byte* first = resultOfF, second = u1)
                 {
-                    u1 = hmac.ComputeHash(u1);
-
-                    // result of F() is XOR sum of all u arrays
-                    int len = u1.Length;
-                    fixed (byte* first = resultOfF, second = u1)
+                    if (Avx2.IsSupported)
                     {
-                        if (Avx2.IsSupported)
-                        {
-                            var part1 = Avx2.Xor(Avx2.LoadVector256(first), Avx2.LoadVector256(second));
-                            var part2 = Avx2.Xor(Avx2.LoadVector256(first + 32), Avx2.LoadVector256(second + 32));
+                        var part1 = Avx2.Xor(Avx2.LoadVector256(first), Avx2.LoadVector256(second));
+                        var part2 = Avx2.Xor(Avx2.LoadVector256(first + 32), Avx2.LoadVector256(second + 32));
 
-                            Avx2.Store(first, part1);
-                            Avx2.Store(first + 32, part2);
-                        }
-                        else
-                        {
-                            *(ulong*)first ^= *(ulong*)second;
-                            *(ulong*)(first + 8) ^= *(ulong*)(second + 8);
-                            *(ulong*)(first + 16) ^= *(ulong*)(second + 16);
-                            *(ulong*)(first + 24) ^= *(ulong*)(second + 24);
-                            *(ulong*)(first + 32) ^= *(ulong*)(second + 32);
-                            *(ulong*)(first + 40) ^= *(ulong*)(second + 40);
-                            *(ulong*)(first + 48) ^= *(ulong*)(second + 48);
-                            *(ulong*)(first + 56) ^= *(ulong*)(second + 56);
-                        }
+                        Avx2.Store(first, part1);
+                        Avx2.Store(first + 32, part2);
+                    }
+                    else
+                    {
+                        *(ulong*)first ^= *(ulong*)second;
+                        *(ulong*)(first + 8) ^= *(ulong*)(second + 8);
+                        *(ulong*)(first + 16) ^= *(ulong*)(second + 16);
+                        *(ulong*)(first + 24) ^= *(ulong*)(second + 24);
+                        *(ulong*)(first + 32) ^= *(ulong*)(second + 32);
+                        *(ulong*)(first + 40) ^= *(ulong*)(second + 40);
+                        *(ulong*)(first + 48) ^= *(ulong*)(second + 48);
+                        *(ulong*)(first + 56) ^= *(ulong*)(second + 56);
                     }
                 }
+            }
 
-                Buffer.BlockCopy(resultOfF, 0, seed, 0, resultOfF.Length);
+            Buffer.BlockCopy(resultOfF, 0, seed, 0, resultOfF.Length);
 
-                using BIP0032 bip = new BIP0032(seed);
-                if (comparer.Compare(bip.GetPrivateKeys(path, keyIndex)[0].ToBytes()))
-                {
-                    report.AddMessageSafe("Found a key.");
-                }
+            using BIP0032 bip = new BIP0032(seed);
+            if (comparer.Compare(bip.GetPrivateKeys(path, 1, keyIndex)[0].ToBytes()))
+            {
+                report.AddMessageSafe("Found a key.");
             }
         }
 
@@ -447,7 +440,7 @@ namespace FinderOuter.Services
         }
 
 
-        private bool TrySetWordList(WordLists wl)
+        public bool TrySetWordList(BIP0039.WordLists wl)
         {
             try
             {
@@ -474,7 +467,7 @@ namespace FinderOuter.Services
             }
         }
 
-        private bool TrySplitMnemonic(string mnemonic, char missingChar)
+        public bool TrySplitMnemonic(string mnemonic, char missingChar)
         {
             if (string.IsNullOrWhiteSpace(mnemonic))
             {
@@ -514,18 +507,35 @@ namespace FinderOuter.Services
             }
         }
 
+        private void SetPbkdf2Salt(string pass)
+        {
+            byte[] salt = Encoding.UTF8.GetBytes($"mnemonic{pass?.Normalize(NormalizationForm.FormKD)}");
+            pbkdf2Salt = new byte[salt.Length + 4];
+            Buffer.BlockCopy(salt, 0, pbkdf2Salt, 0, salt.Length);
+            pbkdf2Salt[^1] = 1;
+        }
 
-        public async Task<bool> FindMissing(string mnemonic, char missChar, string pass, MnemonicTypes mnType, WordLists wl)
+
+        public async Task<bool> FindMissing(string mnemonic, char missChar, string pass, string path, uint index,
+                                            MnemonicTypes mnType, BIP0039.WordLists wl)
         {
             report.Init();
 
+            // TODO: implement Electrum seeds too
+            if (mnType != MnemonicTypes.BIP39)
+                return report.Fail("Only BIP-39 seeds are supported for now.");
+
             if (!TrySetWordList(wl))
-                return report.Fail($"Could not find {wl} word list among resources."); ;
+                return report.Fail($"Could not find {wl} word list among resources.");
             if (!inputService.IsMissingCharValid(missChar))
                 return report.Fail("Missing character is not accepted.");
             if (!TrySplitMnemonic(mnemonic, missChar))
                 return false;
-            passPhrase = pass;
+
+            SetPbkdf2Salt(pass);
+            this.path = new BIP0032Path(path);
+            keyIndex = index;
+            comparer = new PrvToAddrBothComparer();
 
             report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");
             report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
@@ -553,7 +563,7 @@ namespace FinderOuter.Services
         }
 
 
-        public async Task<bool> FindPath(string mnemonic, string extra, MnemonicTypes mnType, WordLists wl, string passPhrase)
+        public async Task<bool> FindPath(string mnemonic, string extra, MnemonicTypes mnType, BIP0039.WordLists wl, string passPhrase)
         {
             report.Init();
 
@@ -572,6 +582,5 @@ namespace FinderOuter.Services
 
             return report.Fail("Not yet implemented");
         }
-
     }
 }
