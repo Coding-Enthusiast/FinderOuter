@@ -516,8 +516,8 @@ namespace FinderOuter.Services
         }
 
 
-        public async Task<bool> FindMissing(string mnemonic, char missChar, string pass, string path, uint index,
-                                            MnemonicTypes mnType, BIP0039.WordLists wl)
+        public async Task<bool> FindMissing(string mnemonic, char missChar, string pass, string extra, InputType extraType,
+                                            string path, uint index, MnemonicTypes mnType, BIP0039.WordLists wl)
         {
             report.Init();
 
@@ -533,9 +533,29 @@ namespace FinderOuter.Services
                 return false;
 
             SetPbkdf2Salt(pass);
-            this.path = new BIP0032Path(path);
+            try
+            {
+                this.path = new BIP0032Path(path);
+            }
+            catch (Exception ex)
+            {
+                return report.Fail($"Invalid path ({ex.Message}).");
+            }
+
             keyIndex = index;
-            comparer = new PrvToAddrBothComparer();
+            switch (extraType)
+            {
+                case InputType.Address:
+                    comparer = new PrvToAddrBothComparer();
+                    break;
+                default:
+                    return report.Fail("Input type is not defined.");
+            }
+
+            if (!comparer.Init(extra))
+            {
+                return report.Fail("Invalid extra data was provided.");
+            }
 
             report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");
             report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");

@@ -7,6 +7,7 @@ namespace FinderOuter.Services.Comparers
 {
     public interface ICompareService
     {
+        bool Init(string data);
         bool Compare(byte[] key);
     }
 }

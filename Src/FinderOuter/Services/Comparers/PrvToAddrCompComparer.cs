@@ -21,7 +21,7 @@ namespace FinderOuter.Services.Comparers
         private readonly Hash160 hash160 = new Hash160();
 
 
-        public bool TrySetHash(string address)
+        public bool Init(string address)
         {
             AddressService serv = new AddressService();
             return serv.CheckAndGetHash(address, out hash);

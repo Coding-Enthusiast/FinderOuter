@@ -22,7 +22,6 @@ namespace FinderOuter.Services
         public MiniKeyService(IReport rep)
         {
             inputService = new InputService();
-            comparer = new PrvToAddrBothComparer();
             report = rep;
         }
 
@@ -266,7 +265,8 @@ namespace FinderOuter.Services
             if (!key.StartsWith(ConstantsFO.MiniKeyStart))
                 return report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
 
-            if (!((PrvToAddrBothComparer)comparer).TrySetHash(extra))
+            comparer = new PrvToAddrBothComparer();
+            if (!comparer.Init(extra))
             {
                 return report.Fail("Invalid address.");
             }

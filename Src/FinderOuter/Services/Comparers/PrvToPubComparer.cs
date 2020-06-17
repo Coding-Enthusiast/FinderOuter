@@ -20,7 +20,7 @@ namespace FinderOuter.Services.Comparers
         private readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
         private EllipticCurvePoint point;
 
-        public bool TrySetPub(string pubHex)
+        public bool Init(string pubHex)
         {
             try
             {

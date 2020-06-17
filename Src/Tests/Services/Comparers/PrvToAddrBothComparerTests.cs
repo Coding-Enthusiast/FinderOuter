@@ -27,10 +27,10 @@ namespace Tests.Services.Comparers
 
         [Theory]
         [MemberData(nameof(GetHashCases))]
-        public void TrySetHashTest(string addr, bool expected)
+        public void InitTest(string addr, bool expected)
         {
             var comp = new PrvToAddrBothComparer();
-            bool actual = comp.TrySetHash(addr);
+            bool actual = comp.Init(addr);
             Assert.Equal(expected, actual);
         }
 
@@ -38,7 +38,7 @@ namespace Tests.Services.Comparers
         public void CompareTest()
         {
             var comp = new PrvToAddrBothComparer();
-            Assert.True(comp.TrySetHash(KeyHelper.Pub1CompAddr));
+            Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
             
@@ -54,7 +54,7 @@ namespace Tests.Services.Comparers
         public void Compare_EdgeTest()
         {
             var comp = new PrvToAddrBothComparer();
-            Assert.True(comp.TrySetHash(KeyHelper.Pub1CompAddr));
+            Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = new byte[32];
             bool b = comp.Compare(key);
             Assert.False(b);

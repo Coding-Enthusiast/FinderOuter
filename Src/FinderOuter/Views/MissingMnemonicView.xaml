@@ -20,10 +20,16 @@
               Margin="3" Height="40" Width="90"
               Grid.Column="1" Grid.Row="0"/>
 
-    <TextBox Text="{Binding PassPhrase}"
-             Watermark="PassPhrase (optional)"
-             UseFloatingWatermark="True" Margin="3"
-             Grid.Column="0" Grid.Row="1"/>
+    <Grid ColumnDefinitions="*,*" Grid.Column="0" Grid.Row="1">
+      <TextBox Text="{Binding MissingChar}" ToolTip.Tip="{Binding MissingToolTip}"
+               Watermark="Missing character used" UseFloatingWatermark="True" Margin="3"
+               Grid.Column="1"/>
+      <TextBox Text="{Binding PassPhrase}"
+               Watermark="PassPhrase (optional)"
+               UseFloatingWatermark="True" Margin="3"
+               Grid.Column="0"/>
+    </Grid>
+
     <ComboBox Items="{Binding MnemonicTypesList}" SelectedItem="{Binding SelectedMnemonicType}"
               Margin="3" Height="40" Width="90"
               Grid.Column="1" Grid.Row="1"/>
