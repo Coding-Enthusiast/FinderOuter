@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 namespace FinderOuter.Backend.Cryptography.Hashing
 {
     /// <summary>
-    /// Computes a Hash-based Message Authentication Code (HMAC) by using the <see cref="Sha512"/> hash function.
+    /// Computes a Hash-based Message Authentication Code (HMAC) by using the <see cref="Sha512Fo"/> hash function.
     /// Based on RFC-2104
     /// <para/> https://tools.ietf.org/html/rfc2104
     /// </summary>
@@ -23,23 +23,23 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public HmacSha512()
         {
-            hashFunc = new Sha512();
+            hashFunc = new Sha512Fo();
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HmacSha512"/> using the given key.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
-        /// <param name="key">Key to use, if the key is bigger than 64 bytes it will be hashed using <see cref="Sha512"/></param>
+        /// <param name="key">Key to use, if the key is bigger than 64 bytes it will be hashed using <see cref="Sha512Fo"/></param>
         public HmacSha512(byte[] key)
         {
-            hashFunc = new Sha512();
+            hashFunc = new Sha512Fo();
             Key = key;
         }
 
 
 
-        private Sha512 hashFunc;
+        private Sha512Fo hashFunc;
 
         public int BlockSize => 128;
         public int OutputSize => 64;
@@ -53,7 +53,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         /// <summary>
         /// Gets and sets key used for computing Hash-based Message Authentication Code (HMAC).
-        /// Keys bigger than block size (128 bytes) will be hashed using <see cref="Sha512"/>.
+        /// Keys bigger than block size (128 bytes) will be hashed using <see cref="Sha512Fo"/>.
         /// </summary>
         /// <exception cref="ArgumentNullException"/>
         public byte[] Key
@@ -65,7 +65,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                     throw new ArgumentNullException("Key can not be null.");
 
 
-                if (value.Length > Sha512.BlockByteSize)
+                if (value.Length > Sha512Fo.BlockByteSize)
                 {
                     _keyValue = hashFunc.ComputeHash(value);
                 }
@@ -77,9 +77,9 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 unsafe
                 {
                     // In order to set pads we have to XOR key with pad values. 
-                    // Since we don't know the length of the key, it is harder to loop using UInt32 so we use 2 temp pad bytes:
-                    byte[] opadB = new byte[Sha512.BlockByteSize];
-                    byte[] ipadB = new byte[Sha512.BlockByteSize];
+                    // Since we don't know the length of the key, it is harder to loop using UInt64 so we use 2 temp pad bytes:
+                    byte[] opadB = new byte[Sha512Fo.BlockByteSize];
+                    byte[] ipadB = new byte[Sha512Fo.BlockByteSize];
 
                     // Note (kp = _keyValue) can't assign to first item because key might be empty array which will throw an excpetion
                     fixed (byte* kp = _keyValue, temp_opB = &opadB[0], temp_ipB = &ipadB[0])
@@ -161,7 +161,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             fixed (ulong* oPt = &opad[0], iPt = &ipad[0])
             fixed (ulong* hPt = &hashFunc.hashState[0], wPt = &hashFunc.w[0])
             {
-                if (key.Length > Sha512.BlockByteSize)
+                if (key.Length > Sha512Fo.BlockByteSize)
                 {
                     hashFunc.Init(hPt);
                     hashFunc.DoHash(key, key.Length);
@@ -181,7 +181,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 {
                     InitPads(iPt, oPt);
 
-                    byte[] temp = new byte[Sha512.BlockByteSize];
+                    byte[] temp = new byte[Sha512Fo.BlockByteSize];
                     Buffer.BlockCopy(key, 0, temp, 0, key.Length);
                     int kIndex = 0;
                     fixed (byte* tPt = &temp[0])
@@ -205,9 +205,9 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 }
 
                 // Now based on key, the pads are set. 
-                // We use pad fields as working vectors for SHA256 hash which also contain the data and act as blocks.
+                // We use pad fields as working vectors for SHA512 hash which also contain the data and act as blocks.
 
-                // Final result is SHA512(outer_pad | SHA256(inner_pad | data))
+                // Final result is SHA512(outer_pad | SHA512(inner_pad | data))
 
                 // 1. Compute SHA512(inner_pad | data)
                 hashFunc.Init(hPt);
@@ -264,7 +264,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 hashFunc.CompressBlock(hPt, iPt);
                 hashFunc.DoHash(data, data.Length + 128); // len + hashFunc.BlockByteSize
 
-                // 2. Compute SHA256(outer_pad | hash)
+                // 2. Compute SHA512(outer_pad | hash)
                 Buffer.BlockCopy(hashFunc.hashState, 0, hashFunc.w, 0, 64); // 64 bytes is upto index 7
                 wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL; // 1 followed by 0 bits: pad1
                 wPt[9] = 0;
