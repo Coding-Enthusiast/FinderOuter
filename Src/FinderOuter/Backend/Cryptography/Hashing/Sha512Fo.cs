@@ -12,12 +12,12 @@ namespace FinderOuter.Backend.Cryptography.Hashing
     /// Implementation of 512-bit Secure Hash Algorithm (SHA) based on RFC-6234
     /// <para/> https://tools.ietf.org/html/rfc6234
     /// </summary>
-    public class Sha512 : IDisposable
+    public class Sha512Fo : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Sha512"/>.
+        /// Initializes a new instance of the <see cref="Sha512Fo"/>.
         /// </summary>
-        public Sha512()
+        public Sha512Fo()
         {
         }
 
@@ -136,14 +136,22 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         internal unsafe void DoHash(byte[] data, int len)
         {
-            byte[] finalBlock = new byte[128];
-
-            fixed (byte* dPt = data, fPt = &finalBlock[0]) // If data.Length == 0 => &data[0] will throw an exception
+            // If data.Length == 0 => &data[0] will throw an exception
+            fixed (byte* dPt = data)
             fixed (ulong* hPt = &hashState[0], wPt = &w[0])
             {
-                int remainingBytes = data.Length;
+                CompressData(dPt, data.Length, len, hPt, wPt);
+            }
+        }
+
+        internal unsafe void CompressData(byte* dPt, int dataLen, int totalLen, ulong* hPt, ulong* wPt)
+        {
+            Span<byte> finalBlock = new byte[128];
+
+            fixed (byte* fPt = &finalBlock[0])
+            {
                 int dIndex = 0;
-                while (remainingBytes >= BlockByteSize)
+                while (dataLen >= BlockByteSize)
                 {
                     for (int i = 0; i < 16; i++, dIndex += 8)
                     {
@@ -160,16 +168,16 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                     CompressBlock(hPt, wPt);
 
-                    remainingBytes -= BlockByteSize;
+                    dataLen -= BlockByteSize;
                 }
 
                 // Copy the reamaining bytes into a blockSize length buffer so that we can loop through it easily:
-                Buffer.BlockCopy(data, data.Length - remainingBytes, finalBlock, 0, remainingBytes);
+                Buffer.MemoryCopy(dPt + dIndex, fPt, finalBlock.Length, dataLen);
 
                 // Append 1 bit followed by zeros. Since we only work with bytes, this is 1 whole byte
-                fPt[remainingBytes] = 0b1000_0000;
+                fPt[dataLen] = 0b1000_0000;
 
-                if (remainingBytes >= 112) // blockSize - pad2.Len = 128 - 16
+                if (dataLen >= 112) // blockSize - pad2.Len = 128 - 16
                 {
                     // This means we have an additional block to compress, which we do it here:
 
@@ -188,20 +196,16 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                     CompressBlock(hPt, wPt);
 
-                    // Zero out all the items in FinalBlock so it can be reused
-                    for (int i = 0; i < 16; i++)
-                    {
-                        ((ulong*)fPt)[i] = 0;
-                    }
+                    finalBlock.Clear();
                 }
 
                 // Add length in bits as the last 16 bytes of final block in big-endian order
                 // See MessageLengthTest in SHA256 Test project to understand what the following shifts are
-                fPt[127] = (byte)(len << 3);
-                fPt[126] = (byte)(len >> 5);
-                fPt[125] = (byte)(len >> 13);
-                fPt[124] = (byte)(len >> 21);
-                fPt[123] = (byte)(len >> 29);
+                fPt[127] = (byte)(totalLen << 3);
+                fPt[126] = (byte)(totalLen >> 5);
+                fPt[125] = (byte)(totalLen >> 13);
+                fPt[124] = (byte)(totalLen >> 21);
+                fPt[123] = (byte)(totalLen >> 29);
                 // The remainig 11 bytes are always zero
                 // The remaining 112 bytes are already set
 
@@ -298,12 +302,82 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
+        internal unsafe void CompressBlockWithWSet(ulong* hPt, ulong* wPt)
+        {
+            ulong a = hPt[0];
+            ulong b = hPt[1];
+            ulong c = hPt[2];
+            ulong d = hPt[3];
+            ulong e = hPt[4];
+            ulong f = hPt[5];
+            ulong g = hPt[6];
+            ulong h = hPt[7];
+
+            ulong temp, aa, bb, cc, dd, ee, ff, hh, gg;
+
+            fixed (ulong* kPt = &Ks[0])
+            {
+                for (int j = 0; j < 80;)
+                {
+                    temp = h + BSIG1(e) + CH(e, f, g) + kPt[j] + wPt[j];
+                    ee = d + temp;
+                    aa = temp + BSIG0(a) + MAJ(a, b, c);
+                    j++;
+
+                    temp = g + BSIG1(ee) + CH(ee, e, f) + kPt[j] + wPt[j];
+                    ff = c + temp;
+                    bb = temp + BSIG0(aa) + MAJ(aa, a, b);
+                    j++;
+
+                    temp = f + BSIG1(ff) + CH(ff, ee, e) + kPt[j] + wPt[j];
+                    gg = b + temp;
+                    cc = temp + BSIG0(bb) + MAJ(bb, aa, a);
+                    j++;
+
+                    temp = e + BSIG1(gg) + CH(gg, ff, ee) + kPt[j] + wPt[j];
+                    hh = a + temp;
+                    dd = temp + BSIG0(cc) + MAJ(cc, bb, aa);
+                    j++;
+
+                    temp = ee + BSIG1(hh) + CH(hh, gg, ff) + kPt[j] + wPt[j];
+                    h = aa + temp;
+                    d = temp + BSIG0(dd) + MAJ(dd, cc, bb);
+                    j++;
+
+                    temp = ff + BSIG1(h) + CH(h, hh, gg) + kPt[j] + wPt[j];
+                    g = bb + temp;
+                    c = temp + BSIG0(d) + MAJ(d, dd, cc);
+                    j++;
+
+                    temp = gg + BSIG1(g) + CH(g, h, hh) + kPt[j] + wPt[j];
+                    f = cc + temp;
+                    b = temp + BSIG0(c) + MAJ(c, d, dd);
+                    j++;
+
+                    temp = hh + BSIG1(f) + CH(f, g, h) + kPt[j] + wPt[j];
+                    e = dd + temp;
+                    a = temp + BSIG0(b) + MAJ(b, c, d);
+                    j++;
+                }
+            }
+
+            hPt[0] += a;
+            hPt[1] += b;
+            hPt[2] += c;
+            hPt[3] += d;
+            hPt[4] += e;
+            hPt[5] += f;
+            hPt[6] += g;
+            hPt[7] += h;
+        }
+
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong CH(ulong x, ulong y, ulong z) => z ^ (x & (y ^ z)); //TODO: find mathematical proof for this change
+        private ulong CH(ulong x, ulong y, ulong z) => z ^ (x & (y ^ z));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong MAJ(ulong x, ulong y, ulong z) => (x & y) | (z & (x | y)); //TODO: find mathematical proof for this change
+        private ulong MAJ(ulong x, ulong y, ulong z) => (x & y) | (z & (x | y));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ulong BSIG0(ulong x) => (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
@@ -312,10 +386,10 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         private ulong BSIG1(ulong x) => (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong SSIG0(ulong x) => (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
+        internal ulong SSIG0(ulong x) => (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong SSIG1(ulong x) => (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
+        internal ulong SSIG1(ulong x) => (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
 
 
 
@@ -341,7 +415,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         /// <summary>
-        /// Releases all resources used by the current instance of the <see cref="Sha512"/> class.
+        /// Releases all resources used by the current instance of the <see cref="Sha512Fo"/> class.
         /// </summary>
         public void Dispose() => Dispose(true);
     }
