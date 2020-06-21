@@ -33,8 +33,8 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         public const int BlockByteSize = 128;
 
 
-        internal ulong[] hashState = new ulong[8];
-        internal ulong[] w = new ulong[80];
+        public ulong[] hashState = new ulong[8];
+        public ulong[] w = new ulong[80];
 
         private readonly ulong[] Ks =
         {
@@ -84,7 +84,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
-        internal virtual unsafe void Init()
+        internal unsafe void Init()
         {
             fixed (ulong* hPt = &hashState[0])
             {
@@ -93,7 +93,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual unsafe void Init(ulong* hPt)
+        public unsafe void Init(ulong* hPt)
         {
             hPt[0] = 0x6a09e667f3bcc908;
             hPt[1] = 0xbb67ae8584caa73b;
@@ -106,14 +106,14 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
-        internal virtual unsafe byte[] GetBytes()
+        public unsafe byte[] GetBytes()
         {
             fixed (ulong* hPt = &hashState[0])
                 return GetBytes(hPt);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual unsafe byte[] GetBytes(ulong* hPt)
+        public unsafe byte[] GetBytes(ulong* hPt)
         {
             byte[] res = new byte[HashByteSize];
             fixed (byte* bPt = &res[0])
@@ -133,6 +133,52 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             return res;
         }
 
+        /// <summary>
+        /// Returns first half of the hash result (used in BIP-32)
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <returns></returns>
+        public unsafe byte[] GetFirst32Bytes(ulong* hPt)
+        {
+            return new byte[32]
+            {
+                (byte)(hPt[0] >> 56), (byte)(hPt[0] >> 48), (byte)(hPt[0] >> 40), (byte)(hPt[0] >> 32),
+                (byte)(hPt[0] >> 24), (byte)(hPt[0] >> 16), (byte)(hPt[0] >> 8), (byte)hPt[0],
+
+                (byte)(hPt[1] >> 56), (byte)(hPt[1] >> 48), (byte)(hPt[1] >> 40), (byte)(hPt[1] >> 32),
+                (byte)(hPt[1] >> 24), (byte)(hPt[1] >> 16), (byte)(hPt[1] >> 8), (byte)hPt[1],
+
+                (byte)(hPt[2] >> 56), (byte)(hPt[2] >> 48), (byte)(hPt[2] >> 40), (byte)(hPt[2] >> 32),
+                (byte)(hPt[2] >> 24), (byte)(hPt[2] >> 16), (byte)(hPt[2] >> 8), (byte)hPt[2],
+
+                (byte)(hPt[3] >> 56), (byte)(hPt[3] >> 48), (byte)(hPt[3] >> 40), (byte)(hPt[3] >> 32),
+                (byte)(hPt[3] >> 24), (byte)(hPt[3] >> 16), (byte)(hPt[3] >> 8), (byte)hPt[3],
+            };
+        }
+
+        /// <summary>
+        /// Returns second half of the hash result (used in BIP-32)
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <returns></returns>
+        public unsafe byte[] GetSecond32Bytes(ulong* hPt)
+        {
+            return new byte[32]
+            {
+                (byte)(hPt[4] >> 56), (byte)(hPt[4] >> 48), (byte)(hPt[4] >> 40), (byte)(hPt[4] >> 32),
+                (byte)(hPt[4] >> 24), (byte)(hPt[4] >> 16), (byte)(hPt[4] >> 8), (byte)hPt[4],
+
+                (byte)(hPt[5] >> 56), (byte)(hPt[5] >> 48), (byte)(hPt[5] >> 40), (byte)(hPt[5] >> 32),
+                (byte)(hPt[5] >> 24), (byte)(hPt[5] >> 16), (byte)(hPt[5] >> 8), (byte)hPt[5],
+
+                (byte)(hPt[6] >> 56), (byte)(hPt[6] >> 48), (byte)(hPt[6] >> 40), (byte)(hPt[6] >> 32),
+                (byte)(hPt[6] >> 24), (byte)(hPt[6] >> 16), (byte)(hPt[6] >> 8), (byte)hPt[6],
+
+                (byte)(hPt[7] >> 56), (byte)(hPt[7] >> 48), (byte)(hPt[7] >> 40), (byte)(hPt[7] >> 32),
+                (byte)(hPt[7] >> 24), (byte)(hPt[7] >> 16), (byte)(hPt[7] >> 8), (byte)hPt[7],
+            };
+        }
+
 
         internal unsafe void DoHash(byte[] data, int len)
         {
@@ -144,7 +190,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
-        internal unsafe void CompressData(byte* dPt, int dataLen, int totalLen, ulong* hPt, ulong* wPt)
+        public unsafe void CompressData(byte* dPt, int dataLen, int totalLen, ulong* hPt, ulong* wPt)
         {
             Span<byte> finalBlock = new byte[128];
 
@@ -227,7 +273,281 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
-        internal unsafe void CompressBlock(ulong* hPt, ulong* wPt)
+
+        /// <summary>
+        /// Computes _single_ SHA512 hash for the second block of
+        /// (data.Length == 192) and (wPt[0] to wPt[15] is set) and (Init() is called)
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public unsafe void Compress192SecondBlock(ulong* hPt, ulong* wPt)
+        {
+            // w8 = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL 
+            // w9 to w14 = 0
+            // w15 = 1536
+            wPt[16] = SSIG0(wPt[1]) + wPt[0];
+            wPt[17] = 54043195528458264 + SSIG0(wPt[2]) + wPt[1];
+            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
+            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
+            wPt[20] = SSIG1(wPt[18]) + SSIG0(wPt[5]) + wPt[4];
+            wPt[21] = SSIG1(wPt[19]) + SSIG0(wPt[6]) + wPt[5];
+            wPt[22] = SSIG1(wPt[20]) + 1536 + SSIG0(wPt[7]) + wPt[6];
+            wPt[23] = SSIG1(wPt[21]) + wPt[16] + 4719772409484279808 + wPt[7];
+            wPt[24] = SSIG1(wPt[22]) + wPt[17] + 9223372036854775808;
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 778;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 1536;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+            wPt[64] = SSIG1(wPt[62]) + wPt[57] + SSIG0(wPt[49]) + wPt[48];
+            wPt[65] = SSIG1(wPt[63]) + wPt[58] + SSIG0(wPt[50]) + wPt[49];
+            wPt[66] = SSIG1(wPt[64]) + wPt[59] + SSIG0(wPt[51]) + wPt[50];
+            wPt[67] = SSIG1(wPt[65]) + wPt[60] + SSIG0(wPt[52]) + wPt[51];
+            wPt[68] = SSIG1(wPt[66]) + wPt[61] + SSIG0(wPt[53]) + wPt[52];
+            wPt[69] = SSIG1(wPt[67]) + wPt[62] + SSIG0(wPt[54]) + wPt[53];
+            wPt[70] = SSIG1(wPt[68]) + wPt[63] + SSIG0(wPt[55]) + wPt[54];
+            wPt[71] = SSIG1(wPt[69]) + wPt[64] + SSIG0(wPt[56]) + wPt[55];
+            wPt[72] = SSIG1(wPt[70]) + wPt[65] + SSIG0(wPt[57]) + wPt[56];
+            wPt[73] = SSIG1(wPt[71]) + wPt[66] + SSIG0(wPt[58]) + wPt[57];
+            wPt[74] = SSIG1(wPt[72]) + wPt[67] + SSIG0(wPt[59]) + wPt[58];
+            wPt[75] = SSIG1(wPt[73]) + wPt[68] + SSIG0(wPt[60]) + wPt[59];
+            wPt[76] = SSIG1(wPt[74]) + wPt[69] + SSIG0(wPt[61]) + wPt[60];
+            wPt[77] = SSIG1(wPt[75]) + wPt[70] + SSIG0(wPt[62]) + wPt[61];
+            wPt[78] = SSIG1(wPt[76]) + wPt[71] + SSIG0(wPt[63]) + wPt[62];
+            wPt[79] = SSIG1(wPt[77]) + wPt[72] + SSIG0(wPt[64]) + wPt[63];
+
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+
+        /// <summary>
+        /// Compresses the given block for HMAC functions with 2 first items set to 0x36 ^ UTF8("Bitcoin seed") and
+        /// the rest to 0x36 values as defined by HMAC-SHA algorithm.
+        /// <para/>This method will set all items from 0 to 80 in w
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public unsafe void CompressHmacBlock_0x36_Bitcoinseed(ulong* hPt, ulong* wPt)
+        {
+            // w1 & w2 => 0x3636363636363636UL ^ "Bitcoin seed"
+            // w3 to w15 = 0x3636363636363636UL
+            wPt[0] = 0x745f4255595f5816UL;
+            wPt[1] = 0x4553535236363636UL;
+            wPt[2] = 0x3636363636363636UL;
+            wPt[3] = 0x3636363636363636UL;
+            wPt[4] = 0x3636363636363636UL;
+            wPt[5] = 0x3636363636363636UL;
+            wPt[6] = 0x3636363636363636UL;
+            wPt[7] = 0x3636363636363636UL;
+            wPt[8] = 0x3636363636363636UL;
+            wPt[9] = 0x3636363636363636UL;
+            wPt[10] = 0x3636363636363636UL;
+            wPt[11] = 0x3636363636363636UL;
+            wPt[12] = 0x3636363636363636UL;
+            wPt[13] = 0x3636363636363636UL;
+            wPt[14] = 0x3636363636363636UL;
+            wPt[15] = 0x3636363636363636UL;
+            wPt[16] = 0x36ab84982c867f3cUL;
+            wPt[17] = 0x207a7a795d5d5d5cUL;
+            wPt[18] = 0x140eb9b421c0933aUL;
+            wPt[19] = 0x42a76bd9ee7e61ecUL;
+            wPt[20] = 0x4bf06373b762cd51UL;
+            wPt[21] = 0x71b9f8e2a6df78d7UL;
+            wPt[22] = 0xa0b4a11c27534500UL;
+            wPt[23] = 0xfd36cad1277ae636UL;
+            wPt[24] = 0xf379c064b2f9b6ceUL;
+            wPt[25] = 0x2e0a83303f490971UL;
+            wPt[26] = 0x54f91d9ca300a056UL;
+            wPt[27] = 0x0129f13799adad0dUL;
+            wPt[28] = 0x87c33266679184a1UL;
+            wPt[29] = 0xc116a6f0cbf7ea60UL;
+            wPt[30] = 0x6d40f14b62510d99UL;
+            wPt[31] = 0x47bbaa9befb537f4UL;
+            wPt[32] = 0xfb155fb0b24116adUL;
+            wPt[33] = 0x3fec19a934241c65UL;
+            wPt[34] = 0xdc601ed653b39a18UL;
+            wPt[35] = 0x3aa29a2f2c3dfe68UL;
+            wPt[36] = 0x0f87ae22bee86a6bUL;
+            wPt[37] = 0x9ae9d3e0cf0bbefeUL;
+            wPt[38] = 0xa35a984d805a1e51UL;
+            wPt[39] = 0x51f080098f858f8dUL;
+            wPt[40] = 0x7570d4919edb5dd5UL;
+            wPt[41] = 0xc61e9061d17550f8UL;
+            wPt[42] = 0xdf1d03c50dee6f36UL;
+            wPt[43] = 0x0e0f5d4cd0d9f100UL;
+            wPt[44] = 0x5ae8209f86819264UL;
+            wPt[45] = 0xe1ebcfc71705f46aUL;
+            wPt[46] = 0x7aacba2a9bc64783UL;
+            wPt[47] = 0xc1089ca0f512349cUL;
+            wPt[48] = 0xd86935fac81d4038UL;
+            wPt[49] = 0xe4312c0ace1197d3UL;
+            wPt[50] = 0xc7bd36e9996d7213UL;
+            wPt[51] = 0x9341f31269ac3f59UL;
+            wPt[52] = 0x35048ccee896390cUL;
+            wPt[53] = 0xb688ded0bc24ee8fUL;
+            wPt[54] = 0xf93f79584148e9daUL;
+            wPt[55] = 0xc4ced4698d7f8314UL;
+            wPt[56] = 0xcb0bd41d3c1f928eUL;
+            wPt[57] = 0xbbd26eb64c089f3aUL;
+            wPt[58] = 0x22980cf223478ee1UL;
+            wPt[59] = 0x5c4a7dbd11dd87b8UL;
+            wPt[60] = 0x12deff15d891a276UL;
+            wPt[61] = 0x6ddac191bfbb3134UL;
+            wPt[62] = 0xe035279310e9e4d5UL;
+            wPt[63] = 0xeab87c927f9da196UL;
+            wPt[64] = 0xf323be22fc7fbbe4UL;
+            wPt[65] = 0xdabb6d63a1f76b15UL;
+            wPt[66] = 0x22cad1cdcd8063ffUL;
+            wPt[67] = 0xf8d17c1a564179d8UL;
+            wPt[68] = 0x132185dbd9342c7aUL;
+            wPt[69] = 0x28a6bdc48a480323UL;
+            wPt[70] = 0x77f219e0d38d94c6UL;
+            wPt[71] = 0xe8be9ac6db1cd144UL;
+            wPt[72] = 0x18c44d093705ddf0UL;
+            wPt[73] = 0x2b47a03a3221351dUL;
+            wPt[74] = 0x302ae3c9deb98c24UL;
+            wPt[75] = 0x6af7da5e4af98288UL;
+            wPt[76] = 0xedf400295ec6b828UL;
+            wPt[77] = 0x704ba8d9a63ac957UL;
+            wPt[78] = 0x666a861b48a11cc1UL;
+            wPt[79] = 0x7ab80bd5f234721dUL;
+
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+
+        /// <summary>
+        /// Compresses the given block for HMAC functions with 2 first items set to 0x5c ^ UTF8("Bitcoin seed") and
+        /// the rest to 0x5c values as defined by HMAC-SHA algorithm.
+        /// <para/>This method will set all items from 0 to 80 in w
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public unsafe void CompressHmacBlock_0x5c_Bitcoinseed(ulong* hPt, ulong* wPt)
+        {
+            // w1 & w2 => 0x5c5c5c5c5c5c5c5cUL ^ "Bitcoin seed"
+            // w3 to w15 = 0x5c5c5c5c5c5c5c5cUL
+            wPt[0] = 0x1e35283f3335327cUL;
+            wPt[1] = 0x2f3939385c5c5c5cUL;
+            wPt[2] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[3] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[4] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[5] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[6] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[7] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[8] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[9] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[10] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[11] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[12] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[13] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[14] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[15] = 0x5c5c5c5c5c5c5c5cUL;
+            wPt[16] = 0x2e97748b0e7471baUL;
+            wPt[17] = 0x667878779b9b9b9aUL;
+            wPt[18] = 0x25ba3fdc348ec15bUL;
+            wPt[19] = 0x6cacf215913fc550UL;
+            wPt[20] = 0x20eff62d16e33acfUL;
+            wPt[21] = 0xc802b274c57beb33UL;
+            wPt[22] = 0x8c296e31810b7bd0UL;
+            wPt[23] = 0x3c127c21e41fc77dUL;
+            wPt[24] = 0x41a16550a65c860aUL;
+            wPt[25] = 0x0d6d768144a060f8UL;
+            wPt[26] = 0xd8a10061153e42f7UL;
+            wPt[27] = 0x57581dd1cccc10ccUL;
+            wPt[28] = 0xa55e55b8fa4dde6bUL;
+            wPt[29] = 0x94d4996acb1c32aeUL;
+            wPt[30] = 0x9ee443840677ca10UL;
+            wPt[31] = 0x6dd8112e7dc24392UL;
+            wPt[32] = 0xf1b73eb2544d4375UL;
+            wPt[33] = 0x2fd2ef1384b5aca4UL;
+            wPt[34] = 0x0a0781298474d939UL;
+            wPt[35] = 0x3cdec9b5be361ee8UL;
+            wPt[36] = 0x5751248d57841143UL;
+            wPt[37] = 0x243ff3b45c78eea3UL;
+            wPt[38] = 0x174a92073ce0b408UL;
+            wPt[39] = 0x949712c7a7f1ceadUL;
+            wPt[40] = 0x1c9e19d7f666c897UL;
+            wPt[41] = 0xd0edd3bfb5fee495UL;
+            wPt[42] = 0x3a660630977cdf8cUL;
+            wPt[43] = 0xbfa99b30c3cf84e9UL;
+            wPt[44] = 0xf79da95ceb1727feUL;
+            wPt[45] = 0x1a1f809885436533UL;
+            wPt[46] = 0x33a299a1990ffdd4UL;
+            wPt[47] = 0xd3718aa72920b74cUL;
+            wPt[48] = 0xd89ed4491e531328UL;
+            wPt[49] = 0xb47ec6d9b9df5bc6UL;
+            wPt[50] = 0x65cce5e45686aa39UL;
+            wPt[51] = 0x672cef97564e5fd9UL;
+            wPt[52] = 0x9d9b8f018974368bUL;
+            wPt[53] = 0x4e8007ecff9795ccUL;
+            wPt[54] = 0xba2db2863d76b601UL;
+            wPt[55] = 0x0e244c7a992e20aeUL;
+            wPt[56] = 0x5269d61b0f78433fUL;
+            wPt[57] = 0x7d4795d7d128684bUL;
+            wPt[58] = 0x73082aca4bab6b77UL;
+            wPt[59] = 0xc8dc7bc902b77feaUL;
+            wPt[60] = 0xf9232ab04709f463UL;
+            wPt[61] = 0x4c10d555afaf0d1fUL;
+            wPt[62] = 0x5b05e3f54c2ee530UL;
+            wPt[63] = 0xeb172a94be10d867UL;
+            wPt[64] = 0xf9af4d8dadda8315UL;
+            wPt[65] = 0xf2e90eed546fbdbbUL;
+            wPt[66] = 0x37e6d3171deeee47UL;
+            wPt[67] = 0x07f032659b6bd4feUL;
+            wPt[68] = 0x3761cd5ded50e03fUL;
+            wPt[69] = 0xcc602e922c42f7a4UL;
+            wPt[70] = 0xf619333ae35df071UL;
+            wPt[71] = 0xdd5a5927212b408dUL;
+            wPt[72] = 0x4796ab36cbd4f5bcUL;
+            wPt[73] = 0x04f59200491aebe1UL;
+            wPt[74] = 0xad4c42811261ce38UL;
+            wPt[75] = 0x199ca023df097ddaUL;
+            wPt[76] = 0xd06fe5c2bb8c3850UL;
+            wPt[77] = 0x42d2391d3003b00dUL;
+            wPt[78] = 0xd34b74e17a5c282eUL;
+            wPt[79] = 0x7d2655337dff24dcUL;
+
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+
+
+        public unsafe void CompressBlock(ulong* hPt, ulong* wPt)
         {
             for (int i = 16; i < w.Length; i++)
             {
