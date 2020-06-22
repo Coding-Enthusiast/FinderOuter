@@ -171,6 +171,71 @@ namespace Tests.Backend.Cryptography.Hashing
         }
 
         [Fact]
+        public unsafe void Compress165SecondBlockTest()
+        {
+            int dataLen = 165;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha512Fo sha = new Sha512Fo();
+            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                sha.Init(hPt);
+
+                int dIndex = 0;
+                for (int i = 0; i < 16; i++, dIndex += 8)
+                {
+                    wPt[i] =
+                            ((ulong)data[dIndex] << 56) |
+                            ((ulong)data[dIndex + 1] << 48) |
+                            ((ulong)data[dIndex + 2] << 40) |
+                            ((ulong)data[dIndex + 3] << 32) |
+                            ((ulong)data[dIndex + 4] << 24) |
+                            ((ulong)data[dIndex + 5] << 16) |
+                            ((ulong)data[dIndex + 6] << 8) |
+                            data[dIndex + 7];
+                }
+
+                sha.CompressBlock(hPt, wPt);
+
+                for (int i = 0; i < 4; i++, dIndex += 8)
+                {
+                    wPt[i] =
+                            ((ulong)data[dIndex] << 56) |
+                            ((ulong)data[dIndex + 1] << 48) |
+                            ((ulong)data[dIndex + 2] << 40) |
+                            ((ulong)data[dIndex + 3] << 32) |
+                            ((ulong)data[dIndex + 4] << 24) |
+                            ((ulong)data[dIndex + 5] << 16) |
+                            ((ulong)data[dIndex + 6] << 8) |
+                            data[dIndex + 7];
+                }
+                wPt[4] = ((ulong)data[dIndex] << 56) |
+                         ((ulong)data[dIndex + 1] << 48) |
+                         ((ulong)data[dIndex + 2] << 40) |
+                         ((ulong)data[dIndex + 3] << 32) |
+                         ((ulong)data[dIndex + 4] << 24) |
+                         0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
+                wPt[5] = 0;
+                wPt[6] = 0;
+                wPt[7] = 0;
+                wPt[8] = 0;
+                wPt[9] = 0;
+                wPt[10] = 0;
+                wPt[11] = 0;
+                wPt[12] = 0;
+                wPt[13] = 0;
+                wPt[14] = 0;
+                wPt[15] = (ulong)dataLen * 8;
+
+                sha.Compress165SecondBlock(hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
         public unsafe void Compress192SecondBlockTest()
         {
             int dataLen = 192;
