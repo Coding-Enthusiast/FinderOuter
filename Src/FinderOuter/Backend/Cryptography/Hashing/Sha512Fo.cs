@@ -105,6 +105,42 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[7] = 0x5be0cd19137e2179;
         }
 
+        /// <summary>
+        /// Sets initial HashState values to the result of computing SHA512("Bitcoin seed" ^ 0x36) used in
+        /// HMACSHA512 in BIP-32 constructor while instantiating from an etnropy source
+        /// </summary>
+        /// <param name="hPt"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Init_InnerPad_Bitcoinseed(ulong* hPt)
+        {
+            hPt[0] = 0x2e2af459060c1873UL;
+            hPt[1] = 0x7894b868dc88433aUL;
+            hPt[2] = 0xdd1a797ef1a1933aUL;
+            hPt[3] = 0xe6486d04fcb412a7UL;
+            hPt[4] = 0xfbcc67b9a396caa0UL;
+            hPt[5] = 0xa2970b146f49b65eUL;
+            hPt[6] = 0xfdf1daabc66f6248UL;
+            hPt[7] = 0x2ff99c812ada6dc3UL;
+        }
+
+        /// <summary>
+        /// Sets initial HashState values to the result of computing SHA512("Bitcoin seed" ^ 0x5c) used in
+        /// HMACSHA512 in BIP-32 constructor while instantiating from an etnropy source
+        /// </summary>
+        /// <param name="hPt"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Init_OuterPad_Bitcoinseed(ulong* hPt)
+        {
+            hPt[0] = 0xbbd27bac212e9dbdUL;
+            hPt[1] = 0xdd0bc55e7e4037c1UL;
+            hPt[2] = 0xdfdd3d6890bd6424UL;
+            hPt[3] = 0x2902de663032b34cUL;
+            hPt[4] = 0xa30f8aa6f67899fcUL;
+            hPt[5] = 0x69a566c30f88378fUL;
+            hPt[6] = 0x0500247985ecb694UL;
+            hPt[7] = 0xf6d70307c6b2d337UL;
+        }
+
 
         public unsafe byte[] GetBytes()
         {

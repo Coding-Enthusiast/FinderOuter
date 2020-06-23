@@ -171,6 +171,66 @@ namespace Tests.Backend.Cryptography.Hashing
         }
 
         [Fact]
+        public unsafe void Init_InnerPad_Bitcoinseed_Test()
+        {
+            int extraLen = 5;
+            byte[] extraEndBa = GetRandomBytes(extraLen);
+            int dataLen = 128 + extraLen;
+            byte[] data = new byte[dataLen];
+            ((Span<byte>)data).Fill(0x36);
+            Buffer.BlockCopy(extraEndBa, 0, data, 128, extraLen);
+            // XOR "Bitcoin seed" with initial bytes
+            byte[] xor = Encoding.UTF8.GetBytes("Bitcoin seed");
+            for (int i = 0; i < xor.Length; i++)
+            {
+                data[i] ^= xor[i];
+            }
+
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha512Fo sha = new Sha512Fo();
+            fixed (byte* dPt = &data[0])
+            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                sha.Init_InnerPad_Bitcoinseed(hPt);
+                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Init_OuterPad_Bitcoinseed_Test()
+        {
+            int extraLen = 5;
+            byte[] extraEndBa = GetRandomBytes(extraLen);
+            int dataLen = 128 + extraLen;
+            byte[] data = new byte[dataLen];
+            ((Span<byte>)data).Fill(0x5c);
+            Buffer.BlockCopy(extraEndBa, 0, data, 128, extraLen);
+            // XOR "Bitcoin seed" with initial bytes
+            byte[] xor = Encoding.UTF8.GetBytes("Bitcoin seed");
+            for (int i = 0; i < xor.Length; i++)
+            {
+                data[i] ^= xor[i];
+            }
+
+            byte[] expected = ComputeSingleSha(data);
+
+            using Sha512Fo sha = new Sha512Fo();
+            fixed (byte* dPt = &data[0])
+            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                sha.Init_OuterPad_Bitcoinseed(hPt);
+                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                byte[] actual = sha.GetBytes(hPt);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
         public unsafe void Compress165SecondBlockTest()
         {
             int dataLen = 165;
