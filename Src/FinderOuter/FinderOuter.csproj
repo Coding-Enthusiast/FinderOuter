@@ -45,9 +45,6 @@
     <AvaloniaResource Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
-    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\French.txt" />
-    <None Remove="Backend\ImprovementProposals\BIP0039WordLists\Italian.txt" />
     <None Remove="Views\AboutView.xaml" />
     <None Remove="Views\Bip32PathView.xaml" />
     <None Remove="Views\HelpView.xaml" />
@@ -56,11 +53,6 @@
     <None Remove="Views\MissingBase58View.xaml" />
     <None Remove="Views\MissingMiniPrivateKeyView.xaml" />
     <None Remove="Views\MissingMnemonicView.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\English.txt" />
-    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\French.txt" />
-    <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\Italian.txt" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autarkysoft.Bitcoin" Version="0.4.0" />
