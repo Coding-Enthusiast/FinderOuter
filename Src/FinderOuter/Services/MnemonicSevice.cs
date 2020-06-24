@@ -12,10 +12,8 @@ using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
@@ -59,9 +57,12 @@ namespace FinderOuter.Services
         private string[] allWords;
         private byte[] pbkdf2Salt;
         private BIP0032Path path;
-        private uint keyIndex;
         private ICompareService comparer;
         private readonly BigInteger order = new SecP256k1().N;
+        private const ulong N0 = 0xBFD25E8C_D0364141;
+        private const ulong N1 = 0xBAAEDCE6_AF48A03B;
+        private const ulong N2 = 0xFFFFFFFF_FFFFFFFE;
+        private const ulong N3 = 0xFFFFFFFF_FFFFFFFF;
 
         private int missCount;
         private string[] words;
@@ -82,13 +83,18 @@ namespace FinderOuter.Services
             Final.Add(item);
         }
 
+        private bool SetResult(byte[] mnBa)
+        {
+            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBa)}");
+            return true;
+        }
 
-        public unsafe bool SetBip32(byte* mnPt, int mnLen, ulong* iPt, ulong* oPt)
+
+        public unsafe bool SetBip32(Sha512Fo sha, byte* mnPt, int mnLen, ulong* iPt, ulong* oPt)
         {
             // The process is: PBKDF2(password=UTF8(mnemonic), salt=UTF8("mnemonic+passphrase") -> BIP32 seed
             //                 BIP32 -> HMACSHA(data=seed, key=MasterKeyHashKey) -> HMACSHA(data=key|index, key=ChainCode)
             // All HMACSHAs are using 512 variant
-            using Sha512Fo sha = new Sha512Fo();
 
             // *** PBKDF2 ***
             // dkLen/HmacLen=1 => only 1 block => no loop needed
@@ -98,6 +104,8 @@ namespace FinderOuter.Services
 
             ulong[] iPadHashStateTemp = new ulong[8];
             ulong[] oPadHashStateTemp = new ulong[8];
+
+            ulong parkey0, parkey1, parkey2, parkey3, carry;
 
             fixed (byte* dPt = &pbkdf2Salt[0])
             fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0], seedPt = &resultOfF[0], uPt = &uTemp[0],
@@ -316,60 +324,74 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
+                BigInteger kParent = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
+                if (kParent == 0 || kParent >= order)
+                {
+                    return false;
+                }
+                parkey0 = hPt[3];
+                parkey1 = hPt[2];
+                parkey2 = hPt[1];
+                parkey3 = hPt[0];
+
                 foreach (var index in path.Indexes)
                 {
-                    BigInteger kParent = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
-                    if (kParent == 0 || kParent >= order)
-                    {
-                        return false;
-                    }
-
                     if ((index & 0x80000000) != 0) // IsHardened
                     {
-                        // First _byte_ is zero and hPt is written to second byte to 32nd byte (total 33 bytes)
-                        uPt[0] = 0;
-                        Buffer.MemoryCopy(hPt, ((byte*)uPt) + 1, 639, 32);
+                        // First _byte_ is zero
+                        // private-key is the first 32 bytes (4 items) of hPt (total 33 bytes)
+                        // 4 bytes index + SHA padding are also added
+                        uPt[0] = parkey3 >> 8;
+                        uPt[1] = parkey3 << 56 | parkey2 >> 8;
+                        uPt[2] = parkey2 << 56 | parkey1 >> 8;
+                        uPt[3] = parkey1 << 56 | parkey0 >> 8;
+                        uPt[4] = parkey0 << 56 |
+                                 (ulong)index << 24 |
+                                 0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
                     }
                     else
                     {
                         var point = calc.MultiplyByG(kParent);
-                        uPt[0] = point.Y.IsEven ? 0x0200000000000000UL : 0x0300000000000000UL;
                         byte[] xBytes = point.X.ToByteArray(true, true).PadLeft(32);
-                        ulong* uCopy = (ulong*)(((byte*)uPt) + 1);
-                        uCopy[0] = ((ulong)xBytes[0] << 56) |
-                                 ((ulong)xBytes[1] << 48) |
-                                 ((ulong)xBytes[2] << 40) |
-                                 ((ulong)xBytes[3] << 32) |
-                                 ((ulong)xBytes[4] << 24) |
-                                 ((ulong)xBytes[5] << 16) |
-                                 ((ulong)xBytes[6] << 8) |
-                                 xBytes[7];
-                        uCopy[1] = ((ulong)xBytes[8] << 56) |
-                                 ((ulong)xBytes[9] << 48) |
-                                 ((ulong)xBytes[10] << 40) |
-                                 ((ulong)xBytes[11] << 32) |
-                                 ((ulong)xBytes[12] << 24) |
-                                 ((ulong)xBytes[13] << 16) |
-                                 ((ulong)xBytes[14] << 8) |
-                                 xBytes[15];
-                        uCopy[2] = ((ulong)xBytes[16] << 56) |
-                                 ((ulong)xBytes[17] << 48) |
-                                 ((ulong)xBytes[18] << 40) |
-                                 ((ulong)xBytes[19] << 32) |
-                                 ((ulong)xBytes[20] << 24) |
-                                 ((ulong)xBytes[21] << 16) |
-                                 ((ulong)xBytes[22] << 8) |
-                                 xBytes[23];
-                        uCopy[3] = ((ulong)xBytes[24] << 56) |
-                                 ((ulong)xBytes[25] << 48) |
-                                 ((ulong)xBytes[26] << 40) |
-                                 ((ulong)xBytes[27] << 32) |
-                                 ((ulong)xBytes[28] << 24) |
-                                 ((ulong)xBytes[29] << 16) |
-                                 ((ulong)xBytes[30] << 8) |
-                                 xBytes[31];
+                        fixed (byte* pubXPt = &xBytes[0])
+                        {
+                            uPt[0] = (point.Y.IsEven ? 0x0200000000000000UL : 0x0300000000000000UL) |
+                                     (ulong)pubXPt[0] << 48 |
+                                     (ulong)pubXPt[1] << 40 |
+                                     (ulong)pubXPt[2] << 32 |
+                                     (ulong)pubXPt[3] << 24 |
+                                     (ulong)pubXPt[4] << 16 |
+                                     (ulong)pubXPt[5] << 8 |
+                                            pubXPt[6];
+                            uPt[1] = (ulong)pubXPt[7] << 56 |
+                                     (ulong)pubXPt[8] << 48 |
+                                     (ulong)pubXPt[9] << 40 |
+                                     (ulong)pubXPt[10] << 32 |
+                                     (ulong)pubXPt[11] << 24 |
+                                     (ulong)pubXPt[12] << 16 |
+                                     (ulong)pubXPt[13] << 8 |
+                                            pubXPt[14];
+                            uPt[2] = (ulong)pubXPt[15] << 56 |
+                                     (ulong)pubXPt[16] << 48 |
+                                     (ulong)pubXPt[17] << 40 |
+                                     (ulong)pubXPt[18] << 32 |
+                                     (ulong)pubXPt[19] << 24 |
+                                     (ulong)pubXPt[20] << 16 |
+                                     (ulong)pubXPt[21] << 8 |
+                                            pubXPt[22];
+                            uPt[3] = (ulong)pubXPt[23] << 56 |
+                                     (ulong)pubXPt[24] << 48 |
+                                     (ulong)pubXPt[25] << 40 |
+                                     (ulong)pubXPt[26] << 32 |
+                                     (ulong)pubXPt[27] << 24 |
+                                     (ulong)pubXPt[28] << 16 |
+                                     (ulong)pubXPt[29] << 8 |
+                                            pubXPt[30];
+                            uPt[4] = (ulong)pubXPt[31] << 56 |
+                                     (ulong)index << 24 |
+                                     0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
+                        }
                     }
-                    uPt[4] |= (ulong)index << 24 | 0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
 
 
                     // Final result is SHA512(outer_pad | SHA512(inner_pad | 37_byte_data))
@@ -386,7 +408,7 @@ namespace FinderOuter.Services
                     oPt[3] = 0x5c5c5c5c5c5c5c5cU ^ hPt[7];
 
                     sha.Init(hPt);
-                    sha.CompressBlockWithWSet(hPt, iPt);
+                    sha.CompressBlock(hPt, iPt);
                     sha.Compress165SecondBlock(hPt, uPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
@@ -396,10 +418,79 @@ namespace FinderOuter.Services
                     sha.Init(hPt);
                     sha.CompressBlock(hPt, oPt);
                     sha.Compress192SecondBlock(hPt, wPt);
+
+                    // New private key is (parentPrvKey + int(hPt)) % order
+                    BigInteger childInt = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
+
+                    BigInteger child = kParent + childInt;
+                    BigInteger reducedChild = child % order;
+                    kParent = reducedChild;
+
+                    ulong toAdd = hPt[3];
+                    parkey0 += toAdd;
+                    if (parkey0 < toAdd) parkey1++;
+
+                    toAdd = hPt[2];
+                    parkey1 += toAdd;
+                    if (parkey1 < toAdd) parkey2++;
+
+                    toAdd = hPt[1];
+                    parkey2 += toAdd;
+                    if (parkey2 < toAdd) parkey3++;
+
+                    toAdd = hPt[0];
+                    parkey3 += toAdd;
+                    if (parkey3 < toAdd) carry = 1;
+                    else carry = 0;
+
+                    bool bigger = false;
+                    if (carry == 1)
+                    {
+                        bigger = true;
+                    }
+                    else if (parkey3 == N3)
+                    {
+                        if (parkey2 > N2)
+                        {
+                            bigger = true;
+                        }
+                        else if (parkey2 == N2)
+                        {
+                            if (parkey1 > N1)
+                            {
+                                bigger = true;
+                            }
+                            else if (parkey1 == N1)
+                            {
+                                if (parkey0 >= N0)
+                                {
+                                    bigger = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (bigger)
+                    {
+                        if (parkey0 < N0) parkey1--;
+                        parkey0 -= N0;
+
+                        if (parkey1 < N1) parkey2--;
+                        parkey1 -= N1;
+
+                        if (parkey2 < N2) parkey3--;
+                        parkey2 -= N2;
+
+                        parkey3 -= N3;
+                    }
                 }
 
                 // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path
                 // and have been computed already
+                hPt[0] = parkey3;
+                hPt[1] = parkey2;
+                hPt[2] = parkey1;
+                hPt[3] = parkey0;
 
                 return comparer.Compare(sha.GetFirst32Bytes(hPt));
             }
@@ -452,7 +543,7 @@ namespace FinderOuter.Services
 
 
             using BIP0032 bip = new BIP0032(seed);
-            if (comparer.Compare(bip.GetPrivateKeys(path, 1, keyIndex)[0].ToBytes()))
+            if (comparer.Compare(bip.GetPrivateKeys(path, 1, 0)[0].ToBytes()))
             {
                 report.AddMessageSafe("Found a key.");
             }
@@ -698,10 +789,15 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop12()
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha512Fo sha512 = new Sha512Fo();
+            ulong[] ipad = new ulong[80];
+            ulong[] opad = new ulong[80];
+
+            using Sha256Fo sha256 = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (ulong* iPt = ipad, oPt = opad)
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
             {
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
@@ -721,8 +817,8 @@ namespace FinderOuter.Services
                     wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
-                    sha.Init(hPt);
-                    sha.Compress16(hPt, wPt);
+                    sha256.Init(hPt);
+                    sha256.Compress16(hPt, wPt);
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
                     {
@@ -733,18 +829,20 @@ namespace FinderOuter.Services
                         }
                         sb.Length--;
 
-                        //SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
                         byte[] tempBaaaa = Encoding.UTF8.GetBytes(sb.ToString());
-                        ulong[] ipad = new ulong[80];
-                        ulong[] opad = new ulong[80];
+
                         fixed (byte* mnPt = tempBaaaa)
-                        fixed (ulong* iPt = ipad, oPt = opad)
-                            SetBip32(mnPt, tempBaaaa.Length, iPt, oPt);
+                        {
+                            if (SetBip32(sha512, mnPt, tempBaaaa.Length, iPt, oPt))
+                            {
+                                return SetResult(tempBaaaa);
+                            }
+                        }
                     }
                 }
             }
 
-            return Final.Count != 0;
+            return false;
         }
 
 
@@ -843,15 +941,14 @@ namespace FinderOuter.Services
             SetPbkdf2Salt(pass);
             try
             {
-                // TODO: release Bitcoin.Net version 0.4.0 and use the Add() method on path to add the index at the end
                 this.path = new BIP0032Path(path);
+                this.path.Add(index);
             }
             catch (Exception ex)
             {
                 return report.Fail($"Invalid path ({ex.Message}).");
             }
 
-            keyIndex = index;
             switch (extraType)
             {
                 case InputType.Address:
