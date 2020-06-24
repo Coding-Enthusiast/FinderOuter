@@ -766,21 +766,7 @@ namespace FinderOuter.Services
         {
             try
             {
-                string fPath = $"FinderOuter.Backend.ImprovementProposals.BIP0039WordLists.{wl}.txt";
-                Assembly asm = Assembly.GetExecutingAssembly();
-                using (Stream stream = asm.GetManifestResourceStream(fPath))
-                {
-                    if (stream != null)
-                    {
-                        using StreamReader reader = new StreamReader(stream);
-                        allWords = reader.ReadToEnd().Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-
+                allWords = BIP0039.GetAllWords(wl);
                 return true;
             }
             catch (Exception)
@@ -869,7 +855,7 @@ namespace FinderOuter.Services
             switch (extraType)
             {
                 case InputType.Address:
-                    comparer = new PrvToAddrBothComparer();
+                    comparer = new PrvToAddrCompComparer();
                     break;
                 default:
                     return report.Fail("Input type is not defined.");

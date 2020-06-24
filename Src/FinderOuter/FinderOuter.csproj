@@ -63,7 +63,7 @@
     <EmbeddedResource Include="Backend\ImprovementProposals\BIP0039WordLists\Italian.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.3.0" />
+    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.4.0" />
     <PackageReference Include="Avalonia" Version="0.9.9" />
     <PackageReference Include="Avalonia.Desktop" Version="0.9.9" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.9" />
