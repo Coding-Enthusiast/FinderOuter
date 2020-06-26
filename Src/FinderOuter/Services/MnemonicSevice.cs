@@ -45,15 +45,17 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
+            calc = new EllipticCurveCalculator();
         }
 
 
-        private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
-        public const byte SpaceByte = 32;
-        HmacSha512 hmac = new HmacSha512();
-        EllipticCurveCalculator calc = new EllipticCurveCalculator();
         private readonly IReport report;
         private readonly InputService inputService;
+        private readonly EllipticCurveCalculator calc;
+
+        private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
+        public const byte SpaceByte = 32;
+
         private readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
         private uint[] wordIndexes;
         private int[] missingIndexes;
@@ -62,6 +64,7 @@ namespace FinderOuter.Services
         private byte[] mnBytes;
         private BIP0032Path path;
         private ICompareService comparer;
+
         private readonly BigInteger order = new SecP256k1().N;
         private const ulong N0 = 0xBFD25E8C_D0364141;
         private const ulong N1 = 0xBAAEDCE6_AF48A03B;
@@ -71,32 +74,10 @@ namespace FinderOuter.Services
         private int missCount;
         private string[] words;
 
-        // Biggest word has 8 chars, biggest mnemonic has 24 words + 23 spaces
-        // TODO: replace StringBuilder with a byte[] for an even faster result
-        private const int SbCap = (8 * 24) + 23;
-
 
         public enum InputType
         {
             Address
-        }
-
-        readonly List<IEnumerable<int>> Final = new List<IEnumerable<int>>();
-        private void SetResult(IEnumerable<int> item)
-        {
-            Final.Add(item);
-        }
-
-        private bool SetResult(int mnLen)
-        {
-            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBytes.SubArray(0, mnLen))}");
-            return true;
-        }
-
-        private bool SetResult(byte[] mnBa)
-        {
-            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBa)}");
-            return true;
         }
 
 
@@ -430,11 +411,8 @@ namespace FinderOuter.Services
                     sha.Compress192SecondBlock(hPt, wPt);
 
                     // New private key is (parentPrvKey + int(hPt)) % order
-                    BigInteger childInt = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
-
-                    BigInteger child = kParent + childInt;
-                    BigInteger reducedChild = child % order;
-                    kParent = reducedChild;
+                    // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
+                    kParent = (kParent + new BigInteger(sha.GetFirst32Bytes(hPt), true, true)) % order;
 
                     ulong toAdd = hPt[3];
                     parkey0 += toAdd;
@@ -506,68 +484,27 @@ namespace FinderOuter.Services
             }
         }
 
-        private unsafe void SetBip32(byte[] mnemonic)
+
+        private bool SetResult(int mnLen)
         {
-            // This is PBKDF2 and since there is only 1 block (dkLen/HmacLen=1) there is no loop here
-            // and the salt is the "mnemonic+passPhrase" + blockNumber so it is fixed and has to be pre-computed.
-
-            hmac.Key = mnemonic;
-
-            // F()
-            byte[] seed = new byte[hmac.OutputSize];
-            // compute u1
-            byte[] u1 = hmac.ComputeHash(pbkdf2Salt);
-
-            Buffer.BlockCopy(u1, 0, seed, 0, u1.Length);
-
-            // compute u2 to u(c-1) where c is iteration and each u is the hmac of previous u
-            for (int j = 1; j < 2048; j++)
-            {
-                u1 = hmac.ComputeHash(u1);
-
-                // result of F() is XOR sum of all u arrays
-                int len = u1.Length;
-                fixed (byte* first = seed, second = u1)
-                {
-                    if (Avx2.IsSupported)
-                    {
-                        var part1 = Avx2.Xor(Avx2.LoadVector256(first), Avx2.LoadVector256(second));
-                        var part2 = Avx2.Xor(Avx2.LoadVector256(first + 32), Avx2.LoadVector256(second + 32));
-
-                        Avx2.Store(first, part1);
-                        Avx2.Store(first + 32, part2);
-                    }
-                    else
-                    {
-                        *(ulong*)first ^= *(ulong*)second;
-                        *(ulong*)(first + 8) ^= *(ulong*)(second + 8);
-                        *(ulong*)(first + 16) ^= *(ulong*)(second + 16);
-                        *(ulong*)(first + 24) ^= *(ulong*)(second + 24);
-                        *(ulong*)(first + 32) ^= *(ulong*)(second + 32);
-                        *(ulong*)(first + 40) ^= *(ulong*)(second + 40);
-                        *(ulong*)(first + 48) ^= *(ulong*)(second + 48);
-                        *(ulong*)(first + 56) ^= *(ulong*)(second + 56);
-                    }
-                }
-            }
-
-
-            using BIP0032 bip = new BIP0032(seed);
-            if (comparer.Compare(bip.GetPrivateKeys(path, 1, 0)[0].ToBytes()))
-            {
-                report.AddMessageSafe("Found a key.");
-            }
+            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBytes.SubArray(0, mnLen))}");
+            return true;
         }
 
 
         private unsafe bool Loop24()
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha512Fo sha512 = new Sha512Fo();
+            ulong[] ipad = new ulong[80];
+            ulong[] opad = new ulong[80];
 
+            using Sha256Fo sha256 = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (ulong* iPt = ipad, oPt = opad)
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
+            fixed (byte* mnPt = &mnBytes[0])
             {
                 wPt[8] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 256;
@@ -635,34 +572,45 @@ namespace FinderOuter.Services
                     //                                         -> LLLL_LLLM MMMM_MMMM MMNN_NNNN NNNN_NOOO
                     wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
-                    sha.Init(hPt);
-                    sha.Compress32(hPt, wPt);
+                    sha256.Init(hPt);
+                    sha256.Compress32(hPt, wPt);
 
                     if ((byte)wrd[23] == hPt[0] >> 24)
                     {
-                        StringBuilder sb = new StringBuilder(SbCap);
+                        int mnLen = 0;
                         for (int i = 0; i < 24; i++)
                         {
-                            sb.Append($"{allWords[wrd[i]]} ");
+                            foreach (byte b in wordBytes[wrd[i]])
+                            {
+                                mnPt[mnLen++] = b;
+                            }
+                            mnPt[mnLen++] = SpaceByte;
                         }
-                        // no space at the end.
-                        sb.Length--;
 
-                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
+                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        {
+                            return SetResult(mnLen);
+                        }
                     }
                 }
             }
 
-            return Final.Count != 0;
+            return false;
         }
 
         private unsafe bool Loop21()
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha512Fo sha512 = new Sha512Fo();
+            ulong[] ipad = new ulong[80];
+            ulong[] opad = new ulong[80];
+
+            using Sha256Fo sha256 = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (ulong* iPt = ipad, oPt = opad)
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
+            fixed (byte* mnPt = &mnBytes[0])
             {
                 wPt[7] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 224;
@@ -684,33 +632,45 @@ namespace FinderOuter.Services
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
                     wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
-                    sha.Init(hPt);
-                    sha.Compress28(hPt, wPt);
+                    sha256.Init(hPt);
+                    sha256.Compress28(hPt, wPt);
 
                     if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
                     {
-                        StringBuilder sb = new StringBuilder(SbCap);
+                        int mnLen = 0;
                         for (int i = 0; i < 21; i++)
                         {
-                            sb.Append($"{allWords[wrd[i]]} ");
+                            foreach (byte b in wordBytes[wrd[i]])
+                            {
+                                mnPt[mnLen++] = b;
+                            }
+                            mnPt[mnLen++] = SpaceByte;
                         }
-                        sb.Length--;
 
-                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
+                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        {
+                            return SetResult(mnLen);
+                        }
                     }
                 }
             }
 
-            return Final.Count != 0;
+            return false;
         }
 
         private unsafe bool Loop18()
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha512Fo sha512 = new Sha512Fo();
+            ulong[] ipad = new ulong[80];
+            ulong[] opad = new ulong[80];
+
+            using Sha256Fo sha256 = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (ulong* iPt = ipad, oPt = opad)
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
+            fixed (byte* mnPt = &mnBytes[0])
             {
                 wPt[6] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 192;
@@ -731,24 +691,30 @@ namespace FinderOuter.Services
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
-                    sha.Init(hPt);
-                    sha.Compress24(hPt, wPt);
+                    sha256.Init(hPt);
+                    sha256.Compress24(hPt, wPt);
 
                     if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
                     {
-                        StringBuilder sb = new StringBuilder(SbCap);
+                        int mnLen = 0;
                         for (int i = 0; i < 18; i++)
                         {
-                            sb.Append($"{allWords[wrd[i]]} ");
+                            foreach (byte b in wordBytes[wrd[i]])
+                            {
+                                mnPt[mnLen++] = b;
+                            }
+                            mnPt[mnLen++] = SpaceByte;
                         }
-                        sb.Length--;
 
-                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
+                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        {
+                            return SetResult(mnLen);
+                        }
                     }
                 }
             }
 
-            return Final.Count != 0;
+            return false;
         }
 
         private unsafe bool Loop15()
@@ -763,6 +729,7 @@ namespace FinderOuter.Services
             fixed (ulong* iPt = ipad, oPt = opad)
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
+            fixed (byte* mnPt = &mnBytes[0])
             {
                 wPt[5] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 160;
@@ -787,19 +754,25 @@ namespace FinderOuter.Services
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
                     {
-                        StringBuilder sb = new StringBuilder(SbCap);
+                        int mnLen = 0;
                         for (int i = 0; i < 15; i++)
                         {
-                            sb.Append($"{allWords[wrd[i]]} ");
+                            foreach (byte b in wordBytes[wrd[i]])
+                            {
+                                mnPt[mnLen++] = b;
+                            }
+                            mnPt[mnLen++] = SpaceByte;
                         }
-                        sb.Length--;
 
-                        SetBip32(Encoding.UTF8.GetBytes(sb.ToString()));
+                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        {
+                            return SetResult(mnLen);
+                        }
                     }
                 }
             }
 
-            return Final.Count != 0;
+            return false;
         }
 
         private unsafe bool Loop12()
