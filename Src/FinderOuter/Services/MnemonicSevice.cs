@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend;
@@ -47,6 +48,8 @@ namespace FinderOuter.Services
         }
 
 
+        private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
+        public const byte SpaceByte = 32;
         HmacSha512 hmac = new HmacSha512();
         EllipticCurveCalculator calc = new EllipticCurveCalculator();
         private readonly IReport report;
@@ -56,6 +59,7 @@ namespace FinderOuter.Services
         private int[] missingIndexes;
         private string[] allWords;
         private byte[] pbkdf2Salt;
+        private byte[] mnBytes;
         private BIP0032Path path;
         private ICompareService comparer;
         private readonly BigInteger order = new SecP256k1().N;
@@ -81,6 +85,12 @@ namespace FinderOuter.Services
         private void SetResult(IEnumerable<int> item)
         {
             Final.Add(item);
+        }
+
+        private bool SetResult(int mnLen)
+        {
+            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBytes.SubArray(0, mnLen))}");
+            return true;
         }
 
         private bool SetResult(byte[] mnBa)
@@ -743,10 +753,15 @@ namespace FinderOuter.Services
 
         private unsafe bool Loop15()
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha512Fo sha512 = new Sha512Fo();
+            ulong[] ipad = new ulong[80];
+            ulong[] opad = new ulong[80];
+
+            using Sha256Fo sha256 = new Sha256Fo();
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
 
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0], wrd = &wordIndexes[0])
+            fixed (ulong* iPt = ipad, oPt = opad)
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
             {
                 wPt[5] = 0b10000000_00000000_00000000_00000000U;
@@ -767,8 +782,8 @@ namespace FinderOuter.Services
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
-                    sha.Init(hPt);
-                    sha.Compress20(hPt, wPt);
+                    sha256.Init(hPt);
+                    sha256.Compress20(hPt, wPt);
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
                     {
@@ -799,6 +814,7 @@ namespace FinderOuter.Services
             fixed (ulong* iPt = ipad, oPt = opad)
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[0])
+            fixed (byte* mnPt = &mnBytes[0])
             {
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 128;
@@ -822,21 +838,19 @@ namespace FinderOuter.Services
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
                     {
-                        StringBuilder sb = new StringBuilder(SbCap);
+                        int mnLen = 0;
                         for (int i = 0; i < 12; i++)
                         {
-                            sb.Append($"{allWords[wrd[i]]} ");
-                        }
-                        sb.Length--;
-
-                        byte[] tempBaaaa = Encoding.UTF8.GetBytes(sb.ToString());
-
-                        fixed (byte* mnPt = tempBaaaa)
-                        {
-                            if (SetBip32(sha512, mnPt, tempBaaaa.Length, iPt, oPt))
+                            foreach (byte b in wordBytes[wrd[i]])
                             {
-                                return SetResult(tempBaaaa);
+                                mnPt[mnLen++] = b;
                             }
+                            mnPt[mnLen++] = SpaceByte;
+                        }
+
+                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        {
+                            return SetResult(mnLen);
                         }
                     }
                 }
@@ -860,18 +874,31 @@ namespace FinderOuter.Services
         }
 
 
-        public bool TrySetWordList(BIP0039.WordLists wl)
+        public bool TrySetWordList(BIP0039.WordLists wl, out string[] allWords, out int maxWordLen)
         {
             try
             {
                 allWords = BIP0039.GetAllWords(wl);
+                maxWordLen = allWords.Max(w => Encoding.UTF8.GetBytes(w).Length);
                 return true;
             }
             catch (Exception)
             {
+                allWords = null;
+                maxWordLen = 0;
                 return false;
             }
         }
+
+        /// <summary>
+        /// Returns a buffer to hold byte array representation of the mnemonic with maximum possible length.
+        /// Number of words * maximum word byte length + number of spaces in between
+        /// </summary>
+        /// <param name="seedLen"></param>
+        /// <param name="maxWordLen"></param>
+        /// <returns></returns>
+        public byte[] GetSeedByte(int seedLen, int maxWordLen) => new byte[(seedLen * maxWordLen) + (seedLen - 1)];
+
 
         public bool TrySplitMnemonic(string mnemonic, char missingChar)
         {
@@ -931,12 +958,20 @@ namespace FinderOuter.Services
             if (mnType != MnemonicTypes.BIP39)
                 return report.Fail("Only BIP-39 seeds are supported for now.");
 
-            if (!TrySetWordList(wl))
+            if (!TrySetWordList(wl, out allWords, out int maxWordLen))
                 return report.Fail($"Could not find {wl} word list among resources.");
             if (!inputService.IsMissingCharValid(missChar))
                 return report.Fail("Missing character is not accepted.");
             if (!TrySplitMnemonic(mnemonic, missChar))
                 return false;
+
+            mnBytes = GetSeedByte(words.Length, maxWordLen);
+
+            wordBytes = new Dictionary<uint, byte[]>(2048);
+            for (uint i = 0; i < allWords.Length; i++)
+            {
+                wordBytes.Add(i, Encoding.UTF8.GetBytes(allWords[i]));
+            }
 
             SetPbkdf2Salt(pass);
             try
@@ -993,7 +1028,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!TrySetEntropy(mnemonic, mnType) && !TrySetWordList(wl))
+            if (!TrySetEntropy(mnemonic, mnType) && !TrySetWordList(wl, out allWords, out int maxWordLen))
             {
                 return false;
             }
