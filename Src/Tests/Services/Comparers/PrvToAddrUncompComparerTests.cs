@@ -6,58 +6,36 @@
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Services.Comparers;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace Tests.Services.Comparers
 {
-    public class PrvToAddrBothComparerTests
+    public class PrvToAddrUncompComparerTests
     {
-        public static IEnumerable<object[]> GetHashCases()
-        {
-            yield return new object[] { KeyHelper.Pub1CompAddr, true };
-            yield return new object[] { KeyHelper.Pub1CompAddr + "1", false };
-            yield return new object[] { KeyHelper.Pub1NestedSegwit, true };
-            yield return new object[] { KeyHelper.Pub1NestedSegwit + "1", false };
-            yield return new object[] { KeyHelper.Pub1BechAddr, true };
-            yield return new object[] { KeyHelper.Pub1BechAddr + "a", false };
-
-            yield return new object[] { "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", false };
-        }
-
-        [Theory]
-        [MemberData(nameof(GetHashCases))]
-        public void InitTest(string addr, bool expected)
-        {
-            var comp = new PrvToAddrBothComparer();
-            bool actual = comp.Init(addr);
-            Assert.Equal(expected, actual);
-        }
-
         [Fact]
         public void Compare_CompressedTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            var comp = new PrvToAddrUncompComparer();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
-            
+
             bool b = comp.Compare(key);
             Assert.False(b);
 
             key[0]--;
             b = comp.Compare(key);
-            Assert.True(b);
+            Assert.False(b); // False since Init() was from comp. address
         }
 
         [Fact]
         public void Compare_UncompressedTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            var comp = new PrvToAddrUncompComparer();
             Assert.True(comp.Init(KeyHelper.Pub1UnCompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
-            
+
             bool b = comp.Compare(key);
             Assert.False(b);
 
@@ -69,7 +47,7 @@ namespace Tests.Services.Comparers
         [Fact]
         public void Compare_EdgeTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            var comp = new PrvToAddrUncompComparer();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = new byte[32];
             bool b = comp.Compare(key);

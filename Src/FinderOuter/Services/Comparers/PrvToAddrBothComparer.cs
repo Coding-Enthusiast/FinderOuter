@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using FinderOuter.Backend.Cryptography.Hashing;
 using System;
 using System.Numerics;
 
@@ -13,25 +12,12 @@ namespace FinderOuter.Services.Comparers
     /// <summary>
     /// Converts private key to address using both compressed and uncompressed public keys
     /// </summary>
-    public class PrvToAddrBothComparer : ICompareService, IDisposable
+    public class PrvToAddrBothComparer : PrvToAddrBase
     {
-        private readonly SecP256k1 curve = new SecP256k1();
-        private readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
-        private byte[] hash;
-        private readonly Hash160 hash160 = new Hash160();
-
-
-        public bool Init(string address)
-        {
-            AddressService serv = new AddressService();
-            return serv.CheckAndGetHash(address, out hash);
-        }
-
-
-        public bool Compare(byte[] key)
+        public override bool Compare(byte[] key)
         {
             BigInteger kVal = new BigInteger(key, true, true);
-            if (kVal >= curve.N || kVal == 0)
+            if (kVal >= order || kVal == 0)
             {
                 return false;
             }
@@ -57,8 +43,5 @@ namespace FinderOuter.Services.Comparers
 
             return uncompHash.SequenceEqual(hash);
         }
-
-
-        public void Dispose() => hash160.Dispose();
     }
 }
