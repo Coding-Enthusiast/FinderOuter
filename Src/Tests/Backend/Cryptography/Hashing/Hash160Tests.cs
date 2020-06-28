@@ -32,6 +32,18 @@ namespace Tests.Backend.Cryptography.Hashing
         }
 
         [Fact]
+        public unsafe void Compress22Test()
+        {
+            using Hash160 hash = new Hash160();
+            byte[] data = Helper.HexToBytes("01d349abfc6687a7ca8c23e207f88356b1d712322bae");
+            byte[] actual = hash.Compress22(data);
+            byte[] expected = Helper.HexToBytes("1a5b597a300d83e993c8a3e518c21c9b309596e9");
+
+            Assert.Equal(22, data.Length);
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
         public unsafe void Compress33Test()
         {
             using Hash160 hash = new Hash160();

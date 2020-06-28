@@ -95,6 +95,59 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
+        public unsafe byte[] Compress22(byte[] data)
+        {
+            fixed (byte* dPt = data)
+            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
+            {
+                // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
+                // so we just pass RIPEMD160 block as HashState of SHA256
+                sha.Init(rip_blkPt);
+
+                sh_wPt[0] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
+                sh_wPt[1] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
+                sh_wPt[2] = (uint)((dPt[8] << 24) | (dPt[9] << 16) | (dPt[10] << 8) | dPt[11]);
+                sh_wPt[3] = (uint)((dPt[12] << 24) | (dPt[13] << 16) | (dPt[14] << 8) | dPt[15]);
+                sh_wPt[4] = (uint)((dPt[16] << 24) | (dPt[17] << 16) | (dPt[18] << 8) | dPt[19]);
+                sh_wPt[5] = (uint)((dPt[20] << 24) | (dPt[21] << 16) | 0b00000000_00000000_10000000_00000000U);
+                sh_wPt[6] = 0;
+                sh_wPt[7] = 0;
+                sh_wPt[8] = 0;
+                sh_wPt[9] = 0;
+                sh_wPt[10] = 0;
+                sh_wPt[11] = 0;
+                sh_wPt[12] = 0;
+                sh_wPt[13] = 0;
+
+                sh_wPt[14] = 0;
+                sh_wPt[15] = 176; // 22*8
+
+                sha.Compress22(rip_blkPt, sh_wPt);
+
+                // SHA256 compression is over and the result is already inside RIPEMD160 Block
+                // But SHA256 endianness is reverse of RIPEMD160, so we have to do an endian swap
+
+                // 32 byte or 8 uint items coming from SHA256
+                for (int i = 0; i < 8; i++)
+                {
+                    // RIPEMD160 uses little-endian while SHA256 uses big-endian
+                    rip_blkPt[i] =
+                        (rip_blkPt[i] >> 24) | (rip_blkPt[i] << 24) |                       // Swap byte 1 and 4
+                        ((rip_blkPt[i] >> 8) & 0xff00) | ((rip_blkPt[i] << 8) & 0xff0000);  // Swap byte 2 and 3
+                }
+                rip_blkPt[8] = 0b00000000_00000000_00000000_10000000U;
+                rip_blkPt[14] = 256;
+                // rip_blkPt[15] = 0;
+                // There is no need to set other items in block (like 13, 12,...)
+                // because they are not changed and they are always zero
+
+                rip.Init(rip_hPt);
+                rip.CompressBlock(rip_blkPt, rip_hPt);
+
+                return rip.GetBytes(rip_hPt);
+            }
+        }
+
         public unsafe byte[] Compress33(byte[] data)
         {
             fixed (byte* dPt = data)
