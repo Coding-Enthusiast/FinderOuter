@@ -17,7 +17,7 @@ namespace Tests.Services.Comparers
         {
             yield return new object[] { KeyHelper.Pub1CompAddr, true };
             yield return new object[] { KeyHelper.Pub1CompAddr + "1", false };
-            yield return new object[] { KeyHelper.Pub1NestedSegwit, true };
+            yield return new object[] { KeyHelper.Pub1NestedSegwit, false };
             yield return new object[] { KeyHelper.Pub1NestedSegwit + "1", false };
             yield return new object[] { KeyHelper.Pub1BechAddr, true };
             yield return new object[] { KeyHelper.Pub1BechAddr + "a", false };

@@ -12,6 +12,12 @@ namespace FinderOuter.Services.Comparers
 {
     public abstract class PrvToAddrBase : ICompareService, IDisposable
     {
+        public PrvToAddrBase(bool acceptP2shP2wpkh)
+        {
+            accept3 = acceptP2shP2wpkh;
+        }
+
+        protected readonly bool accept3;
         protected readonly BigInteger order = new SecP256k1().N;
         protected readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
         protected byte[] hash;
@@ -20,7 +26,7 @@ namespace FinderOuter.Services.Comparers
         public bool Init(string address)
         {
             AddressService serv = new AddressService();
-            return serv.CheckAndGetHash(address, out hash);
+            return serv.CheckAndGetHash(address, accept3, out hash);
         }
 
         public abstract bool Compare(byte[] key);

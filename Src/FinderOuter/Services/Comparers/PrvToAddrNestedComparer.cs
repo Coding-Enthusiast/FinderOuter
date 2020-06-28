@@ -9,12 +9,9 @@ using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
-    /// <summary>
-    /// Converts private key to address using only compressed public key
-    /// </summary>
-    public class PrvToAddrCompComparer : PrvToAddrBase
+    public class PrvToAddrNestedComparer : PrvToAddrBase
     {
-        public PrvToAddrCompComparer() : base(false) { }
+        public PrvToAddrNestedComparer() : base(true) { }
 
         public override bool Compare(byte[] key)
         {
@@ -31,8 +28,15 @@ namespace FinderOuter.Services.Comparers
             toHash[0] = point.Y.IsEven ? (byte)2 : (byte)3;
             Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(toHash);
-            return compHash.SequenceEqual(hash);
+            byte[] firstHash = hash160.Compress33(toHash);
+            // OP_0 Push<20-bytes>
+            toHash = new byte[22];
+            toHash[1] = 20;
+            Buffer.BlockCopy(firstHash, 0, toHash, 2, 20);
+
+            ReadOnlySpan<byte> secondHash = hash160.Compress22(toHash);
+
+            return secondHash.SequenceEqual(hash);
         }
     }
 }
