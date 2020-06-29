@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Linq;
 using System.Numerics;
@@ -19,6 +20,21 @@ namespace FinderOuter.Services
         private readonly Base58 b58Enc = new Base58();
         private readonly Bech32 b32Enc = new Bech32();
 
+
+        public bool TryGetCompareService(InputType inType, string input, out ICompareService result)
+        {
+            result = inType switch
+            {
+                InputType.AddrComp => new PrvToAddrCompComparer(),
+                InputType.AddrUnComp => new PrvToAddrUncompComparer(),
+                InputType.AddrBoth => new PrvToAddrBothComparer(),
+                InputType.AddrNested => new PrvToAddrNestedComparer(),
+                InputType.Pubkey => new PrvToPubComparer(),
+                InputType.PrivateKey => new PrvToPrvComparer(),
+                _ => null
+            };
+            return result is null ? false : result.Init(input);
+        }
 
         public string CheckMiniKey(string key)
         {

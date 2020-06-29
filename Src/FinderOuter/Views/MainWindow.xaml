@@ -3,8 +3,8 @@
         xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignHeight="650" d:DesignWidth="900"
-        Height="650" Width="950"
+        mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000"
+        Height="700" Width="1000"
         x:Class="FinderOuter.Views.MainWindow"
         Icon="/Assets/Icon.ico"
         Title="{Binding WindowTitle}" FontSize="14">

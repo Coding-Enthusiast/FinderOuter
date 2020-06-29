@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
@@ -16,16 +17,22 @@ namespace FinderOuter.ViewModels
     {
         public MissingMnemonicViewModel()
         {
-            WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
-            MnemonicTypesList = new MnemonicTypes[] { MnemonicTypes.BIP39 };
-            InputTypeList = Enum.GetValues(typeof(MnemonicSevice.InputType)).Cast<MnemonicSevice.InputType>();
+            WordListsList = ListHelper.GetAllEnumValues<BIP0039.WordLists>().ToArray();
+            MnemonicTypesList = ListHelper.GetAllEnumValues<MnemonicTypes>().ToArray();
+            InputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
+            SelectedInputType = InputTypeList.First();
             MnService = new MnemonicSevice(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Mnemonic,
-                x => x.Result.CurrentState, (mn, state) =>
+                x => x.AdditionalInfo,
+                x => x.KeyPath,
+                x => x.Result.CurrentState,
+                (mn, extra, path, state) =>
                             !string.IsNullOrEmpty(mn) &&
-                            state != Models.State.Working);
+                            !string.IsNullOrEmpty(extra) &&
+                            !string.IsNullOrEmpty(path) &&
+                            state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
         }
@@ -33,7 +40,15 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Mnemonic";
-        public override string Description => "Helps you recover mnemonic (seed phrases) that are missing some words.";
+        public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are missing " +
+            $"some words. Enter words that are known and replace the missing ones with the symbol defined by " +
+            $"{nameof(MissingChar)} parameter.{Environment.NewLine}" +
+            $"The passphrase box is for the optional passphrase used by BIP-39. Leave empty if it wasn't used.{Environment.NewLine}" +
+            $"The additional info box is for entering either an address, a public or private key from the child keys derived " +
+            $"from this mnemonic.{Environment.NewLine}" +
+            $"The key index is the zero-based index of the entered key/address (first address is 0, second is 1,...)" +
+            $"{Environment.NewLine}" +
+            $"The path is the BIP-32 defined path of the child extended key (eg. m/44'/0'/0')";
 
         public MnemonicSevice MnService { get; }
 
@@ -55,10 +70,10 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selMnT, value);
         }
 
-        public IEnumerable<MnemonicSevice.InputType> InputTypeList { get; }
+        public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
 
-        private MnemonicSevice.InputType _inT;
-        public MnemonicSevice.InputType SelectedInputType
+        private DescriptiveItem<InputType> _inT;
+        public DescriptiveItem<InputType> SelectedInputType
         {
             get => _inT;
             set => this.RaiseAndSetIfChanged(ref _inT, value);
@@ -109,7 +124,7 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            _ = MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType, KeyPath, KeyIndex,
+            _ = MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value, KeyPath, KeyIndex,
                                       SelectedMnemonicType, SelectedWordListType);
         }
     }

@@ -22,17 +22,6 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    public enum WordLists
-    {
-        English,
-        ChineseSimplified,
-        ChineseTraditional,
-        French,
-        Italian,
-        Japanese,
-        Korean,
-        Spanish
-    }
     public enum MnemonicTypes
     {
         BIP39,
@@ -73,12 +62,6 @@ namespace FinderOuter.Services
 
         private int missCount;
         private string[] words;
-
-
-        public enum InputType
-        {
-            Address
-        }
 
 
         public unsafe bool SetBip32(Sha512Fo sha, byte* mnPt, int mnLen, ulong* iPt, ulong* oPt)
@@ -957,18 +940,9 @@ namespace FinderOuter.Services
                 return report.Fail($"Invalid path ({ex.Message}).");
             }
 
-            switch (extraType)
+            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
             {
-                case InputType.Address:
-                    comparer = new PrvToAddrCompComparer();
-                    break;
-                default:
-                    return report.Fail("Input type is not defined.");
-            }
-
-            if (!comparer.Init(extra))
-            {
-                return report.Fail("Invalid extra data was provided.");
+                return report.Fail("Invalid extra input or input type.");
             }
 
             report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");

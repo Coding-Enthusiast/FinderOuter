@@ -17,7 +17,7 @@ namespace FinderOuter.ViewModels
     {
         public Bip32PathViewModel()
         {
-            WordListsList = Enum.GetValues(typeof(WordLists)).Cast<WordLists>();
+            WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Mnemonic,
@@ -40,7 +40,7 @@ namespace FinderOuter.ViewModels
 
         public MnemonicSevice MnService { get; }
 
-        public IEnumerable<WordLists> WordListsList { get; }
+        public IEnumerable<BIP0039.WordLists> WordListsList { get; }
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
 
 
@@ -78,7 +78,6 @@ namespace FinderOuter.ViewModels
             get => _pass;
             set => this.RaiseAndSetIfChanged(ref _pass, value);
         }
-
 
 
         public override void Find()
