@@ -40,7 +40,7 @@ namespace Tests.Services.Comparers
         public void Compare_EdgeTest()
         {
             var comp = new PrvToAddrNestedComparer();
-            Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
+            Assert.True(comp.Init(KeyHelper.Pub1NestedSegwit));
             byte[] key = new byte[32];
             bool b = comp.Compare(key);
             Assert.False(b);

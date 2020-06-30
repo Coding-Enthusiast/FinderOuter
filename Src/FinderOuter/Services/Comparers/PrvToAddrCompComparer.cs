@@ -14,8 +14,6 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToAddrCompComparer : PrvToAddrBase
     {
-        public PrvToAddrCompComparer() : base(false) { }
-
         public override bool Compare(byte[] key)
         {
             BigInteger kVal = new BigInteger(key, true, true);

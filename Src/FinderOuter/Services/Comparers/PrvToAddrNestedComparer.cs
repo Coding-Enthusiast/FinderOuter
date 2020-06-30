@@ -11,7 +11,11 @@ namespace FinderOuter.Services.Comparers
 {
     public class PrvToAddrNestedComparer : PrvToAddrBase
     {
-        public PrvToAddrNestedComparer() : base(true) { }
+        public override bool Init(string address)
+        {
+            AddressService serv = new AddressService();
+            return serv.CheckAndGetHash_P2sh(address, out hash);
+        }
 
         public override bool Compare(byte[] key)
         {

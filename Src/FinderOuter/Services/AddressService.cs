@@ -12,8 +12,11 @@ namespace FinderOuter.Services
     {
         private readonly Address addrMan = new Address();
 
-        /// <param name="accept3">If false, rejects P2SH addresses</param>
-        public bool CheckAndGetHash(string address, bool accept3, out byte[] hash)
+        /// <summary>
+        /// Checks the given address and returns its decoded hash.
+        /// Works only for P2PKH and P2WPKH addresses
+        /// </summary>
+        public bool CheckAndGetHash(string address, out byte[] hash)
         {
             hash = null;
             if (string.IsNullOrWhiteSpace(address))
@@ -25,10 +28,6 @@ namespace FinderOuter.Services
             {
                 return addrMan.VerifyType(address, PubkeyScriptType.P2PKH, out hash);
             }
-            else if (address[0] == '3' && accept3)
-            {
-                return addrMan.VerifyType(address, PubkeyScriptType.P2SH, out hash);
-            }
             else if (address[0] == 'b')
             {
                 return addrMan.VerifyType(address, PubkeyScriptType.P2WPKH, out hash);
@@ -36,6 +35,23 @@ namespace FinderOuter.Services
             else
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks the given address and returns its decoded hash.
+        /// Works only for P2SH addresses
+        /// </summary>
+        public bool CheckAndGetHash_P2sh(string address, out byte[] hash)
+        {
+            if (string.IsNullOrWhiteSpace(address) || address[0] != '3')
+            {
+                hash = null;
+                return false;
+            }
+            else
+            {
+                return addrMan.VerifyType(address, PubkeyScriptType.P2SH, out hash);
             }
         }
     }
