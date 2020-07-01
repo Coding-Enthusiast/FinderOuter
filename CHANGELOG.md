@@ -1,8 +1,15 @@
 ### Release ?.?.? (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.3.0.0...master)
-* Missing mnemonic words
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.0.0...master)
 * Finding bip32 key path
 * Password recovery
+* Multi-thread and SIMD support
+
+### Release 0.4.0 (2020-06-30)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.3.0.0...v0.4.0.0)
+* **New feature**: Missing BIP-39 mnomonic words
+* Decoupling comparer classes so that they can be injected as dependencies based on user selection
+* Optimization of SHA512
+* Various code improvements, bug fixes and additional tests
 
 ### Release 0.3.0 (2020-05-30)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.2.0.0...v0.3.0.0)

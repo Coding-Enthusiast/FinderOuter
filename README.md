@@ -2,17 +2,29 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/License)
 
 # The FinderOuter
-The FinderOuter aims to make recovery process easy for everyone by using a user friendly GUI. It will focus on simplicity 
-so that the user doesn't have to read many pages of how-to-use in order to learn how to work with the command line. 
-Instead user will only have to fill in a textbox or two and click a button! It only works for bitcoin but altcoin option _may_
-be added in the future.
+The FinderOuter is a bitcoin recovery tool that focuses on making the recovery process easy for everyone.  
+There is no need to read long guide pages to learn how to use the application. Instead it will always be as easy as filling some
+boxes, maybe selecting some options and clicking a button all in a user-friendly GUI.  
+Each recovery option is written from scratch and all parts down to the basic cryptography used (such as SHA, ECC,...) are specialized
+for maximum efficiency.
 
 Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) this tool 
 can run on all operating systems.  
-This project is written fully in c# and is stand alone with only GUI related components as its dependancies.  
-FinderOuter is still in beta and under development. New features are slowly added and everything is optimized. Please
-report any bugs you find or any improvement suggestions you have by creating a new 
+This project is written fully in C# and is 100% open source.  
+FinderOuter is still in beta and under development. New features are slowly added and everything is optimized.  
+Contribution is always welcome. Please report any bugs you find or any improvement suggestions you have by creating a new 
 [issue](https://github.com/Coding-Enthusiast/FinderOuter/issues/new/choose).
+
+## How to use and preview
+1. Select an option from this list depending on what you want to recover
+2. Read the instructions
+3. Fill in the required information
+4. Select appropriate available options according to the entered data
+5. Some parts have tooltips for extra explanation
+6. Click Find button
+7. See the progress and the reports
+
+![Preview](/Doc/Images/MainPreview.jpg)
 
 ## Available options
 #### 1. Message signature verification  
@@ -37,9 +49,13 @@ yet optimized.
 This option is similar to 2 and 3 but works for mini-privatekeys (eg. SzavMBLoXU6kDrqtUVmffv). It requires an address to check
 each possible key against, as a result it is also slower since it depends on ECC and has 2 additional hashes.
 
+#### 5. Missing mnomonic (seed) words 
+This option works for [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics (others like Electrum will
+be added in the future) that have some words missing. It requires knowing one child key or address created from that seed and the 
+exact path of it.
+
 ## Future plans
 * Optimization is always at the top of the to-do list
-* Mnemonic recovery (seed phrases missing a couple of words, having wrong order,...)
 * BIP-32 path finder (user has master key and at least one child key but doesn't know the derivation path)
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
