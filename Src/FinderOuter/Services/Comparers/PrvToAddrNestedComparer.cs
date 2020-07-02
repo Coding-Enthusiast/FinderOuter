@@ -32,15 +32,8 @@ namespace FinderOuter.Services.Comparers
             toHash[0] = point.Y.IsEven ? (byte)2 : (byte)3;
             Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
-            byte[] firstHash = hash160.Compress33(toHash);
-            // OP_0 Push<20-bytes>
-            toHash = new byte[22];
-            toHash[1] = 20;
-            Buffer.BlockCopy(firstHash, 0, toHash, 2, 20);
-
-            ReadOnlySpan<byte> secondHash = hash160.Compress22(toHash);
-
-            return secondHash.SequenceEqual(hash);
+            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
+            return actual.SequenceEqual(hash);
         }
     }
 }

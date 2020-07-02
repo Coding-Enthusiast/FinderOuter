@@ -79,6 +79,8 @@ namespace Tests
             return BytesToHex(GetBytes(size));
         }
 
+        internal static void FillRandomByte(byte[] data) => new Random().NextBytes(data);
+
         /// <summary>
         /// This is used internally by unit tests so checks are skipped.
         /// Use <see cref="CryptoCurrency.Net.Encoders.Base16.ToByteArray(string)"/> for complete functionality.
