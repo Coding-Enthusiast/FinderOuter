@@ -36,8 +36,11 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            ExampleCommand = ReactiveCommand.Create(Example);
             HasExample = true;
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+                x => x.Result.CurrentState, 
+                (state) => state != State.Working && HasExample);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
         }
 
 
@@ -134,7 +137,7 @@ namespace FinderOuter.ViewModels
         private int exampleIndex;
         public void Example()
         {
-            int total = 1;
+            int total = 4;
 
             switch (exampleIndex)
             {
@@ -150,7 +153,74 @@ namespace FinderOuter.ViewModels
                     KeyIndex = 0;
 
                     Result.Message = $"This is example 1 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
-                                     $"It is missing one word (grace) and it should take ~1 second to find it.";
+                                     $"It is missing one word (grace) and it should take ~1 second to find it." +
+                                     $"{Environment.NewLine}It creates the following addresses:{Environment.NewLine}" +
+                                     $"{Environment.NewLine}" +
+                                     $"{Environment.NewLine}" +
+                                     $"{Environment.NewLine}" +
+                                     $"{Environment.NewLine}";
+                    break;
+                case 1:
+                    Mnemonic = "ozone - grab fiber curtain grace pudding thank - elder eight picnic";
+                    SelectedWordListType = BIP0039.WordLists.English;
+                    SelectedMnemonicType = MnemonicTypes.BIP39;
+                    PassPhrase = "$4f9Asf*vX#4bX@7";
+                    MissingChar = '-';
+                    AdditionalInfo = "bc1ql5swedpywx3kjq4grv9qmlngapdf6xumv7f2ew";
+                    SelectedInputType = InputTypeList.First();
+                    KeyPath = "m/84'/0'/0'/0";
+                    KeyIndex = 4;
+
+                    Result.Message = $"This is example 2 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
+                                     $"It is missing two word (drill, cruise) and it should take ~1 hour to find them." +
+                                     $"{Environment.NewLine}This example shows how to use a different missing char, " +
+                                     $"input type, path, key index.{Environment.NewLine}" +
+                                     $"It creates the following addresses:{Environment.NewLine}" +
+                                     $"m/84'/0'/0'/0/0: bc1q4tkug9kdjdwqsytku6kjqmh8l5ack7r807y6xw{Environment.NewLine}" +
+                                     $"m/84'/0'/0'/0/1: bc1q2jd2nm87up6v52tx5dmlph60z4exwlm0z2ljms{Environment.NewLine}" +
+                                     $"m/84'/0'/0'/0/2: bc1q9wc94vnv795ldevgggevry0evgz2n50tz9g3y0{Environment.NewLine}" +
+                                     $"m/84'/0'/0'/0/3: bc1qfwlp044ca3ynpk2pvq69dv9huyfq5qy5nn32j2{Environment.NewLine}" +
+                                     $"m/84'/0'/0'/0/4: bc1ql5swedpywx3kjq4grv9qmlngapdf6xumv7f2ew{Environment.NewLine}";
+                    break;
+                case 2:
+                    Mnemonic = "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil * fabuleux pizza diminuer gagner oisillon trafic imposer";
+                    SelectedWordListType = BIP0039.WordLists.French;
+                    SelectedMnemonicType = MnemonicTypes.BIP39;
+                    PassPhrase = "";
+                    MissingChar = '*';
+                    AdditionalInfo = "L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs";
+                    SelectedInputType = InputTypeList.ToArray()[5];
+                    KeyPath = "m/0/";
+                    KeyIndex = 2;
+
+                    Result.Message = $"This is example 3 out of {total} with a random mnemonic.{Environment.NewLine}" +
+                                     $"It is missing one word (lézard) and it should take ~1 second to find it." +
+                                     $"{Environment.NewLine}This example shows how to use a different language and " +
+                                     $"input type.{Environment.NewLine}" +
+                                     $"It creates the following keys:{Environment.NewLine}" +
+        $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd: L1ac6reGcRagt1oSRUwPJzY6mNMBHAzbB8sfz6LJ8fCBwxzXD6v2{Environment.NewLine}" +
+        $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
+        $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
+                    break;
+                case 3:
+                    Mnemonic = "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil * fabuleux pizza diminuer gagner oisillon trafic imposer";
+                    SelectedWordListType = BIP0039.WordLists.French;
+                    SelectedMnemonicType = MnemonicTypes.BIP39;
+                    PassPhrase = "";
+                    MissingChar = '*';
+                    AdditionalInfo = "32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z";
+                    SelectedInputType = InputTypeList.ToArray()[3];
+                    KeyPath = "m/0/";
+                    KeyIndex = 2;
+
+                    Result.Message = $"This is example 4 out of {total} with a random mnemonic.{Environment.NewLine}" +
+                                     $"It is missing one word (lézard) and it should take ~1 second to find it." +
+                                     $"{Environment.NewLine}This example shows how to use a different language and " +
+                                     $"input type (nested SegWit address or P2SH-P2WPKH).{Environment.NewLine}" +
+                                     $"It creates the following keys:{Environment.NewLine}" +
+        $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd: L1ac6reGcRagt1oSRUwPJzY6mNMBHAzbB8sfz6LJ8fCBwxzXD6v2{Environment.NewLine}" +
+        $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
+        $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
                     break;
                 default:
                     break;

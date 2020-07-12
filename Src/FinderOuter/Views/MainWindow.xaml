@@ -46,7 +46,7 @@
         <Button Content="Find!" Command="{Binding SelectedOption.FindCommand}" IsVisible="{Binding IsFindButtonVisible}"
                 Margin="3" Grid.Column="0"/>
         <Button Content="Example" Command="{Binding SelectedOption.ExampleCommand}" IsVisible="{Binding IsFindButtonVisible}"
-                IsEnabled="{Binding SelectedOption.HasExample}"
+                IsEnabled="{Binding SelectedOption.HasExample}" ToolTip.Tip="Click again for next example."
                 Margin="3" Grid.Column="1"/>
       </Grid>
       <TextBlock Text="{Binding SelectedOption.Description}" TextWrapping="Wrap"
