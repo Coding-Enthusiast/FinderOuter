@@ -17,14 +17,18 @@ namespace FinderOuter.ViewModels
         public abstract string OptionName { get; }
         public abstract string Description { get; }
 
-        private Report _res = new Report();
-        public Report Result
+        private IReport _res = new Report();
+        public IReport Result
         {
             get => _res;
             set => this.RaiseAndSetIfChanged(ref _res, value);
         }
 
         public string MissingToolTip => ConstantsFO.MissingToolTip;
+
+        public bool HasExample { get; protected set; }
+
+        public IReactiveCommand ExampleCommand { get; protected set; }
 
         public IReactiveCommand FindCommand { get; protected set; }
         public abstract void Find();

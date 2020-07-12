@@ -35,6 +35,9 @@ namespace FinderOuter.ViewModels
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
+
+            ExampleCommand = ReactiveCommand.Create(Example);
+            HasExample = true;
         }
 
 
@@ -126,6 +129,38 @@ namespace FinderOuter.ViewModels
         {
             _ = MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value, KeyPath, KeyIndex,
                                       SelectedMnemonicType, SelectedWordListType);
+        }
+
+        private int exampleIndex;
+        public void Example()
+        {
+            int total = 1;
+
+            switch (exampleIndex)
+            {
+                case 0:
+                    Mnemonic = "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic";
+                    SelectedWordListType = BIP0039.WordLists.English;
+                    SelectedMnemonicType = MnemonicTypes.BIP39;
+                    PassPhrase = "AnExamplePassPhrase";
+                    MissingChar = '*';
+                    AdditionalInfo = "1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN";
+                    SelectedInputType = InputTypeList.First();
+                    KeyPath = "m/44'/0'/0'/0/";
+                    KeyIndex = 0;
+
+                    Result.Message = $"This is example 1 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
+                                     $"It is missing one word (grace) and it should take ~1 second to find it.";
+                    break;
+                default:
+                    break;
+            }
+
+            exampleIndex++;
+            if (exampleIndex >= total)
+            {
+                exampleIndex = 0;
+            }
         }
     }
 }

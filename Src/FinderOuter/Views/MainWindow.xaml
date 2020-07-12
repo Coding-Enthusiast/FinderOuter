@@ -42,8 +42,13 @@
     </Grid>
 
     <Grid RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="1">
-      <Button Content="Find!" Command="{Binding SelectedOption.FindCommand}" IsVisible="{Binding IsFindButtonVisible}"
-              Margin="3" Grid.Row="0"/>
+      <Grid ColumnDefinitions="*,auto" Grid.Row="0">
+        <Button Content="Find!" Command="{Binding SelectedOption.FindCommand}" IsVisible="{Binding IsFindButtonVisible}"
+                Margin="3" Grid.Column="0"/>
+        <Button Content="Example" Command="{Binding SelectedOption.ExampleCommand}" IsVisible="{Binding IsFindButtonVisible}"
+                IsEnabled="{Binding SelectedOption.HasExample}"
+                Margin="3" Grid.Column="1"/>
+      </Grid>
       <TextBlock Text="{Binding SelectedOption.Description}" TextWrapping="Wrap"
                  Margin="3" Grid.Row="1"/>
 
