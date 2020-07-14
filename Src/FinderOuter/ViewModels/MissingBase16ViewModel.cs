@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
@@ -25,6 +24,8 @@ namespace FinderOuter.ViewModels
                             state != Models.State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
+            ExampleCommand = ReactiveCommand.Create(Example);
+            HasExample = true;
         }
 
 
@@ -72,6 +73,43 @@ namespace FinderOuter.ViewModels
         public override void Find()
         {
             _ = b16Service.Find(Input, MissingChar, AdditionalInput, IsCompressed);
+        }
+
+        private int exampleIndex;
+        public void Example()
+        {
+            int total = 2;
+
+            switch (exampleIndex)
+            {
+                case 0:
+                    Input = "0c28fca386c7a227600b2fe50b7cae11ec86d3b*1fbe471be89827e19d72aa1d";
+                    MissingChar = '*';
+                    AdditionalInput = "1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK";
+
+                    Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is missing one character (f) and it should take <1 second to find it.";
+                    break;
+                case 1:
+                    Input = "0c28fca386c7a227600?2fe50b7cae11ec?6d3b?1fbe471be89827e19d72aa1d";
+                    MissingChar = '?';
+                    AdditionalInput = "1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK";
+
+                    Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is missing three character (b, 8, f) and it should take <1 min to find it." +
+                                     $"{Environment.NewLine}It also shows how to use a different missing character.";
+                    break;
+
+                default:
+                    Result.Message = "Invalid example index was given (this is a bug).";
+                    break;
+            }
+
+            exampleIndex++;
+            if (exampleIndex >= total)
+            {
+                exampleIndex = 0;
+            }
         }
     }
 }
