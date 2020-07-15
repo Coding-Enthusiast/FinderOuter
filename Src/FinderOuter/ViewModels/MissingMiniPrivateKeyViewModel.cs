@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
@@ -25,14 +26,20 @@ namespace FinderOuter.ViewModels
                             !string.IsNullOrEmpty(miniKey) &&
                             !string.IsNullOrEmpty(addr) &&
                             inServ.IsMissingCharValid(c) &&
-                            state != Models.State.Working);
+                            state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
+
+            HasExample = true;
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+                x => x.Result.CurrentState,
+                (state) => state != State.Working);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
         }
 
         public override string OptionName => "Missing mini private key";
 
-        public override string Description => 
+        public override string Description =>
             $"This option can recover missing characters in a mini private key." +
             $"{Environment.NewLine}" +
             $"Enter the mini key (22 or 30 characters long starting with S) in first box while replacing its missing " +
@@ -66,6 +73,52 @@ namespace FinderOuter.ViewModels
         public override void Find()
         {
             _ = miniService.Find(Input, ExtraInput, MissingChar);
+        }
+
+        public void Example()
+        {
+            int total = 3;
+
+            switch (exampleIndex)
+            {
+                case 0:
+                    Input = "SzavMBLoXU6kDr*tUV*ffv";
+                    MissingChar = '*';
+                    ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
+
+                    Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is missing 2 characters (q, m) and it should take <1 second to find the correct key.";
+                    break;
+                case 1:
+                    Input = "SzavMBLoXU6kDrqtUVmf--";
+                    MissingChar = '-';
+                    ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
+
+                    Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is missing 2 characters (f, v) and it should take <1 second to find the correct key." +
+                                     $"{Environment.NewLine}Note the usage of a different missing character.";
+                    break;
+                case 2:
+                    Input = "S6c56bnXQiB*k9mqS*E7ykVQ7Nzr*y";
+                    MissingChar = '*';
+                    ExtraInput = "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW";
+
+                    Result.Message = $"This is example 3 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is missing 3 characters (j, Y, R) and it should take <30 seconds to find the " +
+                                     $"correct key." +
+                                     $"{Environment.NewLine}The address this time is using the uncompressed public key.";
+                    break;
+
+                default:
+                    Result.Message = "Invalid example index was given (this is a bug).";
+                    break;
+            }
+
+            exampleIndex++;
+            if (exampleIndex >= total)
+            {
+                exampleIndex = 0;
+            }
         }
     }
 }
