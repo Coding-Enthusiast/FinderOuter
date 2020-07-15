@@ -222,7 +222,9 @@ namespace FinderOuter.ViewModels
         $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
         $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
                     break;
+
                 default:
+                    Result.Message = "Invalid example index was given (this is a bug).";
                     break;
             }
 

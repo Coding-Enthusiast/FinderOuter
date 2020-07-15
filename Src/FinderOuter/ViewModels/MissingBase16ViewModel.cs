@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
@@ -21,11 +22,15 @@ namespace FinderOuter.ViewModels
                 x => x.Result.CurrentState, (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
                             b16Service.IsMissingCharValid(c) &&
-                            state != Models.State.Working);
+                            state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
-            ExampleCommand = ReactiveCommand.Create(Example);
+
             HasExample = true;
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+                x => x.Result.CurrentState,
+                (state) => state != State.Working);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
         }
 
 
