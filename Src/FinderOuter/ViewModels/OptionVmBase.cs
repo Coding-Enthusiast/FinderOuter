@@ -27,6 +27,7 @@ namespace FinderOuter.ViewModels
         public string MissingToolTip => ConstantsFO.MissingToolTip;
 
         public bool HasExample { get; protected set; }
+        protected int exampleIndex;
 
         public IReactiveCommand ExampleCommand { get; protected set; }
 

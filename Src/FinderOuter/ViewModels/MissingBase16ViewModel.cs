@@ -80,7 +80,7 @@ namespace FinderOuter.ViewModels
             _ = b16Service.Find(Input, MissingChar, AdditionalInput, IsCompressed);
         }
 
-        private int exampleIndex;
+
         public void Example()
         {
             int total = 2;

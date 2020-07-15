@@ -38,7 +38,7 @@ namespace FinderOuter.ViewModels
 
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState, 
+                x => x.Result.CurrentState,
                 (state) => state != State.Working && HasExample);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
         }
@@ -134,7 +134,7 @@ namespace FinderOuter.ViewModels
                                       SelectedMnemonicType, SelectedWordListType);
         }
 
-        private int exampleIndex;
+
         public void Example()
         {
             int total = 4;

@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Backend;
+using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
@@ -25,10 +26,16 @@ namespace FinderOuter.ViewModels
                 x => x.Result.CurrentState, (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
                             inServ.IsMissingCharValid(c) &&
-                            state != Models.State.Working);
+                            state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
             InputTypeList = Enum.GetValues(typeof(Base58Sevice.InputType)).Cast<Base58Sevice.InputType>();
+
+            HasExample = true;
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+                x => x.Result.CurrentState,
+                (state) => state != State.Working);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
         }
 
 
@@ -73,6 +80,75 @@ namespace FinderOuter.ViewModels
         public override void Find()
         {
             _ = b58Service.Find(Input, MissingChar, SelectedInputType);
+        }
+
+        public void Example()
+        {
+            int total = 5;
+
+            switch (exampleIndex)
+            {
+                case 0:
+                    Input = "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNydYXYB9KF";
+                    MissingChar = '*';
+                    SelectedInputType = InputTypeList.First();
+
+                    Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is an uncompressed private key missing 4 character (o, M, W, X) and it " +
+                                     $"should take <1 second to find the correct key and <10 seconds to check " +
+                                     $"all possible keys.";
+                    break;
+                case 1:
+                    Input = "L53fCHmQh??p1B4JipfBtfeHZH7cAib?G9oK19?fiFzxHgAkz6JK";
+                    MissingChar = '?';
+                    SelectedInputType = InputTypeList.First();
+
+                    Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is a compressed private key missing 4 character (b, N, z, X) and it " +
+                                     $"should take <1 second to find the correct key and <10 seconds to check " +
+                                     $"all possible keys.{Environment.NewLine}" +
+                                     $"Note the usage of a different missing character.";
+                    break;
+                case 2:
+                    Input = "142viJrTYHA4TzryiEiuQkYk4Ay5Tfp***";
+                    MissingChar = '*';
+                    SelectedInputType = InputTypeList.ElementAt(1);
+
+                    Result.Message = $"This is example 3 out of {total} taken from Bitcoin.Net test vectors.{Environment.NewLine}" +
+                                     $"It is an address missing 3 character (z, q, W) and it should take <1 second to search " +
+                                     $"all possible addresses and find the correct one.";
+                    break;
+                case 3:
+                    Input = "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5**DGhwP4*5o44cvXdoY7sRzhtp**o";
+                    MissingChar = '*';
+                    SelectedInputType = InputTypeList.ElementAt(2);
+
+                    Result.Message = $"This is example 4 out of {total} taken from BIP-38.{Environment.NewLine}" +
+                                     $"It is a BIP-38 encrypted private key missing 5 character (s, 6, J, U, e) and it " +
+                                     $"should take ~5 minutes to find the correct key and ~8 minutes to search " +
+                                     $"all possible keys.";
+                    break;
+                case 4:
+                    Input = "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK";
+                    MissingChar = '*';
+                    SelectedInputType = InputTypeList.First();
+
+                    Result.Message = $"This is example 5 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
+                                     $"It is a compressed private key missing 3 characters at unknown positions " +
+                                     $"should take ~2 minutes to find the correct key and ~3 minutes to search " +
+                                     $"all possible keys.";
+                    break;
+
+                default:
+                    Result.Message = "Invalid example index was given (this is a bug).";
+                    break;
+            }
+
+            exampleIndex++;
+            if (exampleIndex >= total)
+            {
+                exampleIndex = 0;
+            }
         }
     }
 }
