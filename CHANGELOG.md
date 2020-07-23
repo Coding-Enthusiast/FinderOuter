@@ -1,8 +1,13 @@
 ### Release ?.?.? (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.0.0...master)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.1.0...master)
 * Finding bip32 key path
 * Password recovery
 * Multi-thread and SIMD support
+
+### Release 0.4.1 (2020-07-23)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.0.0...v0.4.1.0)
+* This minor release introduces the Example button in order to simplify the recovery process even more, 
+it could be helpful to show how some boxes should be filled in more complex cases such as BIP-32 paths.
 
 ### Release 0.4.0 (2020-06-30)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.3.0.0...v0.4.0.0)
