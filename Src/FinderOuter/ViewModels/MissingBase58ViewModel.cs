@@ -79,7 +79,7 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            _ = b58Service.Find(Input, MissingChar, SelectedInputType);
+            b58Service.Find(Input, MissingChar, SelectedInputType);
         }
 
         public void Example()

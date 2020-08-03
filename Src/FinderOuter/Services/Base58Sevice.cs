@@ -191,7 +191,7 @@ namespace FinderOuter.Services
 
             return localPre;
         }
-        private unsafe bool LoopComp()
+        private unsafe void LoopComp()
         {
             if (missCount >= 5)
             {
@@ -208,15 +208,12 @@ namespace FinderOuter.Services
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
                 LoopComp(precomputed, -1, 0, cartesian);
             }
-
-            return report.FoundAnyResult;
         }
 
-        private unsafe bool LoopUncomp()
+        private unsafe void LoopUncomp()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
             using Sha256Fo sha = new Sha256Fo();
-            bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
@@ -262,12 +259,9 @@ namespace FinderOuter.Services
                     if (hPt[0] == tmp[9])
                     {
                         SetResult(item);
-                        success = true;
                     }
                 }
             }
-
-            return success;
         }
 
         private unsafe bool SpecialLoopComp(string key)
@@ -617,10 +611,8 @@ namespace FinderOuter.Services
         }
 
 
-        private async Task<bool> FindPrivateKey(string key, char missingChar)
+        private async Task FindPrivateKey(string key, char missingChar)
         {
-            bool success = false;
-
             if (key.Contains(missingChar)) // Length must be correct then
             {
                 missCount = key.Count(c => c == missingChar);
@@ -636,17 +628,17 @@ namespace FinderOuter.Services
 
                     Stopwatch watch = Stopwatch.StartNew();
 
-                    success = await Task.Run(() =>
+                    await Task.Run(() =>
                     {
                         if (isComp)
                         {
                             report.AddMessageSafe("Running compressed loop. Please wait.");
-                            return LoopComp();
+                            LoopComp();
                         }
                         else
                         {
                             report.AddMessageSafe("Running uncompressed loop. Please wait.");
-                            return LoopUncomp();
+                            LoopUncomp();
                         }
                     }
                     );
@@ -659,13 +651,6 @@ namespace FinderOuter.Services
                 {
                     report.AddMessageSafe(error);
                 }
-
-                if (!success)
-                {
-                    report.AddMessageSafe("Could not find any results.");
-                }
-
-                return success;
             }
             else // Doesn't have any missing chars so length must be <= max key len
             {
@@ -675,16 +660,14 @@ namespace FinderOuter.Services
                     {
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
-                        return true;
                     }
                     else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
                     {
-                        return await FindUnknownLocation3(key);
+                        await FindUnknownLocation3(key);
                     }
                     else
                     {
                         report.AddMessageSafe("Only 3 missing characters at unkown locations is supported for now.");
-                        return false;
                     }
                 }
                 else if (key[0] == ConstantsFO.PrivKeyUncompChar)
@@ -693,45 +676,37 @@ namespace FinderOuter.Services
                     {
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
-                        return true;
                     }
                     else
                     {
                         report.AddMessageSafe("Recovering uncompressed private keys with missing characters at unknown locations " +
                                               "is not supported yet.");
-                        return false;
                     }
                 }
                 else
                 {
                     report.AddMessageSafe("The given key has an invalid first character.");
-                    return false;
                 }
             }
         }
 
-        private async Task<bool> FindAddress(string address, char missingChar)
+        private async Task FindAddress(string address, char missingChar)
         {
             missCount = address.Count(c => c == missingChar);
             if (missCount == 0)
             {
                 report.AddMessageSafe("The given input has no missing characters, verifying it as a complete address.");
                 report.AddMessageSafe(inputService.CheckBase58Address(address));
-                return true;
             }
-
-            bool success = false;
-            if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
+            else if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
             {
                 report.AddMessageSafe($"Base-58 address should start with {ConstantsFO.B58AddressChar1} or " +
                                       $"{ConstantsFO.B58AddressChar2}.");
-                return false;
             }
             else if (address.Length < ConstantsFO.B58AddressMinLen || address.Length > ConstantsFO.B58AddressMaxLen)
             {
                 report.AddMessageSafe($"Address length must be between {ConstantsFO.B58AddressMinLen} and " +
                                       $"{ConstantsFO.B58AddressMaxLen} (but it is {address.Length}).");
-                return false;
             }
             else
             {
@@ -740,11 +715,11 @@ namespace FinderOuter.Services
 
                 Stopwatch watch = Stopwatch.StartNew();
 
-                success = await Task.Run(() =>
+                await Task.Run(() =>
                 {
                     report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
                     report.AddMessageSafe("Going throgh each case. Please wait...");
-                    return Loop21();
+                    Loop21();
                 }
                 );
 
@@ -752,35 +727,23 @@ namespace FinderOuter.Services
                 report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
                 report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
-
-            if (!success)
-            {
-                report.AddMessageSafe("Couldn't find any valid addresses with the given input.");
-            }
-
-            return success;
         }
 
-        private async Task<bool> FindBip38(string bip38, char missingChar)
+        private async Task FindBip38(string bip38, char missingChar)
         {
             missCount = bip38.Count(c => c == missingChar);
             if (missCount == 0)
             {
                 report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
                 report.AddMessageSafe(inputService.CheckBase58Bip38(bip38));
-                return true;
             }
-
-            bool success = false;
-            if (!bip38.StartsWith(ConstantsFO.Bip38Start))
+            else if (!bip38.StartsWith(ConstantsFO.Bip38Start))
             {
                 report.AddMessageSafe($"Base-58 encoded BIP-38 should start with {ConstantsFO.Bip38Start}.");
-                return false;
             }
             else if (bip38.Length != ConstantsFO.Bip38Base58Len)
             {
                 report.AddMessageSafe($"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.");
-                return false;
             }
             else
             {
@@ -789,11 +752,11 @@ namespace FinderOuter.Services
 
                 Stopwatch watch = Stopwatch.StartNew();
 
-                success = await Task.Run(() =>
+                await Task.Run(() =>
                 {
                     report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
                     report.AddMessageSafe("Going throgh each case. Please wait...");
-                    return Loop58();
+                    Loop58();
                 }
                 );
 
@@ -801,43 +764,38 @@ namespace FinderOuter.Services
                 report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
                 report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
-
-            if (!success)
-            {
-                report.AddMessageSafe("Couldn't find any valid addresses with the given input.");
-            }
-
-            return success;
         }
 
-        public async Task<bool> Find(string key, char missingChar, InputType t)
+        public async void Find(string key, char missingChar, InputType t)
         {
             report.Init();
 
             if (!inputService.IsMissingCharValid(missingChar))
-                return report.Fail("Invalid missing character.");
-            if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
-                return report.Fail("Input contains invalid base-58 character(s).");
-
-            keyToCheck = key;
-
-            bool success;
-            switch (t)
+                report.Fail("Invalid missing character.");
+            else if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
+                report.Fail("Input contains invalid base-58 character(s).");
+            else
             {
-                case InputType.PrivateKey:
-                    success = await FindPrivateKey(key, missingChar);
-                    break;
-                case InputType.Address:
-                    success = await FindAddress(key, missingChar);
-                    break;
-                case InputType.Bip38:
-                    success = await FindBip38(key, missingChar);
-                    break;
-                default:
-                    return report.Fail("Given input type is not defined.");
-            }
+                keyToCheck = key;
 
-            return report.Finalize(success);
+                switch (t)
+                {
+                    case InputType.PrivateKey:
+                        await FindPrivateKey(key, missingChar);
+                        break;
+                    case InputType.Address:
+                        await FindAddress(key, missingChar);
+                        break;
+                    case InputType.Bip38:
+                        await FindBip38(key, missingChar);
+                        break;
+                    default:
+                        report.Fail("Given input type is not defined.");
+                        return;
+                }
+
+                report.Finalize();
+            }
         }
     }
 }
