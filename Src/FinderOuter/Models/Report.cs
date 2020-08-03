@@ -50,10 +50,13 @@ namespace FinderOuter.Models
             set => this.RaiseAndSetIfChanged(ref _prog, value);
         }
 
+        public bool FoundAnyResult { get; set; }
+
 
         public void Init()
         {
             CurrentState = State.Working;
+            FoundAnyResult = false;
             Message = string.Empty;
             IsProgressVisible = true;
             Progress = 0;
@@ -63,6 +66,12 @@ namespace FinderOuter.Models
         {
             CurrentState = success ? State.FinishedSuccess : State.FinishedFail;
             return success;
+        }
+
+        public bool Finalize()
+        {
+            CurrentState = FoundAnyResult ? State.FinishedSuccess : State.FinishedFail;
+            return FoundAnyResult;
         }
 
         /// <summary>

@@ -13,9 +13,11 @@ namespace FinderOuter.Models
         string Message { get; set; }
         bool IsProgressVisible { get; set; }
         double Progress { get; set; }
+        bool FoundAnyResult { get; set; }
 
         void Init();
         bool Finalize(bool success);
+        bool Finalize();
 
         void AddMessage(string msg);
         void AddMessageSafe(string msg);
