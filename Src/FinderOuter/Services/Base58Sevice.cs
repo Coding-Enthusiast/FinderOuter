@@ -415,6 +415,7 @@ namespace FinderOuter.Services
                                                                      .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
                                                 report.AddMessageSafe($"Found a key: {foundRes}");
                                                 //Task.Run(() => cancelToken.Cancel());
+                                                report.FoundAnyResult = true;
                                             }
                                         }
                                     }
