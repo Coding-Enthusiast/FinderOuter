@@ -102,7 +102,7 @@ namespace FinderOuter.Services
 
         private void SetResultParallel(IEnumerable<int> missingItems, int firstItem)
         {
-            report.AddMessageSafe($"Found a possible result (still running):");
+            report.AddMessageSafe($"Found a possible result (will continue checking the rest):");
 
             char[] temp = keyToCheck.ToCharArray();
             int i = 0;
@@ -210,19 +210,18 @@ namespace FinderOuter.Services
             }
         }
 
-        private unsafe void LoopUncomp()
+        private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, IEnumerable<IEnumerable<int>> cartesian)
         {
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
             using Sha256Fo sha = new Sha256Fo();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (uint* pow = &powers58[0], res = &precomputed[0], tmp = &temp[0])
-            fixed (int* mi = &missingIndexes[0])
+            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (int* mi = &missingIndexes[misStart])
             {
                 foreach (var item in cartesian)
                 {
-                    Buffer.MemoryCopy(res, tmp, 40, 40);
+                    Buffer.MemoryCopy(pre, tmp, 40, 40);
                     int mis = 0;
                     foreach (var keyItem in item)
                     {
@@ -258,9 +257,25 @@ namespace FinderOuter.Services
 
                     if (hPt[0] == tmp[9])
                     {
-                        SetResult(item);
+                        SetResultParallel(item, firstItem);
                     }
                 }
+            }
+        }
+        private unsafe void LoopUncomp()
+        {
+            if (missCount >= 5)
+            {
+                report.ChangeProgressVisibilitySafe(true);
+                report.AddMessageSafe("Running in parallel.");
+                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount - 1));
+                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem), firstItem, 1, cartesian));
+            }
+            else
+            {
+                report.ChangeProgressVisibilitySafe(false);
+                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
+                LoopUncomp(precomputed, -1, 0, cartesian);
             }
         }
 
