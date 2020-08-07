@@ -172,6 +172,8 @@ namespace FinderOuter.Services
                     }
                 }
             }
+
+            report.IncrementProgress();
         }
         private unsafe uint[] ParallelPre(int firstItem)
         {
@@ -197,14 +199,13 @@ namespace FinderOuter.Services
             {
                 // 4 missing chars is 11,316,496 cases and it takes <2 seconds to run.
                 // That makes 5 the optimal number for using parallelization
-                report.ChangeProgressVisibilitySafe(true);
+                report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount - 1));
                 Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem), firstItem, 1, cartesian));
             }
             else
             {
-                report.ChangeProgressVisibilitySafe(false);
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
                 LoopComp(precomputed, -1, 0, cartesian);
             }
@@ -261,19 +262,20 @@ namespace FinderOuter.Services
                     }
                 }
             }
+
+            report.IncrementProgress();
         }
         private unsafe void LoopUncomp()
         {
             if (missCount >= 5)
             {
-                report.ChangeProgressVisibilitySafe(true);
+                report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount - 1));
                 Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem), firstItem, 1, cartesian));
             }
             else
             {
-                report.ChangeProgressVisibilitySafe(false);
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
                 LoopUncomp(precomputed, -1, 0, cartesian);
             }

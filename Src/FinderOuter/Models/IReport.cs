@@ -28,7 +28,8 @@ namespace FinderOuter.Models
         void SetKeyPerSec(BigInteger totalKeys, double totalSecond);
         void SetKeyPerSecSafe(BigInteger totalKeys, double totalSecond);
 
-        void SetProgressSafe(BigInteger total, BigInteger current);
-        void ChangeProgressVisibilitySafe(bool isVisible);
+        /// <param name="splitSize">Number of keys checked in each round that completes</param>
+        void SetProgressStep(int splitSize);
+        void IncrementProgress();
     }
 }

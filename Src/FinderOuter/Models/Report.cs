@@ -58,8 +58,9 @@ namespace FinderOuter.Models
             CurrentState = State.Working;
             FoundAnyResult = false;
             Message = string.Empty;
-            IsProgressVisible = true;
             Progress = 0;
+            percent = 0;
+            IsProgressVisible = false;
         }
 
         public bool Finalize(bool success)
@@ -71,6 +72,7 @@ namespace FinderOuter.Models
         public bool Finalize()
         {
             CurrentState = FoundAnyResult ? State.FinishedSuccess : State.FinishedFail;
+            Progress = 100;
             return FoundAnyResult;
         }
 
@@ -114,12 +116,22 @@ namespace FinderOuter.Models
         public void SetKeyPerSec(BigInteger totalKeys, double totalSecond) => AddMessage(GetKPS(totalKeys, totalSecond));
         public void SetKeyPerSecSafe(BigInteger totalKeys, double totalSecond) => AddMessageSafe(GetKPS(totalKeys, totalSecond));
 
-        public void SetProgressSafe(BigInteger total, BigInteger current)
+
+        private double percent;
+        /// <inheritdoc/>
+        public void SetProgressStep(int splitSize)
         {
-            double val = (double)(current / total * 100);
-            Dispatcher.UIThread.InvokeAsync(() => Progress = (double)(current / total * 100));
+            percent = (double)100 / splitSize;
+            Dispatcher.UIThread.InvokeAsync(() => IsProgressVisible = true);
         }
 
-        public void ChangeProgressVisibilitySafe(bool isVisible) => Dispatcher.UIThread.InvokeAsync(() => IsProgressVisible = isVisible);
+        private readonly object lockObj = new object();
+        public void IncrementProgress()
+        {
+            lock (lockObj)
+            {
+                Progress += percent;
+            }
+        }
     }
 }
