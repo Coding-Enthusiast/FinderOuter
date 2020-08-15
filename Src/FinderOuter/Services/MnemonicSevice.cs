@@ -758,22 +758,25 @@ namespace FinderOuter.Services
             return false;
         }
 
-        private unsafe bool Loop12()
+
+        private unsafe void Loop12(int firstItem, int firstIndex, int misStart, IEnumerable<IEnumerable<int>> cartesian)
         {
             using Sha512Fo sha512 = new Sha512Fo();
             ulong[] ipad = new ulong[80];
             ulong[] opad = new ulong[80];
 
             using Sha256Fo sha256 = new Sha256Fo();
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+            byte[] localMnBytes = new byte[mnBytes.Length];
 
             fixed (ulong* iPt = ipad, oPt = opad)
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
-            fixed (int* mi = &missingIndexes[0])
-            fixed (byte* mnPt = &mnBytes[0])
+            fixed (int* mi = &missingIndexes[misStart])
+            fixed (byte* mnPt = &localMnBytes[0])
             {
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = 128;
+
+                wrd[firstIndex] = (uint)firstItem;
 
                 foreach (var item in cartesian)
                 {
@@ -806,12 +809,82 @@ namespace FinderOuter.Services
 
                         if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
                         {
-                            return SetResult(mnLen);
+                            SetResultParallel(mnPt, mnLen);
                         }
                     }
                 }
             }
 
+            report.IncrementProgress();
+        }
+
+        private unsafe void SetResultParallel(byte* mnPt, int mnLen)
+        {
+            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnPt, mnLen)}");
+            report.FoundAnyResult = true;
+        }
+
+        private unsafe bool Loop12()
+        {
+            if (missCount > 1)
+            {
+                report.AddMessageSafe("Running in parallel.");
+                report.SetProgressStep(2048);
+                int firstIndex = missingIndexes[0];
+                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount - 1));
+                Parallel.For(0, 2048, (firstItem) => Loop12(firstItem, firstIndex, 1, cartesian));
+            }
+            else
+            {
+                //var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
+                //Loop12(0, missingIndexes[0], 0, cartesian);
+
+                using Sha512Fo sha512 = new Sha512Fo();
+                ulong[] ipad = new ulong[80];
+                ulong[] opad = new ulong[80];
+
+                using Sha256Fo sha256 = new Sha256Fo();
+
+                fixed (ulong* iPt = ipad, oPt = opad)
+                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                fixed (int* mi = &missingIndexes[0])
+                fixed (byte* mnPt = &mnBytes[0])
+                {
+                    wPt[4] = 0b10000000_00000000_00000000_00000000U;
+                    wPt[15] = 128;
+
+                    for (uint item = 0; item < 2048; item++)
+                    {
+                        wrd[mi[0]] = item;
+
+                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+
+                        sha256.Init(hPt);
+                        sha256.Compress16(hPt, wPt);
+
+                        if ((wrd[11] & 0b1111) == hPt[0] >> 28)
+                        {
+                            int mnLen = 0;
+                            for (int i = 0; i < 12; i++)
+                            {
+                                foreach (byte b in wordBytes[wrd[i]])
+                                {
+                                    mnPt[mnLen++] = b;
+                                }
+                                mnPt[mnLen++] = SpaceByte;
+                            }
+
+                            if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                            {
+                                return SetResult(mnLen);
+                            }
+                        }
+                    }
+                }
+            }
             return false;
         }
 
