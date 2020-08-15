@@ -700,7 +700,7 @@ namespace FinderOuter.Services
             return false;
         }
 
-        private unsafe bool Loop15()
+        private unsafe void Loop15()
         {
             using Sha512Fo sha512 = new Sha512Fo();
             ulong[] ipad = new ulong[80];
@@ -749,18 +749,17 @@ namespace FinderOuter.Services
 
                         if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
                         {
-                            return SetResult(mnLen);
+                            SetResultParallel(mnPt, mnLen);
                         }
                     }
                 }
             }
-
-            return false;
         }
 
 
-        private unsafe void Loop12(int firstItem, int firstIndex, int misStart, IEnumerable<IEnumerable<int>> cartesian)
+        private unsafe void Loop12(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
+            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount - 1));
             using Sha512Fo sha512 = new Sha512Fo();
             ulong[] ipad = new ulong[80];
             ulong[] opad = new ulong[80];
@@ -770,7 +769,7 @@ namespace FinderOuter.Services
 
             fixed (ulong* iPt = ipad, oPt = opad)
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
-            fixed (int* mi = &missingIndexes[misStart])
+            fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
@@ -780,6 +779,11 @@ namespace FinderOuter.Services
 
                 foreach (var item in cartesian)
                 {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+
                     int j = 0;
                     foreach (var k in item)
                     {
@@ -810,6 +814,8 @@ namespace FinderOuter.Services
                         if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
                         {
                             SetResultParallel(mnPt, mnLen);
+                            loopState.Stop();
+                            break;
                         }
                     }
                 }
@@ -824,7 +830,7 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
-        private unsafe bool Loop12()
+        private unsafe void Loop12()
         {
             if (missCount > 1)
             {
@@ -832,22 +838,22 @@ namespace FinderOuter.Services
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount - 1));
-                Parallel.For(0, 2048, (firstItem) => Loop12(firstItem, firstIndex, 1, cartesian));
+                Parallel.For(0, 2048, (firstItem, state) => Loop12(firstItem, firstIndex, state));
             }
             else
             {
-                //var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount));
-                //Loop12(0, missingIndexes[0], 0, cartesian);
-
+                // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
+                // avoiding the inner loop over the IEnumerable
                 using Sha512Fo sha512 = new Sha512Fo();
                 ulong[] ipad = new ulong[80];
                 ulong[] opad = new ulong[80];
 
                 using Sha256Fo sha256 = new Sha256Fo();
 
+                int misIndex = missingIndexes[0];
+
                 fixed (ulong* iPt = ipad, oPt = opad)
                 fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
-                fixed (int* mi = &missingIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
                     wPt[4] = 0b10000000_00000000_00000000_00000000U;
@@ -855,7 +861,7 @@ namespace FinderOuter.Services
 
                     for (uint item = 0; item < 2048; item++)
                     {
-                        wrd[mi[0]] = item;
+                        wrd[misIndex] = item;
 
                         wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
                         wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
@@ -879,13 +885,13 @@ namespace FinderOuter.Services
 
                             if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
                             {
-                                return SetResult(mnLen);
+                                SetResultParallel(mnPt, mnLen);
+                                break;
                             }
                         }
                     }
                 }
             }
-            return false;
         }
 
 
@@ -1023,16 +1029,34 @@ namespace FinderOuter.Services
 
             Stopwatch watch = Stopwatch.StartNew();
 
-            bool success = await Task.Run(() =>
+            await Task.Run(() =>
             {
-                return words.Length switch
+                switch (words.Length)
                 {
-                    24 => Loop24(),
-                    21 => Loop21(),
-                    18 => Loop18(),
-                    15 => Loop15(),
-                    _ => Loop12(),
-                };
+                    case 12:
+                        Loop12();
+                        break;
+                    case 15:
+                        Loop15();
+                        break;
+                    case 18:
+                        Loop18();
+                        break;
+                    case 21:
+                        Loop21();
+                        break;
+                    case 24:
+                        Loop24();
+                        break;
+                }
+                //words.Length switch
+                //{
+                //    //24 => Loop24(),
+                //    //21 => Loop21(),
+                //    //18 => Loop18(),
+                //    //15 => Loop15(),
+                //    _ => Loop12(),
+                //};
             });
 
             watch.Stop();
@@ -1040,7 +1064,7 @@ namespace FinderOuter.Services
             report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
             report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
 
-            return report.Finalize(success);
+            return report.Finalize();
         }
 
 
