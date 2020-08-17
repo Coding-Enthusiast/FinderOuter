@@ -771,8 +771,11 @@ namespace FinderOuter.Services
             var localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            fixed (ulong* iPt = ipad, oPt = opad)
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+            uint[] localWIndex = new uint[wordIndexes.Length];
+            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+
+            fixed (ulong* iPt = &ipad[0], oPt = &opad[0])
+            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
