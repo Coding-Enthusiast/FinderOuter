@@ -43,6 +43,7 @@ namespace FinderOuter.Services
         private readonly EllipticCurveCalculator calc;
 
         private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
+        private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
 
         private readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
@@ -767,6 +768,9 @@ namespace FinderOuter.Services
             using Sha256Fo sha256 = new Sha256Fo();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
+            var localCopy = new byte[allWordsBytes.Length][];
+            Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
+
             fixed (ulong* iPt = ipad, oPt = opad)
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
             fixed (int* mi = &missingIndexes[1])
@@ -804,11 +808,9 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 12; i++)
                         {
-                            foreach (byte b in wordBytes[wrd[i]])
-                            {
-                                mnPt[mnLen++] = b;
-                            }
-                            mnPt[mnLen++] = SpaceByte;
+                            var temp = localCopy[wrd[i]];
+                            Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                            mnLen += temp.Length;
                         }
 
                         if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
@@ -837,7 +839,6 @@ namespace FinderOuter.Services
                 report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
-                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount - 1));
                 Parallel.For(0, 2048, (firstItem, state) => Loop12(firstItem, firstIndex, state));
             }
             else
@@ -876,11 +877,9 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 12; i++)
                             {
-                                foreach (byte b in wordBytes[wrd[i]])
-                                {
-                                    mnPt[mnLen++] = b;
-                                }
-                                mnPt[mnLen++] = SpaceByte;
+                                var temp = allWordsBytes[wrd[i]];
+                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                mnLen += temp.Length;
                             }
 
                             if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
@@ -1006,6 +1005,7 @@ namespace FinderOuter.Services
             for (uint i = 0; i < allWords.Length; i++)
             {
                 wordBytes.Add(i, Encoding.UTF8.GetBytes(allWords[i]));
+                allWordsBytes[i] = Encoding.UTF8.GetBytes($"{allWords[i]} ");
             }
 
             SetPbkdf2Salt(pass);
