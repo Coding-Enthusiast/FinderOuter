@@ -100,8 +100,10 @@ namespace FinderOuter.Services
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
-        private void SetResultParallel(IEnumerable<int> missingItems, int firstItem)
+        private void SetResultParallel(uint[] missingItems, int firstItem)
         {
+            // Chances of finding more than 1 correct result is very small in base-58 and even if it happened 
+            // this method would be called in very long intervals, meaning UI updates here are not an issue.
             report.AddMessageSafe($"Found a possible result (will continue checking the rest):");
 
             char[] temp = keyToCheck.ToCharArray();
@@ -112,65 +114,81 @@ namespace FinderOuter.Services
             }
             foreach (var index in missingItems)
             {
-                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[index];
+                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[(int)index];
             }
 
             report.AddMessageSafe(new string(temp));
             report.FoundAnyResult = true;
-            return;
         }
 
+        private unsafe bool MoveNext(uint* cartesian, int len)
+        {
+            for (int i = len - 1; i >= 0; --i)
+            {
+                cartesian[i] += 1;
 
-        private unsafe void LoopComp(uint[] precomputed, int firstItem, int misStart, IEnumerable<IEnumerable<int>> cartesian)
+                if (cartesian[i] == 58)
+                {
+                    cartesian[i] = 0;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private unsafe void LoopComp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
             using Sha256Fo sha = new Sha256Fo();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[misStart])
             {
-                foreach (var item in cartesian)
+                do
                 {
                     Buffer.MemoryCopy(pre, tmp, 40, 40);
-                    int mis = 0;
-                    foreach (var keyItem in item)
+                    int i = 0;
+                    foreach (var keyItem in missingItems)
                     {
                         ulong carry = 0;
                         for (int k = 9, j = 0; k >= 0; k--, j++)
                         {
-                            ulong result = (pow[(mi[mis] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
+                            ulong result = (pow[(mi[i] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
                             tmp[k] = (uint)result;
                             carry = (uint)(result >> 32);
                         }
-                        mis++;
+                        i++;
                     }
 
-                    if (((tmp[0] & 0x0000ff00) | (tmp[8] & 0x000000ff)) != 0x00008001)
+                    if (((tmp[0] & 0x0000ff00) | (tmp[8] & 0x000000ff)) == 0x00008001)
                     {
-                        continue;
+                        wPt[0] = (tmp[0] << 16) | (tmp[1] >> 16);
+                        wPt[1] = (tmp[1] << 16) | (tmp[2] >> 16);
+                        wPt[2] = (tmp[2] << 16) | (tmp[3] >> 16);
+                        wPt[3] = (tmp[3] << 16) | (tmp[4] >> 16);
+                        wPt[4] = (tmp[4] << 16) | (tmp[5] >> 16);
+                        wPt[5] = (tmp[5] << 16) | (tmp[6] >> 16);
+                        wPt[6] = (tmp[6] << 16) | (tmp[7] >> 16);
+                        wPt[7] = (tmp[7] << 16) | (tmp[8] >> 16);
+                        wPt[8] = (tmp[8] << 16) | 0b00000000_00000000_10000000_00000000U;
+                        // from 9 to 14 =0
+                        wPt[15] = 272; // 34 *8 = 272
+
+                        sha.Init(hPt);
+                        sha.CompressDouble34(hPt, wPt);
+
+                        if (hPt[0] == tmp[9])
+                        {
+                            SetResultParallel(missingItems, firstItem);
+                        }
                     }
-
-                    wPt[0] = (tmp[0] << 16) | (tmp[1] >> 16);
-                    wPt[1] = (tmp[1] << 16) | (tmp[2] >> 16);
-                    wPt[2] = (tmp[2] << 16) | (tmp[3] >> 16);
-                    wPt[3] = (tmp[3] << 16) | (tmp[4] >> 16);
-                    wPt[4] = (tmp[4] << 16) | (tmp[5] >> 16);
-                    wPt[5] = (tmp[5] << 16) | (tmp[6] >> 16);
-                    wPt[6] = (tmp[6] << 16) | (tmp[7] >> 16);
-                    wPt[7] = (tmp[7] << 16) | (tmp[8] >> 16);
-                    wPt[8] = (tmp[8] << 16) | 0b00000000_00000000_10000000_00000000U;
-                    // from 9 to 14 =0
-                    wPt[15] = 272; // 34 *8 = 272
-
-                    sha.Init(hPt);
-                    sha.CompressDouble34(hPt, wPt);
-
-                    if (hPt[0] == tmp[9])
-                    {
-                        SetResultParallel(item, firstItem);
-                    }
-                }
+                } while (MoveNext(itemsPt, missingItems.Length));
             }
 
             report.IncrementProgress();
@@ -201,66 +219,63 @@ namespace FinderOuter.Services
                 // That makes 5 the optimal number for using parallelization
                 report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
-                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount - 1));
-                Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem), firstItem, 1, cartesian));
+                Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem), firstItem, 1, new uint[missCount - 1]));
             }
             else
             {
-                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-                LoopComp(precomputed, -1, 0, cartesian);
+                LoopComp(precomputed, -1, 0, new uint[missCount]);
             }
         }
 
-        private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, IEnumerable<IEnumerable<int>> cartesian)
+        private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
             using Sha256Fo sha = new Sha256Fo();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[misStart])
             {
-                foreach (var item in cartesian)
+                do
                 {
                     Buffer.MemoryCopy(pre, tmp, 40, 40);
-                    int mis = 0;
-                    foreach (var keyItem in item)
+                    int i = 0;
+                    foreach (var keyItem in missingItems)
                     {
                         ulong carry = 0;
                         for (int k = 9, j = 0; k >= 0; k--, j++)
                         {
-                            ulong result = (pow[(mi[mis] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
+                            ulong result = (pow[(mi[i] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
                             tmp[k] = (uint)result;
                             carry = (uint)(result >> 32);
                         }
-                        mis++;
+                        i++;
                     }
 
-                    if (tmp[0] != 0x00000080)
+                    if (tmp[0] == 0x00000080)
                     {
-                        continue;
+                        wPt[0] = (tmp[0] << 24) | (tmp[1] >> 8);
+                        wPt[1] = (tmp[1] << 24) | (tmp[2] >> 8);
+                        wPt[2] = (tmp[2] << 24) | (tmp[3] >> 8);
+                        wPt[3] = (tmp[3] << 24) | (tmp[4] >> 8);
+                        wPt[4] = (tmp[4] << 24) | (tmp[5] >> 8);
+                        wPt[5] = (tmp[5] << 24) | (tmp[6] >> 8);
+                        wPt[6] = (tmp[6] << 24) | (tmp[7] >> 8);
+                        wPt[7] = (tmp[7] << 24) | (tmp[8] >> 8);
+                        wPt[8] = (tmp[8] << 24) | 0b00000000_10000000_00000000_00000000U;
+                        // from 9 to 14 = 0
+                        wPt[15] = 264; // 33 *8 = 264
+
+                        sha.Init(hPt);
+                        sha.CompressDouble33(hPt, wPt);
+
+                        if (hPt[0] == tmp[9])
+                        {
+                            SetResultParallel(missingItems, firstItem);
+                        }
                     }
-
-                    wPt[0] = (tmp[0] << 24) | (tmp[1] >> 8);
-                    wPt[1] = (tmp[1] << 24) | (tmp[2] >> 8);
-                    wPt[2] = (tmp[2] << 24) | (tmp[3] >> 8);
-                    wPt[3] = (tmp[3] << 24) | (tmp[4] >> 8);
-                    wPt[4] = (tmp[4] << 24) | (tmp[5] >> 8);
-                    wPt[5] = (tmp[5] << 24) | (tmp[6] >> 8);
-                    wPt[6] = (tmp[6] << 24) | (tmp[7] >> 8);
-                    wPt[7] = (tmp[7] << 24) | (tmp[8] >> 8);
-                    wPt[8] = (tmp[8] << 24) | 0b00000000_10000000_00000000_00000000U;
-                    // from 9 to 14 = 0
-                    wPt[15] = 264; // 33 *8 = 264
-
-                    sha.Init(hPt);
-                    sha.CompressDouble33(hPt, wPt);
-
-                    if (hPt[0] == tmp[9])
-                    {
-                        SetResultParallel(item, firstItem);
-                    }
-                }
+                } while (MoveNext(itemsPt, missingItems.Length));
             }
 
             report.IncrementProgress();
@@ -269,15 +284,14 @@ namespace FinderOuter.Services
         {
             if (missCount >= 5)
             {
+                // Same as LoopComp()
                 report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
-                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount - 1));
-                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem), firstItem, 1, cartesian));
+                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem), firstItem, 1, new uint[missCount - 1]));
             }
             else
             {
-                var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
-                LoopUncomp(precomputed, -1, 0, cartesian);
+                LoopUncomp(precomputed, -1, 0, new uint[missCount]);
             }
         }
 
@@ -482,31 +496,30 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe bool Loop21()
+        private unsafe void Loop21(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 58), missCount));
             using Sha256Fo sha = new Sha256Fo();
-            bool success = false;
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (uint* pow = &powers58[0], res = &precomputed[0], tmp = &temp[0])
-            fixed (int* mi = &missingIndexes[0])
+            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (uint* itemsPt = &missingItems[0])
+            fixed (int* mi = &missingIndexes[misStart])
             {
-                foreach (var item in cartesian)
+                do
                 {
-                    Buffer.MemoryCopy(res, tmp, 28, 28);
-                    int mis = 0;
-                    foreach (var keyItem in item)
+                    Buffer.MemoryCopy(pre, tmp, 28, 28);
+                    int i = 0;
+                    foreach (var keyItem in missingItems)
                     {
                         ulong carry = 0;
                         for (int k = 6, j = 0; k >= 0; k--, j++)
                         {
-                            ulong result = (pow[(mi[mis] * 7) + j] * (ulong)keyItem) + tmp[k] + carry;
+                            ulong result = (pow[(mi[i] * 7) + j] * (ulong)keyItem) + tmp[k] + carry;
                             tmp[k] = (uint)result;
                             carry = (uint)(result >> 32);
                         }
-                        mis++;
+                        i++;
                     }
 
                     wPt[0] = (tmp[0] << 24) | (tmp[1] >> 8);
@@ -523,16 +536,45 @@ namespace FinderOuter.Services
 
                     sha.Init(hPt);
                     sha.CompressDouble21(hPt, wPt);
-
                     if (hPt[0] == tmp[6])
                     {
-                        SetResult(item);
-                        success = true;
+                        SetResultParallel(missingItems, firstItem);
                     }
+                } while (MoveNext(itemsPt, missingItems.Length));
+            }
+
+            report.IncrementProgress();
+        }
+        private unsafe uint[] ParallelPre21(int firstItem)
+        {
+            uint[] localPre = new uint[precomputed.Length];
+            fixed (uint* lpre = &localPre[0], pre = &precomputed[0], pow = &powers58[0])
+            {
+                Buffer.MemoryCopy(pre, lpre, 28, 28);
+                int index = missingIndexes[0];
+                ulong carry = 0;
+                for (int k = 6, j = 0; k >= 0; k--, j++)
+                {
+                    ulong result = (pow[(index * 7) + j] * (ulong)firstItem) + lpre[k] + carry;
+                    lpre[k] = (uint)result;
+                    carry = (uint)(result >> 32);
                 }
             }
 
-            return success;
+            return localPre;
+        }
+        private unsafe void Loop21()
+        {
+            if (missCount >= 5)
+            {
+                report.SetProgressStep(58);
+                report.AddMessageSafe("Running in parallel.");
+                Parallel.For(0, 58, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1, new uint[missCount - 1]));
+            }
+            else
+            {
+                Loop21(precomputed, -1, 0, new uint[missCount]);
+            }
         }
 
 
@@ -549,7 +591,6 @@ namespace FinderOuter.Services
 
             report.AddMessageSafe(new string(temp));
             report.FoundAnyResult = true;
-            return;
         }
 
         private unsafe bool Loop58()
@@ -640,7 +681,7 @@ namespace FinderOuter.Services
                     bool isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
                     report.AddMessageSafe($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
                                           $"characters was detected.");
-                    report.AddMessageSafe($"Total number of keys to test: {GetTotalCount(missCount):n0}");
+                    report.AddMessageSafe($"Total number of keys to check: {GetTotalCount(missCount):n0}");
 
                     Initialize(key.ToCharArray(), missingChar, InputType.PrivateKey);
 
@@ -731,15 +772,13 @@ namespace FinderOuter.Services
                 missingIndexes = new int[missCount];
                 Initialize(address.ToCharArray(), missingChar, InputType.Address);
 
+                report.AddMessageSafe($"Base-58 address missing {missCount} characters was detected.");
+                report.AddMessageSafe($"Total number of addresses to check: {GetTotalCount(missCount):n0}");
+                report.AddMessageSafe("Going throgh each case. Please wait...");
+                
                 Stopwatch watch = Stopwatch.StartNew();
 
-                await Task.Run(() =>
-                {
-                    report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
-                    report.AddMessageSafe("Going throgh each case. Please wait...");
-                    Loop21();
-                }
-                );
+                await Task.Run(() => Loop21());
 
                 watch.Stop();
                 report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
@@ -772,7 +811,7 @@ namespace FinderOuter.Services
 
                 await Task.Run(() =>
                 {
-                    report.AddMessageSafe($"Total number of addresses to test: {GetTotalCount(missCount):n0}");
+                    report.AddMessageSafe($"Total number of encrypted keys to check: {GetTotalCount(missCount):n0}");
                     report.AddMessageSafe("Going throgh each case. Please wait...");
                     Loop58();
                 }
