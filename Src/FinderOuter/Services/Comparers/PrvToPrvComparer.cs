@@ -4,7 +4,9 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using FinderOuter.Backend;
 using System;
+using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -30,5 +32,22 @@ namespace FinderOuter.Services.Comparers
         }
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expected).SequenceEqual(key);
+
+        public bool Compare(BigInteger key)
+        {
+            byte[] ba = key.ToByteArray(true, true);
+            if (ba.Length < 32)
+            {
+                return (Compare(ba.PadLeft(32)));
+            }
+            else if (ba.Length == 32)
+            {
+                return Compare(ba);
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

@@ -23,7 +23,17 @@ namespace FinderOuter.Services.Comparers
             return serv.CheckAndGetHash(address, out hash);
         }
 
-        public abstract bool Compare(byte[] key);
+        public bool Compare(byte[] key)
+        {
+            BigInteger kVal = new BigInteger(key, true, true);
+            if (kVal >= order || kVal == 0)
+            {
+                return false;
+            }
+            return Compare(kVal);
+        }
+
+        public abstract bool Compare(BigInteger key);
 
         public void Dispose() => hash160.Dispose();
     }
