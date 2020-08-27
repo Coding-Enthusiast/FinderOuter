@@ -15,10 +15,8 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToAddrUncompComparer : PrvToAddrBase
     {
-        public override bool Compare(BigInteger key)
+        public override bool Compare(in EllipticCurvePoint point)
         {
-            EllipticCurvePoint point = calc.MultiplyByG(key);
-
             byte[] xBytes = point.X.ToByteArray(true, true);
             byte[] yBytes = point.Y.ToByteArray(true, true);
             byte[] toHash = new byte[65];

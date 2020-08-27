@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
@@ -12,5 +13,6 @@ namespace FinderOuter.Services.Comparers
         bool Init(string data);
         bool Compare(byte[] key);
         bool Compare(BigInteger key);
+        bool Compare(in EllipticCurvePoint point);
     }
 }

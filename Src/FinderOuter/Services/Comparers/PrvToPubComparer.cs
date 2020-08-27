@@ -55,5 +55,7 @@ namespace FinderOuter.Services.Comparers
         }
 
         public bool Compare(BigInteger key) => calc.MultiplyByG(key) == point;
+
+        public bool Compare(in EllipticCurvePoint point) => point == this.point;
     }
 }

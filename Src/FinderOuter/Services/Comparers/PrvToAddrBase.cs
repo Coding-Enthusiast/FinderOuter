@@ -33,7 +33,9 @@ namespace FinderOuter.Services.Comparers
             return Compare(kVal);
         }
 
-        public abstract bool Compare(BigInteger key);
+        public bool Compare(BigInteger key) => Compare(calc.MultiplyByG(key));
+
+        public abstract bool Compare(in EllipticCurvePoint point);
 
         public void Dispose() => hash160.Dispose();
     }
