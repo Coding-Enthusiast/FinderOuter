@@ -3,12 +3,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
+using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -29,6 +33,7 @@ namespace FinderOuter.Services
 
         private readonly IReport report;
         private readonly InputService inputService;
+        private ICompareService comparer;
         private readonly Base58 encoder;
         private uint[] powers58, precomputed;
         private int[] missingIndexes;
@@ -99,6 +104,26 @@ namespace FinderOuter.Services
 
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
+
+        private bool IsMissingFromEnd()
+        {
+            if (missingIndexes[0] != 0)
+            {
+                return false;
+            }
+
+            if (missingIndexes.Length != 1)
+            {
+                for (int i = 1; i < missingIndexes.Length; i++)
+                {
+                    if (missingIndexes[i] - missingIndexes[i - 1] != 1)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 
         private void SetResultParallel(uint[] missingItems, int firstItem)
         {
@@ -282,7 +307,82 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopUncomp()
         {
-            if (missCount >= 5)
+            if (IsMissingFromEnd() && missCount <= 9)
+            {
+                // 1-4 -> 0
+                // Everything below is ±1
+                // 5  ->           1
+                // 6  ->           9
+                // 7  ->         514
+                // 8  ->      29,817
+                // 9  ->   1,729,387
+                // 10 -> 100,304,420
+
+                string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
+                string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
+                string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
+                var start = encoder.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
+                var end = encoder.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
+
+                var diff = end - start + 1;
+                report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
+
+                var curve = new SecP256k1();
+                if (start == 0 || end >= curve.N)
+                {
+                    report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
+                    return;
+                }
+
+                // With small number of missing keys there is only 1 result or worse case 2 which is simply printed without
+                // needing ICompareService. Instead all possible addresses are printed.
+                if (diff < 3)
+                {
+                    var addrMaker = new Address();
+                    for (int i = 0; i < (int)diff; i++)
+                    {
+                        using PrivateKey tempKey = new PrivateKey(start + i);
+                        string tempWif = tempKey.ToWif(false);
+                        if (tempWif.Contains(baseWif))
+                        {
+                            var pub = tempKey.ToPublicKey();
+                            string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
+                                $"     Compressed P2PKH address={addrMaker.GetP2pkh(pub, true)}{Environment.NewLine}" +
+                                $"     Uncompressed P2PKH address={addrMaker.GetP2pkh(pub, false)}{Environment.NewLine}" +
+                                $"     Compressed P2WPKH address={addrMaker.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
+                                $"     Compressed P2SH-P2WPKH address={addrMaker.GetP2sh_P2wpkh(pub, 0)}";
+                            report.AddMessageSafe(msg);
+                            report.FoundAnyResult = true;
+                        }
+                    }
+
+                    return;
+                }
+
+                if (comparer is null)
+                {
+                    report.AddMessageSafe("You must enter address or pubkey to compare with results.");
+                    return;
+                }
+
+                var calc = new ECCalc();
+                EllipticCurvePoint point = calc.MultiplyByG(start);
+
+                for (int i = 0; i < (int)diff; i++)
+                {
+                    // The first point is the smallKey * G the next is smallKey+1 * G
+                    // And there is one extra addition at the end which shouldn't matter speed-wise
+                    if (comparer.Compare(point))
+                    {
+                        using PrivateKey tempKey = new PrivateKey(start + i);
+                        string tempWif = tempKey.ToWif(false);
+                        report.AddMessageSafe($"Found the key: {tempWif}");
+                        report.FoundAnyResult = true;
+                    }
+                    point = calc.AddChecked(point, curve.G);
+                }
+            }
+            else if (missCount >= 5)
             {
                 // Same as LoopComp()
                 report.SetProgressStep(58);
@@ -834,7 +934,7 @@ namespace FinderOuter.Services
             }
         }
 
-        public async void Find(string key, char missingChar, InputType t)
+        public async void Find(string key, char missingChar, InputType t, string extra, Services.InputType extraType)
         {
             report.Init();
 
@@ -849,6 +949,12 @@ namespace FinderOuter.Services
                 switch (t)
                 {
                     case InputType.PrivateKey:
+                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                        {
+                            if (!string.IsNullOrEmpty(extra))
+                                report.AddMessage("Could not instantiate ICompareService.");
+                            comparer = null;
+                        }
                         await FindPrivateKey(key, missingChar);
                         break;
                     case InputType.Address:

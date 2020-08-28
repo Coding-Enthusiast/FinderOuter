@@ -29,7 +29,9 @@ namespace FinderOuter.ViewModels
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
-            InputTypeList = Enum.GetValues(typeof(Base58Sevice.InputType)).Cast<Base58Sevice.InputType>();
+            InputTypeList = ListHelper.GetAllEnumValues<Base58Sevice.InputType>();
+            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>(InputType.PrivateKey).ToArray();
+            SelectedExtraInputType = ExtraInputTypeList.First();
 
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
@@ -54,6 +56,7 @@ namespace FinderOuter.ViewModels
         private readonly Base58Sevice b58Service;
 
         public IEnumerable<Base58Sevice.InputType> InputTypeList { get; private set; }
+        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
         private Base58Sevice.InputType _selInpT;
         public Base58Sevice.InputType SelectedInputType
@@ -69,6 +72,20 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _input, value);
         }
 
+        private DescriptiveItem<InputType> _selInpT2;
+        public DescriptiveItem<InputType> SelectedExtraInputType
+        {
+            get => _selInpT2;
+            set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
+        }
+
+        private string _input2;
+        public string ExtraInput
+        {
+            get => _input2;
+            set => this.RaiseAndSetIfChanged(ref _input2, value);
+        }
+
         private char _mis = '*';
         public char MissingChar
         {
@@ -79,7 +96,7 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            b58Service.Find(Input, MissingChar, SelectedInputType);
+            b58Service.Find(Input, MissingChar, SelectedInputType, ExtraInput, SelectedExtraInputType.Value);
         }
 
         public void Example()

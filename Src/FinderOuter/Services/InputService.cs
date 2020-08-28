@@ -33,7 +33,7 @@ namespace FinderOuter.Services
                 InputType.PrivateKey => new PrvToPrvComparer(),
                 _ => null
             };
-            return result is null ? false : result.Init(input);
+            return !(result is null) && result.Init(input);
         }
 
         public string CheckMiniKey(string key)
