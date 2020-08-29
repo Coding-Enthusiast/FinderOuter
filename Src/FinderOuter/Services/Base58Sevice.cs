@@ -125,6 +125,86 @@ namespace FinderOuter.Services
             return true;
         }
 
+        private void WifLoopMissingEnd(bool compressed)
+        {
+            // Numbers are approximates, values usually are ±1
+            //         Uncompressed ;     Compressed
+            // 1-5 ->             1 ;              1
+            // 6   ->             9 ;              1
+            // 7   ->           514 ;              3
+            // 8   ->        29,817 ;            117
+            // 9   ->     1,729,387 ;          6,756
+            // 10  ->   100,304,420 ;        391,815
+            // 11  -> 5,817,656,406 ;     22,725,222
+            // 12  ->               ;  1,318,062,780
+
+            string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
+            string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
+            string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
+            var start = encoder.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
+            var end = encoder.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
+
+            var diff = end - start + 1;
+            report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
+
+            var curve = new SecP256k1();
+            if (start == 0 || end >= curve.N)
+            {
+                report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
+                return;
+            }
+
+            // With small number of missing keys there is only 1 result or worse case 2 which is simply printed without
+            // needing ICompareService. Instead all possible addresses are printed.
+            if (diff < 3)
+            {
+                var addrMaker = new Address();
+                for (int i = 0; i < (int)diff; i++)
+                {
+                    using PrivateKey tempKey = new PrivateKey(start + i);
+                    string tempWif = tempKey.ToWif(compressed);
+                    if (tempWif.Contains(baseWif))
+                    {
+                        var pub = tempKey.ToPublicKey();
+                        string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
+                            $"     Compressed P2PKH address={addrMaker.GetP2pkh(pub, true)}{Environment.NewLine}" +
+                            $"     Uncompressed P2PKH address={addrMaker.GetP2pkh(pub, false)}{Environment.NewLine}" +
+                            $"     Compressed P2WPKH address={addrMaker.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
+                            $"     Compressed P2SH-P2WPKH address={addrMaker.GetP2sh_P2wpkh(pub, 0)}";
+                        report.AddMessageSafe(msg);
+                        report.FoundAnyResult = true;
+                    }
+                }
+
+                return;
+            }
+
+            if (comparer is null)
+            {
+                report.AddMessageSafe("You must enter address or pubkey to compare with results.");
+                return;
+            }
+
+            // TODO: this part could run in parallel ICompareService is instantiated here for each thread.
+            var calc = new ECCalc();
+            EllipticCurvePoint point = calc.MultiplyByG(start);
+
+            for (long i = 0; i < (long)diff; i++)
+            {
+                // The first point is the smallKey * G the next is smallKey+1 * G
+                // And there is one extra addition at the end which shouldn't matter speed-wise
+                if (comparer.Compare(point))
+                {
+                    using PrivateKey tempKey = new PrivateKey(start + i);
+                    string tempWif = tempKey.ToWif(compressed);
+                    report.AddMessageSafe($"Found the key: {tempWif}");
+                    report.FoundAnyResult = true;
+                }
+                point = calc.AddChecked(point, curve.G);
+            }
+        }
+
+
         private void SetResultParallel(uint[] missingItems, int firstItem)
         {
             // Chances of finding more than 1 correct result is very small in base-58 and even if it happened 
@@ -238,7 +318,11 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopComp()
         {
-            if (missCount >= 5)
+            if (IsMissingFromEnd() && missCount <= 11)
+            {
+                WifLoopMissingEnd(true);
+            }
+            else if (missCount >= 5)
             {
                 // 4 missing chars is 11,316,496 cases and it takes <2 seconds to run.
                 // That makes 5 the optimal number for using parallelization
@@ -309,78 +393,7 @@ namespace FinderOuter.Services
         {
             if (IsMissingFromEnd() && missCount <= 9)
             {
-                // 1-4 -> 0
-                // Everything below is ±1
-                // 5  ->           1
-                // 6  ->           9
-                // 7  ->         514
-                // 8  ->      29,817
-                // 9  ->   1,729,387
-                // 10 -> 100,304,420
-
-                string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
-                string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
-                string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
-                var start = encoder.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
-                var end = encoder.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
-
-                var diff = end - start + 1;
-                report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
-
-                var curve = new SecP256k1();
-                if (start == 0 || end >= curve.N)
-                {
-                    report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
-                    return;
-                }
-
-                // With small number of missing keys there is only 1 result or worse case 2 which is simply printed without
-                // needing ICompareService. Instead all possible addresses are printed.
-                if (diff < 3)
-                {
-                    var addrMaker = new Address();
-                    for (int i = 0; i < (int)diff; i++)
-                    {
-                        using PrivateKey tempKey = new PrivateKey(start + i);
-                        string tempWif = tempKey.ToWif(false);
-                        if (tempWif.Contains(baseWif))
-                        {
-                            var pub = tempKey.ToPublicKey();
-                            string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
-                                $"     Compressed P2PKH address={addrMaker.GetP2pkh(pub, true)}{Environment.NewLine}" +
-                                $"     Uncompressed P2PKH address={addrMaker.GetP2pkh(pub, false)}{Environment.NewLine}" +
-                                $"     Compressed P2WPKH address={addrMaker.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
-                                $"     Compressed P2SH-P2WPKH address={addrMaker.GetP2sh_P2wpkh(pub, 0)}";
-                            report.AddMessageSafe(msg);
-                            report.FoundAnyResult = true;
-                        }
-                    }
-
-                    return;
-                }
-
-                if (comparer is null)
-                {
-                    report.AddMessageSafe("You must enter address or pubkey to compare with results.");
-                    return;
-                }
-
-                var calc = new ECCalc();
-                EllipticCurvePoint point = calc.MultiplyByG(start);
-
-                for (int i = 0; i < (int)diff; i++)
-                {
-                    // The first point is the smallKey * G the next is smallKey+1 * G
-                    // And there is one extra addition at the end which shouldn't matter speed-wise
-                    if (comparer.Compare(point))
-                    {
-                        using PrivateKey tempKey = new PrivateKey(start + i);
-                        string tempWif = tempKey.ToWif(false);
-                        report.AddMessageSafe($"Found the key: {tempWif}");
-                        report.FoundAnyResult = true;
-                    }
-                    point = calc.AddChecked(point, curve.G);
-                }
+                WifLoopMissingEnd(false);
             }
             else if (missCount >= 5)
             {
