@@ -144,6 +144,26 @@ namespace FinderOuter.Services
             var start = encoder.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
             var end = encoder.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
 
+            // If the key (integer) value is so tiny that almost all of its higher bytes are zero, or too big that almost
+            // all of its bytes are 0xff the smallWif string can end up being bigger in value than the bigWif string 
+            // and in some cases withwith an invalid first byte.
+            // Chances of a wallet producing such values is practically zero, so the following condition is only
+            // to prevent program from crashing if someone used a _test_ key!
+            if (end < start)
+            {
+                report.AddMessageSafe($"The given key is an edge case that can not be recovered. If this key was created by " +
+                                      $"a wallet and not some puzzle or test,... please open an issue on GitHub." +
+                                      $"{Environment.NewLine}" +
+                                      $"Here are the upper and lower values of the given key (DO NOT SHARE THESE):" +
+                                      $"{Environment.NewLine}" +
+                                      $"Low:{Environment.NewLine}    {smallWif}{Environment.NewLine}" +
+                                      $"    {encoder.Decode(smallWif).ToBase16()}" +
+                                      $"{Environment.NewLine}" +
+                                      $"High:{Environment.NewLine}    {bigWif}{Environment.NewLine}" +
+                                      $"    {encoder.Decode(bigWif).ToBase16()}");
+                return;
+            }
+
             var diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
