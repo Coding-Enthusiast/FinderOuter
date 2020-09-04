@@ -41,6 +41,14 @@ namespace FinderOuter.Services.Comparers
             }
         }
 
+        public ICompareService Clone()
+        {
+            return new PrvToPubComparer()
+            {
+                point = this.point
+            };
+        }
+
 
         public bool Compare(byte[] key)
         {

@@ -23,6 +23,8 @@ namespace FinderOuter.Services.Comparers
             return serv.CheckAndGetHash(address, out hash);
         }
 
+        public abstract ICompareService Clone();
+
         public bool Compare(byte[] key)
         {
             BigInteger kVal = new BigInteger(key, true, true);

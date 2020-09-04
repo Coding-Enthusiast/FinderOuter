@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using System;
-using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -14,6 +14,14 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToAddrCompComparer : PrvToAddrBase
     {
+        public override ICompareService Clone()
+        {
+            return new PrvToAddrCompComparer()
+            {
+                hash = this.hash.CloneByteArray()
+            };
+        }
+
         public override bool Compare(in EllipticCurvePoint point)
         {
             byte[] xBytes = point.X.ToByteArray(true, true);

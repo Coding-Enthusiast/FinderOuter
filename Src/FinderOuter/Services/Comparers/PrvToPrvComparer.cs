@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using FinderOuter.Backend;
@@ -30,6 +31,14 @@ namespace FinderOuter.Services.Comparers
             {
                 return false;
             }
+        }
+
+        public ICompareService Clone()
+        {
+            return new PrvToPrvComparer()
+            {
+                expected = this.expected.CloneByteArray()
+            };
         }
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expected).SequenceEqual(key);

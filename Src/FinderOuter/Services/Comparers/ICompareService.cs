@@ -11,6 +11,7 @@ namespace FinderOuter.Services.Comparers
     public interface ICompareService
     {
         bool Init(string data);
+        ICompareService Clone();
         bool Compare(byte[] key);
         bool Compare(BigInteger key);
         bool Compare(in EllipticCurvePoint point);
