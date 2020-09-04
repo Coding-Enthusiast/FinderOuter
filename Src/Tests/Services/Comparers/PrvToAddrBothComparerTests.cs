@@ -35,13 +35,29 @@ namespace Tests.Services.Comparers
         }
 
         [Fact]
+        public void CloneTest()
+        {
+            var original = new PrvToAddrBothComparer();
+            Assert.True(original.Init(KeyHelper.Pub1CompAddr)); // Make sure it is successfully initialized
+            var cloned = original.Clone();
+            // Change original field value to make sure it is cloned not a reference copy
+            Assert.True(original.Init(KeyHelper.Pub2CompAddr));
+
+            byte[] key = KeyHelper.Prv1.ToBytes();
+
+            // Since the original was changed it should fail when comparing
+            Assert.False(original.Compare(key));
+            Assert.True(cloned.Compare(key));
+        }
+
+        [Fact]
         public void Compare_CompressedTest()
         {
             var comp = new PrvToAddrBothComparer();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
-            
+
             bool b = comp.Compare(key);
             Assert.False(b);
 
@@ -57,7 +73,7 @@ namespace Tests.Services.Comparers
             Assert.True(comp.Init(KeyHelper.Pub1UnCompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
-            
+
             bool b = comp.Compare(key);
             Assert.False(b);
 

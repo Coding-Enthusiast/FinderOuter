@@ -13,6 +13,22 @@ namespace Tests.Services.Comparers
 {
     public class PrvToAddrNestedComparerTests
     {
+        [Fact]
+        public void CloneTest()
+        {
+            var original = new PrvToAddrNestedComparer();
+            Assert.True(original.Init(KeyHelper.Pub1NestedSegwit)); // Make sure it is successfully initialized
+            var cloned = original.Clone();
+            // Change original field value to make sure it is cloned not a reference copy
+            Assert.True(original.Init(KeyHelper.Pub2NestedSegwit));
+
+            byte[] key = KeyHelper.Prv1.ToBytes();
+
+            // Since the original was changed it should fail when comparing
+            Assert.False(original.Compare(key));
+            Assert.True(cloned.Compare(key));
+        }
+
         public static IEnumerable<object[]> GetCompareCases()
         {
             yield return new object[] { KeyHelper.Pub1NestedSegwit, KeyHelper.Prv1.ToBytes() };

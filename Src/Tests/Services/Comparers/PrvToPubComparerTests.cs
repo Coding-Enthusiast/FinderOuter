@@ -30,6 +30,22 @@ namespace Tests.Services.Comparers
         }
 
         [Fact]
+        public void CloneTest()
+        {
+            var original = new PrvToPubComparer();
+            Assert.True(original.Init(KeyHelper.Pub1CompHex)); // Make sure it is successfully initialized
+            var cloned = original.Clone();
+            // Change original field value to make sure it is cloned not a reference copy
+            Assert.True(original.Init(KeyHelper.Pub2CompHex));
+
+            byte[] key = KeyHelper.Prv1.ToBytes();
+
+            // Since the original was changed it should fail when comparing
+            Assert.False(original.Compare(key));
+            Assert.True(cloned.Compare(key));
+        }
+
+        [Fact]
         public void CompareTest()
         {
             var comp1 = new PrvToPubComparer();

@@ -13,6 +13,22 @@ namespace Tests.Services.Comparers
     public class PrvToAddrCompComparerTests
     {
         [Fact]
+        public void CloneTest()
+        {
+            var original = new PrvToAddrCompComparer();
+            Assert.True(original.Init(KeyHelper.Pub1CompAddr)); // Make sure it is successfully initialized
+            var cloned = original.Clone();
+            // Change original field value to make sure it is cloned not a reference copy
+            Assert.True(original.Init(KeyHelper.Pub2CompAddr));
+
+            byte[] key = KeyHelper.Prv1.ToBytes();
+
+            // Since the original was changed it should fail when comparing
+            Assert.False(original.Compare(key));
+            Assert.True(cloned.Compare(key));
+        }
+
+        [Fact]
         public void Compare_CompressedTest()
         {
             var comp = new PrvToAddrCompComparer();
