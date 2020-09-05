@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend;
+using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -34,13 +35,13 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
-            calc = new EllipticCurveCalculator();
+            calc = new ECCalc();
         }
 
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private readonly EllipticCurveCalculator calc;
+        private readonly ECCalc calc;
 
         private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
         private readonly byte[][] allWordsBytes = new byte[2048][];
@@ -50,7 +51,10 @@ namespace FinderOuter.Services
         private uint[] wordIndexes;
         private int[] missingIndexes;
         private string[] allWords;
+        // TODO: this could be converted to SHA512 working vector and then leave the compression 
+        //       to SetBip32() after setting HMAC key
         private byte[] pbkdf2Salt;
+        // TODO: change this to an int only storing the length (has to be instantiated per thread anyways)
         private byte[] mnBytes;
         private BIP0032Path path;
         private ICompareService comparer;
@@ -469,10 +473,440 @@ namespace FinderOuter.Services
         }
 
 
+        public unsafe bool SetBip32(Sha512Fo sha, byte* mnPt, int mnLen, ulong* bigBuffer, ICompareService comparer)
+        {
+            // The process is: PBKDF2(password=UTF8(mnemonic), salt=UTF8("mnemonic+passphrase") -> BIP32 seed
+            //                 BIP32 -> HMACSHA(data=seed, key=MasterKeyHashKey) -> HMACSHA(data=key|index, key=ChainCode)
+            // All HMACSHAs are using 512 variant
+
+            // *** PBKDF2 ***
+            // dkLen/HmacLen=1 => only 1 block => no loop needed
+            // Salt is the "mnemonic+passPhrase" + blockNumber(=1) => fixed and set during precomputing
+
+            ulong* uPt = bigBuffer;
+            ulong* iPt = uPt + 80;
+            ulong* oPt = iPt + 80;
+
+            ulong* seedPt = oPt + 80;
+            ulong* ihPt = seedPt + 8;
+            ulong* ohPt = ihPt + 8;
+
+            ulong parkey0, parkey1, parkey2, parkey3, carry;
+
+            fixed (byte* dPt = &pbkdf2Salt[0])
+            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            {
+                // Setting values in uTemp that never change
+                uPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+                uPt[9] = 0;
+                uPt[10] = 0;
+                uPt[11] = 0;
+                uPt[12] = 0;
+                uPt[13] = 0;
+                uPt[14] = 0;
+                uPt[15] = 1536;
+
+
+                // Set HMAC key ie. set pads (used as working vectors)
+                if (mnLen > Sha512Fo.BlockByteSize)
+                {
+                    // Key bytes must be hashed first
+                    sha.Init(hPt);
+                    sha.CompressData(mnPt, mnLen, mnLen, hPt, wPt);
+                    // Set pads to be used as working vectors
+                    iPt[0] = 0x3636363636363636U ^ hPt[0];
+                    iPt[1] = 0x3636363636363636U ^ hPt[1];
+                    iPt[2] = 0x3636363636363636U ^ hPt[2];
+                    iPt[3] = 0x3636363636363636U ^ hPt[3];
+                    iPt[4] = 0x3636363636363636U ^ hPt[4];
+                    iPt[5] = 0x3636363636363636U ^ hPt[5];
+                    iPt[6] = 0x3636363636363636U ^ hPt[6];
+                    iPt[7] = 0x3636363636363636U ^ hPt[7];
+                    iPt[8] = 0x3636363636363636U;
+                    iPt[9] = 0x3636363636363636U;
+                    iPt[10] = 0x3636363636363636U;
+                    iPt[11] = 0x3636363636363636U;
+                    iPt[12] = 0x3636363636363636U;
+                    iPt[13] = 0x3636363636363636U;
+                    iPt[14] = 0x3636363636363636U;
+                    iPt[15] = 0x3636363636363636U;
+
+                    oPt[0] = 0x5c5c5c5c5c5c5c5cU ^ hPt[0];
+                    oPt[1] = 0x5c5c5c5c5c5c5c5cU ^ hPt[1];
+                    oPt[2] = 0x5c5c5c5c5c5c5c5cU ^ hPt[2];
+                    oPt[3] = 0x5c5c5c5c5c5c5c5cU ^ hPt[3];
+                    oPt[4] = 0x5c5c5c5c5c5c5c5cU ^ hPt[4];
+                    oPt[5] = 0x5c5c5c5c5c5c5c5cU ^ hPt[5];
+                    oPt[6] = 0x5c5c5c5c5c5c5c5cU ^ hPt[6];
+                    oPt[7] = 0x5c5c5c5c5c5c5c5cU ^ hPt[7];
+                    oPt[8] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[9] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[10] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[11] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[12] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[13] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[14] = 0x5c5c5c5c5c5c5c5cU;
+                    oPt[15] = 0x5c5c5c5c5c5c5c5cU;
+                }
+                else
+                {
+                    byte[] temp = new byte[Sha512Fo.BlockByteSize];
+                    fixed (byte* tPt = &temp[0])
+                    {
+                        Buffer.MemoryCopy(mnPt, tPt, Sha512Fo.BlockByteSize, mnLen);
+                        for (int i = 0, j = 0; i < 16; i++, j += 8)
+                        {
+                            ulong val =
+                                ((ulong)tPt[j] << 56) |
+                                ((ulong)tPt[j + 1] << 48) |
+                                ((ulong)tPt[j + 2] << 40) |
+                                ((ulong)tPt[j + 3] << 32) |
+                                ((ulong)tPt[j + 4] << 24) |
+                                ((ulong)tPt[j + 5] << 16) |
+                                ((ulong)tPt[j + 6] << 8) |
+                                tPt[j + 7];
+
+                            iPt[i] = 0x3636363636363636U ^ val;
+                            oPt[i] = 0x5c5c5c5c5c5c5c5cU ^ val;
+                        }
+                    }
+                }
+
+                // F()
+                // compute u1 = hmac.ComputeHash(data=pbkdf2Salt);
+
+                // Final result is SHA512(outer_pad | SHA512(inner_pad | data)) where data is pbkdf2Salt
+                // 1. Compute SHA512(inner_pad | data)
+                sha.Init(hPt);
+                sha.CompressBlock(hPt, iPt);
+                // Make a copy of hashState of inner-pad to be used in the loop below (explaination in the loop)
+                *(Block64*)ihPt = *(Block64*)hPt;
+                // Data length is unknown and an initial block of 128 bytes was already compressed
+                sha.CompressData(dPt, pbkdf2Salt.Length, pbkdf2Salt.Length + 128, hPt, wPt);
+                // 2. Compute SHA512(outer_pad | hash)
+                *(Block64*)wPt = *(Block64*)hPt;
+                wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+                wPt[9] = 0;
+                wPt[10] = 0;
+                wPt[11] = 0;
+                wPt[12] = 0;
+                wPt[13] = 0;
+                wPt[14] = 0;
+                wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
+
+                sha.Init(hPt);
+                sha.CompressBlock(hPt, oPt);
+                // Make a copy of hashState of outer-pad to be used in the loop below (explaination in the loop)
+                *(Block64*)ohPt = *(Block64*)hPt;
+                sha.Compress192SecondBlock(hPt, wPt);
+
+                // Copy u1 to result of F() to be XOR'ed with each result on iterations, and result of F() is the seed
+                *(Block64*)seedPt = *(Block64*)hPt;
+
+                // Compute u2 to u(c-1) where c is iteration and each u is the HMAC of previous u
+                for (int j = 1; j < 2048; j++)
+                {
+                    // Each u is calculated by computing HMAC(previous_u) where previous_u is 64 bytes hPt
+                    // Start by making a copy of hPt so Init() can be called
+                    *(Block64*)uPt = *(Block64*)hPt;
+
+                    // Final result is SHA512(outer_pad | SHA512(inner_pad | 64_byte_data))
+                    // 1. Compute SHA512(inner_pad | 64_byte_data)
+                    // 2. Compute SHA512(outer_pad | hash)
+                    //    Since pads don't change and each step is Init() then Compress(pad) the hashState is always the same
+                    //    after these 2 steps and is already computed and stored in temp arrays above
+                    //    by doing this 2*2047=4094 SHA512 block compressions are skipped
+
+                    // Replace: sha.Init(hPt); sha.CompressBlockWithWSet(hPt, iPt); with line below:
+                    *(Block64*)hPt = *(Block64*)ihPt;
+                    sha.Compress192SecondBlock(hPt, uPt);
+
+                    // 2. Compute SHA512(outer_pad | hash)
+                    *(Block64*)wPt = *(Block64*)hPt;
+                    // The rest of wPt is set above and is unchanged
+
+                    // Replace: sha.Init(hPt); sha.CompressBlock(hPt, oPt); with line below:
+                    *(Block64*)hPt = *(Block64*)ohPt;
+                    sha.Compress192SecondBlock(hPt, wPt);
+
+                    // result of F() is XOR sum of all u arrays
+                    if (Avx2.IsSupported) // AVX512 :(
+                    {
+                        Vector256<ulong> part1 = Avx2.Xor(Avx2.LoadVector256(seedPt), Avx2.LoadVector256(hPt));
+                        Vector256<ulong> part2 = Avx2.Xor(Avx2.LoadVector256(seedPt + 4), Avx2.LoadVector256(hPt + 4));
+
+                        Avx2.Store(seedPt, part1);
+                        Avx2.Store(seedPt + 4, part2);
+                    }
+                    else
+                    {
+                        seedPt[0] ^= hPt[0];
+                        seedPt[1] ^= hPt[1];
+                        seedPt[2] ^= hPt[2];
+                        seedPt[3] ^= hPt[3];
+                        seedPt[4] ^= hPt[4];
+                        seedPt[5] ^= hPt[5];
+                        seedPt[6] ^= hPt[6];
+                        seedPt[7] ^= hPt[7];
+                    }
+                }
+
+
+                // *** BIP32 ***
+                // Set from entropy/seed by computing HMAC(data=seed, key="Bitcoin seed")
+
+                // Final result is SHA512(outer_pad | SHA512(inner_pad | data)) where data is 64-byte seed
+                // 1. Compute SHA512(inner_pad | data)
+                sha.Init_InnerPad_Bitcoinseed(hPt);
+                *(Block64*)wPt = *(Block64*)seedPt;
+                // from wPt[8] to wPt[15] didn't change
+                sha.Compress192SecondBlock(hPt, wPt);
+
+                // 2. Compute SHA512(outer_pad | hash)
+                *(Block64*)wPt = *(Block64*)hPt; // ** Copy hashState before changing it **
+                // from wPt[8] to wPt[15] didn't change
+                sha.Init_OuterPad_Bitcoinseed(hPt);
+                sha.Compress192SecondBlock(hPt, wPt);
+                // Master key is set. PrivateKey= first 32-bytes of hPt and ChainCode is second 32-bytes
+
+                // Each child is derived by computing HMAC(data=(hardened? 0|prvKey : pubkey) | index, key=ChainCode)
+                // ChainCode is the second 32-byte half of the hash. Set pad items that never change here:
+                iPt[4] = 0x3636363636363636U;
+                iPt[5] = 0x3636363636363636U;
+                iPt[6] = 0x3636363636363636U;
+                iPt[7] = 0x3636363636363636U;
+                iPt[8] = 0x3636363636363636U;
+                iPt[9] = 0x3636363636363636U;
+                iPt[10] = 0x3636363636363636U;
+                iPt[11] = 0x3636363636363636U;
+                iPt[12] = 0x3636363636363636U;
+                iPt[13] = 0x3636363636363636U;
+                iPt[14] = 0x3636363636363636U;
+                iPt[15] = 0x3636363636363636U;
+
+                oPt[4] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[5] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[6] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[7] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[8] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[9] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[10] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[11] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[12] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[13] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[14] = 0x5c5c5c5c5c5c5c5cU;
+                oPt[15] = 0x5c5c5c5c5c5c5c5cU;
+
+                uPt[5] = 0;
+                uPt[6] = 0;
+                uPt[7] = 0;
+                uPt[8] = 0;
+                uPt[9] = 0;
+                uPt[10] = 0;
+                uPt[11] = 0;
+                uPt[12] = 0;
+                uPt[13] = 0;
+                uPt[14] = 0;
+                uPt[15] = 1320; // (1+32+4 + 128)*8
+
+                BigInteger kParent = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
+                if (kParent == 0 || kParent >= order)
+                {
+                    return false;
+                }
+                parkey0 = hPt[3];
+                parkey1 = hPt[2];
+                parkey2 = hPt[1];
+                parkey3 = hPt[0];
+
+                foreach (var index in path.Indexes)
+                {
+                    if ((index & 0x80000000) != 0) // IsHardened
+                    {
+                        // First _byte_ is zero
+                        // private-key is the first 32 bytes (4 items) of hPt (total 33 bytes)
+                        // 4 bytes index + SHA padding are also added
+                        uPt[0] = parkey3 >> 8;
+                        uPt[1] = parkey3 << 56 | parkey2 >> 8;
+                        uPt[2] = parkey2 << 56 | parkey1 >> 8;
+                        uPt[3] = parkey1 << 56 | parkey0 >> 8;
+                        uPt[4] = parkey0 << 56 |
+                                 (ulong)index << 24 |
+                                 0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
+                    }
+                    else
+                    {
+                        var point = calc.MultiplyByG(kParent);
+                        byte[] xBytes = point.X.ToByteArray(true, true).PadLeft(32);
+                        fixed (byte* pubXPt = &xBytes[0])
+                        {
+                            uPt[0] = (point.Y.IsEven ? 0x0200000000000000UL : 0x0300000000000000UL) |
+                                     (ulong)pubXPt[0] << 48 |
+                                     (ulong)pubXPt[1] << 40 |
+                                     (ulong)pubXPt[2] << 32 |
+                                     (ulong)pubXPt[3] << 24 |
+                                     (ulong)pubXPt[4] << 16 |
+                                     (ulong)pubXPt[5] << 8 |
+                                            pubXPt[6];
+                            uPt[1] = (ulong)pubXPt[7] << 56 |
+                                     (ulong)pubXPt[8] << 48 |
+                                     (ulong)pubXPt[9] << 40 |
+                                     (ulong)pubXPt[10] << 32 |
+                                     (ulong)pubXPt[11] << 24 |
+                                     (ulong)pubXPt[12] << 16 |
+                                     (ulong)pubXPt[13] << 8 |
+                                            pubXPt[14];
+                            uPt[2] = (ulong)pubXPt[15] << 56 |
+                                     (ulong)pubXPt[16] << 48 |
+                                     (ulong)pubXPt[17] << 40 |
+                                     (ulong)pubXPt[18] << 32 |
+                                     (ulong)pubXPt[19] << 24 |
+                                     (ulong)pubXPt[20] << 16 |
+                                     (ulong)pubXPt[21] << 8 |
+                                            pubXPt[22];
+                            uPt[3] = (ulong)pubXPt[23] << 56 |
+                                     (ulong)pubXPt[24] << 48 |
+                                     (ulong)pubXPt[25] << 40 |
+                                     (ulong)pubXPt[26] << 32 |
+                                     (ulong)pubXPt[27] << 24 |
+                                     (ulong)pubXPt[28] << 16 |
+                                     (ulong)pubXPt[29] << 8 |
+                                            pubXPt[30];
+                            uPt[4] = (ulong)pubXPt[31] << 56 |
+                                     (ulong)index << 24 |
+                                     0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
+                        }
+                    }
+
+
+                    // Final result is SHA512(outer_pad | SHA512(inner_pad | 37_byte_data))
+                    // 1. Compute SHA512(inner_pad | 37_byte_data)
+                    // Set pads to be used as working vectors (key is ChainCode that is the second 32 bytes of SHA512
+                    iPt[0] = 0x3636363636363636U ^ hPt[4];
+                    iPt[1] = 0x3636363636363636U ^ hPt[5];
+                    iPt[2] = 0x3636363636363636U ^ hPt[6];
+                    iPt[3] = 0x3636363636363636U ^ hPt[7];
+
+                    oPt[0] = 0x5c5c5c5c5c5c5c5cU ^ hPt[4];
+                    oPt[1] = 0x5c5c5c5c5c5c5c5cU ^ hPt[5];
+                    oPt[2] = 0x5c5c5c5c5c5c5c5cU ^ hPt[6];
+                    oPt[3] = 0x5c5c5c5c5c5c5c5cU ^ hPt[7];
+
+                    sha.Init(hPt);
+                    sha.CompressBlock(hPt, iPt);
+                    sha.Compress165SecondBlock(hPt, uPt);
+
+                    // 2. Compute SHA512(outer_pad | hash)
+                    *(Block64*)wPt = *(Block64*)hPt;
+
+                    // from wPt[8] to wPt[15] didn't change
+                    sha.Init(hPt);
+                    sha.CompressBlock(hPt, oPt);
+                    sha.Compress192SecondBlock(hPt, wPt);
+
+                    // New private key is (parentPrvKey + int(hPt)) % order
+                    // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
+                    kParent = (kParent + new BigInteger(sha.GetFirst32Bytes(hPt), true, true)) % order;
+
+                    ulong toAdd = hPt[3];
+                    parkey0 += toAdd;
+                    if (parkey0 < toAdd) parkey1++;
+
+                    toAdd = hPt[2];
+                    parkey1 += toAdd;
+                    if (parkey1 < toAdd) parkey2++;
+
+                    toAdd = hPt[1];
+                    parkey2 += toAdd;
+                    if (parkey2 < toAdd) parkey3++;
+
+                    toAdd = hPt[0];
+                    parkey3 += toAdd;
+                    if (parkey3 < toAdd) carry = 1;
+                    else carry = 0;
+
+                    bool bigger = false;
+                    if (carry == 1)
+                    {
+                        bigger = true;
+                    }
+                    else if (parkey3 == N3)
+                    {
+                        if (parkey2 > N2)
+                        {
+                            bigger = true;
+                        }
+                        else if (parkey2 == N2)
+                        {
+                            if (parkey1 > N1)
+                            {
+                                bigger = true;
+                            }
+                            else if (parkey1 == N1)
+                            {
+                                if (parkey0 >= N0)
+                                {
+                                    bigger = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (bigger)
+                    {
+                        if (parkey0 < N0) parkey1--;
+                        parkey0 -= N0;
+
+                        if (parkey1 < N1) parkey2--;
+                        parkey1 -= N1;
+
+                        if (parkey2 < N2) parkey3--;
+                        parkey2 -= N2;
+
+                        parkey3 -= N3;
+                    }
+                }
+
+                // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path
+                // and have been computed already
+                hPt[0] = parkey3;
+                hPt[1] = parkey2;
+                hPt[2] = parkey1;
+                hPt[3] = parkey0;
+
+                return comparer.Compare(sha.GetFirst32Bytes(hPt));
+            }
+        }
+
         private bool SetResult(int mnLen)
         {
             report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnBytes.SubArray(0, mnLen))}");
             return true;
+        }
+
+        private unsafe void SetResultParallel(byte* mnPt, int mnLen)
+        {
+            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnPt, mnLen)}");
+            report.FoundAnyResult = true;
+        }
+
+        private unsafe bool MoveNext(uint* cartesian, int len)
+        {
+            for (int i = len - 1; i >= 0; --i)
+            {
+                cartesian[i] += 1;
+
+                if (cartesian[i] == 2048)
+                {
+                    cartesian[i] = 0;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
 
@@ -760,11 +1194,10 @@ namespace FinderOuter.Services
 
         private unsafe void Loop12(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 2048), missCount - 1));
-            using Sha512Fo sha512 = new Sha512Fo();
-            ulong[] ipad = new ulong[80];
-            ulong[] opad = new ulong[80];
+            var missingItems = new uint[missCount - 1];
+            var localComp = comparer.Clone();
 
+            using Sha512Fo sha512 = new Sha512Fo();
             using Sha256Fo sha256 = new Sha256Fo();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
@@ -774,8 +1207,10 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            fixed (ulong* iPt = &ipad[0], oPt = &opad[0])
+            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+
             fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
@@ -784,7 +1219,7 @@ namespace FinderOuter.Services
 
                 wrd[firstIndex] = (uint)firstItem;
 
-                foreach (var item in cartesian)
+                do
                 {
                     if (loopState.IsStopped)
                     {
@@ -792,9 +1227,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var k in item)
+                    foreach (var item in missingItems)
                     {
-                        wrd[mi[j]] = (uint)k;
+                        wrd[mi[j]] = item;
                         j++;
                     }
 
@@ -812,27 +1247,21 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 12; i++)
                         {
                             var temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
                         {
-                            SetResultParallel(mnPt, mnLen);
+                            SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
-                            break;
+                            return;
                         }
                     }
-                }
+                } while (MoveNext(itemsPt, missingItems.Length));
             }
 
             report.IncrementProgress();
-        }
-
-        private unsafe void SetResultParallel(byte* mnPt, int mnLen)
-        {
-            report.AddMessageSafe($"Found a key: {Encoding.UTF8.GetString(mnPt, mnLen)}");
-            report.FoundAnyResult = true;
         }
 
         private unsafe void Loop12()
@@ -849,14 +1278,10 @@ namespace FinderOuter.Services
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
                 using Sha512Fo sha512 = new Sha512Fo();
-                ulong[] ipad = new ulong[80];
-                ulong[] opad = new ulong[80];
-
                 using Sha256Fo sha256 = new Sha256Fo();
 
                 int misIndex = missingIndexes[0];
-
-                fixed (ulong* iPt = ipad, oPt = opad)
+                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
                 fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
@@ -885,9 +1310,9 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, --mnLen, iPt, oPt))
+                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
                             {
-                                SetResultParallel(mnPt, mnLen);
+                                SetResultParallel(mnPt, mnLen - 1);
                                 break;
                             }
                         }
