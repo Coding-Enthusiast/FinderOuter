@@ -5,7 +5,6 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using FinderOuter.Backend.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Arithmetic;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,7 @@ namespace FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve
 {
     public class ECCalc
     {
-        public ECCalc() : this(new TempCurve())
+        public ECCalc() : this(new SecP256k1())
         {
         }
 
