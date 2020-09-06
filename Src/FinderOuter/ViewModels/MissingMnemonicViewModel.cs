@@ -127,11 +127,19 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _ki, value);
         }
 
+        private bool _isHard = false;
+        public bool IsHardenedKey
+        {
+            get => _isHard;
+            set => this.RaiseAndSetIfChanged(ref _isHard, value);
+        }
+
 
         public override void Find()
         {
-            _ = MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value, KeyPath, KeyIndex,
-                                      SelectedMnemonicType, SelectedWordListType);
+            MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
+                                  KeyPath, KeyIndex, IsHardenedKey,
+                                  SelectedMnemonicType, SelectedWordListType);
         }
 
 

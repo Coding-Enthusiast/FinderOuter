@@ -53,13 +53,14 @@
       </ComboBox.ItemTemplate>
     </ComboBox>
 
-    <Grid ColumnDefinitions="*,*" Grid.Column="0" Grid.Row="3">
+    <Grid ColumnDefinitions="*,*,auto" Grid.Column="0" Grid.Row="3">
       <TextBox Text="{Binding KeyPath}" Watermark="Complete path of the given key/address above"
                UseFloatingWatermark="True" Margin="3"
                Grid.Column="0"/>
       <TextBox Text="{Binding KeyIndex}" Watermark="Index of the given key/address above"
                UseFloatingWatermark="True" Margin="3"
                Grid.Column="1"/>
+      <CheckBox Content="Hardened key" IsChecked="{Binding IsHardenedKey}" Grid.Column="2"/>
     </Grid>
   </Grid>
 </UserControl>
