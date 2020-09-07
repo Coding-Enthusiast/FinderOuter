@@ -23,6 +23,14 @@
     <TextBox Text="{Binding ExtraInput}" Watermark="Extra input to check against (address)"
              UseFloatingWatermark="True"
              Margin="3" Grid.Column="0" Grid.Row="1"/>
+    <ComboBox Items="{Binding ExtraInputTypeList}" SelectedItem="{Binding SelectedExtraInputType}"
+              Grid.Column="1" Grid.Row="1">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}" ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
 
   </Grid>
 </UserControl>

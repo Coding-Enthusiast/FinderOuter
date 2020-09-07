@@ -39,21 +39,18 @@ namespace FinderOuter.Services
 
         private void SetResult(IEnumerable<byte> item)
         {
-            Task.Run(() =>
+            char[] temp = keyToCheck.ToCharArray();
+            int i = 0;
+            foreach (var index in item)
             {
-                char[] temp = keyToCheck.ToCharArray();
-                int i = 0;
-                foreach (var index in item)
-                {
-                    temp[missingIndexes[i++]] = (char)index;
-                }
+                temp[missingIndexes[i++]] = (char)index;
+            }
 
-                report.AddMessageSafe($"Found a possible result: {new string(temp)}");
-                return;
-            });
+            report.AddMessageSafe($"Found the correct key: {new string(temp)}");
+            report.FoundAnyResult = true;
         }
 
-        private unsafe bool Loop23()
+        private unsafe void Loop23()
         {
             // The actual data that is changing is 22 bytes (22 char long mini key) with a fixed starting character ('S')
             // plus an additional byte added to the end (char('?')=0x3f) during checking loop.
@@ -63,11 +60,10 @@ namespace FinderOuter.Services
 
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
             using Sha256Fo sha = new Sha256Fo();
-            bool success = false;
 
-            byte[] temp = new byte[precomputed.Length];
+            byte* tmp = stackalloc byte[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (byte* pre = &precomputed[0], tmp = &temp[0])
+            fixed (byte* pre = &precomputed[0])
             fixed (int* mi = &missingIndexes[0])
             {
                 foreach (var item in cartesian)
@@ -108,27 +104,23 @@ namespace FinderOuter.Services
                         if (comparer.Compare(sha.GetBytes(hPt)))
                         {
                             SetResult(item);
-                            success = true;
                             break;
                         }
                     }
                 }
             }
-
-            return success;
         }
 
 
-        private unsafe bool Loop27()
+        private unsafe void Loop27()
         {
             // Same as above but key is 26 chars
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
             using Sha256Fo sha = new Sha256Fo();
-            bool success = false;
 
-            byte[] temp = new byte[precomputed.Length];
+            byte* tmp = stackalloc byte[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (byte* pre = &precomputed[0], tmp = &temp[0])
+            fixed (byte* pre = &precomputed[0])
             fixed (int* mi = &missingIndexes[0])
             {
                 foreach (var item in cartesian)
@@ -166,26 +158,22 @@ namespace FinderOuter.Services
                         if (comparer.Compare(sha.GetBytes(hPt)))
                         {
                             SetResult(item);
-                            success = true;
                             break;
                         }
                     }
                 }
             }
-
-            return success;
         }
 
 
-        private unsafe bool Loop31()
+        private unsafe void Loop31()
         {
             var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
             using Sha256Fo sha = new Sha256Fo();
-            bool success = false;
 
-            byte[] temp = new byte[precomputed.Length];
+            byte* tmp = stackalloc byte[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (byte* pre = &precomputed[0], tmp = &temp[0])
+            fixed (byte* pre = &precomputed[0])
             fixed (int* mi = &missingIndexes[0])
             {
                 foreach (var item in cartesian)
@@ -227,14 +215,11 @@ namespace FinderOuter.Services
                         if (comparer.Compare(sha.GetBytes(hPt)))
                         {
                             SetResult(item);
-                            success = true;
                             break;
                         }
                     }
                 }
             }
-
-            return success;
         }
 
 
@@ -254,67 +239,65 @@ namespace FinderOuter.Services
             }
         }
 
-        public async Task<bool> Find(string key, string extra, char missingChar)
+        public async void Find(string key, string extra, InputType extraType, char missingChar)
         {
             report.Init();
 
             if (!inputService.IsMissingCharValid(missingChar))
-                return report.Fail("Invalid missing character.");
-            if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
-                return report.Fail("Input contains invalid base-58 character(s).");
-            if (!key.StartsWith(ConstantsFO.MiniKeyStart))
-                return report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
-
-            comparer = new PrvToAddrBothComparer();
-            if (!comparer.Init(extra))
-            {
-                return report.Fail("Invalid address.");
-            }
-
-            missCount = key.Count(c => c == missingChar);
-            if (missCount == 0)
-            {
-                report.AddMessageSafe("The given input has no missing characters, verifying it as a complete minikey.");
-                report.AddMessageSafe(inputService.CheckMiniKey(key));
-                return report.Finalize(true);
-            }
-
-            keyToCheck = key;
-            missingIndexes = new int[missCount];
-
-            bool success;
-            report.AddMessageSafe($"Total number of minikeys to test: {GetTotalCount(missCount):n0}");
-            report.AddMessageSafe("Going throgh each case. Please wait...");
-            Stopwatch watch = Stopwatch.StartNew();
-
-            if (key.Length == ConstantsFO.MiniKeyLen1)
-            {
-                precomputed = new byte[ConstantsFO.MiniKeyLen1];
-                PreCompute(missingChar);
-                success = await Task.Run(Loop23);
-            }
-            else if (key.Length == ConstantsFO.MiniKeyLen2)
-            {
-                precomputed = new byte[ConstantsFO.MiniKeyLen2];
-                PreCompute(missingChar);
-                success = await Task.Run(Loop27);
-            }
-            else if (key.Length == ConstantsFO.MiniKeyLen3)
-            {
-                precomputed = new byte[ConstantsFO.MiniKeyLen3];
-                PreCompute(missingChar);
-                success = await Task.Run(Loop31);
-            }
+                report.Fail("Invalid missing character.");
+            else if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
+                report.Fail("Input contains invalid base-58 character(s).");
+            else if (!key.StartsWith(ConstantsFO.MiniKeyStart))
+                report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
+            else if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                report.Fail("Invalid extra input or input type.");
             else
             {
-                return report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen3}.");
+                missCount = key.Count(c => c == missingChar);
+                if (missCount == 0)
+                {
+                    report.AddMessageSafe("The given input has no missing characters, verifying it as a complete minikey.");
+                    report.AddMessageSafe(inputService.CheckMiniKey(key));
+                    report.FoundAnyResult = true;
+                    return;
+                }
+
+                keyToCheck = key;
+                missingIndexes = new int[missCount];
+
+                report.AddMessageSafe($"Total number of minikeys to test: {GetTotalCount(missCount):n0}");
+                report.AddMessageSafe("Going throgh each case. Please wait...");
+                Stopwatch watch = Stopwatch.StartNew();
+
+                if (key.Length == ConstantsFO.MiniKeyLen1)
+                {
+                    precomputed = new byte[ConstantsFO.MiniKeyLen1];
+                    PreCompute(missingChar);
+                    await Task.Run(Loop23);
+                }
+                else if (key.Length == ConstantsFO.MiniKeyLen2)
+                {
+                    precomputed = new byte[ConstantsFO.MiniKeyLen2];
+                    PreCompute(missingChar);
+                    await Task.Run(Loop27);
+                }
+                else if (key.Length == ConstantsFO.MiniKeyLen3)
+                {
+                    precomputed = new byte[ConstantsFO.MiniKeyLen3];
+                    PreCompute(missingChar);
+                    await Task.Run(Loop31);
+                }
+                else
+                {
+                    report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen3}.");
+                }
+
+                watch.Stop();
+                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
+
+                report.Finalize();
             }
-
-            watch.Stop();
-            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-            report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
-
-            return report.Finalize(success);
         }
     }
 }

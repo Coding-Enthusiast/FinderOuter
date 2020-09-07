@@ -7,6 +7,8 @@ using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
@@ -35,6 +37,9 @@ namespace FinderOuter.ViewModels
                 x => x.Result.CurrentState,
                 (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+
+            ExtraInputTypeList = ListHelper.GetEnumDescItems(InputType.PrivateKey).ToArray();
+            SelectedExtraInputType = ExtraInputTypeList.First();
         }
 
         public override string OptionName => "Missing mini private key";
@@ -49,11 +54,20 @@ namespace FinderOuter.ViewModels
 
         private readonly MiniKeyService miniService;
 
+        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
+
         private string _input;
         public string Input
         {
             get => _input;
             set => this.RaiseAndSetIfChanged(ref _input, value);
+        }
+
+        private DescriptiveItem<InputType> _selInpT2;
+        public DescriptiveItem<InputType> SelectedExtraInputType
+        {
+            get => _selInpT2;
+            set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
         }
 
         private string _input2;
@@ -72,7 +86,7 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            _ = miniService.Find(Input, ExtraInput, MissingChar);
+            miniService.Find(Input, ExtraInput, SelectedExtraInputType.Value, MissingChar);
         }
 
         public void Example()
