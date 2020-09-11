@@ -2,11 +2,13 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/License)
 
 # The FinderOuter
-The FinderOuter is a bitcoin recovery tool that focuses on making the recovery process easy for everyone.  
-There is no need to read long guide pages to learn how to use the application. Instead it will always be as easy as filling some
-boxes, maybe selecting some options and clicking a button all in a user-friendly GUI.  
-Each recovery option is written from scratch and all parts down to the basic cryptography used (such as SHA, ECC,...) are specialized
-for maximum efficiency.
+The FinderOuter is a bitcoin recovery tool that focuses on making the recovery process easy for everyone with any level of
+technical knowledge. It uses a simple user interface with a list of recovery options. Each option has an explanation and many
+hints helping user figure out what is needed. It always consist of filling some text boxes and selecting some options and finally
+clicking the `Find` button. This eliminates the need to read long guide pages on how to use the application. Each option also has
+some example cases that can show a simple preview of how each option should be filled for different cases.  
+Each recovery option and their parts are written from scratch and all those parts down to the basic cryptography used (such as SHA,
+ECC,...) are specialized for maximum efficiency.
 
 Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) this tool 
 can run on all operating systems.  
@@ -15,7 +17,7 @@ FinderOuter is still in beta and under development. New features are slowly adde
 Contribution is always welcome. Please report any bugs you find or any improvement suggestions you have by creating a new 
 [issue](https://github.com/Coding-Enthusiast/FinderOuter/issues/new/choose).
 
-## How to use and preview
+## Preview
 1. Select an option from this list depending on what you want to recover
 2. Read the instructions
 3. Fill in the required information
@@ -60,49 +62,58 @@ exact path of it.
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
 
-## Downloading
-Compiled binaries of each version can be found under [releases](https://github.com/Coding-Enthusiast/FinderOuter/releases)<sup>1</sup>.
-There will only be self-contained<sup>2</sup> deployment targetting 64-bit Linux operating systems. 
-There are two main reasons for this decision:  
-1. SCD releases are bigger in size and targetting one OS can slightly decrease the size.
-2. Since many features of this tool deal with sensitive information such as private keys, mnemonics,... that need to be 
-kept secure, we strongly recommend that a Live linux is used with its network disabled.  
+## How to use The FinderOuter
+#### Step 1: Preparation
+Since this project deals with _sensative information_ such as private keys, mnemonics, etc. the safest approach is to run it 
+on a clean and [air-gapped](https://en.wikipedia.org/wiki/Air_gap_(networking)) computer. Easiest way of acheiving that is using
+a live Linux:  
+1. Download [Ubuntu](https://ubuntu.com/download/desktop) or any other Linux OS (all FinderOuter releases are tested on 64-bit
+Ubuntu 20.04 before being published)
+2. Verify Ubuntu's iso ([link](https://ubuntu.com/tutorials/tutorial-how-to-verify-ubuntu#1-overview))
+3. Disconnect network cable (to remain offline)
+4. Burn that ISO on a DVD or could be a USB disk 
+([link](https://ubuntu.com/tutorials/try-ubuntu-before-you-install#1-getting-started))
+5. Take the steps in next section (Download and build)
+6. After you are done, shut down Ubuntu and remove the medium used in step 4
 
-However if you want to run this on another platform, you still can 
-[compile the source code yourself](https://github.com/Coding-Enthusiast/FinderOuter#build-from-source-code).
-
-<sup>1</sup> There are 3 files found in "releases" page, the bigger file on top is the compiled version and the other two named
-`Source code.zip` and `Source code.tar.gz` are the project's source code that GitHub automatically adds. There is no need to
-download the last two files if you are looking for compiled version.  
-<sup>2</sup> There is no need to download/install anything (such as .Net), everything is already included.
-
-## Build from source code
+#### Step 2: Download and build
+If you have [Visual Studio](https://visualstudio.microsoft.com/downloads/) you can clone this repository and build the included
+[solution file](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter.sln).  
+Building is also possible through these steps: 
 1. Get Git: https://git-scm.com/downloads
 2. Get .NET Core 3.1 SDK: https://www.microsoft.com/net/download (see `TargetFramework` 
-[here](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj))
+[here](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj), we tend to always 
+use the latest .Net version)
 3. clone FinderOuter `git clone https://github.com/Coding-Enthusiast/FinderOuter.git`
-4. Build using `dotnet build`
+4. Build using `dotnet build`  
 
-## Running the FinderOuter
-If the already compiled [SCD](https://docs.microsoft.com/en-us/dotnet/core/deploying/) release provided here is used, there
-is no need to download anything else since the framework is included.  
+**Notes:**  
+- Remember to build the project using `release` [configuration](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build)
+to benefit from compiler optimizations.  
+- .Net applications could be compiled as [self contained](https://docs.microsoft.com/en-us/dotnet/core/deploying/) which will 
+increase the size of the binray by including the required framework in it. That helps running the application on any system 
+(like the live Linux explained above) without needing to install .Net separately. The size can be reduced by selecting the
+`Trim unused assemblies` option.  
+- This project can be built on and executed from any operating system  
+
+If for any reason you can't or don't want to build the project yourself, we provide compiled binaries under 
+[releases](https://github.com/Coding-Enthusiast/FinderOuter/releases). These are each version compiled as a self-contained 
+application but *only for for 64-bit Linux operating system* because we want to encourage security as explained in Preparation
+section.  
+There are 3 files found in "releases" page, the bigger file on top is the compiled version and the other two named
+`Source code.zip` and `Source code.tar.gz` are the project's source code that GitHub automatically adds. There is no need to
+download the last two files if you are looking for compiled version, however they could be useful if you are trying to build the
+same version at the given commit.  
+
+#### Step 3: Run
+If you have compiled FinderOuter as SCD or downloaded the provided binaries there is no need to download .Net Core, otherwise it
+has to be downloaded and installed on the system that needs to run FinderOuter.  
+FinderOuter can be run by using `dotnet FinderOuter.dll` in console on any operating system (Windows, Mac and Linux) or by running
+the `FinderOuter.exe` on Windows.  
+Linux may require providing persmissions first
+([more info](https://stackoverflow.com/questions/46843863/how-to-run-net-core-console-app-on-linux)):  
 1. Provide execute permissions `chmod 777 ./FinderOuter`
 2. Execute application `./FinderOuter`
-[more info](https://stackoverflow.com/questions/46843863/how-to-run-net-core-console-app-on-linux)  
-
-If the source is compiled, then the `FinderOuter.exe` file on Windows or `FinderOuter.dll` on any other platform can be used 
-(`dotnet FinderOuter.dll` in command line) to run FinderOuter.  
-**Important:** Make sure [released build](https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2019) is used (instead of debug) for optimization.  
-
-**Note:** Since this project deals with _sensative information_ such as private keys and mnemonics, the safest approach is to run it 
-on an air-gapped computer. Example: 
-1. Download FinderOuter release or source and build it yourself (deterministic builds and PGP signature will be added in near future)
-2. Download [Ubuntu](https://ubuntu.com/download/desktop)
-3. Verify Ubuntu's iso ([link](https://ubuntu.com/tutorials/tutorial-how-to-verify-ubuntu#1-overview))
-4. Disconnect network cable (to remain offline)
-5. Boot from a DVD or USB ([link](https://ubuntu.com/tutorials/try-ubuntu-before-you-install#1-getting-started))
-6. Run FinderOuter
-7. Shut down Ubuntu and remove the medium used in step 5
 
 ## Contributing
 Please check out [conventions](https://github.com/Autarkysoft/Conventions) for information about coding styles, 
