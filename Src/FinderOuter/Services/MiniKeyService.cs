@@ -50,30 +50,71 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
-        private unsafe void Loop23()
+        private unsafe void SetResultParallel(byte* keyBytes, int len)
         {
-            // The actual data that is changing is 22 bytes (22 char long mini key) with a fixed starting character ('S')
-            // plus an additional byte added to the end (char('?')=0x3f) during checking loop.
-            // Checksum is replaced by checking if first byte of hash result is zero.
-            // The actual key itself is the hash of the same 22 bytes (without '?') using a single SHA256
-            // Note characters are decoded using UTF-8
-
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
-            using Sha256Fo sha = new Sha256Fo();
-
-            byte* tmp = stackalloc byte[precomputed.Length];
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (byte* pre = &precomputed[0])
-            fixed (int* mi = &missingIndexes[0])
+            // This method is called once and after it is called the execution stops so GUI update is not a problem.
+            char[] temp = new char[len];
+            for (int i = 0; i < len; i++)
             {
-                foreach (var item in cartesian)
+                temp[i] = (char)keyBytes[i];
+            }
+            Encoding.UTF8.GetString(keyBytes, len);
+            report.AddMessageSafe($"Found the correct key: {Encoding.UTF8.GetString(keyBytes, len)}");
+            report.FoundAnyResult = true;
+        }
+
+        private unsafe bool MoveNext(int* items, int len)
+        {
+            for (int i = len - 1; i >= 0; --i)
+            {
+                items[i] += 1;
+
+                if (items[i] == 58)
                 {
-                    Buffer.MemoryCopy(pre, tmp, 22, 22);
-                    int mis = 0;
-                    foreach (var keyItem in item)
+                    items[i] = 0;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        private unsafe void Loop23(int firstItem, int misStart, ParallelLoopState loopState)
+        {
+            using Sha256Fo sha = new Sha256Fo();
+            byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
+            int[] missingItems = new int[missCount - misStart];
+            int firstIndex = missingIndexes[0];
+
+            // tmp has 2 equal parts, first part is the byte[] value that keeps changing and
+            // second part is the precomputed value that is supposed to be copied each round.
+            byte* tmp = stackalloc byte[2 * precomputed.Length];
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
+            fixed (int* miPt = &missingIndexes[misStart], itemsPt = &missingItems[0])
+            {
+                Buffer.MemoryCopy(pre, tmp, 44, 22);
+                Buffer.MemoryCopy(pre, tmp + 22, 44, 22);
+                tmp[firstIndex] = allPt[firstItem];
+                tmp[firstIndex + 22] = allPt[firstItem];
+
+                do
+                {
+                    if (loopState.IsStopped)
                     {
-                        tmp[mi[mis]] = keyItem;
-                        mis++;
+                        return;
+                    }
+
+                    Buffer.MemoryCopy(tmp + 22, tmp, 22, 22);
+                    int i = 0;
+                    foreach (var keyItem in missingItems)
+                    {
+                        tmp[miPt[i]] = allPt[keyItem];
+                        i++;
                     }
 
                     // The added value below is the fixed first char(S)=0x53 shifted left 24 places
@@ -103,8 +144,81 @@ namespace FinderOuter.Services
 
                         if (comparer.Compare(sha.GetBytes(hPt)))
                         {
-                            SetResult(item);
-                            break;
+                            SetResultParallel(tmp, 22);
+                            loopState.Stop();
+                            return;
+                        }
+                    }
+                } while (MoveNext(itemsPt, missingItems.Length));
+            }
+
+            report.IncrementProgress();
+        }
+        private unsafe void Loop23()
+        {
+            // The actual data that is changing is 22 bytes (22 char long mini key) with a fixed starting character ('S')
+            // plus an additional byte added to the end (char('?')=0x3f) during checking loop.
+            // Checksum is replaced by checking if first byte of hash result is zero.
+            // The actual key itself is the hash of the same 22 bytes (without '?') using a single SHA256
+            // Note characters are decoded using UTF-8
+            if (missCount >= 4)
+            {
+                // 4 missing chars is 11,316,496 cases and due to EC mult it takes longer to run
+                // which makes it the optimal number for using parallelization
+                report.SetProgressStep(58);
+                report.AddMessageSafe("Running in parallel.");
+                Parallel.For(0, 58, (firstItem, state) => Loop23(firstItem, 1, state));
+            }
+            else
+            {
+                IEnumerable<IEnumerable<byte>> cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
+                using Sha256Fo sha = new Sha256Fo();
+
+                byte* tmp = stackalloc byte[precomputed.Length];
+                fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+                fixed (byte* pre = &precomputed[0])
+                fixed (int* mi = &missingIndexes[0])
+                {
+                    foreach (IEnumerable<byte> item in cartesian)
+                    {
+                        Buffer.MemoryCopy(pre, tmp, 22, 22);
+                        int mis = 0;
+                        foreach (byte keyItem in item)
+                        {
+                            tmp[mi[mis]] = keyItem;
+                            mis++;
+                        }
+
+                        // The added value below is the fixed first char(S)=0x53 shifted left 24 places
+                        wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
+                        wPt[1] = (uint)tmp[4] << 24 | (uint)tmp[5] << 16 | (uint)tmp[6] << 8 | tmp[7];
+                        wPt[2] = (uint)tmp[8] << 24 | (uint)tmp[9] << 16 | (uint)tmp[10] << 8 | tmp[11];
+                        wPt[3] = (uint)tmp[12] << 24 | (uint)tmp[13] << 16 | (uint)tmp[14] << 8 | tmp[15];
+                        wPt[4] = (uint)tmp[16] << 24 | (uint)tmp[17] << 16 | (uint)tmp[18] << 8 | tmp[19];
+                        // The added value below is the SHA padding and the last added ? char equal to 0x3f shifted right 8 places
+                        wPt[5] = (uint)tmp[20] << 24 | (uint)tmp[21] << 16 | 0b00000000_00000000_00111111_10000000U;
+                        // from 6 to 14 = 0
+                        wPt[15] = 184; // 23 *8 = 184
+
+                        sha.Init(hPt);
+                        sha.Compress23(hPt, wPt);
+
+                        if ((hPt[0] & 0b11111111_00000000_00000000_00000000U) == 0)
+                        {
+                            // The actual key is SHA256 of 22 char key (without '?')
+                            // SHA working vector is already set, only the last 2 bytes ('?' and pad) and the length have to change
+                            wPt[5] ^= 0b00000000_00000000_10111111_10000000U;
+                            // from 6 to 14 (remain) = 0
+                            wPt[15] = 176; // 22 *8 = 176
+
+                            sha.Init(hPt);
+                            sha.Compress22(hPt, wPt);
+
+                            if (comparer.Compare(sha.GetBytes(hPt)))
+                            {
+                                SetResult(item);
+                                break;
+                            }
                         }
                     }
                 }
