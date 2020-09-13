@@ -83,19 +83,24 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe void Loop23(int firstItem, int misStart, ParallelLoopState loopState)
+        private unsafe void Loop23(int firstItem, ParallelLoopState loopState)
         {
+            // There are 2 steps here:
+            // First to compute hash of the mini-key + an extra byte (char('?')=0x3f) and accept those that have a hash[0] == 0
+            // Second to compute hash of the mini-key (without ?) to use as the private key
+            // The mini-key here is 22 bytes. All hashes are single SHA256.
+            // All characters are decoded using UTF-8
             using Sha256Fo sha = new Sha256Fo();
             byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-            int[] missingItems = new int[missCount - misStart];
+            int[] missingItems = new int[missCount - 1];
             int firstIndex = missingIndexes[0];
 
             // tmp has 2 equal parts, first part is the byte[] value that keeps changing and
             // second part is the precomputed value that is supposed to be copied each round.
-            byte* tmp = stackalloc byte[2 * precomputed.Length];
+            byte* tmp = stackalloc byte[44];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-            fixed (int* miPt = &missingIndexes[misStart], itemsPt = &missingItems[0])
+            fixed (int* miPt = &missingIndexes[1], itemsPt = &missingItems[0])
             {
                 Buffer.MemoryCopy(pre, tmp, 44, 22);
                 Buffer.MemoryCopy(pre, tmp + 22, 44, 22);
@@ -117,7 +122,7 @@ namespace FinderOuter.Services
                         i++;
                     }
 
-                    // The added value below is the fixed first char(S)=0x53 shifted left 24 places
+                    // The added value below is the fixed first char('S')=0x53 shifted left 24 places
                     wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
                     wPt[1] = (uint)tmp[4] << 24 | (uint)tmp[5] << 16 | (uint)tmp[6] << 8 | tmp[7];
                     wPt[2] = (uint)tmp[8] << 24 | (uint)tmp[9] << 16 | (uint)tmp[10] << 8 | tmp[11];
@@ -156,37 +161,33 @@ namespace FinderOuter.Services
         }
         private unsafe void Loop23()
         {
-            // The actual data that is changing is 22 bytes (22 char long mini key) with a fixed starting character ('S')
-            // plus an additional byte added to the end (char('?')=0x3f) during checking loop.
-            // Checksum is replaced by checking if first byte of hash result is zero.
-            // The actual key itself is the hash of the same 22 bytes (without '?') using a single SHA256
-            // Note characters are decoded using UTF-8
             if (missCount >= 4)
             {
                 // 4 missing chars is 11,316,496 cases and due to EC mult it takes longer to run
                 // which makes it the optimal number for using parallelization
                 report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
-                Parallel.For(0, 58, (firstItem, state) => Loop23(firstItem, 1, state));
+                Parallel.For(0, 58, (firstItem, state) => Loop23(firstItem, state));
             }
             else
             {
-                IEnumerable<IEnumerable<byte>> cartesian = CartesianProduct.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars), missCount));
                 using Sha256Fo sha = new Sha256Fo();
+                byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
+                int[] missingItems = new int[missCount];
 
-                byte* tmp = stackalloc byte[precomputed.Length];
+                byte* tmp = stackalloc byte[22];
                 fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-                fixed (byte* pre = &precomputed[0])
-                fixed (int* mi = &missingIndexes[0])
+                fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
+                fixed (int* miPt = &missingIndexes[0], itemsPt = &missingItems[0])
                 {
-                    foreach (IEnumerable<byte> item in cartesian)
+                    do
                     {
                         Buffer.MemoryCopy(pre, tmp, 22, 22);
-                        int mis = 0;
-                        foreach (byte keyItem in item)
+                        int i = 0;
+                        foreach (int keyItem in missingItems)
                         {
-                            tmp[mi[mis]] = keyItem;
-                            mis++;
+                            tmp[miPt[i]] = allPt[keyItem];
+                            i++;
                         }
 
                         // The added value below is the fixed first char(S)=0x53 shifted left 24 places
@@ -216,11 +217,11 @@ namespace FinderOuter.Services
 
                             if (comparer.Compare(sha.GetBytes(hPt)))
                             {
-                                SetResult(item);
+                                SetResultParallel(tmp, 22);
                                 break;
                             }
                         }
-                    }
+                    } while (MoveNext(itemsPt, missingItems.Length));
                 }
             }
         }
@@ -379,8 +380,10 @@ namespace FinderOuter.Services
                 keyToCheck = key;
                 missingIndexes = new int[missCount];
 
-                report.AddMessageSafe($"Total number of minikeys to test: {GetTotalCount(missCount):n0}");
-                report.AddMessageSafe("Going throgh each case. Please wait...");
+                report.AddMessageSafe($"Key with length = {key.Length} and {missCount} missing characters was found." +
+                                      $"{Environment.NewLine}" +
+                                      $"Total number of minikeys to test: {GetTotalCount(missCount):n0}{Environment.NewLine}" +
+                                      $"Going throgh each case. Please wait...");
                 Stopwatch watch = Stopwatch.StartNew();
 
                 if (key.Length == ConstantsFO.MiniKeyLen1)
