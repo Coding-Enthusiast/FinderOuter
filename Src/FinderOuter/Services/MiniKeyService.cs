@@ -376,7 +376,7 @@ namespace FinderOuter.Services
                         i++;
                     }
 
-                    if (Loop27Hash(sha, wPt, hPt, tmp, comparer))
+                    if (Loop31Hash(sha, wPt, hPt, tmp, comparer))
                     {
                         SetResultParallel(tmp, 30);
                         loopState.Stop();
