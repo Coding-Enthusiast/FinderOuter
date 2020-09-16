@@ -145,7 +145,7 @@ namespace FinderOuter.ViewModels
 
         public void Example()
         {
-            int total = 4;
+            int total = 5;
 
             switch (exampleIndex)
             {
@@ -159,6 +159,7 @@ namespace FinderOuter.ViewModels
                     SelectedInputType = InputTypeList.First();
                     KeyPath = "m/44'/0'/0'/0/";
                     KeyIndex = 0;
+                    IsHardenedKey = false;
 
                     Result.Message = $"This is example 1 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
                                      $"It is missing one word (grace) and it should take ~1 second to find it." +
@@ -178,6 +179,7 @@ namespace FinderOuter.ViewModels
                     SelectedInputType = InputTypeList.First();
                     KeyPath = "m/84'/0'/0'/0";
                     KeyIndex = 4;
+                    IsHardenedKey = false;
 
                     Result.Message = $"This is example 2 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
                                      $"It is missing two word (drill, cruise) and it should take ~1 hour to find them." +
@@ -197,9 +199,10 @@ namespace FinderOuter.ViewModels
                     PassPhrase = "";
                     MissingChar = '*';
                     AdditionalInfo = "L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs";
-                    SelectedInputType = InputTypeList.ToArray()[5];
+                    SelectedInputType = InputTypeList.ElementAt(5);
                     KeyPath = "m/0/";
                     KeyIndex = 2;
+                    IsHardenedKey = false;
 
                     Result.Message = $"This is example 3 out of {total} with a random mnemonic.{Environment.NewLine}" +
                                      $"It is missing one word (lézard) and it should take ~1 second to find it." +
@@ -217,9 +220,10 @@ namespace FinderOuter.ViewModels
                     PassPhrase = "";
                     MissingChar = '*';
                     AdditionalInfo = "32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z";
-                    SelectedInputType = InputTypeList.ToArray()[3];
+                    SelectedInputType = InputTypeList.ElementAt(3);
                     KeyPath = "m/0/";
                     KeyIndex = 2;
+                    IsHardenedKey = false;
 
                     Result.Message = $"This is example 4 out of {total} with a random mnemonic.{Environment.NewLine}" +
                                      $"It is missing one word (lézard) and it should take ~1 second to find it." +
@@ -229,6 +233,28 @@ namespace FinderOuter.ViewModels
         $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd: L1ac6reGcRagt1oSRUwPJzY6mNMBHAzbB8sfz6LJ8fCBwxzXD6v2{Environment.NewLine}" +
         $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
         $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
+                    break;
+                case 4:
+                    Mnemonic = "duck firm october practice soccer * result regret unveil * uncle ginger";
+                    SelectedWordListType = BIP0039.WordLists.English;
+                    SelectedMnemonicType = MnemonicTypes.BIP39;
+                    PassPhrase = "";
+                    MissingChar = '*';
+                    AdditionalInfo = "L5fdNeFhX5Kgqnmbn6urPVt77eUocpbCF9f2ScEMu2HZwiFL3Viw";
+                    SelectedInputType = InputTypeList.ElementAt(5);
+                    KeyPath = "m/0'/";
+                    KeyIndex = 0;
+                    IsHardenedKey = true;
+
+                    Result.Message = $"This is example 5 out of {total} with a random mnemonic.{Environment.NewLine}" +
+                                     $"It is missing 2 words (coast, slow) so it runs in parallel." +
+                                     $"{Environment.NewLine}" +
+                                     $"The interesting thing about this example is the usage of all hardened indexes " +
+                                     $"and a child private key as the extra input. Since there is no ECC involved the " +
+                                     $"loop runs at maximum speed utilizing the entire CPU power avoiding issue #9. " +
+                                     $"It should take about a minute to check the entire 4,194,304 mnemonics." +
+                                     $"{Environment.NewLine}" +
+                                     $"Notice the usage of progress bar only in parallel.";
                     break;
 
                 default:
