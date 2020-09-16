@@ -99,6 +99,7 @@ namespace FinderOuter.ViewModels
                     Input = "SzavMBLoXU6kDr*tUV*ffv";
                     MissingChar = '*';
                     ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
+                    SelectedExtraInputType = ExtraInputTypeList.First();
 
                     Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
                                      $"It is missing 2 characters (q, m) and it should take <1 second to find the correct key.";
@@ -107,6 +108,7 @@ namespace FinderOuter.ViewModels
                     Input = "SzavMBLoXU6kDrqtUVmf--";
                     MissingChar = '-';
                     ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
+                    SelectedExtraInputType = ExtraInputTypeList.First();
 
                     Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
                                      $"It is missing 2 characters (f, v) and it should take <1 second to find the correct key." +
@@ -116,6 +118,7 @@ namespace FinderOuter.ViewModels
                     Input = "S6c56bnXQiB*k9mqS*E7ykVQ7Nzr*y";
                     MissingChar = '*';
                     ExtraInput = "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW";
+                    SelectedExtraInputType = ExtraInputTypeList.ElementAt(1);
 
                     Result.Message = $"This is example 3 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
                                      $"It is missing 3 characters (j, Y, R) and it should take <30 seconds to find the " +
