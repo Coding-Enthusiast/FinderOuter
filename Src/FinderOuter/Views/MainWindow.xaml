@@ -3,6 +3,7 @@
         xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
         mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000"
         Height="700" Width="1010"
         x:Class="FinderOuter.Views.MainWindow"
@@ -12,6 +13,10 @@
   <Design.DataContext>
     <vm:MainWindowViewModel/>
   </Design.DataContext>
+
+  <Window.Resources>
+    <mvvm:StateToBitmapConverter x:Key="imgConv"/>
+  </Window.Resources>
 
   <Grid ColumnDefinitions="200,*" RowDefinitions="auto,*,30">
 
@@ -59,8 +64,12 @@
                Margin="3" Grid.Row="3"/>
     </Grid>
 
-    <TextBlock Text="{Binding SelectedOption.Result.CurrentState}"
-               Margin="3" Grid.Column="0" Grid.Row="2"/>
+    <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="2">
+      <Image Source="{Binding SelectedOption.Result.CurrentState, Converter={StaticResource imgConv}, Mode=OneWay}"
+             Margin="3"/>
+      <TextBlock Text="{Binding SelectedOption.Result.CurrentState}" Margin="3"/>
+    </StackPanel>
+
     <ProgressBar IsVisible="{Binding SelectedOption.Result.IsProgressVisible}"
                  Value="{Binding SelectedOption.Result.Progress}"
                  Grid.Column="1" Grid.Row="2"/>
