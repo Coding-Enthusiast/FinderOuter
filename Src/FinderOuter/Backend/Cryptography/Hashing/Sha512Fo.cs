@@ -142,6 +142,43 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
+        /// <summary>
+        /// Sets initial HashState values to the result of computing SHA512("Seed version" ^ 0x36) used in
+        /// HMACSHA512 in Electrum mnemonic checksum verification.
+        /// </summary>
+        /// <param name="hPt"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Init_InnerPad_SeedVersion(ulong* hPt)
+        {
+            hPt[0] = 0x1197a4930cdcdf99UL;
+            hPt[1] = 0x546bbb7463b748ecUL;
+            hPt[2] = 0x54b710c32be37324UL;
+            hPt[3] = 0xb1c66f4992fba20bUL;
+            hPt[4] = 0x2636810bfe5bb0acUL;
+            hPt[5] = 0xa303a6e0e2f532b7UL;
+            hPt[6] = 0x6f8de49628412246UL;
+            hPt[7] = 0x12a1440d199e4378UL;
+        }
+
+        /// <summary>
+        /// Sets initial HashState values to the result of computing SHA512("Seed version" ^ 0x5c) used in
+        /// HMACSHA512 in Electrum mnemonic checksum verification.
+        /// </summary>
+        /// <param name="hPt"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Init_OuterPad_SeedVersion(ulong* hPt)
+        {
+            hPt[0] = 0x81dbfcd8ccef4fd9UL;
+            hPt[1] = 0xe6d72480c338f2f2UL;
+            hPt[2] = 0x83986704cc866344UL;
+            hPt[3] = 0x3c6605131ca79477UL;
+            hPt[4] = 0xb9dceafa29032584UL;
+            hPt[5] = 0xded96c7785b367d5UL;
+            hPt[6] = 0x393a2aff50ec45ebUL;
+            hPt[7] = 0x2e7b225f70227970UL;
+        }
+
+
         public unsafe byte[] GetBytes()
         {
             fixed (ulong* hPt = &hashState[0])
