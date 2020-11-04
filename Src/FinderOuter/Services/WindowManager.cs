@@ -25,7 +25,6 @@ namespace FinderOuter.Services
                 Content = vm,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 CanResize = false,
-                ShowInTaskbar = false,
                 Width = vm.Width,
                 Height = vm.Height,
                 Title = vm.GetType().Name.Replace("ViewModel", ""),
