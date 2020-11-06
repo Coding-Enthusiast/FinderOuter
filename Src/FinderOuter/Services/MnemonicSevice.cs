@@ -13,6 +13,7 @@ using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.Intrinsics;
@@ -1205,6 +1206,175 @@ namespace FinderOuter.Services
 
 
 
+        private unsafe void LoopElectrum(int firstItem, int firstIndex, ulong mask, ulong expected, ParallelLoopState loopState)
+        {
+            var missingItems = new uint[missCount - 1];
+            var localComp = comparer.Clone();
+
+            byte[] localMnBytes = new byte[mnBytes.Length];
+
+            var localCopy = new byte[allWordsBytes.Length][];
+            Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
+
+            uint[] localWIndex = new uint[wordIndexes.Length];
+            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+
+
+            using Sha512Fo sha512 = new Sha512Fo();
+
+            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            fixed (uint* wrd = &localWIndex[0], itemsPt = &missingItems[0])
+            fixed (int* mi = &missingIndexes[1])
+            fixed (ulong* hPt = &sha512.hashState[0], wPt = &sha512.w[0])
+            fixed (byte* mnPt = &localMnBytes[0])
+            {
+                wrd[firstIndex] = (uint)firstItem;
+
+                do
+                {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+
+                    int j = 0;
+                    foreach (var item in missingItems)
+                    {
+                        wrd[mi[j]] = item;
+                        j++;
+                    }
+
+                    int mnLen = 0;
+                    for (int i = 0; i < 12; i++)
+                    {
+                        var temp = localCopy[wrd[i]];
+                        Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                        mnLen += temp.Length;
+                    }
+
+                    // Remove last space
+                    mnLen--;
+
+                    // Compute HMACSHA512("Seed version", normalized_mnemonic)
+                    // 1. Compute SHA512(inner_pad | data)
+                    sha512.Init_InnerPad_SeedVersion(hPt);
+                    sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
+
+                    // 2. Compute SHA512(outer_pad | hash)
+                    *(Block64*)wPt = *(Block64*)hPt;
+                    wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
+                    sha512.Init_OuterPad_SeedVersion(hPt);
+                    sha512.Compress192SecondBlock(hPt, wPt);
+
+                    if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, localComp))
+                    {
+                        SetResultParallel(mnPt, mnLen);
+                        loopState.Stop();
+                        break;
+                    } 
+                } while (MoveNext(itemsPt, missingItems.Length));
+            }
+
+            report.IncrementProgress();
+        }
+
+        private unsafe void LoopElectrum(ElectrumMnemonic.MnemonicType mnType)
+        {
+            ulong mask = mnType switch
+            {
+                ElectrumMnemonic.MnemonicType.Standard => 0xff000000_00000000,
+                ElectrumMnemonic.MnemonicType.Undefined => 0,
+                ElectrumMnemonic.MnemonicType.SegWit => 0xfff00000_00000000,
+                ElectrumMnemonic.MnemonicType.Legacy2Fa => 0xfff00000_00000000,
+                ElectrumMnemonic.MnemonicType.SegWit2Fa => 0xfff00000_00000000,
+                _ => 0
+            };
+
+            ulong expected = mnType switch
+            {
+                ElectrumMnemonic.MnemonicType.Standard => 0x01000000_00000000,
+                ElectrumMnemonic.MnemonicType.Undefined => 0,
+                ElectrumMnemonic.MnemonicType.SegWit => 0x10000000_00000000,
+                ElectrumMnemonic.MnemonicType.Legacy2Fa => 0x10100000_00000000,
+                ElectrumMnemonic.MnemonicType.SegWit2Fa => 0x10200000_00000000,
+                _ => 0
+            };
+
+            if (mask == 0 || expected == 0)
+            {
+                report.AddMessageSafe("Invalid Electrum mnemonic type.");
+                return;
+            }
+
+            if (missCount > 1)
+            {
+                report.AddMessageSafe("Running in parallel.");
+                report.SetProgressStep(2048);
+                int firstIndex = missingIndexes[0];
+                Parallel.For(0, 2048, (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
+            }
+            else
+            {
+                using Sha512Fo sha512 = new Sha512Fo();
+
+                int misIndex = missingIndexes[0];
+                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                fixed (uint* wrd = &wordIndexes[0])
+                fixed (ulong* hPt = &sha512.hashState[0], wPt = &sha512.w[0])
+                fixed (byte* mnPt = &mnBytes[0])
+                {
+                    for (uint item = 0; item < 2048; item++)
+                    {
+                        wrd[misIndex] = item;
+
+                        int mnLen = 0;
+                        for (int i = 0; i < 12; i++)
+                        {
+                            var temp = allWordsBytes[wrd[i]];
+                            Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                            mnLen += temp.Length;
+                        }
+
+                        // Remove last space
+                        mnLen--;
+
+                        // Compute HMACSHA512("Seed version", normalized_mnemonic)
+                        // 1. Compute SHA512(inner_pad | data)
+                        sha512.Init_InnerPad_SeedVersion(hPt);
+                        sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
+
+                        // 2. Compute SHA512(outer_pad | hash)
+                        *(Block64*)wPt = *(Block64*)hPt;
+                        wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
+                        sha512.Init_OuterPad_SeedVersion(hPt);
+                        sha512.Compress192SecondBlock(hPt, wPt);
+
+                        if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, comparer))
+                        {
+                            SetResultParallel(mnPt, mnLen);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+
+
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
 
         private bool TrySetEntropy(string mnemonic, MnemonicTypes mnType)
@@ -1292,15 +1462,99 @@ namespace FinderOuter.Services
             pbkdf2Salt[^1] = 1;
         }
 
+        // TODO: replace the following methods and property with the public ElectrumMnemonic method in next Bitcoin.Net version
+        private readonly int[][] CJK_INTERVALS = new int[][]
+        {
+            new int[] { 0x4E00, 0x9FFF }, // CJK Unified Ideographs
+            new int[] { 0x3400, 0x4DBF }, // CJK Unified Ideographs Extension A
+            new int[] { 0x20000, 0x2A6DF }, // CJK Unified Ideographs Extension B
+            new int[] { 0x2A700, 0x2B73F }, // CJK Unified Ideographs Extension C
+            new int[] { 0x2B740, 0x2B81F }, // CJK Unified Ideographs Extension D
+            new int[] { 0xF900, 0xFAFF }, // CJK Compatibility Ideographs
+            new int[] { 0x2F800, 0x2FA1D }, // CJK Compatibility Ideographs Supplement
+            new int[] { 0x3190, 0x319F }, // Kanbun
+            new int[] { 0x2E80, 0x2EFF }, // CJK Radicals Supplement
+            new int[] { 0x2F00, 0x2FDF }, // CJK Radicals
+            new int[] { 0x31C0, 0x31EF }, // CJK Strokes
+            new int[] { 0x2FF0, 0x2FFF }, // Ideographic Description Characters
+            new int[] { 0xE0100, 0xE01EF }, // Variation Selectors Supplement
+            new int[] { 0x3100, 0x312F }, // Bopomofo
+            new int[] { 0x31A0, 0x31BF }, // Bopomofo Extended
+            new int[] { 0xFF00, 0xFFEF }, // Halfwidth and Fullwidth Forms
+            new int[] { 0x3040, 0x309F }, // Hiragana
+            new int[] { 0x30A0, 0x30FF }, // Katakana
+            new int[] { 0x31F0, 0x31FF }, // Katakana Phonetic Extensions
+            new int[] { 0x1B000, 0x1B0FF }, // Kana Supplement
+            new int[] { 0xAC00, 0xD7AF }, // Hangul Syllables
+            new int[] { 0x1100, 0x11FF }, // Hangul Jamo
+            new int[] { 0xA960, 0xA97F }, // Hangul Jamo Extended A
+            new int[] { 0xD7B0, 0xD7FF }, // Hangul Jamo Extended B
+            new int[] { 0x3130, 0x318F }, // Hangul Compatibility Jamo
+            new int[] { 0xA4D0, 0xA4FF }, // Lisu
+            new int[] { 0x16F00, 0x16F9F }, // Miao
+            new int[] { 0xA000, 0xA48F }, // Yi Syllables
+            new int[] { 0xA490, 0xA4CF }, // Yi Radicals
+        };
+
+        private bool IsCJK(char c)
+        {
+            int val = c;
+            foreach (var item in CJK_INTERVALS)
+            {
+                if (val >= item[0] && val <= item[1])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private string RemoveDiacritics(string text)
+        {
+            return new string(
+                text.Normalize(System.Text.NormalizationForm.FormD)
+                    .ToCharArray()
+                    .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                    .ToArray());
+        }
+        private string Normalize(string text)
+        {
+            if (text is null)
+            {
+                return string.Empty;
+            }
+
+            string norm = RemoveDiacritics(text.Normalize(NormalizationForm.FormKD).ToLower());
+            norm = string.Join(' ', norm.Split(" ", StringSplitOptions.RemoveEmptyEntries));
+            // Remove whitespaces between CJK
+            var temp = new StringBuilder();
+            for (int i = 0; i < norm.Length; i++)
+            {
+                if (!(char.IsWhiteSpace(norm[i]) && IsCJK(norm[i - 1]) && IsCJK(norm[i + 1])))
+                {
+                    temp.Append(norm[i]);
+                }
+            }
+            return temp.ToString();
+        }
+
+        public void SetPbkdf2SaltElectrum(string pass)
+        {
+            byte[] salt = Encoding.UTF8.GetBytes($"electrum{Normalize(pass)}");
+            pbkdf2Salt = new byte[salt.Length + 4];
+            Buffer.BlockCopy(salt, 0, pbkdf2Salt, 0, salt.Length);
+            pbkdf2Salt[^1] = 1;
+        }
+
 
         public async void FindMissing(string mnemonic, char missChar, string pass, string extra, InputType extraType,
-                                            string path, uint index, bool hardened, MnemonicTypes mnType, BIP0039.WordLists wl)
+                                            string path, uint index, bool hardened, MnemonicTypes mnType, BIP0039.WordLists wl,
+                                            ElectrumMnemonic.MnemonicType elecMnType)
         {
             report.Init();
 
             // TODO: implement Electrum seeds too
-            if (mnType != MnemonicTypes.BIP39)
-                report.Fail("Only BIP-39 seeds are supported for now.");
+            if (mnType == MnemonicTypes.Electrum && wl != BIP0039.WordLists.English)
+                report.Fail("Only English words are currently supported for Electrum mnemonics.");
             else if (!TrySetWordList(wl, out allWords, out int maxWordLen))
                 report.Fail($"Could not find {wl} word list among resources.");
             else if (!inputService.IsMissingCharValid(missChar))
@@ -1320,7 +1574,6 @@ namespace FinderOuter.Services
                     allWordsBytes[i] = Encoding.UTF8.GetBytes($"{allWords[i]} ");
                 }
 
-                SetPbkdf2Salt(pass);
                 try
                 {
                     this.path = new BIP0032Path(path);
@@ -1343,27 +1596,49 @@ namespace FinderOuter.Services
 
                 Stopwatch watch = Stopwatch.StartNew();
 
-                await Task.Run(() =>
+                if (mnType == MnemonicTypes.BIP39)
                 {
-                    switch (words.Length)
+                    SetPbkdf2Salt(pass);
+                    await Task.Run(() =>
                     {
-                        case 12:
-                            Loop12();
-                            break;
-                        case 15:
-                            Loop15();
-                            break;
-                        case 18:
-                            Loop18();
-                            break;
-                        case 21:
-                            Loop21();
-                            break;
-                        case 24:
-                            Loop24();
-                            break;
+                        switch (words.Length)
+                        {
+                            case 12:
+                                Loop12();
+                                break;
+                            case 15:
+                                Loop15();
+                                break;
+                            case 18:
+                                Loop18();
+                                break;
+                            case 21:
+                                Loop21();
+                                break;
+                            case 24:
+                                Loop24();
+                                break;
+                        }
+                    });
+                }
+                else if (mnType == MnemonicTypes.Electrum)
+                {
+                    if (elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
+                    {
+                        report.Fail("Undefined mnemonic type.");
+                        watch.Stop();
+                        return;
                     }
-                });
+
+                    SetPbkdf2SaltElectrum(pass);
+                    await Task.Run(() => LoopElectrum(elecMnType));
+                }
+                else
+                {
+                    report.Fail("Undefined mnemonic type.");
+                    watch.Stop();
+                    return;
+                }
 
                 watch.Stop();
 

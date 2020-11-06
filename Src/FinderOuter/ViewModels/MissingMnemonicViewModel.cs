@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using Avalonia.Metadata;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
@@ -19,6 +20,7 @@ namespace FinderOuter.ViewModels
         {
             WordListsList = ListHelper.GetAllEnumValues<BIP0039.WordLists>().ToArray();
             MnemonicTypesList = ListHelper.GetAllEnumValues<MnemonicTypes>().ToArray();
+            ElectrumMnemonicTypesList = ListHelper.GetAllEnumValues<ElectrumMnemonic.MnemonicType>().ToArray();
             InputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
             SelectedInputType = InputTypeList.First();
             MnService = new MnemonicSevice(Result);
@@ -41,6 +43,8 @@ namespace FinderOuter.ViewModels
                 x => x.Result.CurrentState,
                 (state) => state != State.Working && HasExample);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+
+            this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);
         }
 
 
@@ -68,12 +72,27 @@ namespace FinderOuter.ViewModels
         }
 
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
+        public IEnumerable<ElectrumMnemonic.MnemonicType> ElectrumMnemonicTypesList { get; }
 
         private MnemonicTypes _selMnT;
         public MnemonicTypes SelectedMnemonicType
         {
             get => _selMnT;
             set => this.RaiseAndSetIfChanged(ref _selMnT, value);
+        }
+
+        private ElectrumMnemonic.MnemonicType _selElecMnT;
+        public ElectrumMnemonic.MnemonicType SelectedElectrumMnType
+        {
+            get => _selElecMnT;
+            set => this.RaiseAndSetIfChanged(ref _selElecMnT, value);
+        }
+
+        private bool _isElecTVisible;
+        public bool IsElectrumTypesVisible
+        {
+            get => _isElecTVisible;
+            set => this.RaiseAndSetIfChanged(ref _isElecTVisible, value);
         }
 
         public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
@@ -139,7 +158,8 @@ namespace FinderOuter.ViewModels
         {
             MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
                                   KeyPath, KeyIndex, IsHardenedKey,
-                                  SelectedMnemonicType, SelectedWordListType);
+                                  SelectedMnemonicType, SelectedWordListType,
+                                  SelectedElectrumMnType);
         }
 
 

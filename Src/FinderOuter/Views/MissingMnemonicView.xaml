@@ -62,5 +62,9 @@
                Grid.Column="1"/>
       <CheckBox Content="Hardened key" IsChecked="{Binding IsHardenedKey}" Grid.Column="2"/>
     </Grid>
+
+    <ComboBox Items="{Binding ElectrumMnemonicTypesList}" SelectedItem="{Binding SelectedElectrumMnType}"
+              IsVisible="{Binding IsElectrumTypesVisible}" ToolTip.Tip="Electrum mnemonic type"
+              Grid.Column="1" Grid.Row="3"/>
   </Grid>
 </UserControl>
