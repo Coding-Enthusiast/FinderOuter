@@ -22,10 +22,12 @@
     <TextBox Text="{Binding Mnemonic}"
              Watermark="Mnemonic (seed phrase), separate each word with a space and replace missing words with the MissingChar"
              UseFloatingWatermark="True" TextWrapping="Wrap" AcceptsReturn="True"
-             ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="3" Height="70"
+             ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="3" Height="86"
              Grid.Column="0" Grid.Row="0"/>
-    <ComboBox Items="{Binding WordListsList}" SelectedItem="{Binding SelectedWordListType}"
-              Grid.Column="1" Grid.Row="0"/>
+    <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
+      <ComboBox Items="{Binding WordListsList}" SelectedItem="{Binding SelectedWordListType}"/>
+      <ComboBox Items="{Binding MnemonicTypesList}" SelectedItem="{Binding SelectedMnemonicType}"/>
+    </StackPanel>
 
     <Grid ColumnDefinitions="*,*" Grid.Column="0" Grid.Row="1">
       <TextBox Text="{Binding MissingChar}" ToolTip.Tip="{Binding MissingToolTip}"
@@ -37,7 +39,8 @@
                Grid.Column="0"/>
     </Grid>
 
-    <ComboBox Items="{Binding MnemonicTypesList}" SelectedItem="{Binding SelectedMnemonicType}"
+    <ComboBox Items="{Binding ElectrumMnemonicTypesList}" SelectedItem="{Binding SelectedElectrumMnType}"
+              IsVisible="{Binding IsElectrumTypesVisible}" ToolTip.Tip="Electrum mnemonic type"
               Grid.Column="1" Grid.Row="1"/>
 
     <TextBox Text="{Binding AdditionalInfo}"
@@ -63,8 +66,5 @@
       <CheckBox Content="Hardened key" IsChecked="{Binding IsHardenedKey}" Grid.Column="2"/>
     </Grid>
 
-    <ComboBox Items="{Binding ElectrumMnemonicTypesList}" SelectedItem="{Binding SelectedElectrumMnType}"
-              IsVisible="{Binding IsElectrumTypesVisible}" ToolTip.Tip="Electrum mnemonic type"
-              Grid.Column="1" Grid.Row="3"/>
   </Grid>
 </UserControl>
