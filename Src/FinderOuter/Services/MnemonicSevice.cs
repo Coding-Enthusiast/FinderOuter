@@ -1278,7 +1278,7 @@ namespace FinderOuter.Services
                         SetResultParallel(mnPt, mnLen);
                         loopState.Stop();
                         break;
-                    } 
+                    }
                 } while (MoveNext(itemsPt, missingItems.Length));
             }
 
@@ -1543,6 +1543,21 @@ namespace FinderOuter.Services
             pbkdf2Salt = new byte[salt.Length + 4];
             Buffer.BlockCopy(salt, 0, pbkdf2Salt, 0, salt.Length);
             pbkdf2Salt[^1] = 1;
+        }
+
+
+        // https://github.com/spesmilo/electrum/blob/1c07777e135d28fffa157019f90ccdaa002b614e/electrum/keystore.py#L984-L1003
+        public string GetElectrumPath(ElectrumMnemonic.MnemonicType value)
+        {
+            return value switch
+            {
+                ElectrumMnemonic.MnemonicType.Undefined => "m",
+                ElectrumMnemonic.MnemonicType.Standard => "m/0",
+                ElectrumMnemonic.MnemonicType.SegWit => "m/0'/0",
+                ElectrumMnemonic.MnemonicType.Legacy2Fa => "m/1'/0",
+                ElectrumMnemonic.MnemonicType.SegWit2Fa => "m/1'/0",
+                _ => "m",
+            };
         }
 
 

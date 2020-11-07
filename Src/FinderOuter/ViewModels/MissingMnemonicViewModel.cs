@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using Avalonia.Metadata;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
@@ -85,7 +84,11 @@ namespace FinderOuter.ViewModels
         public ElectrumMnemonic.MnemonicType SelectedElectrumMnType
         {
             get => _selElecMnT;
-            set => this.RaiseAndSetIfChanged(ref _selElecMnT, value);
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _selElecMnT, value);
+                KeyPath = MnService.GetElectrumPath(value);
+            }
         }
 
         private bool _isElecTVisible;
