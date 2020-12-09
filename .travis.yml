@@ -1,7 +1,7 @@
 language: csharp
 solution: "./Src/FinderOuter.sln"
 mono: none
-dotnet: 3.1
+dotnet: 5.0
 
 notifications:
   email: false
