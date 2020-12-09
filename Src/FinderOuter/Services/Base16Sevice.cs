@@ -7,8 +7,8 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
-using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -28,9 +28,10 @@ namespace FinderOuter.Services
 
         private readonly IReport report;
         private readonly InputService inputService;
+        private ICompareService comparer;
 
 
-        private unsafe bool LoopComp(string key, int missingCount, char missingChar, byte[] expectedHash)
+        private unsafe void LoopComp(string key, int missingCount, char missingChar)
         {
             int[] missingIndexes = new int[missingCount];
             byte[] ba = new byte[32];
@@ -47,7 +48,7 @@ namespace FinderOuter.Services
                     hi = key[i * 2] - 65;
                     hi = hi + 10 + ((hi >> 31) & 7);
                 }
-                if (key[i * 2 + 1] == '*')
+                if (key[i * 2 + 1] == missingChar)
                 {
                     lo = 0;
                     missingIndexes[j++] = i * 2 + 1;
@@ -67,7 +68,6 @@ namespace FinderOuter.Services
 
             BigInteger smallVal = new BigInteger(ba, true, true);
             EllipticCurvePoint smallPub = calc.MultiplyByG(smallVal);
-            bool foundAny = false;
 
             Parallel.ForEach(cartesian, (item, loopState) =>
             {
@@ -91,14 +91,7 @@ namespace FinderOuter.Services
                 BigInteger tempVal = new BigInteger(temp, true, true);
                 EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
                 EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
-                byte[] toHash = new byte[33];
-                toHash[0] = pub.Y.IsEven ? (byte)2 : (byte)3;
-                byte[] xBytes = pub.X.ToByteArray(true, true);
-                Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
-
-                Hash160 hash = new Hash160();
-                ReadOnlySpan<byte> actual = hash.ComputeHash(toHash);
-                if (actual.SequenceEqual(expectedHash))
+                if (comparer.Compare(pub))
                 {
                     char[] origHex = key.ToCharArray();
                     int index = 0;
@@ -106,17 +99,12 @@ namespace FinderOuter.Services
                     {
                         origHex[missingIndexes[index++]] = GetHex(keyItem);
                     }
-                    report.AddMessageSafe($"Found a key: {new string(origHex)}");
-                    foundAny = true;
-                    loopState.Break();
+                    report.AddMessageSafe($"Found the key: {new string(origHex)}");
+                    report.FoundAnyResult = true;
+                    loopState.Stop();
+                    return;
                 }
             });
-
-            if (!foundAny)
-            {
-                report.AddMessageSafe("Failed to find any key.");
-            }
-            return foundAny;
         }
 
         private char GetHex(int val)
@@ -143,54 +131,47 @@ namespace FinderOuter.Services
             };
         }
 
-        public bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
         public bool IsInputValid(string key, char missingChar)
         {
-            return !string.IsNullOrEmpty(key) && key.All(c => c == missingChar || ConstantsFO.Base16Chars.Contains(char.ToLower(c)));
+            return !string.IsNullOrEmpty(key) &&
+                    key.All(c => c == missingChar || ConstantsFO.Base16Chars.Contains(char.ToLower(c)));
         }
 
-        public async Task<bool> Find(string key, char missingChar, string AdditionalInput, bool isComp)
+        public async void Find(string key, char missingChar, string AdditionalInput, InputType extraType)
         {
             report.Init();
 
-            if (!IsMissingCharValid(missingChar))
-                return report.Fail("Missing character is not valid.");
-            if (!IsInputValid(key, missingChar))
-                return report.Fail("Input contains invalid base-16 character(s).");
-            if (key.Length != 64)
-                return report.Fail("Key length must be 64.");
-            if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
-                return report.Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
-            if (!inputService.IsValidAddress(AdditionalInput, true, out byte[] hash))
-                return report.Fail("Input is not a valid address.");
-            int missingCount = key.Count(c => c == missingChar);
-            if (missingCount == 0)
-                return report.Fail("The given key has no missing characters and it is inside the range defined by secp256k1 curve.");
-
-            BigInteger total = BigInteger.Pow(16, missingCount);
-            report.AddMessage($"There are {total:n0} keys to check.");
-            Stopwatch watch = Stopwatch.StartNew();
-
-            bool success = await Task.Run(() =>
+            if (!inputService.IsMissingCharValid(missingChar))
+                report.Fail("Missing character is not valid.");
+            else if (!IsInputValid(key, missingChar))
+                report.Fail("Input contains invalid base-16 character(s).");
+            else if (key.Length != 64)
+                report.Fail("Key length must be 64.");
+            else if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
+                report.Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
+            else if (!inputService.TryGetCompareService(extraType, AdditionalInput, out comparer))
+                report.Fail("Could not instantiate ICompareService.");
+            else
             {
-                if (isComp)
+                int missingCount = key.Count(c => c == missingChar);
+                if (missingCount == 0)
                 {
-                    report.AddMessageSafe("Running compressed loop.");
-                    return LoopComp(key, missingCount, missingChar, hash);
+                    report.Fail("The given key has no missing characters and it is inside the range defined by secp256k1 curve.");
+                    return;
                 }
-                else
-                {
-                    report.AddMessageSafe("Not yet defined.");
-                    return false;
-                }
+
+                BigInteger total = BigInteger.Pow(16, missingCount);
+                report.AddMessage($"There are {total:n0} keys to check.");
+                Stopwatch watch = Stopwatch.StartNew();
+
+                await Task.Run(() => LoopComp(key, missingCount, missingChar));
+
+                watch.Stop();
+                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                report.SetKeyPerSec(total, watch.Elapsed.TotalSeconds);
+
+                report.Finalize();
             }
-            );
-
-            watch.Stop();
-            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-            report.SetKeyPerSec(total, watch.Elapsed.TotalSeconds);
-
-            return report.Finalize(success);
         }
     }
 }
