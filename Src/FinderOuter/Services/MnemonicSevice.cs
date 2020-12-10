@@ -1462,84 +1462,9 @@ namespace FinderOuter.Services
             pbkdf2Salt[^1] = 1;
         }
 
-        // TODO: replace the following methods and property with the public ElectrumMnemonic method in next Bitcoin.Net version
-        private readonly int[][] CJK_INTERVALS = new int[][]
-        {
-            new int[] { 0x4E00, 0x9FFF }, // CJK Unified Ideographs
-            new int[] { 0x3400, 0x4DBF }, // CJK Unified Ideographs Extension A
-            new int[] { 0x20000, 0x2A6DF }, // CJK Unified Ideographs Extension B
-            new int[] { 0x2A700, 0x2B73F }, // CJK Unified Ideographs Extension C
-            new int[] { 0x2B740, 0x2B81F }, // CJK Unified Ideographs Extension D
-            new int[] { 0xF900, 0xFAFF }, // CJK Compatibility Ideographs
-            new int[] { 0x2F800, 0x2FA1D }, // CJK Compatibility Ideographs Supplement
-            new int[] { 0x3190, 0x319F }, // Kanbun
-            new int[] { 0x2E80, 0x2EFF }, // CJK Radicals Supplement
-            new int[] { 0x2F00, 0x2FDF }, // CJK Radicals
-            new int[] { 0x31C0, 0x31EF }, // CJK Strokes
-            new int[] { 0x2FF0, 0x2FFF }, // Ideographic Description Characters
-            new int[] { 0xE0100, 0xE01EF }, // Variation Selectors Supplement
-            new int[] { 0x3100, 0x312F }, // Bopomofo
-            new int[] { 0x31A0, 0x31BF }, // Bopomofo Extended
-            new int[] { 0xFF00, 0xFFEF }, // Halfwidth and Fullwidth Forms
-            new int[] { 0x3040, 0x309F }, // Hiragana
-            new int[] { 0x30A0, 0x30FF }, // Katakana
-            new int[] { 0x31F0, 0x31FF }, // Katakana Phonetic Extensions
-            new int[] { 0x1B000, 0x1B0FF }, // Kana Supplement
-            new int[] { 0xAC00, 0xD7AF }, // Hangul Syllables
-            new int[] { 0x1100, 0x11FF }, // Hangul Jamo
-            new int[] { 0xA960, 0xA97F }, // Hangul Jamo Extended A
-            new int[] { 0xD7B0, 0xD7FF }, // Hangul Jamo Extended B
-            new int[] { 0x3130, 0x318F }, // Hangul Compatibility Jamo
-            new int[] { 0xA4D0, 0xA4FF }, // Lisu
-            new int[] { 0x16F00, 0x16F9F }, // Miao
-            new int[] { 0xA000, 0xA48F }, // Yi Syllables
-            new int[] { 0xA490, 0xA4CF }, // Yi Radicals
-        };
-
-        private bool IsCJK(char c)
-        {
-            int val = c;
-            foreach (var item in CJK_INTERVALS)
-            {
-                if (val >= item[0] && val <= item[1])
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        private string RemoveDiacritics(string text)
-        {
-            return new string(
-                text.Normalize(System.Text.NormalizationForm.FormD)
-                    .ToCharArray()
-                    .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    .ToArray());
-        }
-        private string Normalize(string text)
-        {
-            if (text is null)
-            {
-                return string.Empty;
-            }
-
-            string norm = RemoveDiacritics(text.Normalize(NormalizationForm.FormKD).ToLower());
-            norm = string.Join(' ', norm.Split(" ", StringSplitOptions.RemoveEmptyEntries));
-            // Remove whitespaces between CJK
-            var temp = new StringBuilder();
-            for (int i = 0; i < norm.Length; i++)
-            {
-                if (!(char.IsWhiteSpace(norm[i]) && IsCJK(norm[i - 1]) && IsCJK(norm[i + 1])))
-                {
-                    temp.Append(norm[i]);
-                }
-            }
-            return temp.ToString();
-        }
-
         public void SetPbkdf2SaltElectrum(string pass)
         {
-            byte[] salt = Encoding.UTF8.GetBytes($"electrum{Normalize(pass)}");
+            byte[] salt = Encoding.UTF8.GetBytes($"electrum{ElectrumMnemonic.Normalize(pass)}");
             pbkdf2Salt = new byte[salt.Length + 4];
             Buffer.BlockCopy(salt, 0, pbkdf2Salt, 0, salt.Length);
             pbkdf2Salt[^1] = 1;
