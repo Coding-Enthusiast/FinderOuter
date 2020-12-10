@@ -1,8 +1,35 @@
 ### Release ?.?.? (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.1.0...master)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.6.0.0...master)
 * Finding bip32 key path
 * Password recovery
-* Multi-thread and SIMD support
+* SIMD support
+* A help window
+
+### Release 0.6.0 (2020-??-??)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.5.0.0...v0.6.0.0)
+* Move to .net 5.0
+
+### Release 0.5.0 (2020-09-17)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.1.0...v0.5.0.0)  
+**The Parallelization Update**  
+This is the parallelism update with tons of optimization from a small 10% speed gain to more than 1800% in some cases.  
+- Most of these optimizations are in Base58 recovery option.  
+  - Compressed and uncompressed private key recovery uses all available CPU cores for maximum speed and at 100% capacity.
+  - Two special cases were added to recover private keys that are missing characters from their end (up to 9 missing for uncompressed and 11 for compressed is the default for now and can be recovered in less than a minute).  
+  - Recovery of Base58 addresses and BIP-38 encrypted keys are also optimized the same way.
+- Mini private key recovery
+  - It uses all available CPU cores
+  - It suffers from the known issue #9
+  - The extra input has more options like other recovery options to enter different types of addresses or a public key.
+- Mnemonic recovery
+  - New wordlist added (Czech)
+  - There is a simple checkbox now to set the key index itself to be hardened
+  - It suffers from the known issue #9 whenever there is EC multiplication involved (private key to public key), otherwise if there weren't any the code will run at maximum efficiency using all cores at 100% (see 5th example in mnemonic recovery)
+
+Other most notable changes:
+- Now there is a progress bar at the bottom that will be used when recovering in parallel to show the progress so far. Other times when using single core the recovery process never takes up longer than a minute (usually less than 10 seconds) so progress bar is disabled.  
+- Addition of more examples for each recovery option.  
+- Various code improvements and bug fixes.
 
 ### Release 0.4.1 (2020-07-23)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.4.0.0...v0.4.1.0)
