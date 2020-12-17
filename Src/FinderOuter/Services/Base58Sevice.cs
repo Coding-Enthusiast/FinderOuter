@@ -985,9 +985,10 @@ namespace FinderOuter.Services
                         if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                         {
                             if (!string.IsNullOrEmpty(extra))
-                                report.AddMessage("Could not instantiate ICompareService.");
+                                report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
                             comparer = null;
                         }
+                        // comparer can be null for some of the Loop*() methods
                         await FindPrivateKey(key, missingChar);
                         break;
                     case InputType.Address:

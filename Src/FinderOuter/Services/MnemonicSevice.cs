@@ -1527,7 +1527,7 @@ namespace FinderOuter.Services
 
                 if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                 {
-                    report.Fail("Invalid extra input or input type.");
+                    report.Fail($"Invalid extra input or input type {extraType}.");
                     return;
                 }
 

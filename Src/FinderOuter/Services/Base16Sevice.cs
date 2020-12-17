@@ -150,7 +150,7 @@ namespace FinderOuter.Services
             else if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
                 report.Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
             else if (!inputService.TryGetCompareService(extraType, AdditionalInput, out comparer))
-                report.Fail("Could not instantiate ICompareService.");
+                report.Fail($"Could not instantiate ICompareService (invalid {extraType}).");
             else
             {
                 int missingCount = key.Count(c => c == missingChar);
