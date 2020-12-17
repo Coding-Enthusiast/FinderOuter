@@ -17,11 +17,11 @@ namespace FinderOuter.ViewModels
         {
             OptionList = new OptionVmBase[]
             {
-                new MessageSignatureViewModel(),
-                new MissingBase58ViewModel(),
+                //new MessageSignatureViewModel(),
+                //new MissingBase58ViewModel(),
                 new MissingBase16ViewModel(),
-                new MissingMiniPrivateKeyViewModel(),
-                new MissingMnemonicViewModel(),
+                //new MissingMiniPrivateKeyViewModel(),
+                //new MissingMnemonicViewModel(),
             };
 
             WinMan = new WindowManager();

@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
@@ -137,6 +138,12 @@ namespace FinderOuter.Services
                     key.All(c => c == missingChar || ConstantsFO.Base16Chars.Contains(char.ToLower(c)));
         }
 
+        private bool GetComparer(string input)
+        {
+            comparer = new TronComparer();
+            return comparer.Init(input);
+        }
+
         public async void Find(string key, char missingChar, string AdditionalInput, InputType extraType)
         {
             report.Init();
@@ -149,7 +156,7 @@ namespace FinderOuter.Services
                 report.Fail("Key length must be 64.");
             else if (!inputService.IsPrivateKeyInRange(Base16.Decode(key.Replace(missingChar, 'f'))))
                 report.Fail("This is a problematic key to brute force, please open a new issue on GitHub for this case.");
-            else if (!inputService.TryGetCompareService(extraType, AdditionalInput, out comparer))
+            else if (!GetComparer(AdditionalInput))
                 report.Fail($"Could not instantiate ICompareService (invalid {extraType}).");
             else
             {
