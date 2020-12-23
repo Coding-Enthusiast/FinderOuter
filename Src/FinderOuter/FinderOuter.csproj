@@ -55,7 +55,7 @@
     <None Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.7.0" />
+    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.8.0" />
     <PackageReference Include="Avalonia" Version="0.9.12" />
     <PackageReference Include="Avalonia.Desktop" Version="0.9.12" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.12" />
