@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
@@ -30,81 +31,149 @@ namespace FinderOuter.Services
         private readonly InputService inputService;
         private ICompareService comparer;
 
+        private int[] missingIndexes;
+        private int missCount;
+        private string key;
 
-        private unsafe void LoopComp(string key, int missingCount, char missingChar)
+
+        private unsafe bool MoveNext(int* items, int len)
         {
-            int[] missingIndexes = new int[missingCount];
-            byte[] ba = new byte[32];
-            for (int i = 0, j = 0; i < ba.Length; i++)
+            for (int i = len - 1; i >= 0; --i)
             {
-                int hi, lo;
-                if (key[i * 2] == missingChar)
-                {
-                    hi = 0;
-                    missingIndexes[j++] = i * 2;
-                }
-                else
-                {
-                    hi = key[i * 2] - 65;
-                    hi = hi + 10 + ((hi >> 31) & 7);
-                }
-                if (key[i * 2 + 1] == missingChar)
-                {
-                    lo = 0;
-                    missingIndexes[j++] = i * 2 + 1;
-                }
-                else
-                {
-                    lo = key[i * 2 + 1] - 65;
-                    lo = lo + 10 + ((lo >> 31) & 7) & 0x0f;
-                }
+                items[i] += 1;
 
-                ba[i] = (byte)(lo | hi << 4);
+                if (items[i] == 16)
+                {
+                    items[i] = 0;
+                }
+                else
+                {
+                    return true;
+                }
             }
 
-            var cartesian = CartesianProduct.Create(Enumerable.Repeat(Enumerable.Range(0, 16), missingCount));
+            return false;
+        }
+
+        private unsafe void SetResultParallel(int* items, int firstItem)
+        {
+            char[] origHex = key.ToCharArray();
+            origHex[missingIndexes[0]] = GetHex(firstItem);
+            for (int i = 0; i < missCount - 1; i++)
+            {
+                int index = missingIndexes[i + 1];
+                origHex[index] = GetHex(items[i]);
+            }
+
+            report.AddMessageSafe($"Found the key: {new string(origHex)}");
+            report.FoundAnyResult = true;
+        }
+
+        private unsafe void Loop(int firstItem, in EllipticCurvePoint smallPub, ParallelLoopState loopState)
+        {
+            var calc = new ECCalc();
+            var missingItems = new int[missCount - 1];
+            var localComp = comparer.Clone();
+
+            Span<byte> temp = stackalloc byte[32];
+
+            fixed (int* itemsPt = &missingItems[0])
+            fixed (int* mi = &missingIndexes[0])
+            fixed (byte* tmp = &temp[0])
+            {
+                int misIndex = mi[0];
+                int firstIndex = misIndex / 2;
+                byte firstValue = (misIndex % 2 == 0) ? (byte)(firstItem << 4) : (byte)firstItem;
+                tmp[firstIndex] = firstValue;
+
+                do
+                {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+
+                    int mis = 1;
+                    foreach (var item in missingItems)
+                    {
+                        misIndex = mi[mis++];
+                        if (misIndex % 2 == 0)
+                        {
+                            tmp[misIndex / 2] &= 0b0000_1111;
+                            tmp[misIndex / 2] |= (byte)(item << 4);
+                        }
+                        else
+                        {
+                            tmp[misIndex / 2] &= 0b1111_0000;
+                            tmp[misIndex / 2] |= (byte)item;
+                        }
+                    }
+
+                    BigInteger tempVal = new BigInteger(temp, true, true);
+                    EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
+                    EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
+                    if (comparer.Compare(pub))
+                    {
+                        SetResultParallel(itemsPt, firstItem);
+                        loopState.Stop();
+                        return;
+                    }
+
+                } while (MoveNext(itemsPt, missingItems.Length));
+            }
+
+            report.IncrementProgress();
+        }
+        private unsafe void Loop(byte[] preComputed)
+        {
             ECCalc calc = new ECCalc();
-
-
-            BigInteger smallVal = new BigInteger(ba, true, true);
+            BigInteger smallVal = new BigInteger(preComputed, true, true);
             EllipticCurvePoint smallPub = calc.MultiplyByG(smallVal);
 
-            Parallel.ForEach(cartesian, (item, loopState) =>
+            if (missCount == 1)
             {
-                Span<byte> temp = new byte[32];
+                int misIndex = missingIndexes[0];
+                int index = misIndex / 2;
+                bool condition = misIndex % 2 == 0;
 
-                int mis = 0;
-                foreach (int keyItem in item)
+                Span<byte> temp = stackalloc byte[32];
+                fixed (int* mi = &missingIndexes[0])
+                fixed (byte* tmp = &temp[0])
                 {
-                    int misIndex = missingIndexes[mis];
-                    if (misIndex % 2 == 0)
+                    for (int i = 0; i < 16; i++)
                     {
-                        temp[misIndex / 2] |= (byte)(keyItem << 4);
-                    }
-                    else
-                    {
-                        temp[misIndex / 2] |= (byte)keyItem;
-                    }
-                    mis++;
-                }
+                        if (condition)
+                        {
+                            tmp[index] &= 0b0000_1111;
+                            tmp[index] |= (byte)(i << 4);
+                        }
+                        else
+                        {
+                            tmp[index] &= 0b1111_0000;
+                            tmp[index] |= (byte)i;
+                        }
 
-                BigInteger tempVal = new BigInteger(temp, true, true);
-                EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
-                EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
-                if (comparer.Compare(pub))
-                {
-                    char[] origHex = key.ToCharArray();
-                    int index = 0;
-                    foreach (var keyItem in item)
-                    {
-                        origHex[missingIndexes[index++]] = GetHex(keyItem);
+                        BigInteger tempVal = new BigInteger(temp, true, true);
+                        EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
+                        EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
+                        if (comparer.Compare(pub))
+                        {
+                            char[] origHex = key.ToCharArray();
+                            origHex[misIndex] = GetHex(i);
+
+                            report.AddMessageSafe($"Found the key: {new string(origHex)}");
+                            report.FoundAnyResult = true;
+                            return;
+                        }
                     }
-                    report.AddMessageSafe($"Found the key: {new string(origHex)}");
-                    report.FoundAnyResult = true;
-                    loopState.Stop();
-                    return;
                 }
-            });
+            }
+            else
+            {
+                report.AddMessageSafe("Running in parallel.");
+                report.SetProgressStep(16);
+                Parallel.For(0, 16, (firstItem, state) => Loop(firstItem, smallPub, state));
+            }
         }
 
         private char GetHex(int val)
@@ -153,18 +222,58 @@ namespace FinderOuter.Services
                 report.Fail($"Could not instantiate ICompareService (invalid {extraType}).");
             else
             {
-                int missingCount = key.Count(c => c == missingChar);
-                if (missingCount == 0)
+                missCount = key.Count(c => c == missingChar);
+                if (missCount == 0)
                 {
-                    report.Fail("The given key has no missing characters and it is inside the range defined by secp256k1 curve.");
+                    try
+                    {
+                        using PrivateKey prv = new PrivateKey(Base16.Decode(key));
+                    }
+                    catch (Exception ex)
+                    {
+                        report.Fail($"Key is out of range {ex.Message}");
+                    }
+
+                    report.Pass("The given key is valid.");
                     return;
                 }
 
-                BigInteger total = BigInteger.Pow(16, missingCount);
-                report.AddMessage($"There are {total:n0} keys to check.");
+                this.key = key;
+
+                BigInteger total = BigInteger.Pow(16, missCount);
+                report.AddMessage($"The given key is missing {missCount} characters and there are {total:n0} keys to check.");
                 Stopwatch watch = Stopwatch.StartNew();
 
-                await Task.Run(() => LoopComp(key, missingCount, missingChar));
+                missingIndexes = new int[missCount];
+                byte[] ba = new byte[32];
+                for (int i = 0, j = 0; i < ba.Length; i++)
+                {
+                    int hi, lo;
+                    if (key[i * 2] == missingChar)
+                    {
+                        hi = 0;
+                        missingIndexes[j++] = i * 2;
+                    }
+                    else
+                    {
+                        hi = key[i * 2] - 65;
+                        hi = hi + 10 + ((hi >> 31) & 7);
+                    }
+                    if (key[i * 2 + 1] == missingChar)
+                    {
+                        lo = 0;
+                        missingIndexes[j++] = i * 2 + 1;
+                    }
+                    else
+                    {
+                        lo = key[i * 2 + 1] - 65;
+                        lo = lo + 10 + ((lo >> 31) & 7) & 0x0f;
+                    }
+
+                    ba[i] = (byte)(lo | hi << 4);
+                }
+
+                await Task.Run(() => Loop(ba));
 
                 watch.Stop();
                 report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
