@@ -228,6 +228,16 @@ namespace FinderOuter.Services
                     try
                     {
                         using PrivateKey prv = new PrivateKey(Base16.Decode(key));
+                        bool check = new AddressService().Compare(AdditionalInput, extraType, prv, out string msg);
+                        if (check)
+                        {
+                            report.Pass(msg);
+                        }
+                        else
+                        {
+                            report.Fail(msg);
+                        }
+                        return;
                     }
                     catch (Exception ex)
                     {
