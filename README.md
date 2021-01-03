@@ -82,9 +82,9 @@ If you have [Visual Studio](https://visualstudio.microsoft.com/downloads/) you c
 [solution file](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter.sln).  
 Building is also possible through these steps: 
 1. Get Git: https://git-scm.com/downloads
-2. Get .NET Core 3.1 SDK: https://www.microsoft.com/net/download (see `TargetFramework` 
-[here](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj), we tend to always 
-use the latest .Net version)
+2. Get .NET 5.0 SDK: https://www.microsoft.com/net/download (see `TargetFramework` in
+[FinderOuter.csproj](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj)
+for the required .net version in case readme wasn't updated)
 3. clone FinderOuter `git clone https://github.com/Coding-Enthusiast/FinderOuter.git`
 4. Build using `dotnet build`  
 
