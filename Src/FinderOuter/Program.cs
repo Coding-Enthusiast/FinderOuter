@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Avalonia;
-using Avalonia.Logging.Serilog;
 using Avalonia.ReactiveUI;
 
 namespace FinderOuter
@@ -21,7 +20,7 @@ namespace FinderOuter
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
-                .LogToDebug()
+                .LogToTrace()
                 .UseReactiveUI();
     }
 }

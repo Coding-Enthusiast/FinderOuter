@@ -71,7 +71,7 @@
     </StackPanel>
 
     <ProgressBar IsVisible="{Binding SelectedOption.Result.IsProgressVisible}"
-                 Value="{Binding SelectedOption.Result.Progress}"
+                 Value="{Binding SelectedOption.Result.Progress}" ShowProgressText="True"
                  Grid.Column="1" Grid.Row="2"/>
   </Grid>
 </Window>
