@@ -38,7 +38,7 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        public string VerString => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
+        public static string VerString => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
 
 
         public IEnumerable<OptionVmBase> OptionList { get; private set; }
@@ -56,6 +56,17 @@ namespace FinderOuter.ViewModels
         }
 
 
+        public bool IsDebug
+        {
+            get
+            {
+#if DEBUG
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
         public bool IsFindButtonVisible => SelectedOption != null;
 
 
