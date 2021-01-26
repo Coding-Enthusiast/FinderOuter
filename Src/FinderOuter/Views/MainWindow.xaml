@@ -30,6 +30,22 @@
     <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="1">
       <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
                Grid.Row="0">
+        <ListBox.Styles>
+          <Style Selector="ListBox">
+            <Setter Property="TextBlock.Foreground" Value="#FF000000"/>
+            <Setter Property="Background" Value="#FFF2F2F2"/>
+            <Setter Property="BorderBrush" Value="#FF000000"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+          </Style>
+
+          <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="12"/>
+          </Style>
+        </ListBox.Styles>
+
         <ListBox.DataTemplates>
           <DataTemplate>
             <TextBlock Text="{Binding OptionName}"/>
