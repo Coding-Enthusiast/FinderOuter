@@ -40,6 +40,10 @@
     <Style Selector="ComboBox /template/ Border">
       <Setter Property="CornerRadius" Value="3"/>
     </Style>
+
+    <Style Selector="Button /template/ ContentPresenter">
+      <Setter Property="CornerRadius" Value="5"/>
+    </Style>
   </Application.Styles>
 
 </Application>

@@ -18,16 +18,9 @@
     <mvvm:StateToBitmapConverter x:Key="imgConv"/>
   </Window.Resources>
 
-  <Grid ColumnDefinitions="200,*" RowDefinitions="auto,*,35">
+  <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
-    <Menu Grid.ColumnSpan="2" Grid.Row="0">
-      <MenuItem Header="Help">
-        <MenuItem Header="Help" Command="{Binding OpenHelp}" HotKey="F1"/>
-        <MenuItem Header="About" Command="{Binding OpenAbout}"/>
-      </MenuItem>
-    </Menu>
-
-    <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="1">
+    <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
       <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
                Grid.Row="0">
         <ListBox.Styles>
@@ -73,19 +66,22 @@
       </Border>
     </Grid>
 
-    <Grid RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="1">
+    <Grid RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="0">
       <Grid ColumnDefinitions="*,auto" Grid.Row="0">
         <Button Content="Find!"
                 Command="{Binding SelectedOption.FindCommand}"
                 IsVisible="{Binding IsFindButtonVisible}"
-                Margin="3"
+                Margin="3,6,3,3"
+                Height="40"
                 Grid.Column="0"/>
         <Button Content="Example"
                 Command="{Binding SelectedOption.ExampleCommand}"
                 IsVisible="{Binding IsFindButtonVisible}"
                 IsEnabled="{Binding SelectedOption.HasExample}"
                 ToolTip.Tip="Click again for next example."
-                Margin="3"
+                Margin="3,6,3,3"
+                Height="40"
+                Width="125"
                 Grid.Column="1"/>
       </Grid>
       <TextBlock Text="{Binding SelectedOption.Description}"
@@ -102,13 +98,14 @@
                AcceptsReturn="True"
                ScrollViewer.VerticalScrollBarVisibility="Auto"
                IsReadOnly="True"
-               Margin="3" Grid.Row="3"/>
+               Grid.Row="3"/>
     </Grid>
 
     <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="2">
       <Image Source="{Binding SelectedOption.Result.CurrentState, Converter={StaticResource imgConv}, Mode=OneWay}"
              Margin="3"/>
       <TextBlock Text="{Binding SelectedOption.Result.CurrentState}"
+                 VerticalAlignment="Center"
                  Margin="3"/>
     </StackPanel>
 
