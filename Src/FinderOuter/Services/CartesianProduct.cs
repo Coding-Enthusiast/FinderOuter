@@ -3,11 +3,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace FinderOuter.Services
 {
+    [Obsolete("This class is very slow to use")]
     public class CartesianProduct
     {
         public static IEnumerable<IEnumerable<T>> Create<T>(IEnumerable<IEnumerable<T>> inputs)
