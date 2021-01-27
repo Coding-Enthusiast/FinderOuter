@@ -11,15 +11,21 @@
   </Design.DataContext>
 
   <StackPanel Spacing="5">
-    <TextBox Text="{Binding Message}" Watermark="Message" UseFloatingWatermark="True"
-             TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-    <TextBox Text="{Binding Address}" Watermark="Address" UseFloatingWatermark="True"/>
-    <TextBox Text="{Binding Signature}" Watermark="Signature" UseFloatingWatermark="True"
-             TextWrapping="Wrap" AcceptsReturn="True"/>
+    <TextBox Text="{Binding Message}"
+             Watermark="Message"
+             AcceptsReturn="True"
+             ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    <TextBox Text="{Binding Address}"
+             Watermark="Address"/>
+    <TextBox Text="{Binding Signature}"
+             Watermark="Signature"
+             AcceptsReturn="True"/>
 
-    <Button Content="Try to find the problem!" Command="{Binding FindProblemCommand}"
+    <Button Content="Try to find the problem!"
+            Command="{Binding FindProblemCommand}"
             IsVisible="{Binding IsFindProblemVisible}"
-            Margin="3" Width="170"/>
+            Margin="3"
+            Width="170"/>
   </StackPanel>
 
 </UserControl>
