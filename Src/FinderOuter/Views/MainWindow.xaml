@@ -74,7 +74,7 @@
                 Margin="3,6,3,3"
                 Height="40"
                 Grid.Column="0"/>
-        <Button Content="Example"
+        <Button Content="{Binding SelectedOption.ExampleButtonName}"
                 Command="{Binding SelectedOption.ExampleCommand}"
                 IsVisible="{Binding IsFindButtonVisible}"
                 IsEnabled="{Binding SelectedOption.HasExample}"

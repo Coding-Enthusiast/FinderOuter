@@ -6,6 +6,8 @@
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using ReactiveUI;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FinderOuter.ViewModels
 {
@@ -17,6 +19,13 @@ namespace FinderOuter.ViewModels
         public abstract string OptionName { get; }
         public abstract string Description { get; }
 
+        private string _exName = "";
+        public string ExampleButtonName
+        {
+            get => _exName;
+            set => this.RaiseAndSetIfChanged(ref _exName, value);
+        }
+
         private IReport _res = new Report();
         public IReport Result
         {
@@ -27,7 +36,37 @@ namespace FinderOuter.ViewModels
         public string MissingToolTip => ConstantsFO.MissingToolTip;
 
         public bool HasExample { get; protected set; }
-        protected int exampleIndex;
+        protected int exampleIndex, totalExampleCount;
+        private IEnumerator<object[]> exampleEnumerator;
+
+        protected void SetExamples(ExampleData data)
+        {
+            HasExample = true;
+            totalExampleCount = data.Total;
+            exampleEnumerator = data.GetEnumerator();
+
+            ExampleButtonName = $"{totalExampleCount} Examples";
+        }
+
+        protected object[] GetNextExample()
+        {
+            if (exampleEnumerator.MoveNext())
+            {
+                exampleIndex++;
+            }
+            else
+            {
+                exampleIndex = 1;
+                exampleEnumerator.Reset();
+                exampleEnumerator.MoveNext();
+            }
+
+            Debug.Assert(exampleIndex != 0 && exampleIndex <= totalExampleCount);
+            Debug.Assert(!(exampleEnumerator.Current is null));
+
+            ExampleButtonName = $"Example {exampleIndex}/{totalExampleCount}";
+            return exampleEnumerator.Current;
+        }
 
         public IReactiveCommand ExampleCommand { get; protected set; }
 
