@@ -99,7 +99,7 @@ namespace FinderOuter.ViewModels
             MissingChar = (char)ex[1];
             AdditionalInput = (string)ex[2];
             int temp = (int)ex[3];
-            Debug.Assert(temp <= ExtraInputTypeList.Count());
+            Debug.Assert(temp < ExtraInputTypeList.Count());
             SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp);
             Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[4]}";
         }
@@ -115,7 +115,7 @@ namespace FinderOuter.ViewModels
                     0,
                     $"bitcoin wiki.{Environment.NewLine}" +
                     $"This example is missing one character (f).{Environment.NewLine}" +
-                    $"Estimated time: <1 second"
+                    $"Estimated time: <1 sec"
                 },
                 {
                     "0c28fca386c7a227600?2fe50b7cae11ec?6d3b?1fbe471be89827e19d72aa1d",

@@ -8,7 +8,6 @@ using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;

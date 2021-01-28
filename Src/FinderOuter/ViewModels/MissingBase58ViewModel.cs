@@ -9,6 +9,7 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
@@ -38,6 +39,8 @@ namespace FinderOuter.ViewModels
                 x => x.Result.CurrentState,
                 (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+
+            SetExamples(GetExampleData());
         }
 
 
@@ -101,128 +104,156 @@ namespace FinderOuter.ViewModels
 
         public void Example()
         {
-            int total = 9;
+            object[] ex = GetNextExample();
 
-            switch (exampleIndex)
+            Input = (string)ex[0];
+            MissingChar = (char)ex[1];
+
+            int temp1 = (int)ex[2];
+            Debug.Assert(temp1 < InputTypeList.Count());
+            SelectedInputType = InputTypeList.ElementAt(temp1);
+
+            ExtraInput = (string)ex[3];
+
+            int temp2 = (int)ex[4];
+            Debug.Assert(temp2 < ExtraInputTypeList.Count());
+            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp2);
+
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[5]}";
+        }
+
+        private ExampleData GetExampleData()
+        {
+            return new ExampleData<string, char, int, string, int, string>()
             {
-                case 0:
-                    Input = "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNydYXYB9KF";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is an uncompressed private key missing 4 character (o, M, W, X) and it " +
-                                     $"should take <1 second to find the correct key and <5 seconds to check " +
-                                     $"all possible keys.";
-                    break;
-                case 1:
-                    Input = "L53fCHmQh??p1B4JipfBtfeHZH7cAib?G9oK19?fiFzxHgAkz6JK";
-                    MissingChar = '?';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is a compressed private key missing 4 character (b, N, z, X) and it " +
-                                     $"should take <1 second to find the correct key and to check all possible keys." +
-                                     $"{Environment.NewLine}" +
-                                     $"Note the usage of a different missing character.";
-                    break;
-                case 2:
-                    Input = "142viJrTYHA4TzryiEiuQkYk4Ay5Tfp***";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.ElementAt(1);
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 3 out of {total} taken from Bitcoin.Net test vectors.{Environment.NewLine}" +
-                                     $"It is an address missing 3 character (z, q, W) and it should take <1 second to search " +
-                                     $"all possible addresses and find the correct one.";
-                    break;
-                case 3:
-                    Input = "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s*DGhwP4*5o44cvXdoY7sRzhtp**o";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.ElementAt(2);
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 4 out of {total} taken from BIP-38.{Environment.NewLine}" +
-                                     $"It is a BIP-38 encrypted private key missing 4 character (6, J, U, e) and it " +
-                                     $"should take ~3 seconds to find the correct key and ~6 seconds to search " +
-                                     $"all possible keys.";
-                    break;
-                case 4:
-                    Input = "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5**DGhwP4*5o44cvXdoY7sRzhtp**o";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.ElementAt(2);
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 5 out of {total} taken from BIP-38.{Environment.NewLine}" +
-                                     $"It is a BIP-38 encrypted private key missing 5 character (s, 6, J, U, e) and this " +
-                                     $"is the threshold where the parallelism is used and all CPU cores are going to be used" +
-                                     $"{Environment.NewLine}Notice the progress bar at the bottom reports progress constantly." +
-                                     $"{Environment.NewLine}" +
-                                     $"it should take ~3 minutes to find the correct key and to search all possible keys.";
-                    break;
-                case 5:
-                    Input = "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 6 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is a compressed private key missing 3 characters at unknown positions " +
-                                     $"should take ~2 minutes to find the correct key and ~3 minutes to search " +
-                                     $"all possible keys.";
-                    break;
-                case 6:
-                    Input = "5JBK1WUuytf9HURTCwCVmKghDUgqEs3NRa1dsKja4FgRBQ*****";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 7 out of {total} using a random key.{Environment.NewLine}" +
-                                     $"This is a special optimized case where the missing characters are from the end " +
-                                     $"of the private key. With missing 5 chars, instead of checking 656,356,768 " +
-                                     $"keys we only check 1 so it should only take a second.";
-                    break;
-                case 7:
-                    Input = "KxpWVF8Cr71MZi2vfgDjxdUCW5CovBsTZShoj7gtuMny********";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = "1DjPqd6oBjii7PQh7JY1yAmPpHEHPWcaF3";
-                    SelectedExtraInputType = ExtraInputTypeList.First();
-
-                    Result.Message = $"This is example 8 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"Same key as previous example but compressed and is missing 8 characters." +
-                                     $"This time the optimization checks only 117 keys instead of 128,063,081,718,016." +
-                                     $"{Environment.NewLine}" +
-                                     $"Consequently it should only take a fraction of a second to find the correct key." +
-                                     $"{Environment.NewLine}" +
-                                     $"Also note that since there are more than one possible key to check it requires an " +
-                                     $"additional input to check against. Here the compressed address was used.";
-                    break;
-                case 8:
-                    Input = "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNy*YXYB9KF";
-                    MissingChar = '*';
-                    SelectedInputType = InputTypeList.First();
-                    ExtraInput = null;
-
-                    Result.Message = $"This is example 9 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"This is an interesting example because it is on the threshold of using parallelism " +
-                                     $"(all CPU cores) and it can recover 2 valid private keys using the given characters." +
-                                     $"{Environment.NewLine}" +
-                                     $"The whole thing should take about 3 minutes.";
-                    break;
-
-                default:
-                    Result.Message = "Invalid example index was given (this is a bug).";
-                    break;
-            }
-
-            exampleIndex++;
-            if (exampleIndex >= total)
-            {
-                exampleIndex = 0;
-            }
+                {
+                    "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNydYXYB9KF",
+                    '*',
+                    0,
+                    null,
+                    0,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is an uncompressed private key missing 4 character (o, M, W, X).{Environment.NewLine}" +
+                    $"Estimated time: <1 sec to find, <5 sec to check all"
+                },
+                {
+                    "L53fCHmQh??p1B4JipfBtfeHZH7cAib?G9oK19?fiFzxHgAkz6JK",
+                    '?',
+                    0,
+                    null,
+                    0,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is a compressed private key missing 4 character (b, N, z, X).{Environment.NewLine}" +
+                    $"Note the usage of a different missing character.{Environment.NewLine}" +
+                    $"Estimated time: <1 sec to find, <1 sec to check all"
+                },
+                {
+                    "5JBK1WUuytf9HURTCwCVmKghDUgqEs3NRa1dsKja4FgRBQ*****",
+                    '*',
+                    0,
+                    null,
+                    0,
+                    $"random key{Environment.NewLine}" +
+                    $"This example is an uncompressed private key missing 5 character (N, G, c, a, A).{Environment.NewLine}" +
+                    $"Note that since these characters are all missing from the end, FinderOuter automatically chooses " +
+                    $"an optimized algorithm that only checks 1 key instead of 656,356,768 greatly increasing the speed." +
+                    $"{Environment.NewLine}" +
+                    $"Also note that this cas doesn't need any additional input to check against since it only checks " +
+                    $"one key.{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "KxpWVF8Cr71MZi2vfgDjxdUCW5CovBsTZShoj7gtuMny********",
+                    '*',
+                    0,
+                    "1DjPqd6oBjii7PQh7JY1yAmPpHEHPWcaF3",
+                    0,
+                    $"random key{Environment.NewLine}" +
+                    $"This example is a compressed private key missing 8 character (i,i,V,j,k,V,e,v).{Environment.NewLine}" +
+                    $"Note that since these characters are all missing from the end, FinderOuter automatically chooses " +
+                    $"an optimized algorithm that only checks 117 keys instead of 128 trillion (128,063,081,718,016) " +
+                    $"greatly increasing the speed.{Environment.NewLine}" +
+                    $"Also note that this optimized method requires an additional input such as public key or address " +
+                    $"of this private key to check each result against it since all of them are valid.{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNy*YXYB9KF",
+                    '*',
+                    0,
+                    null,
+                    0,
+                    $"bitcoin wiki{Environment.NewLine}" +
+                    $"This example is an uncompressed private key missing 5 character (o, M, W, X, d).{Environment.NewLine}" +
+                    $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"Also note that sometimes FinderOuter can find more than one valid base58, in this case 3." +
+                    $"{Environment.NewLine}" +
+                    $"Estimated time: <3 min"
+                },
+                {
+                    "L53fCHmQhbNp1B4JipfBtfe**H7cA*bzG9o*19XfiF*xHgAkz6JK",
+                    '*',
+                    0,
+                    null,
+                    0,
+                    $"bitcoin wiki{Environment.NewLine}" +
+                    $"This example is a compressed private key missing 5 character (H, Z, i, K, z).{Environment.NewLine}" +
+                    $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"Estimated time: <3 sec to find, <30 sec to check all"
+                },
+                {
+                    "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK",
+                    '*',
+                    0,
+                    null,
+                    0,
+                    $"bitcoin wiki{Environment.NewLine}" +
+                    $"This example is a compressed private key missing 3 character at unknown positions.{Environment.NewLine}" +
+                    $"Note that this is a special case and it uses multi-thread (parallelism).{Environment.NewLine}" +
+                    $"Estimated time: <2 min to find, <3.5 min to check all"
+                },
+                {
+                    "142viJrTYHA4TzryiEiuQkYk4Ay5Tfp***",
+                    '*',
+                    1,
+                    null,
+                    0,
+                    $"Bitcoin.Net test vectors{Environment.NewLine}" +
+                    $"This example is a P2PKH address missing 3 character (z, q, W).{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "39vipRmsscHCg**T7FHfq*UmCoNZ*oCygq",
+                    '*',
+                    1,
+                    null,
+                    0,
+                    $"Bitcoin.Net test vectors{Environment.NewLine}" +
+                    $"This example is a P2SH address missing 4 character (3, s, S, r).{Environment.NewLine}" +
+                    $"Estimated time: <6 sec"
+                },
+                {
+                    "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s*DGhwP4*5o44cvXdoY7sRzhtp**o",
+                    '*',
+                    2,
+                    null,
+                    0,
+                    $"BIP-38 test vectors{Environment.NewLine}" +
+                    $"This example is a BIP-38 encrypted private key missing 4 character (6, J, U, e).{Environment.NewLine}" +
+                    $"Estimated time: <3 sec to find, <6 second to check all"
+                },
+                {
+                    "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5**DGhwP4*5o44cvXdoY7sRzhtp**o",
+                    '*',
+                    2,
+                    null,
+                    0,
+                    $"BIP-38 test vectors{Environment.NewLine}" +
+                    $"This example is a BIP-38 encrypted private key missing 5 character (s, 6, J, U, e).{Environment.NewLine}" +
+                    $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"Estimated time: <1 min to find, <3 min to check all"
+                },
+            };
         }
     }
 }

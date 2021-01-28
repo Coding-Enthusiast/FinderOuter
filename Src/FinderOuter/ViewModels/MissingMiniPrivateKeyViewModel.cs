@@ -8,6 +8,7 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
@@ -40,6 +41,8 @@ namespace FinderOuter.ViewModels
 
             ExtraInputTypeList = ListHelper.GetEnumDescItems(InputType.PrivateKey).ToArray();
             SelectedExtraInputType = ExtraInputTypeList.First();
+
+            SetExamples(GetExampleData());
         }
 
         public override string OptionName => "Missing mini private key";
@@ -91,51 +94,61 @@ namespace FinderOuter.ViewModels
 
         public void Example()
         {
-            int total = 3;
+            object[] ex = GetNextExample();
 
-            switch (exampleIndex)
+            Input = (string)ex[0];
+            MissingChar = (char)ex[1];
+            ExtraInput = (string)ex[2];
+            int temp = (int)ex[3];
+            Debug.Assert(temp < ExtraInputTypeList.Count());
+            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp);
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[4]}";
+        }
+
+        private ExampleData GetExampleData()
+        {
+            return new ExampleData<string, char, string, int, string>()
             {
-                case 0:
-                    Input = "SzavMBLoXU6kDr*tUV*ffv";
-                    MissingChar = '*';
-                    ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
-                    SelectedExtraInputType = ExtraInputTypeList.First();
-
-                    Result.Message = $"This is example 1 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is missing 2 characters (q, m) and it should take <1 second to find the correct key.";
-                    break;
-                case 1:
-                    Input = "SzavMBLoXU6kDrqtUVmf--";
-                    MissingChar = '-';
-                    ExtraInput = "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR";
-                    SelectedExtraInputType = ExtraInputTypeList.First();
-
-                    Result.Message = $"This is example 2 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is missing 2 characters (f, v) and it should take <1 second to find the correct key." +
-                                     $"{Environment.NewLine}Note the usage of a different missing character.";
-                    break;
-                case 2:
-                    Input = "S6c56bnXQiB*k9mqS*E7ykVQ7Nzr*y";
-                    MissingChar = '*';
-                    ExtraInput = "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW";
-                    SelectedExtraInputType = ExtraInputTypeList.ElementAt(1);
-
-                    Result.Message = $"This is example 3 out of {total} taken from bitcoin wiki.{Environment.NewLine}" +
-                                     $"It is missing 3 characters (j, Y, R) and it should take <30 seconds to find the " +
-                                     $"correct key." +
-                                     $"{Environment.NewLine}The address this time is using the uncompressed public key.";
-                    break;
-
-                default:
-                    Result.Message = "Invalid example index was given (this is a bug).";
-                    break;
-            }
-
-            exampleIndex++;
-            if (exampleIndex >= total)
-            {
-                exampleIndex = 0;
-            }
+                {
+                    "SzavMBLoXU6kDr*tUV*ffv",
+                    '*',
+                    "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR",
+                    0,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is missing 2 characters (q, m).{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "SzavMBLoXU6kDrqtUVmf--",
+                    '-',
+                    "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
+                    4,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is missing 2 characters (f, v).{Environment.NewLine}" +
+                    $"Note the usage of a different missing character and extra input type (pubkey).{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "S6c56bnXQiB*k9mqS*E7ykVQ7Nzr*y",
+                    '*',
+                    "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW",
+                    1,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is missing 3 characters (j, Y, R).{Environment.NewLine}" +
+                    $"Note the usage of a different extra input type (address using uncompressed pubkey).{Environment.NewLine}" +
+                    $"Estimated time: <10 sec"
+                },
+                {
+                    "SzavMBLo*U6kD**tU*mffv",
+                    '*',
+                    "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
+                    4,
+                    $"bitcoin wiki.{Environment.NewLine}" +
+                    $"This example is missing 4 characters (X, r, q, V).{Environment.NewLine}" +
+                    $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"Estimated time: <6 min"
+                }
+            };
         }
     }
 }
