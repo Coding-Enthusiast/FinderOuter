@@ -1487,7 +1487,7 @@ namespace FinderOuter.Services
 
 
         public async void FindMissing(string mnemonic, char missChar, string pass, string extra, InputType extraType,
-                                            string path, uint index, bool hardened, MnemonicTypes mnType, BIP0039.WordLists wl,
+                                            string path, MnemonicTypes mnType, BIP0039.WordLists wl,
                                             ElectrumMnemonic.MnemonicType elecMnType)
         {
             report.Init();
@@ -1501,8 +1501,6 @@ namespace FinderOuter.Services
                 report.Fail("Missing character is not accepted.");
             else if (!TrySplitMnemonic(mnemonic, missChar))
                 return;
-            else if (index >= 0x80000000)
-                report.Fail("Key index is invalid.");
             else
             {
                 mnBytes = GetSeedByte(words.Length, maxWordLen);
@@ -1517,7 +1515,6 @@ namespace FinderOuter.Services
                 try
                 {
                     this.path = new BIP0032Path(path);
-                    this.path.Add(hardened ? index + 0x80000000 : index);
                 }
                 catch (Exception ex)
                 {

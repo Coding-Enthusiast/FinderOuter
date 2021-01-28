@@ -142,25 +142,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _path, value);
         }
 
-        private uint _ki = 0;
-        public uint KeyIndex
-        {
-            get => _ki;
-            set => this.RaiseAndSetIfChanged(ref _ki, value);
-        }
-
-        private bool _isHard = false;
-        public bool IsHardenedKey
-        {
-            get => _isHard;
-            set => this.RaiseAndSetIfChanged(ref _isHard, value);
-        }
-
 
         public override void Find()
         {
             MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
-                                  KeyPath, KeyIndex, IsHardenedKey,
+                                  KeyPath,
                                   SelectedMnemonicType, SelectedWordListType,
                                   SelectedElectrumMnType);
         }
@@ -180,9 +166,7 @@ namespace FinderOuter.ViewModels
                     MissingChar = '*';
                     AdditionalInfo = "1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN";
                     SelectedInputType = InputTypeList.First();
-                    KeyPath = "m/44'/0'/0'/0/";
-                    KeyIndex = 0;
-                    IsHardenedKey = false;
+                    KeyPath = "m/44'/0'/0'/0/0";
 
                     Result.Message = $"This is example 1 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
                                      $"It is missing one word (grace) and it should take ~1 second to find it." +
@@ -200,9 +184,7 @@ namespace FinderOuter.ViewModels
                     MissingChar = '-';
                     AdditionalInfo = "bc1ql5swedpywx3kjq4grv9qmlngapdf6xumv7f2ew";
                     SelectedInputType = InputTypeList.First();
-                    KeyPath = "m/84'/0'/0'/0";
-                    KeyIndex = 4;
-                    IsHardenedKey = false;
+                    KeyPath = "m/84'/0'/0'/0/4";
 
                     Result.Message = $"This is example 2 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
                                      $"It is missing two word (drill, cruise) and it should take ~1 hour to find them." +
@@ -223,9 +205,7 @@ namespace FinderOuter.ViewModels
                     MissingChar = '*';
                     AdditionalInfo = "L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs";
                     SelectedInputType = InputTypeList.ElementAt(5);
-                    KeyPath = "m/0/";
-                    KeyIndex = 2;
-                    IsHardenedKey = false;
+                    KeyPath = "m/0/2";
 
                     Result.Message = $"This is example 3 out of {total} with a random mnemonic.{Environment.NewLine}" +
                                      $"It is missing one word (lézard) and it should take ~1 second to find it." +
@@ -244,9 +224,7 @@ namespace FinderOuter.ViewModels
                     MissingChar = '*';
                     AdditionalInfo = "32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z";
                     SelectedInputType = InputTypeList.ElementAt(3);
-                    KeyPath = "m/0/";
-                    KeyIndex = 2;
-                    IsHardenedKey = false;
+                    KeyPath = "m/0/2";
 
                     Result.Message = $"This is example 4 out of {total} with a random mnemonic.{Environment.NewLine}" +
                                      $"It is missing one word (lézard) and it should take ~1 second to find it." +
@@ -265,9 +243,7 @@ namespace FinderOuter.ViewModels
                     MissingChar = '*';
                     AdditionalInfo = "L5fdNeFhX5Kgqnmbn6urPVt77eUocpbCF9f2ScEMu2HZwiFL3Viw";
                     SelectedInputType = InputTypeList.ElementAt(5);
-                    KeyPath = "m/0'/";
-                    KeyIndex = 0;
-                    IsHardenedKey = true;
+                    KeyPath = "m/0'/0'";
 
                     Result.Message = $"This is example 5 out of {total} with a random mnemonic.{Environment.NewLine}" +
                                      $"It is missing 2 words (coast, slow) so it runs in parallel." +

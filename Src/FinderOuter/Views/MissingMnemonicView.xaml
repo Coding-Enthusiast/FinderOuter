@@ -56,17 +56,10 @@
       </ComboBox.ItemTemplate>
     </ComboBox>
 
-    <Grid ColumnDefinitions="*,*,auto" Grid.Column="0" Grid.Row="3">
-      <TextBox Text="{Binding KeyPath}"
-               Watermark="Complete path of the given key/address above"
-               Grid.Column="0"/>
-      <TextBox Text="{Binding KeyIndex}"
-               Watermark="Index of the given key/address above"
-               Grid.Column="1"/>
-      <CheckBox Content="Hardened key"
-                IsChecked="{Binding IsHardenedKey}"
-                Grid.Column="2"/>
-    </Grid>
+    <TextBox Text="{Binding KeyPath}"
+             Watermark="Complete path of the given key/address above"
+             Grid.Column="0"
+             Grid.Row="3"/>
 
   </Grid>
 </UserControl>
