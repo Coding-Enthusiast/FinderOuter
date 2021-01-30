@@ -181,4 +181,104 @@ namespace FinderOuter.Models
             AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6 }));
         }
     }
+
+
+
+    public class ExampleData<T1, T2, T3, T4, T5, T6, T7> : ExampleData
+    {
+        public ExampleData(IEnumerable<(T1, T2, T3, T4, T5, T6, T7)> values)
+        {
+            AddRange(values.ToArray());
+        }
+
+        public ExampleData(params (T1, T2, T3, T4, T5, T6, T7)[] values)
+        {
+            AddRange(values);
+        }
+
+        public void Add(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7)
+        {
+            AddRow(p1, p2, p3, p4, p5, p6, p7);
+        }
+
+        public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7)[] values)
+        {
+            AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7 }));
+        }
+    }
+
+
+
+    public class ExampleData<T1, T2, T3, T4, T5, T6, T7, T8> : ExampleData
+    {
+        public ExampleData(IEnumerable<(T1, T2, T3, T4, T5, T6, T7, T8)> values)
+        {
+            AddRange(values.ToArray());
+        }
+
+        public ExampleData(params (T1, T2, T3, T4, T5, T6, T7, T8)[] values)
+        {
+            AddRange(values);
+        }
+
+        public void Add(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8)
+        {
+            AddRow(p1, p2, p3, p4, p5, p6, p7, p8);
+        }
+
+        public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8)[] values)
+        {
+            AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7, x.p8 }));
+        }
+    }
+
+
+
+    public class ExampleData<T1, T2, T3, T4, T5, T6, T7, T8, T9> : ExampleData
+    {
+        public ExampleData(IEnumerable<(T1, T2, T3, T4, T5, T6, T7, T8, T9)> values)
+        {
+            AddRange(values.ToArray());
+        }
+
+        public ExampleData(params (T1, T2, T3, T4, T5, T6, T7, T8, T9)[] values)
+        {
+            AddRange(values);
+        }
+
+        public void Add(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9)
+        {
+            AddRow(p1, p2, p3, p4, p5, p6, p7, p8, p9);
+        }
+
+        public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9)[] values)
+        {
+            AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7, x.p8, x.p9 }));
+        }
+    }
+
+
+
+    public class ExampleData<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : ExampleData
+    {
+        public ExampleData(IEnumerable<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)> values)
+        {
+            AddRange(values.ToArray());
+        }
+
+        public ExampleData(params (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)[] values)
+        {
+            AddRange(values);
+        }
+
+        public void Add(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9, T10 p10)
+        {
+            AddRow(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10);
+        }
+
+        public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9, T10 p10)[] values)
+        {
+            AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7, x.p8, x.p9, x.p10 }));
+        }
+    }
 }

@@ -9,6 +9,7 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
@@ -44,6 +45,8 @@ namespace FinderOuter.ViewModels
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);
+
+            SetExamples(GetExampleData());
         }
 
 
@@ -52,9 +55,6 @@ namespace FinderOuter.ViewModels
         public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are missing " +
             $"some words. Enter words that are known and replace the missing ones with the symbol defined by " +
             $"{nameof(MissingChar)} parameter.{Environment.NewLine}" +
-            $"The passphrase box is for the optional passphrase used by BIP-39. Leave empty if it wasn't used.{Environment.NewLine}" +
-            $"The additional info box is for entering either an address, a public or private key from the child keys derived " +
-            $"from this mnemonic.{Environment.NewLine}" +
             $"The key index is the zero-based index of the entered key/address (first address is 0, second is 1,...)" +
             $"{Environment.NewLine}" +
             $"The path is the BIP-32 defined path of the child extended key (eg. m/44'/0'/0')";
@@ -154,118 +154,173 @@ namespace FinderOuter.ViewModels
 
         public void Example()
         {
-            int total = 5;
+            object[] ex = GetNextExample();
 
-            switch (exampleIndex)
+            Mnemonic = (string)ex[0];
+            MissingChar = (char)ex[1];
+
+            int temp1 = (int)ex[2];
+            Debug.Assert(temp1 < WordListsList.Count());
+            SelectedWordListType = WordListsList.ElementAt(temp1);
+
+            int temp2 = (int)ex[3];
+            Debug.Assert(temp2 < MnemonicTypesList.Count());
+            SelectedMnemonicType = MnemonicTypesList.ElementAt(temp2);
+
+            int temp3 = (int)ex[4];
+            Debug.Assert(temp3 < MnemonicTypesList.Count());
+            SelectedElectrumMnType = ElectrumMnemonicTypesList.ElementAt(temp3);
+
+            PassPhrase = (string)ex[5];
+            KeyPath = (string)ex[6];
+            AdditionalInfo = (string)ex[7];
+
+            int temp4 = (int)ex[8];
+            Debug.Assert(temp4 < InputTypeList.Count());
+            SelectedInputType = InputTypeList.ElementAt(temp4);
+
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[9]}";
+        }
+
+        private ExampleData GetExampleData()
+        {
+            return new ExampleData<string, char, int, int, int, string, string, string, int, string>()
             {
-                case 0:
-                    Mnemonic = "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic";
-                    SelectedWordListType = BIP0039.WordLists.English;
-                    SelectedMnemonicType = MnemonicTypes.BIP39;
-                    PassPhrase = "AnExamplePassPhrase";
-                    MissingChar = '*';
-                    AdditionalInfo = "1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN";
-                    SelectedInputType = InputTypeList.First();
-                    KeyPath = "m/44'/0'/0'/0/0";
-
-                    Result.Message = $"This is example 1 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
-                                     $"It is missing one word (grace) and it should take ~1 second to find it." +
-                                     $"{Environment.NewLine}It creates the following addresses:{Environment.NewLine}" +
-                                     $"{Environment.NewLine}" +
-                                     $"{Environment.NewLine}" +
-                                     $"{Environment.NewLine}" +
-                                     $"{Environment.NewLine}";
-                    break;
-                case 1:
-                    Mnemonic = "ozone - grab fiber curtain grace pudding thank - elder eight picnic";
-                    SelectedWordListType = BIP0039.WordLists.English;
-                    SelectedMnemonicType = MnemonicTypes.BIP39;
-                    PassPhrase = "$4f9Asf*vX#4bX@7";
-                    MissingChar = '-';
-                    AdditionalInfo = "bc1ql5swedpywx3kjq4grv9qmlngapdf6xumv7f2ew";
-                    SelectedInputType = InputTypeList.First();
-                    KeyPath = "m/84'/0'/0'/0/4";
-
-                    Result.Message = $"This is example 2 out of {total} taken from BIP-39 test vectors.{Environment.NewLine}" +
-                                     $"It is missing two word (drill, cruise) and it should take ~1 hour to find them." +
-                                     $"{Environment.NewLine}This example shows how to use a different missing char, " +
-                                     $"input type, path, key index.{Environment.NewLine}" +
-                                     $"It creates the following addresses:{Environment.NewLine}" +
-                                     $"m/84'/0'/0'/0/0: bc1q4tkug9kdjdwqsytku6kjqmh8l5ack7r807y6xw{Environment.NewLine}" +
-                                     $"m/84'/0'/0'/0/1: bc1q2jd2nm87up6v52tx5dmlph60z4exwlm0z2ljms{Environment.NewLine}" +
-                                     $"m/84'/0'/0'/0/2: bc1q9wc94vnv795ldevgggevry0evgz2n50tz9g3y0{Environment.NewLine}" +
-                                     $"m/84'/0'/0'/0/3: bc1qfwlp044ca3ynpk2pvq69dv9huyfq5qy5nn32j2{Environment.NewLine}" +
-                                     $"m/84'/0'/0'/0/4: bc1ql5swedpywx3kjq4grv9qmlngapdf6xumv7f2ew{Environment.NewLine}";
-                    break;
-                case 2:
-                    Mnemonic = "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil * fabuleux pizza diminuer gagner oisillon trafic imposer";
-                    SelectedWordListType = BIP0039.WordLists.French;
-                    SelectedMnemonicType = MnemonicTypes.BIP39;
-                    PassPhrase = "";
-                    MissingChar = '*';
-                    AdditionalInfo = "L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs";
-                    SelectedInputType = InputTypeList.ElementAt(5);
-                    KeyPath = "m/0/2";
-
-                    Result.Message = $"This is example 3 out of {total} with a random mnemonic.{Environment.NewLine}" +
-                                     $"It is missing one word (lézard) and it should take ~1 second to find it." +
-                                     $"{Environment.NewLine}This example shows how to use a different language and " +
-                                     $"input type.{Environment.NewLine}" +
-                                     $"It creates the following keys:{Environment.NewLine}" +
-        $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd: L1ac6reGcRagt1oSRUwPJzY6mNMBHAzbB8sfz6LJ8fCBwxzXD6v2{Environment.NewLine}" +
-        $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
-        $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
-                    break;
-                case 3:
-                    Mnemonic = "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil * fabuleux pizza diminuer gagner oisillon trafic imposer";
-                    SelectedWordListType = BIP0039.WordLists.French;
-                    SelectedMnemonicType = MnemonicTypes.BIP39;
-                    PassPhrase = "";
-                    MissingChar = '*';
-                    AdditionalInfo = "32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z";
-                    SelectedInputType = InputTypeList.ElementAt(3);
-                    KeyPath = "m/0/2";
-
-                    Result.Message = $"This is example 4 out of {total} with a random mnemonic.{Environment.NewLine}" +
-                                     $"It is missing one word (lézard) and it should take ~1 second to find it." +
-                                     $"{Environment.NewLine}This example shows how to use a different language and " +
-                                     $"input type (nested SegWit address or P2SH-P2WPKH).{Environment.NewLine}" +
-                                     $"It creates the following keys:{Environment.NewLine}" +
-        $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd: L1ac6reGcRagt1oSRUwPJzY6mNMBHAzbB8sfz6LJ8fCBwxzXD6v2{Environment.NewLine}" +
-        $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP: L4S7X4KFCHakg12YZ2d2wft7oXVKfGomuWh4b9y3ombXz9aiZ29B{Environment.NewLine}" +
-        $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z: L3YAaUUnQHMJLT63AntZBZ2Yda7rYeW784mfaaC48SpQJyqA2gTs{Environment.NewLine}";
-                    break;
-                case 4:
-                    Mnemonic = "duck firm october practice soccer * result regret unveil * uncle ginger";
-                    SelectedWordListType = BIP0039.WordLists.English;
-                    SelectedMnemonicType = MnemonicTypes.BIP39;
-                    PassPhrase = "";
-                    MissingChar = '*';
-                    AdditionalInfo = "L5fdNeFhX5Kgqnmbn6urPVt77eUocpbCF9f2ScEMu2HZwiFL3Viw";
-                    SelectedInputType = InputTypeList.ElementAt(5);
-                    KeyPath = "m/0'/0'";
-
-                    Result.Message = $"This is example 5 out of {total} with a random mnemonic.{Environment.NewLine}" +
-                                     $"It is missing 2 words (coast, slow) so it runs in parallel." +
-                                     $"{Environment.NewLine}" +
-                                     $"The interesting thing about this example is the usage of all hardened indexes " +
-                                     $"and a child private key as the extra input. Since there is no ECC involved the " +
-                                     $"loop runs at maximum speed utilizing the entire CPU power avoiding issue #9. " +
-                                     $"It should take about a minute to check the entire 4,194,304 mnemonics." +
-                                     $"{Environment.NewLine}" +
-                                     $"Notice the usage of progress bar only in parallel.";
-                    break;
-
-                default:
-                    Result.Message = "Invalid example index was given (this is a bug).";
-                    break;
-            }
-
-            exampleIndex++;
-            if (exampleIndex >= total)
-            {
-                exampleIndex = 0;
-            }
+                {
+                    "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic",
+                    '*',
+                    0, // WordList
+                    0, // MnemonicType
+                    0, // Electrum mnemonic type
+                    "AnExamplePassPhrase",
+                    "m/44'/0'/0'/0/0",
+                    "1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN",
+                    0,
+                    $"BIP-39 test vectors.{Environment.NewLine}" +
+                    $"This example is missing one word (grace).{Environment.NewLine}" +
+                    $"It is using a BIP-44 specified path (m/44'/0'/0'/0) and we have the first non-hardened address " +
+                    $"from the list of addresses it can produce (in a zero based index system it is address 0) so the " +
+                    $"full path will be m/44'/0'/0'/0/0.{Environment.NewLine}" +
+                    $"It also has an optional passphrase.{Environment.NewLine}" +
+                    $"The following addresses with their private keys are derived from it:{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/0: 1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN Kybku8EdkM3ndLU6gnWhATyn67WUsRqJENZT5xKttPDFbMrPFcBn{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/1: 1Ga41FCgn5f196Bp5aQVijN61rHwE8asUk L21gjCRzGPd9rQFi7wgryCaH4EjqDYpJqq6bux9Db9PmbvXV5wVy{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/2: 142FTStohZfzH563BL35gCX11CNBg8HDfv Kwy7EuvNH2E178irnBJMxFjytCSMkAupXHZiRtcgGSiBTPJy5gUt{Environment.NewLine}" +
+                    $"Estimated time: <2 sec"
+                },
+                {
+                    "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic",
+                    '*',
+                    0, // WordList
+                    0, // MnemonicType
+                    0, // Electrum mnemonic type
+                    "AnExamplePassPhrase",
+                    "m/44'/0'/0'/0/2",
+                    "Kwy7EuvNH2E178irnBJMxFjytCSMkAupXHZiRtcgGSiBTPJy5gUt",
+                    5,
+                    $"BIP-39 test vectors.{Environment.NewLine}" +
+                    $"This example is missing one word (grace).{Environment.NewLine}" +
+                    $"Same as previous example but we have the 3rd private key (at index=2) instead, so the path is " +
+                    $"m/44'/0'/0'/0/2 this time.{Environment.NewLine}" +
+                    $"The following addresses with their private keys are derived from it:{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/0: 1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN Kybku8EdkM3ndLU6gnWhATyn67WUsRqJENZT5xKttPDFbMrPFcBn{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/1: 1Ga41FCgn5f196Bp5aQVijN61rHwE8asUk L21gjCRzGPd9rQFi7wgryCaH4EjqDYpJqq6bux9Db9PmbvXV5wVy{Environment.NewLine}" +
+                    $"m/44'/0'/0'/0/2: 142FTStohZfzH563BL35gCX11CNBg8HDfv Kwy7EuvNH2E178irnBJMxFjytCSMkAupXHZiRtcgGSiBTPJy5gUt{Environment.NewLine}" +
+                    $"Estimated time: <2 sec"
+                },
+                {
+                    "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil - fabuleux pizza diminuer gagner oisillon trafic imposer",
+                    '-',
+                    3, // WordList
+                    0, // MnemonicType
+                    0, // Electrum mnemonic type
+                    "",
+                    "m/0/0",
+                    "3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd",
+                    3,
+                    $"random.{Environment.NewLine}" +
+                    $"This example is missing one word (lézard).{Environment.NewLine}" +
+                    $"Note the usage of a different language (French), different derivation path (BIP-141 m/0), different " +
+                    $"missing character type and different extra input type (nested SegWit address).{Environment.NewLine}" +
+                    $"The following addresses are derived from it:{Environment.NewLine}" +
+                    $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd{Environment.NewLine}" +
+                    $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP{Environment.NewLine}" +
+                    $"m/0/2: 32tpfpxY5KG7Bdqf8m8cthoVcyALjvBk5z{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "panda eyebrow bullet gorilla call smoke muffin * mesh discover soft ostrich alcohol speed nation flash devote level hobby quick inner * ghost inside",
+                    '*',
+                    0, // WordList
+                    0, // MnemonicType
+                    0, // Electrum mnemonic type
+                    "$4f9Asf*vX#4bX@7",
+                    "m/84'/0'/0'/0/4",
+                    "bc1qzqm9vplw0fkk7t9dka82quer95e77levpppmj9",
+                    0,
+                    $"BIP-39 test vectors.{Environment.NewLine}" +
+                    $"This example is missing two words (taste, drive).{Environment.NewLine}" +
+                    $"Note the usage of a different word length (24), different derivation path (BIP-84 m/84'/0'/0'/0) and " +
+                    $"different extra input type (5th bech32 address at index 4).{Environment.NewLine}" +
+                    $"Also note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"This is currently affected by issue #9 and runs slower than it should.{Environment.NewLine}" +
+                    $"The following addresses are derived from it:{Environment.NewLine}" +
+                    $"m/84'/0'/0'/0/0: bc1qdw0n7ausyak5xeng2e524v0sfwpt0dh8e785pr{Environment.NewLine}" +
+                    $"m/84'/0'/0'/0/1: bc1q9qhpj3vmgfxxvmf8wm9m67a99l0uqm922nwp8p{Environment.NewLine}" +
+                    $"m/84'/0'/0'/0/2: bc1qkfaq84rdaevpzz3hy04gnmfm76qm3kqdhp5p3r{Environment.NewLine}" +
+                    $"m/84'/0'/0'/0/3: bc1qjdx97svvkqxkvs7g3402ksyd80fk4l9ddlvje2{Environment.NewLine}" +
+                    $"m/84'/0'/0'/0/4: bc1qzqm9vplw0fkk7t9dka82quer95e77levpppmj9{Environment.NewLine}" +
+                    $"Estimated time: <7 min"
+                },
+                {
+                    "duck firm october practice soccer * result regret unveil * uncle ginger",
+                    '*',
+                    0, // WordList
+                    0, // MnemonicType
+                    0, // Electrum mnemonic type
+                    null,
+                    "m/0'/0'",
+                    "L5fdNeFhX5Kgqnmbn6urPVt77eUocpbCF9f2ScEMu2HZwiFL3Viw",
+                    5,
+                    $"random.{Environment.NewLine}" +
+                    $"This example is missing two words (coast, slow).{Environment.NewLine}" +
+                    $"This is an attempt to address issue #9. Whenever there is no non-hardened indices in the path " +
+                    $"there won't be any ECC involved ergo the code can utilize the entire CPU power and runs at maximum " +
+                    $"efficiency.{Environment.NewLine}" +
+                    $"Estimated time: <1 min"
+                },
+                {
+                    "wild father tree among universe such mobile favorite target dynamic * identify",
+                    '*',
+                    0, // WordList
+                    1, // MnemonicType
+                    2, // Electrum mnemonic type
+                    null,
+                    "m/0'/0/0",
+                    "bc1q4794m2uuw9jmjszmplfj4wvvr5j272fpnx2cse",
+                    0,
+                    $"Electrum test vectors.{Environment.NewLine}" +
+                    $"This example is missing 1 word (credit).{Environment.NewLine}" +
+                    $"Note the usage of Electrum mnemonic type which mandates selecting an Electrum mnemonic type " +
+                    $"(SegWit here).{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    "wild father tree among universe such * favorite target dynamic * identify",
+                    '*',
+                    0, // WordList
+                    1, // MnemonicType
+                    2, // Electrum mnemonic type
+                    null,
+                    "m/0'/0/0",
+                    "bc1q4794m2uuw9jmjszmplfj4wvvr5j272fpnx2cse",
+                    0,
+                    $"Electrum test vectors.{Environment.NewLine}" +
+                    $"This example is missing 2 words (mobile, credit).{Environment.NewLine}" +
+                    $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
+                    $"Estimated time: <9 sec"
+                },
+            };
         }
     }
 }

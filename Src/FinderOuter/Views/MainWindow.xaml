@@ -117,7 +117,7 @@
                  Grid.Row="2">
       <ProgressBar.Styles>
         <Style Selector="ProgressBar /template/ Border">
-          <Setter Property="CornerRadius" Value="18"/>
+          <Setter Property="CornerRadius" Value="0,20,20,0"/>
         </Style>
       </ProgressBar.Styles>
     </ProgressBar>
