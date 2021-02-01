@@ -1503,6 +1503,30 @@ namespace FinderOuter.Services
                 return;
             else
             {
+                if (missCount == 0)
+                {
+                    try
+                    {
+                        if (mnType == MnemonicTypes.BIP39)
+                        {
+                            using BIP0039 temp = new BIP0039(mnemonic, wl, pass);
+                        }
+                        else if (mnType == MnemonicTypes.Electrum)
+                        {
+                            using ElectrumMnemonic temp = new ElectrumMnemonic(mnemonic, wl, pass);
+                        }
+
+                        report.Pass($"Given mnemonic is a valid {mnType}.");
+                    }
+                    catch (Exception ex)
+                    {
+                        report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}.");
+                    }
+
+                    return;
+                }
+
+
                 mnBytes = GetSeedByte(words.Length, maxWordLen);
 
                 wordBytes = new Dictionary<uint, byte[]>(2048);
