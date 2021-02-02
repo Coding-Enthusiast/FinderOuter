@@ -50,7 +50,7 @@ namespace FinderOuter.ViewModels
         public override string Description =>
             $"This option can recover missing characters in a mini private key." +
             $"{Environment.NewLine}" +
-            $"Enter the mini key (22 or 30 characters long starting with S) in first box while replacing its missing " +
+            $"Enter the mini key (22 or 26 or 30 characters long starting with S) in first box while replacing its missing " +
             $"characters with the specified {nameof(MissingChar)} and enter the " +
             $"corresponding address in second box and click Find button.";
 

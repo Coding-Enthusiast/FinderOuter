@@ -52,12 +52,13 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Mnemonic";
-        public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are missing " +
-            $"some words. Enter words that are known and replace the missing ones with the symbol defined by " +
+        public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are " +
+            $"missing some words. It supports both BIP39 and Electrum standards.{Environment.NewLine}" +
+            $"Enter words that are known and replace the missing ones with the symbol defined by " +
             $"{nameof(MissingChar)} parameter.{Environment.NewLine}" +
             $"The key index is the zero-based index of the entered key/address (first address is 0, second is 1,...)" +
             $"{Environment.NewLine}" +
-            $"The path is the BIP-32 defined path of the child extended key (eg. m/44'/0'/0')";
+            $"The path is the full BIP-32 defined path of the child key (eg. m/44'/0'/0'/0)";
 
         public MnemonicSevice MnService { get; }
 

@@ -27,7 +27,7 @@
     </StackPanel>
 
     <TextBox Text="{Binding ExtraInput}"
-             Watermark="Extra input to check against (address)"
+             Watermark="Extra input to check against (address, or public key)"
              Grid.Column="0"
              Grid.Row="1"/>
     <ComboBox Items="{Binding ExtraInputTypeList}"

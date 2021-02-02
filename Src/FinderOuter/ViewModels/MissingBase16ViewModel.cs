@@ -45,9 +45,9 @@ namespace FinderOuter.ViewModels
 
         public override string OptionName => "Missing Base16";
         public override string Description => $"Helps you recover missing Base-16 (hexadecimal) characters in private keys. " +
-            $"Since unlike WIF (Base-58) this format has no checksum you will have to enter an additional data to check each " +
-            $"result with. Currently only an address is accepted." +
-            $"{Environment.NewLine}" +
+            $"Since unlike WIF (Base-58) this format has no checksum, all combinations with any character is correct. " +
+            $"This is why the code has to check each combination against the additional data which can be an address or a " +
+            $"public key.{Environment.NewLine}" +
             $"Enter the base-16 string and replace its missing characters with the symbol defined by {nameof(MissingChar)} " +
             $"parameter and press Find.";
 
