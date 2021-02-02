@@ -1,9 +1,21 @@
-### Release ?.?.? (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.6.0.0...master)
+### Next Release (future ideas)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.7.0.0...master)
 * Finding bip32 key path
 * Password recovery
 * SIMD support
 * A help window
+
+### Release 0.7.0 (2021-02-02)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.6.0.0...v0.7.0.0)
+* General user interface improvements
+* AvaloniaUI is updated to version 0.10
+* Progressbar now shows the progress percentage
+* A warning is added to MainWindow to inform those who build from source and forget to use `-release` (ie. if they run FinderOuter
+in Debug mode by mistake)
+* Menu (help and about windows) is removed
+* Examples are improved, some new ones are added and the button is now showing the count and current example index
+* Recovery option descriptions are slightly improved
+* Fixed a bug in mnemonic recovery option when user entered a mnemonic with no missing words
 
 ### Release 0.6.0 (2020-12-24)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.5.0.0...v0.6.0.0)
