@@ -26,6 +26,9 @@ Contribution is always welcome. Please report any bugs you find or any improveme
 5. Some parts have tooltips for extra explanation
 6. Click Find button
 7. See the progress and the reports
+8. Progressbar showing the progress percentage shows up for options that use multi-threading 
+(take more than a couple of seconds to complete)
+9. All recovery options come with examples, click this button repeatedly to cycle through them
 
 ![Preview](/Doc/Images/MainPreview.jpg)
 
