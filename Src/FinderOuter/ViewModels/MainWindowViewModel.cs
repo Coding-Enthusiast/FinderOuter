@@ -22,6 +22,7 @@ namespace FinderOuter.ViewModels
                 new MissingBase16ViewModel(),
                 new MissingMiniPrivateKeyViewModel(),
                 new MissingMnemonicViewModel(),
+                new MissingBip32PathViewModel(),
             };
 
             WinMan = new WindowManager();
@@ -29,7 +30,7 @@ namespace FinderOuter.ViewModels
 
 
 
-        public string WindowTitle
+        public static string WindowTitle
         {
             get
             {
@@ -67,6 +68,9 @@ namespace FinderOuter.ViewModels
 #endif
             }
         }
+
+        public string DebugWarning => "Warning: Debug mode detected. Build and run in release mode for faster performance.";
+
         public bool IsFindButtonVisible => SelectedOption != null;
 
 

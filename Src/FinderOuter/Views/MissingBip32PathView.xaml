@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.MissingBip32PathView">
+
+  <Design.DataContext>
+    <vm:MissingBip32PathViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
+    <TextBox Text="{Binding Mnemonic}"
+             Watermark="Mnemonic (seed phrase), separate each word with a space"
+             AcceptsReturn="True"
+             Height="86"
+             Grid.Column="0"
+             Grid.Row="0"/>
+    <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
+      <ComboBox Items="{Binding WordListsList}"
+                SelectedItem="{Binding SelectedWordListType}"/>
+      <ComboBox Items="{Binding MnemonicTypesList}"
+                SelectedItem="{Binding SelectedMnemonicType}"/>
+    </StackPanel>
+
+    <TextBox Text="{Binding PassPhrase}"
+             Watermark="PassPhrase (optional)"
+             Grid.Column="0"
+             Grid.Row="1"/>
+
+    <ComboBox Items="{Binding ElectrumMnemonicTypesList}"
+              SelectedItem="{Binding SelectedElectrumMnType}"
+              IsVisible="{Binding IsElectrumTypesVisible}"
+              ToolTip.Tip="Electrum mnemonic type"
+              Grid.Column="1"
+              Grid.Row="1"/>
+
+    <TextBox Text="{Binding AdditionalInfo}"
+             Watermark="Additional info (preferably a private key or public key, if not enter an address)"
+             Grid.Column="0"
+             Grid.Row="2"/>
+    <ComboBox Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"
+              Grid.Column="1"
+              Grid.Row="2">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+
+  </Grid>
+</UserControl>

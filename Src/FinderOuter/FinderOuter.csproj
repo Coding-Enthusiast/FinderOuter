@@ -17,14 +17,14 @@
   <PropertyGroup>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Compile Update="**\*.xaml.cs">
       <DependentUpon>%(Filename)</DependentUpon>
@@ -36,21 +36,21 @@
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Remove="Views\AboutView.xaml" />
-    <AvaloniaResource Remove="Views\Bip32PathView.xaml" />
     <AvaloniaResource Remove="Views\HelpView.xaml" />
     <AvaloniaResource Remove="Views\MessageSignatureView.xaml" />
     <AvaloniaResource Remove="Views\MissingBase16View.xaml" />
     <AvaloniaResource Remove="Views\MissingBase58View.xaml" />
+    <AvaloniaResource Remove="Views\MissingBip32PathView.xaml" />
     <AvaloniaResource Remove="Views\MissingMiniPrivateKeyView.xaml" />
     <AvaloniaResource Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Views\AboutView.xaml" />
-    <None Remove="Views\Bip32PathView.xaml" />
     <None Remove="Views\HelpView.xaml" />
     <None Remove="Views\MessageSignatureView.xaml" />
     <None Remove="Views\MissingBase16View.xaml" />
     <None Remove="Views\MissingBase58View.xaml" />
+    <None Remove="Views\MissingBip32PathView.xaml" />
     <None Remove="Views\MissingMiniPrivateKeyView.xaml" />
     <None Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
@@ -71,9 +71,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Views\Bip32PathView.xaml">
+    <AvaloniaXaml Include="Views\MissingBip32PathView.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </EmbeddedResource>
+    </AvaloniaXaml>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\AboutView.xaml">
@@ -101,11 +101,5 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Views\Bip32PathView.xaml.cs">
-      <DependentUpon>Bip32PathView.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\MissingBase58View.xaml.cs">
-      <DependentUpon>MissingBase58View.xaml</DependentUpon>
-    </Compile>
   </ItemGroup>
 </Project>

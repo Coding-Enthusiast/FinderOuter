@@ -1,4 +1,4 @@
-﻿// The FinderOuter
+// The FinderOuter
 // Copyright (c) 2020 Coding Enthusiast
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
@@ -8,11 +8,11 @@ using Avalonia.Markup.Xaml;
 
 namespace FinderOuter.Views
 {
-    public class Bip32PathView : UserControl
+    public class MissingBip32PathView : UserControl
     {
-        public Bip32PathView()
+        public MissingBip32PathView()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
         private void InitializeComponent()

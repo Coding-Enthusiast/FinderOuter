@@ -46,7 +46,7 @@
         </ListBox.DataTemplates>
       </ListBox>
 
-      <TextBlock Text="Warning: Debug mode detected. Build and run in release mode for faster result."
+      <TextBlock Text="{Binding DebugWarning}"
                  IsVisible="{Binding IsDebug}"
                  TextWrapping="Wrap"
                  FontSize="18"

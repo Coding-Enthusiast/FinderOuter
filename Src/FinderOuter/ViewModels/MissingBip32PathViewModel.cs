@@ -13,9 +13,9 @@ using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
-    public class Bip32PathViewModel : OptionVmBase
+    public class MissingBip32PathViewModel : OptionVmBase
     {
-        public Bip32PathViewModel()
+        public MissingBip32PathViewModel()
         {
             WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
 
