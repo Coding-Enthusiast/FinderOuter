@@ -20,7 +20,7 @@
 
   <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
-    <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
+    <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
       <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
                Grid.Row="0">
         <ListBox.Styles>
@@ -57,7 +57,13 @@
       <Image Source="/Assets/Icon.ico" Height="150" Width="150" Margin="2" Grid.Row="2"/>
       <Image Source="/Assets/Avalonia.jpg" Height="150" Width="150" Margin="2" Grid.Row="3"/>
 
-      <Border BorderThickness="1" BorderBrush="Blue" Margin="3" Grid.Row="4">
+      <Button Content="About"
+              Command="{Binding OpenAbout}"
+              Width="70"
+              Grid.Column="0"
+              Grid.Row="4"/>
+      
+      <Border BorderThickness="1" BorderBrush="Blue" Margin="3" Grid.Row="5">
         <TextBlock Text="{Binding VerString, Mode=OneTime}"
                    FontWeight="Bold"
                    FontFamily="Comic Sans MS"
