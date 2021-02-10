@@ -1477,10 +1477,10 @@ namespace FinderOuter.Services
             return value switch
             {
                 ElectrumMnemonic.MnemonicType.Undefined => "m",
-                ElectrumMnemonic.MnemonicType.Standard => "m/0",
-                ElectrumMnemonic.MnemonicType.SegWit => "m/0'/0",
-                ElectrumMnemonic.MnemonicType.Legacy2Fa => "m/1'/0",
-                ElectrumMnemonic.MnemonicType.SegWit2Fa => "m/1'/0",
+                ElectrumMnemonic.MnemonicType.Standard => "m/0/KEY_INDEX",
+                ElectrumMnemonic.MnemonicType.SegWit => "m/0'/0/KEY_INDEX",
+                ElectrumMnemonic.MnemonicType.Legacy2Fa => "m/1'/0/KEY_INDEX",
+                ElectrumMnemonic.MnemonicType.SegWit2Fa => "m/1'/0/KEY_INDEX",
                 _ => "m",
             };
         }
