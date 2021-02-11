@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.com/Coding-Enthusiast/FinderOuter.svg?branch=master)](https://travis-ci.com/Coding-Enthusiast/FinderOuter)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/License)
 [![Target](https://img.shields.io/badge/dynamic/xml?color=%23512bd4&label=target&query=%2F%2FTargetFramework%5B1%5D&url=https%3A%2F%2Fraw.githubusercontent.com%2FCoding-Enthusiast%2FFinderOuter%2Fmaster%2FSrc%2FFinderOuter%2FFinderOuter.csproj&logo=.net)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj)
+[![Downloads](https://img.shields.io/github/downloads/Coding-Enthusiast/FinderOuter/total)](https://github.com/Coding-Enthusiast/FinderOuter/releases)
 
 # The FinderOuter
 The FinderOuter is a bitcoin recovery tool that focuses on making the recovery process easy for everyone with any level of
@@ -41,28 +42,30 @@ actually invalid signature), the code can search to find the common issues that 
 This option helps recover any base-58 encoded string with a checksum that is missing some characters. For example a damaged 
 paper wallet where some characters are erased/unreadable. The position of missing characters must be known.  
 It works for (1) [WIFs](https://en.bitcoin.it/wiki/Wallet_import_format) (Base-58 encoded private key) 
-(2) [Addresses](https://en.bitcoin.it/wiki/Address) (Base-58 encoded P2PKH address) 
+(2) [Addresses](https://en.bitcoin.it/wiki/Address) (Base-58 encoded P2PKH or P2SH address) 
 (3) [BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) (Base-58 encoded encrypted private key).  
 
 There is also a "special case" where a compressed private key is missing 3 characters at _unknown_ positions.
 
 #### 3. Missing Base-16 characters
-This option is similar to previous feature but works for base-16 (hexadecimal) private keys. It currently requires an address
-and only checks compressed public keys. Unlike the other options, this one is very slow since it depends on ECC and that is not
-yet optimized.
+This option is similar to previous feature but works for base-16 (hexadecimal) private keys. Since there is no checksum in this
+encoding it requires an additional input to check each permutation against. It accepts any address type and public keys.
+This option is slower in comparison because it uses ECC and that is not yet optimized.
 
 #### 4. Missing mini-privatekey characters
-This option is similar to 2 and 3 but works for mini-privatekeys (eg. SzavMBLoXU6kDrqtUVmffv). It requires an address to check
+This option is similar to 2 and 3 but works for [mini-privatekeys](https://en.bitcoin.it/wiki/Mini_private_key_format)
+(eg. SzavMBLoXU6kDrqtUVmffv). It requires the corresponding address or public key of the minikey to check
 each possible key against, as a result it is also slower since it depends on ECC and has 2 additional hashes.
 
 #### 5. Missing mnomonic (seed) words 
-This option works for [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonics (others like Electrum will
-be added in the future) that have some words missing. It requires knowing one child key or address created from that seed and the 
-exact path of it.
+This option works for both [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and Electrum mnemonics
+that have some missing words. It requires knowing one child (private/public) key or address created from that seed and the 
+exact derivation path of it.
 
 ## Future plans
 * Optimization is always at the top of the to-do list
 * BIP-32 path finder (user has master key and at least one child key but doesn't know the derivation path)
+* Armory paper backup recovery
 * Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
 
