@@ -13,9 +13,9 @@ using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
@@ -480,6 +480,7 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe bool MoveNext(uint* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
@@ -1377,17 +1378,6 @@ namespace FinderOuter.Services
 
         private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
 
-        private bool TrySetEntropy(string mnemonic, MnemonicTypes mnType)
-        {
-            if (string.IsNullOrWhiteSpace(mnemonic))
-            {
-                return report.Fail("Mnemonic can not be null or empty.");
-            }
-
-            return report.Fail("Not yet implemented.");
-        }
-
-
         public bool TrySetWordList(BIP0039.WordLists wl, out string[] allWords, out int maxWordLen)
         {
             try
@@ -1492,7 +1482,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            // TODO: implement Electrum seeds too
+            // TODO: implement Electrum seed recovery with other word lists (they need normalization)
             if (mnType == MnemonicTypes.Electrum && wl != BIP0039.WordLists.English)
                 report.Fail("Only English words are currently supported for Electrum mnemonics.");
             else if (!TrySetWordList(wl, out allWords, out int maxWordLen))
@@ -1608,27 +1598,6 @@ namespace FinderOuter.Services
 
                 report.Finalize();
             }
-        }
-
-
-        public async Task<bool> FindPath(string mnemonic, string extra, MnemonicTypes mnType, BIP0039.WordLists wl, string passPhrase)
-        {
-            report.Init();
-
-            if (!TrySetEntropy(mnemonic, mnType) && !TrySetWordList(wl, out allWords, out int maxWordLen))
-            {
-                return false;
-            }
-            if (string.IsNullOrWhiteSpace(extra))
-            {
-                return report.Fail("Additioan info can not be null or empty.");
-            }
-            else
-            {
-
-            }
-
-            return report.Fail("Not yet implemented");
         }
     }
 }

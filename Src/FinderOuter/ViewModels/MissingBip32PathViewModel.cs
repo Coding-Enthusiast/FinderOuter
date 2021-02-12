@@ -17,18 +17,25 @@ namespace FinderOuter.ViewModels
     {
         public MissingBip32PathViewModel()
         {
+            InputTypeList = ListHelper.GetEnumDescItems<Bip32PathService.SeedType>().ToArray();
             WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
+            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
+
+            SelectedInputType = InputTypeList.First();
+            SelectedExtraInputType = ExtraInputTypeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Mnemonic,
-                x => x.AdditionalInfo,
+                x => x.Input,
+                x => x.ExtraInput,
                 x => x.Result.CurrentState,
-                (mn, input, state) => !string.IsNullOrEmpty(mn) && !string.IsNullOrEmpty(input) && state != State.Working);
+                (input1, input2, state) => !string.IsNullOrEmpty(input1) && !string.IsNullOrEmpty(input2) && state != State.Working);
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            MnemonicTypesList = Enum.GetValues(typeof(MnemonicTypes)).Cast<MnemonicTypes>();
+            this.WhenAnyValue(x => x.SelectedInputType)
+                .Subscribe(x => IsMnemonic =
+                           x.Value == Bip32PathService.SeedType.BIP39 || x.Value == Bip32PathService.SeedType.Electrum);
 
-            MnService = new MnemonicSevice(Result);
+            PathService = new Bip32PathService(Result);
         }
 
 
@@ -38,17 +45,25 @@ namespace FinderOuter.ViewModels
             "but don't know the path.";
 
 
-        public MnemonicSevice MnService { get; }
+        public Bip32PathService PathService { get; }
 
+        public IEnumerable<DescriptiveItem<Bip32PathService.SeedType>> InputTypeList { get; }
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
-        public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
+        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
 
-        private MnemonicTypes _selMnemonic;
-        public MnemonicTypes SelectedMnemonicType
+        private DescriptiveItem<Bip32PathService.SeedType> _selInType;
+        public DescriptiveItem<Bip32PathService.SeedType> SelectedInputType
         {
-            get => _selMnemonic;
-            set => this.RaiseAndSetIfChanged(ref _selMnemonic, value);
+            get => _selInType;
+            set => this.RaiseAndSetIfChanged(ref _selInType, value);
+        }
+
+        private DescriptiveItem<InputType> _selExtraInType;
+        public DescriptiveItem<InputType> SelectedExtraInputType
+        {
+            get => _selExtraInType;
+            set => this.RaiseAndSetIfChanged(ref _selExtraInType, value);
         }
 
         private BIP0039.WordLists _selWordLst;
@@ -58,15 +73,46 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selWordLst, value);
         }
 
-        private string _mnemonic;
-        public string Mnemonic
+        private bool _isMn;
+        public bool IsMnemonic
         {
-            get => _mnemonic;
-            set => this.RaiseAndSetIfChanged(ref _mnemonic, value);
+            get => _isMn;
+            set => this.RaiseAndSetIfChanged(ref _isMn, value);
+        }
+
+        private string _input;
+        public string Input
+        {
+            get => _input;
+            set
+            {
+                if (value != _input)
+                {
+                    this.RaiseAndSetIfChanged(ref _input, value);
+                    // Guess type
+                    value = value.Trim();
+                    // TODO: next Bitcoin.Net version should fix the issue of not supporting ypub and zpub!
+                    if (value.StartsWith("xprv"))
+                    {
+                        SelectedInputType = InputTypeList.ElementAt(2);
+                    }
+                    else if (value.StartsWith("xpub"))
+                    {
+                        SelectedInputType = InputTypeList.ElementAt(3);
+                    }
+                    else if (value.Contains(" ") &&
+                             SelectedInputType.Value != Bip32PathService.SeedType.BIP39 &&
+                             SelectedInputType.Value != Bip32PathService.SeedType.Electrum)
+                    {
+                        SelectedInputType = InputTypeList.ElementAt(0);
+                    }
+                }
+
+            }
         }
 
         private string _additional;
-        public string AdditionalInfo
+        public string ExtraInput
         {
             get => _additional;
             set => this.RaiseAndSetIfChanged(ref _additional, value);
@@ -82,7 +128,8 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            _ = MnService.FindPath(Mnemonic, AdditionalInfo, SelectedMnemonicType, SelectedWordListType, PassPhrase);
+            PathService.FindPath(Input, SelectedInputType.Value, SelectedWordListType, PassPhrase,
+                                 ExtraInput, SelectedExtraInputType.Value);
         }
     }
 }
