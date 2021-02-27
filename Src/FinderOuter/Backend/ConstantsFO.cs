@@ -9,6 +9,7 @@ namespace FinderOuter.Backend
     {
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
+        public const string ArmoryChars = "asdfghjkwertuion";
         public const string Symbols = "!@#$%^&*_-+=?";
         public const string MissingToolTip = "Onlye these symbols are accepted as a missing character: !@#$%^&*_-+=?";
 
