@@ -59,8 +59,8 @@ namespace FinderOuter.Services
                 new CompactInt((ulong)msgBa.Length).WriteToStream(stream);
                 stream.Write(msgBa);
 
-                using Sha256 hash = new Sha256(true);
-                toSign = hash.ComputeHash(stream.ToByteArray());
+                using Sha256 hash = new Sha256();
+                toSign = hash.ComputeHashTwice(stream.ToByteArray());
 
                 return true;
             }
