@@ -18,10 +18,11 @@
              Grid.Column="0"
              Grid.Row="0"/>
     <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
-      <ComboBox Items="{Binding WordListsList}"
-                SelectedItem="{Binding SelectedWordListType}"/>
       <ComboBox Items="{Binding MnemonicTypesList}"
                 SelectedItem="{Binding SelectedMnemonicType}"/>
+      <ComboBox Items="{Binding WordListsList}"
+                SelectedItem="{Binding SelectedWordListType}"
+                IsVisible="{Binding IsWordListVisible}"/>
     </StackPanel>
 
     <Grid ColumnDefinitions="*,*" Grid.Column="0" Grid.Row="1">

@@ -45,6 +45,7 @@ namespace FinderOuter.ViewModels
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);
+            this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsWordListVisible = x != MnemonicTypes.Armory);
 
             SetExamples(GetExampleData());
         }
@@ -97,6 +98,13 @@ namespace FinderOuter.ViewModels
         {
             get => _isElecTVisible;
             set => this.RaiseAndSetIfChanged(ref _isElecTVisible, value);
+        }
+
+        private bool _isWLVisible;
+        public bool IsWordListVisible
+        {
+            get => _isWLVisible;
+            set => this.RaiseAndSetIfChanged(ref _isWLVisible, value);
         }
 
         public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
