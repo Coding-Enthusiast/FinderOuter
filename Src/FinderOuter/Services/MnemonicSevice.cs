@@ -1537,8 +1537,12 @@ namespace FinderOuter.Services
 
         private async void FindArmory(string mnemonic, char missChar)
         {
+            // TODO: remove this
+            report.AddMessage("Armory recovery option is incomplete.");
+
+
             if (string.IsNullOrWhiteSpace(mnemonic))
-                report.Fail("Mnemonic can not be null or empty.");
+                report.Fail("Recovery phrase can not be null or empty.");
             else
             {
                 string[] split = mnemonic.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
@@ -1635,7 +1639,6 @@ namespace FinderOuter.Services
                 }
 
                 // Pre-computation:
-                
                 byte[] preComp = new byte[32];
                 int miIndex = 0;
                 for (int i = 0; i < 2; i++)
