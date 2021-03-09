@@ -8,7 +8,7 @@
         Height="700" Width="1010"
         x:Class="FinderOuter.Views.MainWindow"
         Icon="/Assets/Icon.ico"
-        Title="{Binding WindowTitle}" FontSize="14">
+        Title="{Binding WindowTitle}" FontSize="14" Background="{DynamicResource BackgroundColor}">
 
   <Design.DataContext>
     <vm:MainWindowViewModel/>
@@ -16,17 +16,19 @@
 
   <Window.Resources>
     <mvvm:StateToBitmapConverter x:Key="imgConv"/>
+    <Color x:Key="BackgroundColor">#FFFBFBFB</Color>
   </Window.Resources>
-
+  
   <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
-    <Grid Margin="5" RowDefinitions="*,auto,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
+    <Grid RowDefinitions="*,auto,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
       <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
                Grid.Row="0">
         <ListBox.Styles>
           <Style Selector="ListBox">
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="TextBlock.Foreground" Value="#FF000000"/>
-            <Setter Property="Background" Value="#FFF2F2F2"/>
+            <Setter Property="Background" Value="#e5e5e5"/>
             <Setter Property="BorderBrush" Value="#FF000000"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
@@ -36,6 +38,10 @@
           <Style Selector="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="12"/>
+          </Style>
+
+          <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BackgroundColor}"/>
           </Style>
         </ListBox.Styles>
 
@@ -54,15 +60,13 @@
                  Foreground="Red"
                  Margin="3"
                  Grid.Row="1"/>
-      <Image Source="/Assets/Icon.ico" Height="150" Width="150" Margin="2" Grid.Row="2"/>
-      <Image Source="/Assets/Avalonia.jpg" Height="150" Width="150" Margin="2" Grid.Row="3"/>
 
       <Button Content="About"
               Command="{Binding OpenAbout}"
               Width="70"
               Grid.Column="0"
               Grid.Row="4"/>
-      
+
       <Border BorderThickness="1" BorderBrush="Blue" Margin="3" Grid.Row="5">
         <TextBlock Text="{Binding VerString, Mode=OneTime}"
                    FontWeight="Bold"
@@ -72,7 +76,7 @@
       </Border>
     </Grid>
 
-    <Grid RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="0">
+    <Grid Margin="3,0,0,0" RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="0">
       <Grid ColumnDefinitions="*,auto" Grid.Row="0">
         <Button Content="Find!"
                 Command="{Binding SelectedOption.FindCommand}"
@@ -102,6 +106,7 @@
       <TextBox Text="{Binding SelectedOption.Result.Message, Mode=OneWay}"
                TextWrapping="Wrap"
                AcceptsReturn="True"
+               IsVisible="{Binding IsFindButtonVisible}"
                ScrollViewer.VerticalScrollBarVisibility="Auto"
                IsReadOnly="True"
                Grid.Row="3"/>
