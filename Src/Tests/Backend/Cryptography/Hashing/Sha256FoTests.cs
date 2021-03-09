@@ -750,5 +750,18 @@ namespace Tests.Backend.Cryptography.Hashing
                 Assert.Equal(expected, actual);
             }
         }
+
+        [Fact]
+        public void CompressDouble65Test()
+        {
+            int dataLen = 65;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeDoubleSha(data);
+
+            using Sha256Fo sha = new Sha256Fo();
+            byte[] actual = sha.CompressDouble65(data);
+
+            Assert.Equal(expected, actual);
+        }
     }
 }

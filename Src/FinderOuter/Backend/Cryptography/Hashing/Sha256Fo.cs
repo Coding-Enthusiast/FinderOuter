@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace FinderOuter.Backend.Cryptography.Hashing
@@ -1523,6 +1524,25 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
             // Perform second hash
             DoSecondHash(hPt, wPt);
+        }
+
+        /// <summary>
+        /// Computes double SHA256 hash for
+        /// (data.Length == 65)
+        /// </summary>
+        /// <param name="data">65 byte data</param>
+        public unsafe byte[] CompressDouble65(byte[] data)
+        {
+            Debug.Assert(data != null && data.Length == 65);
+
+            fixed (byte* dPt = &data[0])
+            fixed (uint* hPt = &hashState[0], wPt = &w[0])
+            {
+                Init(hPt);
+                Compress65(dPt, hPt, wPt);
+                DoSecondHash(hPt, wPt);
+                return GetBytes(hPt);
+            }
         }
 
         internal unsafe void DoSecondHash(uint* hPt, uint* wPt)
