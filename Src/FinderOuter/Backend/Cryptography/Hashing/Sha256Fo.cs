@@ -35,7 +35,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <summary>
         /// Size of the hash result in bytes (=32 bytes).
         /// </summary>
-        public int HashByteSize => 32;
+        public const int HashByteSize = 32;
 
         /// <summary>
         /// Size of the blocks used in each round (=64 bytes).
@@ -47,7 +47,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         public uint[] w = new uint[64];
 
 
-        private readonly uint[] Ks =
+        private static readonly uint[] Ks =
         {
             0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
             0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -210,6 +210,135 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
+
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the second block of
+        /// (data.Length == 62) and (wPt[0] to wPt[14] is set to zero and wPt[15] to 496)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public unsafe void Compress62SecondBlock(uint* hPt, uint* wPt)
+        {
+            // w0 to w14 = 0
+            // w15 = 496
+            wPt[16] = 0x00000000;
+            wPt[17] = 0x00c60000;
+            wPt[18] = 0x00000000;
+            wPt[19] = 0xc00031fb;
+            wPt[20] = 0x00000000;
+            wPt[21] = 0x1ef2980c;
+            wPt[22] = 0x000001f0;
+            wPt[23] = 0x1f003001;
+            wPt[24] = 0x018c0000;
+            wPt[25] = 0x1e076c6c;
+            wPt[26] = 0x400095f2;
+            wPt[27] = 0x5bbc0d18;
+            wPt[28] = 0x774a0031;
+            wPt[29] = 0x8739cb9a;
+            wPt[30] = 0x3f7f780a;
+            wPt[31] = 0xde2bdef9;
+            wPt[32] = 0xf12c402b;
+            wPt[33] = 0xd55af419;
+            wPt[34] = 0xe7e7d117;
+            wPt[35] = 0x5c04b8e7;
+            wPt[36] = 0x57ab7422;
+            wPt[37] = 0x0a6654ff;
+            wPt[38] = 0xc08aae86;
+            wPt[39] = 0xf1420679;
+            wPt[40] = 0xda7273ec;
+            wPt[41] = 0x13bb5720;
+            wPt[42] = 0x4c49a91a;
+            wPt[43] = 0x60e3f08d;
+            wPt[44] = 0xba7dbe21;
+            wPt[45] = 0x9ba73cdf;
+            wPt[46] = 0xb9834f89;
+            wPt[47] = 0x8c3e571b;
+            wPt[48] = 0x670ac0aa;
+            wPt[49] = 0xca6921b9;
+            wPt[50] = 0x6c26c8e4;
+            wPt[51] = 0x5eae6abf;
+            wPt[52] = 0x1b3027d5;
+            wPt[53] = 0x7a3b844f;
+            wPt[54] = 0xd034a12b;
+            wPt[55] = 0x68ff3fe4;
+            wPt[56] = 0x00f84d7d;
+            wPt[57] = 0x4f4ddc16;
+            wPt[58] = 0xc5081411;
+            wPt[59] = 0x0d6177c1;
+            wPt[60] = 0xa0e9299b;
+            wPt[61] = 0xd898de59;
+            wPt[62] = 0x87b282d2;
+            wPt[63] = 0xea0e6a56;
+
+
+            CompressBlockWithWSet(hPt, wPt);
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the second block of
+        /// (data.Length == 64) and (wPt[0] is the padding wPt[1] to wPt[14] is set to zero and wPt[15] to 512)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public unsafe void Compress64SecondBlock(uint* hPt, uint* wPt)
+        {
+            // w0 = 0b10000000_00000000_00000000_00000000U
+            // w1 to w14 = 0
+            // w15 = 512
+            wPt[16] = 0x80000000;
+            wPt[17] = 0x01400000;
+            wPt[18] = 0x00205000;
+            wPt[19] = 0x00005088;
+            wPt[20] = 0x22000800;
+            wPt[21] = 0x22550014;
+            wPt[22] = 0x05089742;
+            wPt[23] = 0xa0000020;
+            wPt[24] = 0x5a880000;
+            wPt[25] = 0x005c9400;
+            wPt[26] = 0x0016d49d;
+            wPt[27] = 0xfa801f00;
+            wPt[28] = 0xd33225d0;
+            wPt[29] = 0x11675959;
+            wPt[30] = 0xf6e6bfda;
+            wPt[31] = 0xb30c1549;
+            wPt[32] = 0x08b2b050;
+            wPt[33] = 0x9d7c4c27;
+            wPt[34] = 0x0ce2a393;
+            wPt[35] = 0x88e6e1ea;
+            wPt[36] = 0xa52b4335;
+            wPt[37] = 0x67a16f49;
+            wPt[38] = 0xd732016f;
+            wPt[39] = 0x4eeb2e91;
+            wPt[40] = 0x5dbf55e5;
+            wPt[41] = 0x8eee2335;
+            wPt[42] = 0xe2bc5ec2;
+            wPt[43] = 0xa83f4394;
+            wPt[44] = 0x45ad78f7;
+            wPt[45] = 0x36f3d0cd;
+            wPt[46] = 0xd99c05e8;
+            wPt[47] = 0xb0511dc7;
+            wPt[48] = 0x69bc7ac4;
+            wPt[49] = 0xbd11375b;
+            wPt[50] = 0xe3ba71e5;
+            wPt[51] = 0x3b209ff2;
+            wPt[52] = 0x18feee17;
+            wPt[53] = 0xe25ad9e7;
+            wPt[54] = 0x13375046;
+            wPt[55] = 0x0515089d;
+            wPt[56] = 0x4f0d0f04;
+            wPt[57] = 0x2627484e;
+            wPt[58] = 0x310128d2;
+            wPt[59] = 0xc668b434;
+            wPt[60] = 0x420841cc;
+            wPt[61] = 0x62d311b8;
+            wPt[62] = 0xe59ba771;
+            wPt[63] = 0x85a7a484;
+
+            CompressBlockWithWSet(hPt, wPt);
+        }
 
 
         /// <summary>
@@ -1700,7 +1829,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         // This method will become obsolete soon:
-        internal unsafe void CompressBlock(uint* hPt, uint* wPt)
+        public unsafe void CompressBlock(uint* hPt, uint* wPt)
         {
             for (int i = 16; i < w.Length; i++)
             {
