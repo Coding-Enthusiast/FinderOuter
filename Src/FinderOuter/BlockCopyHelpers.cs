@@ -7,6 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace FinderOuter
 {
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
+    internal struct Block16 { }
+
     [StructLayout(LayoutKind.Sequential, Size = 32)]
     internal struct Block32 { }
 
