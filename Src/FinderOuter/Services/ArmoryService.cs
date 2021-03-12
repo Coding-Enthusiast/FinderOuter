@@ -79,7 +79,6 @@ namespace FinderOuter.Services
 
             // ChainCode is result of HMAC with 2x hash of private key as HMAC key 
             // and "Derive Chaincode from Root Key" as its message
-            byte[] message = Encoding.UTF8.GetBytes("Derive Chaincode from Root Key");
 
             using Sha256Fo sha = new Sha256Fo();
             byte* kPt = stackalloc byte[32 + missingIndexes.Length];
@@ -120,7 +119,6 @@ namespace FinderOuter.Services
                         int mIndexInternal = mIndex;
                         do
                         {
-                            mIndex = mIndexInternal;
                             for (int i = 0; i < missCount2; i++)
                             {
                                 int index = mi[mIndex++];
@@ -275,6 +273,11 @@ namespace FinderOuter.Services
                                     return;
                                 }
                             }
+
+                            // Reset second part for next round
+                            *(Block16*)(kPt + 16) = *(Block16*)(pre + 16);
+                            mIndex = mIndexInternal;
+
                         } while (MoveNext(item2, missCount2));
 
                         // Checking second line reached the end and failed, item2 must be reset to 0
@@ -408,78 +411,79 @@ namespace FinderOuter.Services
                 if (lines.Length != 2 && lines.Length != 4)
                 {
                     report.Fail("Armory back ups are either 2 lines or 4 lines.");
-                    return;
                 }
-                if (lines.Any(x => x.Length != 36))
+                else if (lines.Any(x => x.Length != 36))
                 {
                     report.Fail("Each line has to have 36 characters representing 18 bytes.");
-                    return;
                 }
-                if (lines.Any(line => line.Any(c => !ConstantsFO.ArmoryChars.Contains(c) && c != missChar)))
+                else if (lines.Any(line => line.Any(c => !ConstantsFO.ArmoryChars.Contains(c) && c != missChar)))
                 {
                     report.Fail("Input contains invalid characters.");
-                    return;
-                }
-
-                byte[] key = new byte[32];
-                Split(lines[0], key, 0, out int[] miss1, out uint cs1, out uint mask1);
-                Split(lines[1], key, 16, out int[] miss2, out uint cs2, out uint mask2);
-
-                int missCount = miss1.Length + miss2.Length;
-
-                if (missCount == 0)
-                {
-                    report.AddMessageSafe("The given recovery phrase isn't missing any characters.");
-                    if (mask1 != 0)
-                    {
-                        report.AddMessageSafe("First line of the given recovery phrase is missing its checksum.");
-                        report.AddMessageSafe(EncodeLineWithChecksum(key.SubArray(0, 16)));
-                    }
-                    if (mask2 != 0)
-                    {
-                        report.AddMessageSafe("Second line of the given recovery phrase is missing its checksum.");
-                        report.AddMessageSafe(EncodeLineWithChecksum(key.SubArray(16, 16)));
-                    }
-
-                    return;
-                }
-
-                report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} phrases should be checked.");
-
-                missingIndexes = new int[missCount];
-                Array.Copy(miss1, 0, missingIndexes, 0, miss1.Length);
-                Array.Copy(miss2, 0, missingIndexes, miss1.Length, miss2.Length);
-
-                Stopwatch watch = Stopwatch.StartNew();
-
-                if (lines.Length == 2)
-                {
-                    if (mask1 != 0 && mask2 != 0)
-                    {
-                        await Task.Run(() => Loop2(key, miss1.Length, miss2.Length, mask1, mask2, cs1, cs2));
-                    }
-                    else if (mask1 != 0)
-                    {
-                        await Task.Run(() => Loop2NoCS2(key, miss1.Length, miss2.Length, mask1, cs1));
-                    }
-                    else if (mask2 != 0)
-                    {
-                        await Task.Run(() => Loop2NoCS1(key, miss1.Length, miss2.Length, mask2, cs2));
-                    }
-                    else
-                    {
-                        await Task.Run(() => Loop2NoCS(key, miss1.Length, miss2.Length));
-                    }
                 }
                 else
                 {
+                    byte[] key = new byte[32];
+                    Split(lines[0], key, 0, out int[] miss1, out uint cs1, out uint mask1);
+                    Split(lines[1], key, 16, out int[] miss2, out uint cs2, out uint mask2);
 
+                    int missCount = miss1.Length + miss2.Length;
+
+                    if (missCount == 0)
+                    {
+                        report.AddMessageSafe("The given recovery phrase isn't missing any characters.");
+                        if (mask1 != 0xffff0000)
+                        {
+                            report.AddMessageSafe("First line of the given recovery phrase is missing its checksum.");
+                            report.AddMessageSafe(EncodeLineWithChecksum(key.SubArray(0, 16)));
+                        }
+                        if (mask2 != 0xffff0000)
+                        {
+                            report.AddMessageSafe("Second line of the given recovery phrase is missing its checksum.");
+                            report.AddMessageSafe(EncodeLineWithChecksum(key.SubArray(16, 16)));
+                        }
+
+                        report.Finalize(true);
+                        return;
+                    }
+
+                    report.AddMessageSafe($"Given phrase is missing {missCount:n0} characters.");
+                    report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} phrases should be checked.");
+
+                    missingIndexes = new int[missCount];
+                    Array.Copy(miss1, 0, missingIndexes, 0, miss1.Length);
+                    Array.Copy(miss2, 0, missingIndexes, miss1.Length, miss2.Length);
+
+                    Stopwatch watch = Stopwatch.StartNew();
+
+                    if (lines.Length == 2)
+                    {
+                        if (mask1 != 0 && mask2 != 0)
+                        {
+                            await Task.Run(() => Loop2(key, miss1.Length, miss2.Length, mask1, mask2, cs1, cs2));
+                        }
+                        else if (mask1 != 0)
+                        {
+                            await Task.Run(() => Loop2NoCS2(key, miss1.Length, miss2.Length, mask1, cs1));
+                        }
+                        else if (mask2 != 0)
+                        {
+                            await Task.Run(() => Loop2NoCS1(key, miss1.Length, miss2.Length, mask2, cs2));
+                        }
+                        else
+                        {
+                            await Task.Run(() => Loop2NoCS(key, miss1.Length, miss2.Length));
+                        }
+                    }
+                    else
+                    {
+
+                    }
+
+                    watch.Stop();
+
+                    report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+                    report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
                 }
-
-                watch.Stop();
-
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
 
                 report.Finalize();
             }
