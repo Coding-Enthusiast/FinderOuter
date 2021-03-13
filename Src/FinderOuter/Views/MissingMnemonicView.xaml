@@ -21,8 +21,7 @@
       <ComboBox Items="{Binding MnemonicTypesList}"
                 SelectedItem="{Binding SelectedMnemonicType}"/>
       <ComboBox Items="{Binding WordListsList}"
-                SelectedItem="{Binding SelectedWordListType}"
-                IsVisible="{Binding IsWordListVisible}"/>
+                SelectedItem="{Binding SelectedWordListType}"/>
     </StackPanel>
 
     <Grid ColumnDefinitions="*,*" Grid.Column="0" Grid.Row="1">
