@@ -23,6 +23,7 @@ namespace FinderOuter.ViewModels
                 new MissingMiniPrivateKeyViewModel(),
                 new MissingMnemonicViewModel(),
                 new MissingBip32PathViewModel(),
+                new MissingArmoryViewModel(),
             };
 
             WinMan = new WindowManager();
