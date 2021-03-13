@@ -16,6 +16,7 @@
 
   <PropertyGroup>
     <Deterministic>true</Deterministic>
+    <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
