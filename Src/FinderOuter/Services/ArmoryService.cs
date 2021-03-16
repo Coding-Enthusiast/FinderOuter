@@ -16,7 +16,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -67,6 +66,137 @@ namespace FinderOuter.Services
             string res = EncodeFull(new ReadOnlySpan<byte>(kPt, 32));
             report.AddMessageSafe($"Found the correct recovery phrase:{Environment.NewLine}{res}");
             report.FoundAnyResult = true;
+        }
+
+
+        private unsafe BigInteger ComputeKey(Sha256Fo sha, uint* hPt, uint* wPt, uint* oPt, byte* kPt)
+        {
+            // Compute chain-code
+            // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
+            // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
+            sha.Init(hPt);
+            wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+            wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+            wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+            wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+            wPt[4] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+            wPt[5] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+            wPt[6] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+            wPt[7] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+            wPt[8] = 0b10000000_00000000_00000000_00000000U;
+            // From 9 to 14 remain 0
+            wPt[15] = 256;
+
+            sha.CompressDouble32(hPt, wPt);
+
+            // Use hPt in both iPt and oPt here before it is changed
+            oPt[0] = hPt[0] ^ 0x5c5c5c5cU;
+            oPt[1] = hPt[1] ^ 0x5c5c5c5cU;
+            oPt[2] = hPt[2] ^ 0x5c5c5c5cU;
+            oPt[3] = hPt[3] ^ 0x5c5c5c5cU;
+            oPt[4] = hPt[4] ^ 0x5c5c5c5cU;
+            oPt[5] = hPt[5] ^ 0x5c5c5c5cU;
+            oPt[6] = hPt[6] ^ 0x5c5c5c5cU;
+            oPt[7] = hPt[7] ^ 0x5c5c5c5cU;
+
+            wPt[0] = hPt[0] ^ 0x36363636U;
+            wPt[1] = hPt[1] ^ 0x36363636U;
+            wPt[2] = hPt[2] ^ 0x36363636U;
+            wPt[3] = hPt[3] ^ 0x36363636U;
+            wPt[4] = hPt[4] ^ 0x36363636U;
+            wPt[5] = hPt[5] ^ 0x36363636U;
+            wPt[6] = hPt[6] ^ 0x36363636U;
+            wPt[7] = hPt[7] ^ 0x36363636U;
+            wPt[8] = 0x44657269;  // Deri
+            wPt[9] = 0x76652043;  // ve C
+            wPt[10] = 0x6861696e; // hain
+            wPt[11] = 0x636f6465; // code
+            wPt[12] = 0x2066726f; //  fro
+            wPt[13] = 0x6d20526f; // m Ro
+            wPt[14] = 0x6f74204b; // ot K
+            wPt[15] = 0x65798000; // ey + 0x80 pad
+
+            sha.Init(hPt);
+            sha.CompressBlock(hPt, wPt);
+
+            wPt[0] = 0;
+            wPt[1] = 0;
+            wPt[2] = 0;
+            wPt[3] = 0;
+            wPt[4] = 0;
+            wPt[5] = 0;
+            wPt[6] = 0;
+            wPt[7] = 0;
+            wPt[8] = 0;
+            wPt[9] = 0;
+            wPt[10] = 0;
+            wPt[11] = 0;
+            wPt[12] = 0;
+            wPt[13] = 0;
+            wPt[14] = 0;
+            wPt[15] = 496; // 32+30 * 8
+
+            sha.Compress62SecondBlock(hPt, wPt);
+
+            *(Block32*)wPt = *(Block32*)oPt;
+            wPt[8] = hPt[0];
+            wPt[9] = hPt[1];
+            wPt[10] = hPt[2];
+            wPt[11] = hPt[3];
+            wPt[12] = hPt[4];
+            wPt[13] = hPt[5];
+            wPt[14] = hPt[6];
+            wPt[15] = hPt[7];
+
+            sha.Init(hPt);
+            sha.CompressBlock(hPt, wPt);
+
+            wPt[0] = 0b10000000_00000000_00000000_00000000U;
+            wPt[1] = 0;
+            wPt[2] = 0;
+            wPt[3] = 0;
+            wPt[4] = 0;
+            wPt[5] = 0;
+            wPt[6] = 0;
+            wPt[7] = 0;
+            wPt[8] = 0;
+            wPt[9] = 0;
+            wPt[10] = 0;
+            wPt[11] = 0;
+            wPt[12] = 0;
+            wPt[13] = 0;
+            wPt[14] = 0;
+            wPt[15] = 512; // 32+32 * 8
+
+            sha.Compress64SecondBlock(hPt, wPt);
+
+
+            // hPt is chain-code now
+            ReadOnlySpan<byte> key = new ReadOnlySpan<byte>(kPt, 32);
+            BigInteger k = new BigInteger(key, true, true);
+            EllipticCurvePoint point = calc.MultiplyByG(k);
+            byte[] pubBa = new byte[65];
+            pubBa[0] = 4;
+            byte[] xBytes = point.X.ToByteArray(true, true);
+            byte[] yBytes = point.Y.ToByteArray(true, true);
+            Buffer.BlockCopy(xBytes, 0, pubBa, 33 - xBytes.Length, xBytes.Length);
+            Buffer.BlockCopy(yBytes, 0, pubBa, 65 - yBytes.Length, yBytes.Length);
+
+            // TODO: this could be improved a bit
+            byte[] chainCode = sha.GetBytes(hPt);
+
+            byte[] chainXor = sha.CompressDouble65(pubBa);
+
+            for (var i = 0; i < chainXor.Length; i++)
+            {
+                chainXor[i] ^= chainCode[i];
+            }
+
+            BigInteger A = new BigInteger(chainXor, true, true);
+            BigInteger B = new BigInteger(key, true, true);
+
+            BigInteger secexp = (A * B).Mod(N);
+            return secexp;
         }
 
 
@@ -142,131 +272,7 @@ namespace FinderOuter.Services
 
                             if ((hPt[0] & mask2) == comp2)
                             {
-                                // Compute chain-code
-                                // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
-                                // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
-                                sha.Init(hPt);
-                                wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
-                                wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
-                                wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
-                                wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
-                                wPt[4] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
-                                wPt[5] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
-                                wPt[6] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
-                                wPt[7] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
-                                wPt[8] = 0b10000000_00000000_00000000_00000000U;
-                                // From 9 to 14 remain 0
-                                wPt[15] = 256;
-
-                                sha.CompressDouble32(hPt, wPt);
-
-                                // Use hPt in both iPt and oPt here before it is changed
-                                oPt[0] = hPt[0] ^ 0x5c5c5c5cU;
-                                oPt[1] = hPt[1] ^ 0x5c5c5c5cU;
-                                oPt[2] = hPt[2] ^ 0x5c5c5c5cU;
-                                oPt[3] = hPt[3] ^ 0x5c5c5c5cU;
-                                oPt[4] = hPt[4] ^ 0x5c5c5c5cU;
-                                oPt[5] = hPt[5] ^ 0x5c5c5c5cU;
-                                oPt[6] = hPt[6] ^ 0x5c5c5c5cU;
-                                oPt[7] = hPt[7] ^ 0x5c5c5c5cU;
-
-                                wPt[0] = hPt[0] ^ 0x36363636U;
-                                wPt[1] = hPt[1] ^ 0x36363636U;
-                                wPt[2] = hPt[2] ^ 0x36363636U;
-                                wPt[3] = hPt[3] ^ 0x36363636U;
-                                wPt[4] = hPt[4] ^ 0x36363636U;
-                                wPt[5] = hPt[5] ^ 0x36363636U;
-                                wPt[6] = hPt[6] ^ 0x36363636U;
-                                wPt[7] = hPt[7] ^ 0x36363636U;
-                                wPt[8] = 0x44657269;  // Deri
-                                wPt[9] = 0x76652043;  // ve C
-                                wPt[10] = 0x6861696e; // hain
-                                wPt[11] = 0x636f6465; // code
-                                wPt[12] = 0x2066726f; //  fro
-                                wPt[13] = 0x6d20526f; // m Ro
-                                wPt[14] = 0x6f74204b; // ot K
-                                wPt[15] = 0x65798000; // ey + 0x80 pad
-
-                                sha.Init(hPt);
-                                sha.CompressBlock(hPt, wPt);
-
-                                wPt[0] = 0;
-                                wPt[1] = 0;
-                                wPt[2] = 0;
-                                wPt[3] = 0;
-                                wPt[4] = 0;
-                                wPt[5] = 0;
-                                wPt[6] = 0;
-                                wPt[7] = 0;
-                                wPt[8] = 0;
-                                wPt[9] = 0;
-                                wPt[10] = 0;
-                                wPt[11] = 0;
-                                wPt[12] = 0;
-                                wPt[13] = 0;
-                                wPt[14] = 0;
-                                wPt[15] = 496; // 32+30 * 8
-
-                                sha.Compress62SecondBlock(hPt, wPt);
-
-                                *(Block32*)wPt = *(Block32*)oPt;
-                                wPt[8] = hPt[0];
-                                wPt[9] = hPt[1];
-                                wPt[10] = hPt[2];
-                                wPt[11] = hPt[3];
-                                wPt[12] = hPt[4];
-                                wPt[13] = hPt[5];
-                                wPt[14] = hPt[6];
-                                wPt[15] = hPt[7];
-
-                                sha.Init(hPt);
-                                sha.CompressBlock(hPt, wPt);
-
-                                wPt[0] = 0b10000000_00000000_00000000_00000000U;
-                                wPt[1] = 0;
-                                wPt[2] = 0;
-                                wPt[3] = 0;
-                                wPt[4] = 0;
-                                wPt[5] = 0;
-                                wPt[6] = 0;
-                                wPt[7] = 0;
-                                wPt[8] = 0;
-                                wPt[9] = 0;
-                                wPt[10] = 0;
-                                wPt[11] = 0;
-                                wPt[12] = 0;
-                                wPt[13] = 0;
-                                wPt[14] = 0;
-                                wPt[15] = 512; // 32+32 * 8
-
-                                sha.Compress64SecondBlock(hPt, wPt);
-
-
-                                // hPt is chain-code now
-                                ReadOnlySpan<byte> key = new ReadOnlySpan<byte>(kPt, 32);
-                                BigInteger k = new BigInteger(key, true, true);
-                                EllipticCurvePoint point = calc.MultiplyByG(k);
-                                byte[] pubBa = new byte[65];
-                                pubBa[0] = 4;
-                                byte[] xBytes = point.X.ToByteArray(true, true);
-                                byte[] yBytes = point.Y.ToByteArray(true, true);
-                                Buffer.BlockCopy(xBytes, 0, pubBa, 33 - xBytes.Length, xBytes.Length);
-                                Buffer.BlockCopy(yBytes, 0, pubBa, 65 - yBytes.Length, yBytes.Length);
-
-                                // TODO: this could be improved a bit
-                                byte[] temp = sha.GetBytes(hPt);
-
-                                byte[] chainXor = sha.CompressDouble65(pubBa);
-
-                                for (var i = 0; i < chainXor.Length; i++)
-                                {
-                                    chainXor[i] ^= temp[i];
-                                }
-
-                                BigInteger A = new BigInteger(chainXor, true, true);
-                                BigInteger B = new BigInteger(key, true, true);
-
-                                BigInteger secexp = (A * B).Mod(N);
+                                BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
                                 if (comparer.Compare(secexp))
                                 {
                                     SetResult(kPt);
@@ -293,17 +299,196 @@ namespace FinderOuter.Services
 
         private unsafe void Loop2NoCS(byte[] preComputed, int missCount1, int missCount2)
         {
+            using Sha256Fo sha = new Sha256Fo();
+            byte* kPt = stackalloc byte[32 + missingIndexes.Length];
+            byte* item1 = kPt + 32;
+            byte* item2 = item1 + missCount1;
+            uint* oPt = stackalloc uint[8];
+            fixed (byte* pre = &preComputed[0])
+            fixed (int* mi = &missingIndexes[0])
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
+            {
+                do
+                {
+                    *(Block32*)kPt = *(Block32*)pre;
+                    int mIndex = 0;
+                    for (int i = 0; i < missCount1; i++)
+                    {
+                        int index = mi[mIndex++];
+                        kPt[index / 2] |= (index % 2 == 0) ? (byte)(item1[i] << 4) : item1[i];
+                    }
 
+                    int mIndexInternal = mIndex;
+                    do
+                    {
+                        for (int i = 0; i < missCount2; i++)
+                        {
+                            int index = mi[mIndex++];
+                            kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
+                        }
+
+                        BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                        if (comparer.Compare(secexp))
+                        {
+                            SetResult(kPt);
+                            return;
+                        }
+
+                        // Reset second part for next round
+                        *(Block16*)(kPt + 16) = *(Block16*)(pre + 16);
+                        mIndex = mIndexInternal;
+
+                    } while (MoveNext(item2, missCount2));
+
+                    // Checking second line reached the end and failed, item2 must be reset to 0
+                    for (int i = 0; i < missCount2; i++)
+                    {
+                        item2[i] = 0;
+                    }
+                } while (MoveNext(item1, missCount1));
+            }
         }
 
-        private void Loop2NoCS2(byte[] preComputed, int missCount1, int missCount2, uint mask1, uint cs1)
+        private unsafe void Loop2NoCS2(byte[] preComputed, int missCount1, int missCount2, uint mask1, uint cs1)
         {
+            using Sha256Fo sha = new Sha256Fo();
+            byte* kPt = stackalloc byte[32 + missingIndexes.Length];
+            byte* item1 = kPt + 32;
+            byte* item2 = item1 + missCount1;
+            uint* oPt = stackalloc uint[8];
+            fixed (byte* pre = &preComputed[0])
+            fixed (int* mi = &missingIndexes[0])
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
+            {
+                do
+                {
+                    *(Block32*)kPt = *(Block32*)pre;
+                    int mIndex = 0;
+                    for (int i = 0; i < missCount1; i++)
+                    {
+                        int index = mi[mIndex++];
+                        kPt[index / 2] |= (index % 2 == 0) ? (byte)(item1[i] << 4) : item1[i];
+                    }
 
+                    wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+                    wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+                    wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+                    wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+                    wPt[4] = 0b10000000_00000000_00000000_00000000U;
+                    wPt[5] = 0;
+                    wPt[6] = 0;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    // From 9 to 14 remain 0
+                    wPt[15] = 128;
+
+                    sha.Init(hPt);
+                    sha.CompressDouble16(hPt, wPt);
+
+                    if ((hPt[0] & mask1) == cs1)
+                    {
+                        int mIndexInternal = mIndex;
+                        do
+                        {
+                            for (int i = 0; i < missCount2; i++)
+                            {
+                                int index = mi[mIndex++];
+                                kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
+                            }
+
+                            // Second checksum is missing so we can't compute second part's hash to reject invalid
+                            // keys, instead all keys must be checked using the ICompareService instance.
+                            BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                            if (comparer.Compare(secexp))
+                            {
+                                SetResult(kPt);
+                                return;
+                            }
+
+                            // Reset second part for next round
+                            *(Block16*)(kPt + 16) = *(Block16*)(pre + 16);
+                            mIndex = mIndexInternal;
+
+                        } while (MoveNext(item2, missCount2));
+
+                        // Checking second line reached the end and failed, item2 must be reset to 0
+                        for (int i = 0; i < missCount2; i++)
+                        {
+                            item2[i] = 0;
+                        }
+                    }
+                } while (MoveNext(item1, missCount1));
+            }
         }
 
-        private void Loop2NoCS1(byte[] preComputed, int missCount1, int missCount2, uint mask2, uint cs2)
+        private unsafe void Loop2NoCS1(byte[] preComputed, int missCount1, int missCount2, uint mask2, uint cs2)
         {
+            using Sha256Fo sha = new Sha256Fo();
+            byte* kPt = stackalloc byte[32 + missingIndexes.Length];
+            byte* item1 = kPt + 32;
+            byte* item2 = item1 + missCount1;
+            uint* oPt = stackalloc uint[8];
+            fixed (byte* pre = &preComputed[0])
+            fixed (int* mi = &missingIndexes[0])
+            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
+            {
+                do
+                {
+                    *(Block32*)kPt = *(Block32*)pre;
+                    int mIndex = 0;
+                    for (int i = 0; i < missCount1; i++)
+                    {
+                        int index = mi[mIndex++];
+                        kPt[index / 2] |= (index % 2 == 0) ? (byte)(item1[i] << 4) : item1[i];
+                    }
 
+                    // First checksum is missing so we can't compute first part's hash to reject invalid
+                    // keys, instead all keys must be checked using the ICompareService instance.
+
+                    int mIndexInternal = mIndex;
+                    do
+                    {
+                        for (int i = 0; i < missCount2; i++)
+                        {
+                            int index = mi[mIndex++];
+                            kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
+                        }
+
+                        wPt[0] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+                        wPt[1] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+                        wPt[2] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+                        wPt[3] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+                        wPt[4] = 0b10000000_00000000_00000000_00000000U;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        // From 9 to 14 remain 0
+                        wPt[15] = 128;
+
+                        sha.Init(hPt);
+                        sha.CompressDouble16(hPt, wPt);
+
+                        BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                        if (comparer.Compare(secexp))
+                        {
+                            SetResult(kPt);
+                            return;
+                        }
+
+                        // Reset second part for next round
+                        *(Block16*)(kPt + 16) = *(Block16*)(pre + 16);
+                        mIndex = mIndexInternal;
+
+                    } while (MoveNext(item2, missCount2));
+
+                    // Checking second line reached the end and failed, item2 must be reset to 0
+                    for (int i = 0; i < missCount2; i++)
+                    {
+                        item2[i] = 0;
+                    }
+                } while (MoveNext(item1, missCount1));
+            }
         }
 
 
