@@ -5,10 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
         mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000"
-        Height="700" Width="1010"
         x:Class="FinderOuter.Views.MainWindow"
+        Height="700"
+        MinHeight="700"
+        Width="1010"
+        MinWidth="830"
         Icon="/Assets/Icon.ico"
-        Title="{Binding WindowTitle}" FontSize="14" Background="{DynamicResource BackgroundColor}">
+        Title="{Binding WindowTitle}" 
+        FontSize="14" 
+        Background="{DynamicResource BackgroundColor}">
 
   <Design.DataContext>
     <vm:MainWindowViewModel/>
