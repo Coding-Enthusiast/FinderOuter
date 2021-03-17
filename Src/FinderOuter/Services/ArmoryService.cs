@@ -37,6 +37,8 @@ namespace FinderOuter.Services
 
         private ICompareService comparer;
         private int[] missingIndexes;
+        private bool hasChainCode;
+        private byte[] chainCode;
         private readonly BigInteger N = new SecP256k1().N;
 
 
@@ -71,105 +73,115 @@ namespace FinderOuter.Services
 
         private unsafe BigInteger ComputeKey(Sha256Fo sha, uint* hPt, uint* wPt, uint* oPt, byte* kPt)
         {
-            // Compute chain-code
-            // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
-            // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
-            sha.Init(hPt);
-            wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
-            wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
-            wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
-            wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
-            wPt[4] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
-            wPt[5] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
-            wPt[6] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
-            wPt[7] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
-            wPt[8] = 0b10000000_00000000_00000000_00000000U;
-            // From 9 to 14 remain 0
-            wPt[15] = 256;
+            byte[] chainCode;
+            if (hasChainCode)
+            {
+                chainCode = this.chainCode;
+            }
+            else
+            {
+                // Compute chain-code
+                // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
+                // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
+                sha.Init(hPt);
+                wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+                wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+                wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+                wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+                wPt[4] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+                wPt[5] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+                wPt[6] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+                wPt[7] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+                wPt[8] = 0b10000000_00000000_00000000_00000000U;
+                // From 9 to 14 remain 0
+                wPt[15] = 256;
 
-            sha.CompressDouble32(hPt, wPt);
+                sha.CompressDouble32(hPt, wPt);
 
-            // Use hPt in both iPt and oPt here before it is changed
-            oPt[0] = hPt[0] ^ 0x5c5c5c5cU;
-            oPt[1] = hPt[1] ^ 0x5c5c5c5cU;
-            oPt[2] = hPt[2] ^ 0x5c5c5c5cU;
-            oPt[3] = hPt[3] ^ 0x5c5c5c5cU;
-            oPt[4] = hPt[4] ^ 0x5c5c5c5cU;
-            oPt[5] = hPt[5] ^ 0x5c5c5c5cU;
-            oPt[6] = hPt[6] ^ 0x5c5c5c5cU;
-            oPt[7] = hPt[7] ^ 0x5c5c5c5cU;
+                // Use hPt in both iPt and oPt here before it is changed
+                oPt[0] = hPt[0] ^ 0x5c5c5c5cU;
+                oPt[1] = hPt[1] ^ 0x5c5c5c5cU;
+                oPt[2] = hPt[2] ^ 0x5c5c5c5cU;
+                oPt[3] = hPt[3] ^ 0x5c5c5c5cU;
+                oPt[4] = hPt[4] ^ 0x5c5c5c5cU;
+                oPt[5] = hPt[5] ^ 0x5c5c5c5cU;
+                oPt[6] = hPt[6] ^ 0x5c5c5c5cU;
+                oPt[7] = hPt[7] ^ 0x5c5c5c5cU;
 
-            wPt[0] = hPt[0] ^ 0x36363636U;
-            wPt[1] = hPt[1] ^ 0x36363636U;
-            wPt[2] = hPt[2] ^ 0x36363636U;
-            wPt[3] = hPt[3] ^ 0x36363636U;
-            wPt[4] = hPt[4] ^ 0x36363636U;
-            wPt[5] = hPt[5] ^ 0x36363636U;
-            wPt[6] = hPt[6] ^ 0x36363636U;
-            wPt[7] = hPt[7] ^ 0x36363636U;
-            wPt[8] = 0x44657269;  // Deri
-            wPt[9] = 0x76652043;  // ve C
-            wPt[10] = 0x6861696e; // hain
-            wPt[11] = 0x636f6465; // code
-            wPt[12] = 0x2066726f; //  fro
-            wPt[13] = 0x6d20526f; // m Ro
-            wPt[14] = 0x6f74204b; // ot K
-            wPt[15] = 0x65798000; // ey + 0x80 pad
+                wPt[0] = hPt[0] ^ 0x36363636U;
+                wPt[1] = hPt[1] ^ 0x36363636U;
+                wPt[2] = hPt[2] ^ 0x36363636U;
+                wPt[3] = hPt[3] ^ 0x36363636U;
+                wPt[4] = hPt[4] ^ 0x36363636U;
+                wPt[5] = hPt[5] ^ 0x36363636U;
+                wPt[6] = hPt[6] ^ 0x36363636U;
+                wPt[7] = hPt[7] ^ 0x36363636U;
+                wPt[8] = 0x44657269;  // Deri
+                wPt[9] = 0x76652043;  // ve C
+                wPt[10] = 0x6861696e; // hain
+                wPt[11] = 0x636f6465; // code
+                wPt[12] = 0x2066726f; //  fro
+                wPt[13] = 0x6d20526f; // m Ro
+                wPt[14] = 0x6f74204b; // ot K
+                wPt[15] = 0x65798000; // ey + 0x80 pad
 
-            sha.Init(hPt);
-            sha.CompressBlock(hPt, wPt);
+                sha.Init(hPt);
+                sha.CompressBlock(hPt, wPt);
 
-            wPt[0] = 0;
-            wPt[1] = 0;
-            wPt[2] = 0;
-            wPt[3] = 0;
-            wPt[4] = 0;
-            wPt[5] = 0;
-            wPt[6] = 0;
-            wPt[7] = 0;
-            wPt[8] = 0;
-            wPt[9] = 0;
-            wPt[10] = 0;
-            wPt[11] = 0;
-            wPt[12] = 0;
-            wPt[13] = 0;
-            wPt[14] = 0;
-            wPt[15] = 496; // 32+30 * 8
+                wPt[0] = 0;
+                wPt[1] = 0;
+                wPt[2] = 0;
+                wPt[3] = 0;
+                wPt[4] = 0;
+                wPt[5] = 0;
+                wPt[6] = 0;
+                wPt[7] = 0;
+                wPt[8] = 0;
+                wPt[9] = 0;
+                wPt[10] = 0;
+                wPt[11] = 0;
+                wPt[12] = 0;
+                wPt[13] = 0;
+                wPt[14] = 0;
+                wPt[15] = 496; // 32+30 * 8
 
-            sha.Compress62SecondBlock(hPt, wPt);
+                sha.Compress62SecondBlock(hPt, wPt);
 
-            *(Block32*)wPt = *(Block32*)oPt;
-            wPt[8] = hPt[0];
-            wPt[9] = hPt[1];
-            wPt[10] = hPt[2];
-            wPt[11] = hPt[3];
-            wPt[12] = hPt[4];
-            wPt[13] = hPt[5];
-            wPt[14] = hPt[6];
-            wPt[15] = hPt[7];
+                *(Block32*)wPt = *(Block32*)oPt;
+                wPt[8] = hPt[0];
+                wPt[9] = hPt[1];
+                wPt[10] = hPt[2];
+                wPt[11] = hPt[3];
+                wPt[12] = hPt[4];
+                wPt[13] = hPt[5];
+                wPt[14] = hPt[6];
+                wPt[15] = hPt[7];
 
-            sha.Init(hPt);
-            sha.CompressBlock(hPt, wPt);
+                sha.Init(hPt);
+                sha.CompressBlock(hPt, wPt);
 
-            wPt[0] = 0b10000000_00000000_00000000_00000000U;
-            wPt[1] = 0;
-            wPt[2] = 0;
-            wPt[3] = 0;
-            wPt[4] = 0;
-            wPt[5] = 0;
-            wPt[6] = 0;
-            wPt[7] = 0;
-            wPt[8] = 0;
-            wPt[9] = 0;
-            wPt[10] = 0;
-            wPt[11] = 0;
-            wPt[12] = 0;
-            wPt[13] = 0;
-            wPt[14] = 0;
-            wPt[15] = 512; // 32+32 * 8
+                wPt[0] = 0b10000000_00000000_00000000_00000000U;
+                wPt[1] = 0;
+                wPt[2] = 0;
+                wPt[3] = 0;
+                wPt[4] = 0;
+                wPt[5] = 0;
+                wPt[6] = 0;
+                wPt[7] = 0;
+                wPt[8] = 0;
+                wPt[9] = 0;
+                wPt[10] = 0;
+                wPt[11] = 0;
+                wPt[12] = 0;
+                wPt[13] = 0;
+                wPt[14] = 0;
+                wPt[15] = 512; // 32+32 * 8
 
-            sha.Compress64SecondBlock(hPt, wPt);
+                sha.Compress64SecondBlock(hPt, wPt);
 
+                // TODO: this could be improved a bit
+                chainCode = sha.GetBytes(hPt);
+            }
 
             // hPt is chain-code now
             ReadOnlySpan<byte> key = new ReadOnlySpan<byte>(kPt, 32);
@@ -182,11 +194,7 @@ namespace FinderOuter.Services
             Buffer.BlockCopy(xBytes, 0, pubBa, 33 - xBytes.Length, xBytes.Length);
             Buffer.BlockCopy(yBytes, 0, pubBa, 65 - yBytes.Length, yBytes.Length);
 
-            // TODO: this could be improved a bit
-            byte[] chainCode = sha.GetBytes(hPt);
-
             byte[] chainXor = sha.CompressDouble65(pubBa);
-
             for (var i = 0; i < chainXor.Length; i++)
             {
                 chainXor[i] ^= chainCode[i];
@@ -640,28 +648,53 @@ namespace FinderOuter.Services
 
                     Stopwatch watch = Stopwatch.StartNew();
 
-                    if (lines.Length == 2)
+                    if (lines.Length == 4)
                     {
-                        if (mask1 != 0 && mask2 != 0)
+                        // We only support the case where chain-code is known
+                        // TODO: maybe change this in the future?
+                        chainCode = new byte[32];
+                        Split(lines[2], chainCode, 0, out int[] ccMiss1, out _, out uint ccMask1);
+                        Split(lines[3], chainCode, 16, out int[] ccMiss2, out _, out uint ccMask2);
+                        if (ccMiss1.Length + ccMiss2.Length != 0)
                         {
-                            await Task.Run(() => Loop2(key, miss1.Length, miss2.Length, mask1, mask2, cs1, cs2));
+                            report.AddMessageSafe("FinderOuter currently doesn't support recovering chain-code." +
+                                                  "Open a new issue if you need this feature.");
+                            report.Finalize(false);
+                            return;
                         }
-                        else if (mask1 != 0)
+                        if (ccMask1 != 0xffff0000)
                         {
-                            await Task.Run(() => Loop2NoCS2(key, miss1.Length, miss2.Length, mask1, cs1));
+                            report.AddMessageSafe("Third line of the given recovery phrase is missing its checksum.");
+                            report.AddMessageSafe(EncodeLineWithChecksum(chainCode.SubArray(0, 16)));
                         }
-                        else if (mask2 != 0)
+                        if (ccMask2 != 0xffff0000)
                         {
-                            await Task.Run(() => Loop2NoCS1(key, miss1.Length, miss2.Length, mask2, cs2));
+                            report.AddMessageSafe("Forth line of the given recovery phrase is missing its checksum.");
+                            report.AddMessageSafe(EncodeLineWithChecksum(chainCode.SubArray(16, 16)));
                         }
-                        else
-                        {
-                            await Task.Run(() => Loop2NoCS(key, miss1.Length, miss2.Length));
-                        }
+                        hasChainCode = true;
                     }
                     else
                     {
+                        hasChainCode = false;
+                        chainCode = null;
+                    }
 
+                    if (mask1 != 0 && mask2 != 0)
+                    {
+                        await Task.Run(() => Loop2(key, miss1.Length, miss2.Length, mask1, mask2, cs1, cs2));
+                    }
+                    else if (mask1 != 0)
+                    {
+                        await Task.Run(() => Loop2NoCS2(key, miss1.Length, miss2.Length, mask1, cs1));
+                    }
+                    else if (mask2 != 0)
+                    {
+                        await Task.Run(() => Loop2NoCS1(key, miss1.Length, miss2.Length, mask2, cs2));
+                    }
+                    else
+                    {
+                        await Task.Run(() => Loop2NoCS(key, miss1.Length, miss2.Length));
                     }
 
                     watch.Stop();
