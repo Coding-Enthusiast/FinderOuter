@@ -47,7 +47,10 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Armory";
-        public override string Description => "Recover Armory backup phrase.";
+        public override string Description => $"This option is useful to recover Armory recovery phrases.{Environment.NewLine}" +
+            $"It supports recovering phrases that have 2 or 4 lines. Enter the phrase separating each line with a new line " +
+            $"and replace the missing characters with a special missing char.{Environment.NewLine}" +
+            $"The speed mainly depends on whether the checksum (last 4 characters of each line) is present or not.";
 
         private readonly ArmoryService service;
 
@@ -142,11 +145,24 @@ namespace FinderOuter.ViewModels
                     $"eorj otnk sfko dert eafo hsou trnu gsih ****",
                     '*',
                     "15kF4z37Do6NC9RmA41Pn3MWKwUAPpRetj",
-                    0,
+                    1,
                     $"random.{Environment.NewLine}" +
                     $"This example shows that if the input is only missing the checksum, FinderOuter will simply " +
                     $"compute the checksum and return the correct strings without needing any additional checks." +
                     $"{Environment.NewLine}" +
+                    $"Estimated time: <1 sec"
+                },
+                {
+                    $"oois wsgw jja* twof jhtg adnn n*gd wwgk esuh{Environment.NewLine}" +
+                    $"fa*k frar ofof r*rt nkja eued rhsj thgf went{Environment.NewLine}" +
+                    $"tsjj ohtr jtre idof ghhd jidk aidk stho jwfo{Environment.NewLine}" +
+                    $"hiof thot fjot kigh odik aaow eegn dawj utnh",
+                    '*',
+                    "1ASHye7iYLPpysUoUpUHmivxrRh64iBMS4",
+                    1,
+                    $"random.{Environment.NewLine}" +
+                    $"This example is missing 4 characters (n, f, d, u){Environment.NewLine}" +
+                    $"This shows the case when the chain code is present.{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
                 },
             };
