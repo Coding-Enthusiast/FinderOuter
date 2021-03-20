@@ -39,10 +39,16 @@
              Grid.Column="0"
              Grid.Row="1"/>
 
-    <TextBox Text="{Binding ExtraInput}"
-             Watermark="Additional info (preferably a private key or public key, if not enter an address)"
-             Grid.Column="0"
-             Grid.Row="2"/>
+    <Grid ColumnDefinitions="*,auto" Grid.Column="0" Grid.Row="2">
+      <TextBox Text="{Binding ExtraInput}"
+               Watermark="Additional input (preferably a private key or public key, if not enter an address)"
+               Grid.Column="0"/>
+      <NumericUpDown Text="{Binding Count}"
+                     Watermark="Number of child keys to derive"
+                     Height="47"
+                     Minimum="1"
+                     Grid.Column="1"/>
+    </Grid>
     <ComboBox Items="{Binding ExtraInputTypeList}"
               SelectedItem="{Binding SelectedExtraInputType}"
               Grid.Column="1"

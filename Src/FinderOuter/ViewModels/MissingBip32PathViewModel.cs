@@ -9,6 +9,7 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
@@ -19,7 +20,7 @@ namespace FinderOuter.ViewModels
         {
             InputTypeList = ListHelper.GetEnumDescItems<Bip32PathService.SeedType>().ToArray();
             WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
-            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
+            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>(InputType.PrivateKey).ToArray();
 
             SelectedInputType = InputTypeList.First();
             SelectedExtraInputType = ExtraInputTypeList.First();
@@ -36,13 +37,21 @@ namespace FinderOuter.ViewModels
                            x.Value == Bip32PathService.SeedType.BIP39 || x.Value == Bip32PathService.SeedType.Electrum);
 
             PathService = new Bip32PathService(Result);
+
+            HasExample = true;
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+                x => x.Result.CurrentState,
+                (state) => state != State.Working && HasExample);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+
+            SetExamples(GetExampleData());
         }
 
 
 
-        public override string OptionName => "Find BIP32 path";
-        public override string Description => "This part helps you find your BIP32 path if you have you mnemonic (seed phrase)" +
-            "but don't know the path.";
+        public override string OptionName => "Missing BIP32 path";
+        public override string Description => "This option is useful to find BIP32 path if you have you mnemonic (seed phrase), " +
+            "or extended private or public key and at least a child key but don't know the path used to derive that key.";
 
 
         public Bip32PathService PathService { get; }
@@ -89,22 +98,25 @@ namespace FinderOuter.ViewModels
                 if (value != _input)
                 {
                     this.RaiseAndSetIfChanged(ref _input, value);
-                    // Guess type
-                    value = value.Trim();
-                    // TODO: next Bitcoin.Net version should fix the issue of not supporting ypub and zpub!
-                    if (value.StartsWith("xprv"))
+                    if (!string.IsNullOrEmpty(value))
                     {
-                        SelectedInputType = InputTypeList.ElementAt(2);
-                    }
-                    else if (value.StartsWith("xpub"))
-                    {
-                        SelectedInputType = InputTypeList.ElementAt(3);
-                    }
-                    else if (value.Contains(" ") &&
-                             SelectedInputType.Value != Bip32PathService.SeedType.BIP39 &&
-                             SelectedInputType.Value != Bip32PathService.SeedType.Electrum)
-                    {
-                        SelectedInputType = InputTypeList.ElementAt(0);
+                        // Guess type
+                        value = value.Trim();
+                        // TODO: next Bitcoin.Net version should fix the issue of not supporting ypub and zpub!
+                        if (value.StartsWith("xprv"))
+                        {
+                            SelectedInputType = InputTypeList.ElementAt(2);
+                        }
+                        else if (value.StartsWith("xpub"))
+                        {
+                            SelectedInputType = InputTypeList.ElementAt(3);
+                        }
+                        else if (value.Contains(" ") &&
+                                 SelectedInputType.Value != Bip32PathService.SeedType.BIP39 &&
+                                 SelectedInputType.Value != Bip32PathService.SeedType.Electrum)
+                        {
+                            SelectedInputType = InputTypeList.ElementAt(0);
+                        }
                     }
                 }
 
@@ -125,11 +137,90 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _pass, value);
         }
 
+        private uint _count = 1;
+        public uint Count
+        {
+            get => _count;
+            set
+            {
+                if (value > 0)
+                {
+                    this.RaiseAndSetIfChanged(ref _count, value);
+                }
+            }
+        }
+
 
         public override void Find()
         {
             PathService.FindPath(Input, SelectedInputType.Value, SelectedWordListType, PassPhrase,
-                                 ExtraInput, SelectedExtraInputType.Value);
+                                 ExtraInput, SelectedExtraInputType.Value, Count);
+        }
+
+        public void Example()
+        {
+            object[] ex = GetNextExample();
+
+            Input = (string)ex[0];
+
+            int temp1 = (int)ex[1];
+            Debug.Assert(temp1 < InputTypeList.Count());
+            SelectedInputType = InputTypeList.ElementAt(temp1);
+
+            int temp2 = (int)ex[2];
+            Debug.Assert(temp2 < WordListsList.Count());
+            SelectedWordListType = WordListsList.ElementAt(temp2);
+
+            PassPhrase = (string)ex[3];
+            ExtraInput = (string)ex[4];
+
+            int temp3 = (int)ex[5];
+            Debug.Assert(temp3 < ExtraInputTypeList.Count());
+            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp3);
+
+            Count = (uint)ex[6];
+
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[7]}";
+        }
+
+        private ExampleData GetExampleData()
+        {
+            return new ExampleData<string, int, int, string, string, int, uint, string>()
+            {
+                {
+                    "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+                    0, // InputType
+                    0, // WordList
+                    "OptionalPass",
+                    "3PVjFJ6JwwimmgiZ5s6Br7uErhu85BaAnm",
+                    3, // ExtraInputType
+                    10, // Count
+                    $"BIP-39 test vectors.{Environment.NewLine}" +
+                    $"This is the 5th address at m/49'/0'/0'/0/4"
+                },
+                {
+                    "wild father tree among universe such mobile favorite target dynamic credit identify",
+                    1, // InputType
+                    0, // WordList
+                    "",
+                    "bc1q4794m2uuw9jmjszmplfj4wvvr5j272fpnx2cse",
+                    0, // ExtraInputType
+                    10, // Count
+                    $"Electrum test vectors.{Environment.NewLine}" +
+                    $"This is the 1th address at m/0'/0/0"
+                },
+                {
+                    "xprv9s21ZrQH143K32pyy7vM3WySNfaFryw2BxypMX6jVQtaR7MDw4EHFR2XoZkB12SzodbmMHYg24nuvrUH32mSoYGJFp7aPoahhcRkNnHAf6r",
+                    2, // InputType
+                    0, // WordList
+                    "",
+                    "03d9a7513dbd4115d5630c530acf0ce4dffbcb5cf026cce241e3a93f09304bbb1b",
+                    4, // ExtraInputType
+                    10, // Count
+                    $"random.{Environment.NewLine}" +
+                    $"This is the 6th address at m/44'/0'/0'/0/5"
+                },
+            };
         }
     }
 }

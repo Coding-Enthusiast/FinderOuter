@@ -3,15 +3,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -22,13 +21,12 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
-            calc = new ECCalc();
         }
 
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private readonly ECCalc calc;
+        private ICompareService comparer;
 
         public enum SeedType
         {
@@ -42,12 +40,71 @@ namespace FinderOuter.Services
             XPUB
         }
 
-        public async void FindPath(string input, SeedType inputType, BIP0039.WordLists wl, string pass, 
-                                   string extra, InputType extraType)
+        private static readonly BIP0032Path[] AllPaths = new BIP0032Path[]
+        {
+            new BIP0032Path("m/0"),
+            new BIP0032Path("m/0'"),
+            // BIP-44 xprv/xpub P2PKH
+            new BIP0032Path("m/44'/0'/0'/0"),
+            // BIP-49 yprv/upub P2SH-P2WPKH
+            new BIP0032Path("m/49'/0'/0'/0"),
+            // BIP-84 zprv/zpub P2WPKH
+            new BIP0032Path("m/84'/0'/0'/0"),
+        };
+
+
+        public void Loop(BIP0032 bip32, uint count, bool isPubkey)
+        {
+            BIP0032Path[] allPaths = isPubkey ?
+                new BIP0032Path[]
+                {
+                    new BIP0032Path("m/0")
+                } :
+                new BIP0032Path[]
+                {
+                    new BIP0032Path("m/0"),
+                    new BIP0032Path("m/0'"),
+                    new BIP0032Path("m/0'/0/"),
+                    // BIP-44 xprv/xpub P2PKH
+                    new BIP0032Path("m/44'/0'/0'/0"),
+                    // BIP-49 yprv/upub P2SH-P2WPKH
+                    new BIP0032Path("m/49'/0'/0'/0"),
+                    // BIP-84 zprv/zpub P2WPKH
+                    new BIP0032Path("m/84'/0'/0'/0"),
+                };
+
+
+            foreach (var path in allPaths)
+            {
+                PublicKey[] pubkeys = bip32.GetPublicKeys(path, count);
+                for (int i = 0; i < pubkeys.Length; i++)
+                {
+                    if (comparer.Compare(pubkeys[i].ToPoint()))
+                    {
+                        report.AddMessageSafe($"The correct key path is: {path}/{i}");
+                        report.FoundAnyResult = true;
+                        return;
+                    }
+                }
+            }
+
+            report.AddMessageSafe("Could not find any correct paths.");
+        }
+
+
+
+        public async void FindPath(string input, SeedType inputType, BIP0039.WordLists wl, string pass,
+                                   string extra, InputType extraType, uint count)
         {
             report.Init();
 
-            BIP0032 bip32 = null;
+            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+            {
+                report.Fail($"Invalid extra input or extra input type: {extraType}");
+                return;
+            }
+
+            BIP0032 bip32;
             if (inputType == SeedType.BIP39)
             {
                 try
@@ -77,11 +134,11 @@ namespace FinderOuter.Services
                 try
                 {
                     bip32 = new BIP0032(input);
-                    return;
                 }
                 catch (Exception ex)
                 {
                     report.Fail($"Could not instantiate BIP-32 instance. Error: {ex.Message}");
+                    return;
                 }
             }
             else
@@ -92,7 +149,7 @@ namespace FinderOuter.Services
 
             Debug.Assert(bip32 is not null);
 
-            // TODO: Derive child keys at different known paths to see which one matches the extra input
+            await Task.Run(() => Loop(bip32, count, inputType == SeedType.XPUB));
 
             report.Finalize();
         }
