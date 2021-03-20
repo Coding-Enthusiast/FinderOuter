@@ -1,9 +1,16 @@
 ### Next Release (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.7.0.0...master)
-* Finding bip32 key path
-* Password recovery
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.8.0.0...master)
+* BIP-38 password recovery
 * SIMD support
 * A help window
+* BIP-39 passphrase recovery
+
+### Release 0.8.0 (2021-03-20)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.7.0.0...v0.8.0.0)
+* Some user interface improvements
+* **New recovery option**: find BIP-32 derivation path
+* **New recovery option**: recover Armory backup phrases missing some characters
+* Main window size has a limit so it can no longer be shrinked to nearly nothing
 
 ### Release 0.7.0 (2021-02-02)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.6.0.0...v0.7.0.0)
@@ -21,7 +28,7 @@ in Debug mode by mistake)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.5.0.0...v0.6.0.0)
 * Move to .net 5.0
 * Added small icons at the bottom showing the current state of the program
-* New recovery option: ELectrum mnemonics
+* **New recovery option**: ELectrum mnemonics
 * Base16 recovery now has more options for secondary input (to check against)
 * Add a new word list to mnemonic recovery: Portuguese
 
