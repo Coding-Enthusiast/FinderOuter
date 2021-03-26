@@ -11,8 +11,8 @@
         Width="1010"
         MinWidth="830"
         Icon="/Assets/Icon.ico"
-        Title="{Binding WindowTitle}" 
-        FontSize="14" 
+        Title="{Binding WindowTitle}"
+        FontSize="14"
         Background="{DynamicResource BackgroundColor}">
 
   <Design.DataContext>
@@ -23,11 +23,15 @@
     <mvvm:StateToBitmapConverter x:Key="imgConv"/>
     <Color x:Key="BackgroundColor">#FFFBFBFB</Color>
   </Window.Resources>
-  
+
   <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
+    <!--Left side collumn (containing option list, warning, version, about button)-->
     <Grid RowDefinitions="*,auto,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
-      <ListBox Items="{Binding OptionList}" SelectedItem="{Binding SelectedOption}" SelectionMode="Toggle"
+      <ListBox Items="{Binding OptionList}"
+               SelectedItem="{Binding SelectedOption}"
+               SelectionMode="Toggle"
+               IsEnabled="{Binding !IsWorking}"
                Grid.Row="0">
         <ListBox.Styles>
           <Style Selector="ListBox">
@@ -81,17 +85,18 @@
       </Border>
     </Grid>
 
+    <!--Right side collumn (containing find button and selected VM)-->
     <Grid Margin="3,0,0,0" RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="0">
       <Grid ColumnDefinitions="*,auto" Grid.Row="0">
         <Button Content="Find!"
                 Command="{Binding SelectedOption.FindCommand}"
-                IsVisible="{Binding IsFindButtonVisible}"
+                IsVisible="{Binding IsOptionSelected}"
                 Margin="3,6,3,3"
                 Height="40"
                 Grid.Column="0"/>
         <Button Content="{Binding SelectedOption.ExampleButtonName}"
                 Command="{Binding SelectedOption.ExampleCommand}"
-                IsVisible="{Binding IsFindButtonVisible}"
+                IsVisible="{Binding IsOptionSelected}"
                 IsEnabled="{Binding SelectedOption.HasExample}"
                 ToolTip.Tip="Click again for next example."
                 Margin="3,6,3,3"
@@ -107,16 +112,22 @@
       <ContentControl Content="{Binding SelectedOption}"
                       Margin="2"
                       Grid.Row="2"/>
+      <ContentControl Content="{Binding HelpVm}"
+                      IsVisible="{Binding !IsOptionSelected}"
+                      Margin="2"
+                      Grid.Row="2"/>
 
       <TextBox Text="{Binding SelectedOption.Result.Message, Mode=OneWay}"
                TextWrapping="Wrap"
                AcceptsReturn="True"
-               IsVisible="{Binding IsFindButtonVisible}"
+               IsVisible="{Binding IsOptionSelected}"
                ScrollViewer.VerticalScrollBarVisibility="Auto"
                IsReadOnly="True"
                Grid.Row="3"/>
     </Grid>
 
+
+    <!--2 items at the bottom of the window (state and progressbar)-->
     <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="2">
       <Image Source="{Binding SelectedOption.Result.CurrentState, Converter={StaticResource imgConv}, Mode=OneWay}"
              Margin="3"/>
@@ -137,5 +148,6 @@
         </Style>
       </ProgressBar.Styles>
     </ProgressBar>
+
   </Grid>
 </Window>

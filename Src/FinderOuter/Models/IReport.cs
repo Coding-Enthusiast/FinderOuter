@@ -3,11 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using System.ComponentModel;
 using System.Numerics;
 
 namespace FinderOuter.Models
 {
-    public interface IReport
+    public interface IReport : INotifyPropertyChanged
     {
         State CurrentState { get; set; }
         string Message { get; set; }

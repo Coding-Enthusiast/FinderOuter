@@ -3,10 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
 
 namespace FinderOuter.ViewModels
@@ -30,7 +32,6 @@ namespace FinderOuter.ViewModels
         }
 
 
-
         public static string WindowTitle
         {
             get
@@ -42,9 +43,21 @@ namespace FinderOuter.ViewModels
 
         public static string VerString => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
 
+        public static string DebugWarning => "Warning: Debug mode detected. Build and run in release mode for faster performance.";
+
+        public static bool IsDebug =>
+#if DEBUG
+                true;
+#else
+                false;
+#endif
+
+
+        public bool IsOptionSelected => SelectedOption is not null;
+
+        public bool IsWorking => SelectedOption is not null && SelectedOption.Result.CurrentState == State.Working;
 
         public IEnumerable<OptionVmBase> OptionList { get; private set; }
-
 
         private OptionVmBase _selOpt;
         public OptionVmBase SelectedOption
@@ -52,32 +65,33 @@ namespace FinderOuter.ViewModels
             get => _selOpt;
             private set
             {
+                if (value is not null)
+                {
+                    value.Result.PropertyChanged += SelectedOption_PropertyChanged;
+                }
+                else
+                {
+                    _selOpt.Result.PropertyChanged -= SelectedOption_PropertyChanged;
+                }
+
                 this.RaiseAndSetIfChanged(ref _selOpt, value);
-                this.RaisePropertyChanged(nameof(IsFindButtonVisible));
+                this.RaisePropertyChanged(nameof(IsOptionSelected));
+                this.RaisePropertyChanged(nameof(IsWorking));
             }
         }
 
-
-        public bool IsDebug
+        private void SelectedOption_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            get
+            if (e.PropertyName == nameof(OptionVmBase.Result.CurrentState))
             {
-#if DEBUG
-                return true;
-#else
-                return false;
-#endif
+                this.RaisePropertyChanged(nameof(IsWorking));
             }
         }
 
-        public string DebugWarning => "Warning: Debug mode detected. Build and run in release mode for faster performance.";
-
-        public bool IsFindButtonVisible => SelectedOption != null;
-
+        public HelpViewModel HelpVm => new HelpViewModel();
 
         public IWindowManager WinMan { get; set; }
 
         public void OpenAbout() => WinMan.ShowDialog(new AboutViewModel());
-        public void OpenHelp() => WinMan.ShowDialog(new HelpViewModel());
     }
 }
