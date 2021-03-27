@@ -41,6 +41,19 @@
       <Setter Property="CornerRadius" Value="3"/>
     </Style>
 
+    <!--Use Classes="DescriptiveItem" in any ComboBox to represent its items as DescriptiveItem-->
+    <Style Selector="ComboBox.DescriptiveItem">
+      <Setter Property="ItemTemplate">
+        <Setter.Value>
+          <DataTemplate>
+            <TextBlock Text="{Binding Value}"
+                       ToolTip.Tip="{Binding Description}"/>
+          </DataTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    
+
     <Style Selector="Button /template/ ContentPresenter">
       <Setter Property="CornerRadius" Value="5"/>
     </Style>
