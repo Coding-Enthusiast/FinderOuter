@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.MissingEncodingView">
+
+  <Design.DataContext>
+    <vm:MissingEncodingViewModel/>
+  </Design.DataContext>
+
+  <UserControl.Resources>
+    <mvvm:PossibilityToStringConverter x:Key="posToStrConv"/>
+    <mvvm:PossibilityToColorConverter x:Key="posToColConv"/>
+  </UserControl.Resources>
+
+  <Grid RowDefinitions="*,auto">
+    <TextBox Text="{Binding Input}"
+             Watermark="Input string"
+             AcceptsReturn="True"
+             Grid.Row="0"/>
+
+    <ItemsControl x:Name="itemCtrl"
+                  Items="{Binding EncodingList}"
+                  Grid.Row="1">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Grid ColumnDefinitions="20,90,auto">
+            <TextBlock Text="{Binding Possible, Converter={StaticResource posToStrConv}, Mode=OneWay}"
+                       Foreground="{Binding Possible, Converter={StaticResource posToColConv}, Mode=OneWay}"
+                       FontWeight="Bold"
+                       Margin="4"
+                       VerticalAlignment="Center"
+                       Grid.Column="0"/>
+            <TextBlock Text="{Binding Name}"
+                       VerticalAlignment="Center"
+                       Grid.Column="1"/>
+            <Button Content="Decode"
+                    Command="{Binding ElementName=itemCtrl, Path=DataContext.Decode}"
+                    CommandParameter="{Binding Name}"
+                    Grid.Column="2"/>
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+  </Grid>
+</UserControl>
