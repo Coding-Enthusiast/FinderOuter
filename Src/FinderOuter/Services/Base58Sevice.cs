@@ -26,7 +26,6 @@ namespace FinderOuter.Services
         public Base58Sevice(IReport rep)
         {
             inputService = new InputService();
-            encoder = new Base58();
             report = rep;
         }
 
@@ -34,7 +33,6 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
         private ICompareService comparer;
-        private readonly Base58 encoder;
         private uint[] powers58, precomputed;
         private int[] missingIndexes;
         private int missCount;
@@ -141,8 +139,8 @@ namespace FinderOuter.Services
             string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
             string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
             string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
-            var start = encoder.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
-            var end = encoder.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
+            var start = Base58.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
+            var end = Base58.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
 
             // If the key (integer) value is so tiny that almost all of its higher bytes are zero, or too big that almost
             // all of its bytes are 0xff the smallWif string can end up being bigger in value than the bigWif string 
@@ -157,10 +155,10 @@ namespace FinderOuter.Services
                                       $"Here are the upper and lower values of the given key (DO NOT SHARE THESE):" +
                                       $"{Environment.NewLine}" +
                                       $"Low:{Environment.NewLine}    {smallWif}{Environment.NewLine}" +
-                                      $"    {encoder.Decode(smallWif).ToBase16()}" +
+                                      $"    {Base58.Decode(smallWif).ToBase16()}" +
                                       $"{Environment.NewLine}" +
                                       $"High:{Environment.NewLine}    {bigWif}{Environment.NewLine}" +
-                                      $"    {encoder.Decode(bigWif).ToBase16()}");
+                                      $"    {Base58.Decode(bigWif).ToBase16()}");
                 return;
             }
 
@@ -178,7 +176,6 @@ namespace FinderOuter.Services
             // needing ICompareService. Instead all possible addresses are printed.
             if (diff < 3)
             {
-                var addrMaker = new Address();
                 for (int i = 0; i < (int)diff; i++)
                 {
                     using PrivateKey tempKey = new PrivateKey(start + i);
@@ -187,10 +184,10 @@ namespace FinderOuter.Services
                     {
                         var pub = tempKey.ToPublicKey();
                         string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
-                            $"     Compressed P2PKH address={addrMaker.GetP2pkh(pub, true)}{Environment.NewLine}" +
-                            $"     Uncompressed P2PKH address={addrMaker.GetP2pkh(pub, false)}{Environment.NewLine}" +
-                            $"     Compressed P2WPKH address={addrMaker.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
-                            $"     Compressed P2SH-P2WPKH address={addrMaker.GetP2sh_P2wpkh(pub, 0)}";
+                            $"     Compressed P2PKH address={Address.GetP2pkh(pub, true)}{Environment.NewLine}" +
+                            $"     Uncompressed P2PKH address={Address.GetP2pkh(pub, false)}{Environment.NewLine}" +
+                            $"     Compressed P2WPKH address={Address.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
+                            $"     Compressed P2SH-P2WPKH address={Address.GetP2sh_P2wpkh(pub, 0)}";
                         report.AddMessageSafe(msg);
                         report.FoundAnyResult = true;
                     }

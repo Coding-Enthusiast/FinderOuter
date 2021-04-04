@@ -11,8 +11,6 @@ namespace FinderOuter.Services
 {
     public class AddressService
     {
-        private readonly Address addrMan = new Address();
-
         /// <summary>
         /// Checks the given address and returns its decoded hash.
         /// Works only for P2PKH and P2WPKH addresses
@@ -27,11 +25,11 @@ namespace FinderOuter.Services
 
             if (address[0] == '1')
             {
-                return addrMan.VerifyType(address, PubkeyScriptType.P2PKH, out hash);
+                return Address.VerifyType(address, PubkeyScriptType.P2PKH, out hash);
             }
             else if (address[0] == 'b')
             {
-                return addrMan.VerifyType(address, PubkeyScriptType.P2WPKH, out hash);
+                return Address.VerifyType(address, PubkeyScriptType.P2WPKH, out hash);
             }
             else
             {
@@ -52,7 +50,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                return addrMan.VerifyType(address, PubkeyScriptType.P2SH, out hash);
+                return Address.VerifyType(address, PubkeyScriptType.P2SH, out hash);
             }
         }
 
@@ -62,11 +60,11 @@ namespace FinderOuter.Services
             var pub = prv.ToPublicKey();
             if (inType == InputType.AddrNested)
             {
-                if (expectedAddr == addrMan.GetP2sh_P2wpkh(pub, 0))
+                if (expectedAddr == Address.GetP2sh_P2wpkh(pub, 0))
                 {
                     message = "The given address is derived from the given private key.";
                 }
-                else if (expectedAddr == addrMan.GetP2sh_P2wpkh(pub, 0, false))
+                else if (expectedAddr == Address.GetP2sh_P2wpkh(pub, 0, false))
                 {
                     message = "The given address is derived from the given private key but it uses " +
                               "uncompressed pubkey which is non-standard.";
@@ -81,11 +79,11 @@ namespace FinderOuter.Services
             {
                 if (expectedAddr.StartsWith("bc"))
                 {
-                    if (expectedAddr == addrMan.GetP2wpkh(pub, 0))
+                    if (expectedAddr == Address.GetP2wpkh(pub, 0))
                     {
                         message = "The given address is derived from the given private key.";
                     }
-                    else if (expectedAddr == addrMan.GetP2wpkh(pub, 0, false))
+                    else if (expectedAddr == Address.GetP2wpkh(pub, 0, false))
                     {
                         message = "The given address is derived from the given private key but it uses " +
                                   "uncompressed pubkey which is non-standard.";
@@ -98,8 +96,8 @@ namespace FinderOuter.Services
                 }
                 else if (expectedAddr.StartsWith("1"))
                 {
-                    string comp = addrMan.GetP2pkh(pub);
-                    string uncomp = addrMan.GetP2pkh(pub, false);
+                    string comp = Address.GetP2pkh(pub);
+                    string uncomp = Address.GetP2pkh(pub, false);
 
                     if (inType == InputType.AddrComp)
                     {

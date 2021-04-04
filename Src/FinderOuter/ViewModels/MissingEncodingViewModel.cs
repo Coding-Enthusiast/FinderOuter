@@ -12,8 +12,6 @@ using System.Collections.Generic;
 
 namespace FinderOuter.ViewModels
 {
-
-
     public class MissingEncodingViewModel : OptionVmBase
     {
         public MissingEncodingViewModel()
@@ -70,9 +68,9 @@ namespace FinderOuter.ViewModels
                 byte[] ba = name switch
                 {
                     EncodingName.Base16 => Base16.Decode(Input),
-                    EncodingName.Base43 => new Base43().Decode(Input),
-                    EncodingName.Base58 => new Base58().Decode(Input),
-                    EncodingName.Base58Check => new Base58().DecodeWithCheckSum(Input),
+                    EncodingName.Base43 => Base43.Decode(Input),
+                    EncodingName.Base58 => Base58.Decode(Input),
+                    EncodingName.Base58Check => Base58.DecodeWithChecksum(Input),
                     EncodingName.Base64 => Convert.FromBase64String(Input),
                     _ => throw new NotImplementedException(),
                 };

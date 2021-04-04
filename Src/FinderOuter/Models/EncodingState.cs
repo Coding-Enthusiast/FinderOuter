@@ -31,9 +31,9 @@ namespace FinderOuter.Models
             bool validity = Name switch
             {
                 EncodingName.Base16 => Base16.IsValid(input),
-                EncodingName.Base43 => new Base43().HasValidChars(input),
-                EncodingName.Base58 => new Base58().HasValidChars(input),
-                EncodingName.Base58Check => new Base58().IsValid(input),
+                EncodingName.Base43 => Base43.IsValid(input),
+                EncodingName.Base58 => Base58.IsValid(input),
+                EncodingName.Base58Check => Base58.IsValidWithChecksum(input),
                 EncodingName.Base64 => CheckBase64(input),
                 _ => throw new NotImplementedException(),
             };

@@ -15,8 +15,6 @@ namespace FinderOuter.Backend.KeyPairs
     {
         public Address()
         {
-            b58Encoder = new Base58();
-            b32Encoder = new Bech32();
             hashFunc = new Hash160();
             witHashFunc = new Sha256Fo();
 
@@ -35,8 +33,6 @@ namespace FinderOuter.Backend.KeyPairs
 
 
 
-        private readonly Base58 b58Encoder;
-        private readonly Bech32 b32Encoder;
         private readonly Hash160 hashFunc;
         private readonly Sha256Fo witHashFunc;
         private readonly byte versionByte_P2pkh_MainNet, versionByte_P2pkh_TestNet, versionByte_P2pkh_RegTest;
@@ -80,7 +76,7 @@ namespace FinderOuter.Backend.KeyPairs
 
             try
             {
-                byte[] decoded = b58Encoder.DecodeWithCheckSum(address);
+                byte[] decoded = Base58.DecodeWithChecksum(address);
                 if (decoded.Length == Hash160.HashByteSize + 1)
                 {
                     if (decoded[0] == versionByte_P2pkh_MainNet ||
@@ -103,7 +99,7 @@ namespace FinderOuter.Backend.KeyPairs
 
             try
             {
-                byte[] decoded = b32Encoder.Decode(address, out byte witVer, out string hrp);
+                byte[] decoded = Bech32.Decode(address, Bech32.Mode.B32, out byte witVer, out string hrp);
 
                 if (witVer == 0 &&
                     hrp == hrp_MainNet || hrp == hrp_TestNet || hrp == hrp_RegTest)
@@ -148,7 +144,7 @@ namespace FinderOuter.Backend.KeyPairs
                 NetworkType.RegTest => hash160.AppendToBeginning(versionByte_P2pkh_RegTest),
                 _ => throw new ArgumentException($"Network type ({netType}) is not defined!"),
             };
-            return b58Encoder.EncodeWithCheckSum(hash160);
+            return Base58.EncodeWithChecksum(hash160);
         }
 
 
@@ -162,7 +158,7 @@ namespace FinderOuter.Backend.KeyPairs
                 NetworkType.RegTest => hrp_RegTest,
                 _ => throw new ArgumentException($"Network type ({netType}) is not defined!"),
             };
-            return b32Encoder.Encode(hash160, witVer, hrp);
+            return Bech32.Encode(hash160, Bech32.Mode.B32, witVer, hrp);
         }
 
         public string GetToP2SH_P2WPKH(PublicKey pubkey, NetworkType netType)
@@ -178,7 +174,7 @@ namespace FinderOuter.Backend.KeyPairs
                 NetworkType.RegTest => hash.AppendToBeginning(versionByte_P2sh_RegTest),
                 _ => throw new ArgumentException($"Network type ({netType}) is not defined!"),
             };
-            return b58Encoder.EncodeWithCheckSum(hash);
+            return Base58.EncodeWithChecksum(hash);
         }
 
 

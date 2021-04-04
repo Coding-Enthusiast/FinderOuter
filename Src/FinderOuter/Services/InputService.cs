@@ -17,10 +17,6 @@ namespace FinderOuter.Services
 {
     public class InputService
     {
-        private readonly Base58 b58Enc = new Base58();
-        private readonly Bech32 b32Enc = new Bech32();
-
-
         public bool TryGetCompareService(InputType inType, string input, out ICompareService result)
         {
             result = inType switch
@@ -41,13 +37,12 @@ namespace FinderOuter.Services
             try
             {
                 using MiniPrivateKey mini = new MiniPrivateKey(key);
-                Address addr = new Address();
                 return $"Compressed:{Environment.NewLine}" +
                        $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
-                       $"   Address: {addr.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
+                       $"   Address: {Address.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
                        $"Uncompressed:{Environment.NewLine}" +
                        $"         WIF: {mini.ToWif(false)}{Environment.NewLine}" +
-                       $"     Address: {addr.GetP2pkh(mini.ToPublicKey(), false)}";
+                       $"     Address: {Address.GetP2pkh(mini.ToPublicKey(), false)}";
             }
             catch (Exception ex)
             {
@@ -57,16 +52,16 @@ namespace FinderOuter.Services
 
         public string CheckBase58Bip38(string bip38)
         {
-            if (!b58Enc.HasValidChars(bip38))
+            if (!Base58.IsValid(bip38))
             {
                 return "The given BIP-38 string contains invalid base-58 characters.";
             }
-            if (!b58Enc.IsValid(bip38))
+            if (!Base58.IsValidWithChecksum(bip38))
             {
                 return "The given BIP-38 string has an invalid checksum.";
             }
 
-            byte[] data = b58Enc.DecodeWithCheckSum(bip38);
+            byte[] data = Base58.DecodeWithChecksum(bip38);
             if (data.Length != ConstantsFO.Bip38ByteLen)
             {
                 return "The given BIP-38 string has an invalid byte length.";
@@ -81,16 +76,16 @@ namespace FinderOuter.Services
 
         public string CheckBase58Address(string address)
         {
-            if (!b58Enc.HasValidChars(address))
+            if (!Base58.IsValid(address))
             {
                 return "The given address contains invalid base-58 characters.";
             }
-            if (!b58Enc.IsValid(address))
+            if (!Base58.IsValidWithChecksum(address))
             {
                 return "The given address has an invalid checksum.";
             }
 
-            byte[] addrBa = b58Enc.DecodeWithCheckSum(address);
+            byte[] addrBa = Base58.DecodeWithChecksum(address);
 
             if (addrBa[0] != ConstantsFO.P2pkhAddrFirstByte && addrBa[0] != ConstantsFO.P2shAddrFirstByte)
             {
@@ -144,16 +139,16 @@ namespace FinderOuter.Services
 
         public string CheckPrivateKey(string key)
         {
-            if (!b58Enc.HasValidChars(key))
+            if (!Base58.IsValid(key))
             {
                 return "The given key contains invalid base-58 characters.";
             }
-            if (!b58Enc.IsValid(key))
+            if (!Base58.IsValidWithChecksum(key))
             {
                 return "The given key has an invalid checksum.";
             }
 
-            byte[] keyBa = b58Enc.DecodeWithCheckSum(key);
+            byte[] keyBa = Base58.DecodeWithChecksum(key);
             if (keyBa[0] != ConstantsFO.PrivKeyFirstByte)
             {
                 return $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";
@@ -285,17 +280,17 @@ namespace FinderOuter.Services
             if (address.StartsWith("3") && ignoreP2SH)
                 return false;
 
-            if ((address.StartsWith("1") || address.StartsWith("3")) && b58Enc.IsValid(address))
+            if ((address.StartsWith("1") || address.StartsWith("3")) && Base58.IsValidWithChecksum(address))
             {
-                byte[] decoded = b58Enc.DecodeWithCheckSum(address);
+                byte[] decoded = Base58.DecodeWithChecksum(address);
                 if (decoded[0] != 0 || decoded.Length != 21)
                     return false;
                 hash = decoded.SubArray(1);
                 return true;
             }
-            else if (address.StartsWith("bc1") && b32Enc.IsValid(address))
+            else if (address.StartsWith("bc1") && Bech32.IsValid(address, Bech32.Mode.B32))
             {
-                byte[] decoded = b32Enc.Decode(address, out byte witVer, out string hrp);
+                byte[] decoded = Bech32.Decode(address, Bech32.Mode.B32, out byte witVer, out string hrp);
                 if (witVer != 0 || hrp != "bc" || decoded.Length != 20)
                     return false;
                 hash = decoded;
