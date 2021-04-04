@@ -1419,10 +1419,19 @@ namespace FinderOuter.Services
                 }
 
                 string miss = new string(new char[] { missingChar });
-                if (words.Any(s => s != miss && !allWords.Contains(s)))
+                bool invalidWord = false;
+                for (int i = 0; i < words.Length; i++)
+                {
+                    if (words[i] != miss && !allWords.Contains(words[i]))
+                    {
+                        invalidWord = true;
+                        report.Fail($"Given mnemonic contains invalid word at index {i} ({words[i]}).");
+                    }
+                }
+                if (invalidWord)
                 {
                     words = null;
-                    return report.Fail("Given mnemonic contains invalid words.");
+                    return false;
                 }
                 missCount = words.Count(s => s == miss);
                 wordIndexes = new uint[words.Length];
