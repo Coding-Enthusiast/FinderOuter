@@ -5,6 +5,7 @@
 
 using FinderOuter.Backend;
 using FinderOuter.Models;
+using FinderOuter.Services;
 using ReactiveUI;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,12 @@ namespace FinderOuter.ViewModels
     /// </summary>
     public abstract class OptionVmBase : ViewModelBase
     {
+        public OptionVmBase()
+        {
+            WinMan = new WindowManager();
+        }
+
+
         public abstract string OptionName { get; }
         public abstract string Description { get; }
 
@@ -72,5 +79,11 @@ namespace FinderOuter.ViewModels
 
         public IReactiveCommand FindCommand { get; protected set; }
         public abstract void Find();
+
+
+        public KB InputKb => KB.DamagedInput;
+        public KB ExtraInputKb => KB.ExtraInput;
+        public IWindowManager WinMan { get; set; }
+        public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
     }
 }

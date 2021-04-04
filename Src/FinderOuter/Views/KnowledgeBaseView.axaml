@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             x:Class="FinderOuter.Views.KnowledgeBaseView"
+             mc:Ignorable="d" d:DesignWidth="850" d:DesignHeight="450"
+             FontSize="14">
+  <Design.DataContext>
+    <vm:KnowledgeBaseViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="250,*">
+    <ListBox Items="{Binding KBList}"
+              SelectedItem="{Binding SelectedKB}"
+              Grid.Column="0">
+      <ListBox.DataTemplates>
+        <DataTemplate>
+          <TextBlock Text="{Binding Description}"/>
+        </DataTemplate>
+      </ListBox.DataTemplates>
+    </ListBox>
+
+    <StackPanel Orientation="Vertical" Spacing="3" Grid.Column="1">
+      <TextBlock Text="{Binding Title}"
+                 HorizontalAlignment="Center"
+                 FontSize="22"
+                 FontWeight="Bold"
+                 FontFamily="Monotype Corsiva"/>
+      <TextBlock Text="{Binding Description}"
+                 Margin="3"
+                 Grid.Column="1"/>
+      <Image Source="{Binding Image}"
+             Margin="3"/>
+    </StackPanel>
+
+  </Grid>
+</UserControl>
