@@ -14,10 +14,18 @@
              Watermark="Base-16 (hexadecimal) private key"
              Grid.Column="0"
              Grid.Row="0"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding InputKb}"
+            Grid.Column="0"
+            Grid.Row="0"/>
     <TextBox Text="{Binding AdditionalInput}"
              Watermark="Additional data to check against (address or public key)"
              Grid.Column="0"
              Grid.Row="1"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding ExtraInputKb}"
+            Grid.Column="0"
+            Grid.Row="1"/>
 
     <TextBox Text="{Binding MissingChar}"
              TextAlignment="Center"

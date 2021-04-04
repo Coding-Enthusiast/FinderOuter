@@ -17,6 +17,10 @@
              Height="86"
              Grid.Column="0"
              Grid.Row="0"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding InputKb}"
+            Grid.Column="0"
+            Grid.Row="0"/>
     <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
       <ComboBox Items="{Binding MnemonicTypesList}"
                 SelectedItem="{Binding SelectedMnemonicType}"/>
@@ -45,6 +49,10 @@
              Watermark="Additional info (preferably a private key or public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="2"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding ExtraInputKb}"
+            Grid.Column="0"
+            Grid.Row="2"/>
     <ComboBox Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"
               Grid.Column="1"
               Grid.Row="2">

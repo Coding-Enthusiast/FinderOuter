@@ -14,6 +14,10 @@
              Watermark="Mini-private-key (22 or 30 characters long)"
              Grid.Column="0"
              Grid.Row="0"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding InputKb}"
+            Grid.Column="0"
+            Grid.Row="0"/>
 
     <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1" Grid.Row="0">
       <TextBlock Text="Missing char:"
@@ -30,6 +34,10 @@
              Watermark="Extra input to check against (address, or public key)"
              Grid.Column="0"
              Grid.Row="1"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding ExtraInputKb}"
+            Grid.Column="0"
+            Grid.Row="1"/>
     <ComboBox Items="{Binding ExtraInputTypeList}"
               SelectedItem="{Binding SelectedExtraInputType}"
               Grid.Column="1"
