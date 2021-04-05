@@ -71,12 +71,19 @@ This option is used to recover Armory paper backups (containing 2 or 4 lines of 
 that are missing some of their characters. Since the last 4 characters of each line is the checksum this option can be very fast
 (1 trillion keys/sec) if the checksum is available or extremely slow (100 key/sec) if not.
 
+#### 8. Missing string encoding
+This option could be used to determine the encoding of an arbitrary text. It currently supports Base-16, Base-43, Base-58, 
+Base-58 with checksum and Base-64. All inputs will be converted to hexadecimal.
+
+
 ## Future plans
 * Optimization is always at the top of the to-do list
 * BIP-39 passphrase (extention words) recovery
-* Password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
+* File password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 * BIP-38 password recovery
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
+* SIMD code
+* GPU support
 
 ## How to use The FinderOuter
 #### Step 1: Preparation

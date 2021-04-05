@@ -1,9 +1,17 @@
 ### Next Release (future ideas)
-[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.8.0.0...master)
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.9.0.0...master)
+* BIP-39 passphrase recovery
 * BIP-38 password recovery
 * SIMD support
-* A help window
-* BIP-39 passphrase recovery
+* GPU support
+* Wallet file password recovery
+
+### Release 0.9.0 (2021-04-05)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.8.0.0...v0.9.0.0)
+* **New recovery option**: find encoding of an arbitrary input string
+* Add a new help view that shows up at startup and suggests which recovery option to choose
+* Add Bknowledge Base window that contains explanation of different parts
+* Some small improvements in address validation and error message
 
 ### Release 0.8.0 (2021-03-20)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.7.0.0...v0.8.0.0)
