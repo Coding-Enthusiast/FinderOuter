@@ -2,13 +2,13 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>0.8.0.1</AssemblyVersion>
-    <FileVersion>0.8.0.1</FileVersion>
+    <AssemblyVersion>0.9.0.0</AssemblyVersion>
+    <FileVersion>0.9.0.0</FileVersion>
     <PackageProjectUrl>https://github.com/Coding-Enthusiast/FinderOuter</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Coding-Enthusiast/FinderOuter</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright (c) 2020 Coding Enthusiast</Copyright>
-    <Version>0.8.0.1</Version>
+    <Version>0.9.0.0</Version>
     <Company>Autarkysoft</Company>
     <Authors>Coding-Enthusiast</Authors>
     <PackageTags>bitcoin</PackageTags>
