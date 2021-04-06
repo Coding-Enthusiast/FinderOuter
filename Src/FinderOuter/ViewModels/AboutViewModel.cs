@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Avalonia;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -31,6 +32,11 @@ namespace FinderOuter.ViewModels
 
         private const string Bip21Extras = "?label=Coding-Enthusiast&message=Donation%20for%20FinderOuter%20project";
 
+
+        public void Copy(int i)
+        {
+            Application.Current.Clipboard.SetTextAsync(i == 1 ? DonationAddr1 : DonationAddr2);
+        }
 
         // Taken from avalonia source code
         // https://github.com/AvaloniaUI/Avalonia/blob/4340831f29c2dda00cfc3993303921272fedfc61/src/Avalonia.Dialogs/AboutAvaloniaDialog.xaml

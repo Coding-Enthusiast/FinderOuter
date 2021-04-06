@@ -49,11 +49,21 @@
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="Donation:"/>
         <Button Classes="Hyperlink" Content="{Binding DonationAddr1}" CommandParameter="{Binding DonationUri1}"/>
+        <Button Content="Copy"
+                Command="{Binding Copy}"
+                CommandParameter="1"
+                FontSize="12"
+                Margin="5,0,0,0"/>
       </StackPanel>
 
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="Donation:"/>
         <Button Classes="Hyperlink" Content="{Binding DonationAddr2}" CommandParameter="{Binding DonationUri2}"/>
+        <Button Content="Copy"
+                Command="{Binding Copy}"
+                CommandParameter="2"
+                FontSize="12"
+                Margin="5,0,0,0"/>
       </StackPanel>
 
       <StackPanel Orientation="Horizontal" Margin="0,50,0,0">
