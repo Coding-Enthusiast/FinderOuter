@@ -12,27 +12,6 @@
   </Application.Styles>
 
   <Application.Styles>
-    <Style Selector="TextBlock">
-      <Setter Property="TextWrapping" Value="Wrap"/>
-    </Style>
-
-    <Style Selector="TextBox">
-      <Setter Property="Foreground" Value="#FF000000"/>
-      <Setter Property="Background" Value="#66FFFFFF"/>
-      <Setter Property="BorderThickness" Value="2"/>
-      <Setter Property="BorderBrush" Value="#66000000"/>
-      <Setter Property="CaretBrush" Value="#FF000000"/>
-      <Setter Property="SelectionBrush" Value="#FF0078D7"/>
-      <Setter Property="Margin" Value="3"/>
-      <Setter Property="MinHeight" Value="45"/>
-      <Setter Property="Padding" Value="5,3,5,5"/>
-      <Setter Property="UseFloatingWatermark" Value="True"/>
-      <Setter Property="TextWrapping" Value="Wrap"/>
-    </Style>
-    <Style Selector="TextBox /template/ Border">
-      <Setter Property="CornerRadius" Value="3"/>
-    </Style>
-
     <Style Selector="ComboBox">
       <Setter Property="BorderThickness" Value="2"/>
       <Setter Property="BorderBrush" Value="#66000000"/>
@@ -81,6 +60,39 @@
     </Style>
     <Style Selector="Button:pointerover.Help /template/ ContentPresenter">
       <Setter Property="Background" Value="LightGreen"/>
+    </Style>
+
+
+    <Style Selector="TextBlock">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+
+    <Style Selector="TextBox">
+      <Setter Property="Foreground" Value="#FF000000"/>
+      <Setter Property="Background" Value="#66FFFFFF"/>
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderBrush" Value="#66000000"/>
+      <Setter Property="CaretBrush" Value="#FF000000"/>
+      <Setter Property="SelectionBrush" Value="#FF0078D7"/>
+      <Setter Property="Margin" Value="3"/>
+      <Setter Property="MinHeight" Value="45"/>
+      <Setter Property="Padding" Value="5,3,5,5"/>
+      <Setter Property="UseFloatingWatermark" Value="True"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBox /template/ Border">
+      <Setter Property="CornerRadius" Value="3"/>
+    </Style>
+
+
+    <Style Selector="NumericUpDown">
+      <Setter Property="Foreground" Value="#FF000000"/>
+      <Setter Property="Background" Value="#66FFFFFF"/>
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderBrush" Value="#66000000"/>
+      <Setter Property="Margin" Value="3"/>
     </Style>
   </Application.Styles>
 
