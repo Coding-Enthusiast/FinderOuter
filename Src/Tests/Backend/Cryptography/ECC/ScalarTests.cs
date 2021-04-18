@@ -39,7 +39,7 @@ namespace Tests.Backend.Cryptography.ECC
 
             fixed (ulong* hPt = &sha.hashState[0])
             {
-                byte[] hash = sha.GetFirst32Bytes(hPt);
+                byte[] hash = Sha512Fo.GetFirst32Bytes(hPt);
                 var val1 = new Scalar(hash, out int of1);
                 var val2 = new Scalar(hPt, out int of2);
 

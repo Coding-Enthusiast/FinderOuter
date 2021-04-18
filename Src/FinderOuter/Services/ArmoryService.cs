@@ -180,7 +180,7 @@ namespace FinderOuter.Services
                 sha.Compress64SecondBlock(hPt, wPt);
 
                 // TODO: this could be improved a bit
-                chainCode = sha.GetBytes(hPt);
+                chainCode = Sha256Fo.GetBytes(hPt);
             }
 
             // hPt is chain-code now

@@ -93,7 +93,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress22(hPt, wPt);
 
-                return comparer.Compare(sha.GetBytes(hPt));
+                return comparer.Compare(Sha256Fo.GetBytes(hPt));
             }
             else
             {
@@ -218,7 +218,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress26(hPt, wPt);
 
-                return comparer.Compare(sha.GetBytes(hPt));
+                return comparer.Compare(Sha256Fo.GetBytes(hPt));
             }
             else
             {
@@ -310,7 +310,7 @@ namespace FinderOuter.Services
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool Loop31Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
+        private static unsafe bool Loop31Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
         {
             wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
             wPt[1] = (uint)tmp[4] << 24 | (uint)tmp[5] << 16 | (uint)tmp[6] << 8 | tmp[7];
@@ -335,7 +335,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress30(hPt, wPt);
 
-                return comparer.Compare(sha.GetBytes(hPt));
+                return comparer.Compare(Sha256Fo.GetBytes(hPt));
             }
             else
             {
@@ -345,7 +345,7 @@ namespace FinderOuter.Services
         private unsafe void Loop31(int firstItem, ICompareService comparer, ParallelLoopState loopState)
         {
             // Same as above but key is 30 chars (30 bytes)
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
             byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
             int[] missingItems = new int[missCount - 1];
             int firstIndex = missingIndexes[0];
@@ -396,7 +396,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha256Fo sha = new Sha256Fo();
+                using Sha256Fo sha = new();
                 byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
                 int[] missingItems = new int[missCount];
                 int firstIndex = missingIndexes[0];

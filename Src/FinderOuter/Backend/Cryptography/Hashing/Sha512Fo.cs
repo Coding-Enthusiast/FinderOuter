@@ -186,24 +186,34 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe byte[] GetBytes(ulong* hPt)
+        public static unsafe byte[] GetBytes(ulong* hPt)
         {
-            byte[] res = new byte[HashByteSize];
-            fixed (byte* bPt = &res[0])
+            return new byte[HashByteSize]
             {
-                for (int i = 0, j = 0; i < res.Length; i += 8, j++)
-                {
-                    bPt[i] = (byte)(hPt[j] >> 56);
-                    bPt[i + 1] = (byte)(hPt[j] >> 48);
-                    bPt[i + 2] = (byte)(hPt[j] >> 40);
-                    bPt[i + 3] = (byte)(hPt[j] >> 32);
-                    bPt[i + 4] = (byte)(hPt[j] >> 24);
-                    bPt[i + 5] = (byte)(hPt[j] >> 16);
-                    bPt[i + 6] = (byte)(hPt[j] >> 8);
-                    bPt[i + 7] = (byte)hPt[j];
-                }
-            }
-            return res;
+                (byte)(hPt[0] >> 56), (byte)(hPt[0] >> 48), (byte)(hPt[0] >> 40), (byte)(hPt[0] >> 32),
+                (byte)(hPt[0] >> 24), (byte)(hPt[0] >> 16), (byte)(hPt[0] >> 8), (byte)hPt[0],
+
+                (byte)(hPt[1] >> 56), (byte)(hPt[1] >> 48), (byte)(hPt[1] >> 40), (byte)(hPt[1] >> 32),
+                (byte)(hPt[1] >> 24), (byte)(hPt[1] >> 16), (byte)(hPt[1] >> 8), (byte)hPt[1],
+
+                (byte)(hPt[2] >> 56), (byte)(hPt[2] >> 48), (byte)(hPt[2] >> 40), (byte)(hPt[2] >> 32),
+                (byte)(hPt[2] >> 24), (byte)(hPt[2] >> 16), (byte)(hPt[2] >> 8), (byte)hPt[2],
+
+                (byte)(hPt[3] >> 56), (byte)(hPt[3] >> 48), (byte)(hPt[3] >> 40), (byte)(hPt[3] >> 32),
+                (byte)(hPt[3] >> 24), (byte)(hPt[3] >> 16), (byte)(hPt[3] >> 8), (byte)hPt[3],
+
+                (byte)(hPt[4] >> 56), (byte)(hPt[4] >> 48), (byte)(hPt[4] >> 40), (byte)(hPt[4] >> 32),
+                (byte)(hPt[4] >> 24), (byte)(hPt[4] >> 16), (byte)(hPt[4] >> 8), (byte)hPt[4],
+
+                (byte)(hPt[5] >> 56), (byte)(hPt[5] >> 48), (byte)(hPt[5] >> 40), (byte)(hPt[5] >> 32),
+                (byte)(hPt[5] >> 24), (byte)(hPt[5] >> 16), (byte)(hPt[5] >> 8), (byte)hPt[5],
+
+                (byte)(hPt[6] >> 56), (byte)(hPt[6] >> 48), (byte)(hPt[6] >> 40), (byte)(hPt[6] >> 32),
+                (byte)(hPt[6] >> 24), (byte)(hPt[6] >> 16), (byte)(hPt[6] >> 8), (byte)hPt[6],
+
+                (byte)(hPt[7] >> 56), (byte)(hPt[7] >> 48), (byte)(hPt[7] >> 40), (byte)(hPt[7] >> 32),
+                (byte)(hPt[7] >> 24), (byte)(hPt[7] >> 16), (byte)(hPt[7] >> 8), (byte)hPt[7]
+            };
         }
 
         /// <summary>
@@ -211,7 +221,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <returns></returns>
-        public unsafe byte[] GetFirst32Bytes(ulong* hPt)
+        public static unsafe byte[] GetFirst32Bytes(ulong* hPt)
         {
             return new byte[32]
             {

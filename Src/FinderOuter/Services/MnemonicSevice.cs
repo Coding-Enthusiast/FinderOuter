@@ -306,7 +306,7 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
-                BigInteger kParent = new BigInteger(sha.GetFirst32Bytes(hPt), true, true);
+                BigInteger kParent = new BigInteger(Sha512Fo.GetFirst32Bytes(hPt), true, true);
                 if (kParent == 0 || kParent >= order)
                 {
                     return false;
@@ -403,7 +403,7 @@ namespace FinderOuter.Services
 
                     // New private key is (parentPrvKey + int(hPt)) % order
                     // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
-                    kParent = (kParent + new BigInteger(sha.GetFirst32Bytes(hPt), true, true)) % order;
+                    kParent = (kParent + new BigInteger(Sha512Fo.GetFirst32Bytes(hPt), true, true)) % order;
 
                     ulong toAdd = hPt[3];
                     parkey0 += toAdd;
@@ -471,7 +471,7 @@ namespace FinderOuter.Services
                 hPt[2] = parkey1;
                 hPt[3] = parkey0;
 
-                return comparer.Compare(sha.GetFirst32Bytes(hPt));
+                return comparer.Compare(Sha512Fo.GetFirst32Bytes(hPt));
             }
         }
 

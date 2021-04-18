@@ -120,20 +120,19 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe byte[] GetBytes(uint* hPt)
+        public static unsafe byte[] GetBytes(uint* hPt)
         {
-            byte[] res = new byte[HashByteSize];
-            fixed (byte* bPt = &res[0])
+            return new byte[32]
             {
-                for (int i = 0, j = 0; i < res.Length; i += 4, j++)
-                {
-                    bPt[i] = (byte)(hPt[j] >> 24);
-                    bPt[i + 1] = (byte)(hPt[j] >> 16);
-                    bPt[i + 2] = (byte)(hPt[j] >> 8);
-                    bPt[i + 3] = (byte)hPt[j];
-                }
-            }
-            return res;
+                (byte)(hPt[0] >> 24), (byte)(hPt[0] >> 16), (byte)(hPt[0] >> 8), (byte)hPt[0],
+                (byte)(hPt[1] >> 24), (byte)(hPt[1] >> 16), (byte)(hPt[1] >> 8), (byte)hPt[1],
+                (byte)(hPt[2] >> 24), (byte)(hPt[2] >> 16), (byte)(hPt[2] >> 8), (byte)hPt[2],
+                (byte)(hPt[3] >> 24), (byte)(hPt[3] >> 16), (byte)(hPt[3] >> 8), (byte)hPt[3],
+                (byte)(hPt[4] >> 24), (byte)(hPt[4] >> 16), (byte)(hPt[4] >> 8), (byte)hPt[4],
+                (byte)(hPt[5] >> 24), (byte)(hPt[5] >> 16), (byte)(hPt[5] >> 8), (byte)hPt[5],
+                (byte)(hPt[6] >> 24), (byte)(hPt[6] >> 16), (byte)(hPt[6] >> 8), (byte)hPt[6],
+                (byte)(hPt[7] >> 24), (byte)(hPt[7] >> 16), (byte)(hPt[7] >> 8), (byte)hPt[7]
+            };
         }
 
 
