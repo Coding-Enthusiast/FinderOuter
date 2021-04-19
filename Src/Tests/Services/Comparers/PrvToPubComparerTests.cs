@@ -3,6 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
+using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Services.Comparers;
 using System.Collections.Generic;
 using Xunit;
@@ -66,6 +69,46 @@ namespace Tests.Services.Comparers
             b2 = comp2.Compare(key);
             Assert.True(b1);
             Assert.True(b2);
+        }
+
+        [Fact]
+        public unsafe void Compare_Sha256HashStateTest()
+        {
+            var comp = new PrvToPubComparer();
+            using Sha256Fo sha = new();
+            sha.ComputeHash(new byte[1]);
+            fixed (uint* hPt = sha.hashState)
+            {
+                var key = new Scalar(hPt, out int overflow);
+                Assert.Equal(0, overflow);
+                var calc = new Calc();
+                string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
+                bool b = comp.Init(pubHex);
+                Assert.True(b);
+
+                bool actual = comp.Compare(hPt);
+                Assert.True(actual);
+            }
+        }
+
+        [Fact]
+        public unsafe void Compare_Sha512HashStateTest()
+        {
+            var comp = new PrvToPubComparer();
+            using Sha512Fo sha = new();
+            sha.ComputeHash(new byte[1]);
+            fixed (ulong* hPt = sha.hashState)
+            {
+                var key = new Scalar(hPt, out int overflow);
+                Assert.Equal(0, overflow);
+                var calc = new Calc();
+                string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
+                bool b = comp.Init(pubHex);
+                Assert.True(b);
+
+                bool actual = comp.Compare(hPt);
+                Assert.True(actual);
+            }
         }
     }
 }

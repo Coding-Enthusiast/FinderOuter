@@ -4,12 +4,30 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.ECC;
 using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
     public interface ICompareService
     {
+        // TODO: fix this bad name when migration is complete
+        public Calc Calc2 { get; }
+
+        /// <summary>
+        /// Builds the private key using the <see cref="Backend.Cryptography.Hashing.Sha256Fo.hashState"/> pointer
+        /// </summary>
+        /// <param name="hPt"><see cref="Backend.Cryptography.Hashing.Sha256Fo.hashState"/> pointer</param>
+        /// <returns></returns>
+        unsafe bool Compare(uint* hPt);
+        /// <summary>
+        /// Builds the private key using the <see cref="Backend.Cryptography.Hashing.Sha512Fo.hashState"/> pointer
+        /// using its first 32 bytes as the key (similar to what BIP-32 works)
+        /// </summary>
+        /// <param name="hPt"><see cref="Backend.Cryptography.Hashing.Sha512Fo.hashState"/> pointer</param>
+        /// <returns></returns>
+        unsafe bool Compare(ulong* hPt);
+
         bool Init(string data);
         ICompareService Clone();
         bool Compare(byte[] key);

@@ -7,6 +7,8 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using FinderOuter.Backend;
+using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.ECC;
 using System;
 using System.Numerics;
 
@@ -23,7 +25,7 @@ namespace FinderOuter.Services.Comparers
         {
             try
             {
-                using PrivateKey temp = new PrivateKey(data);
+                using PrivateKey temp = new(data);
                 expected = temp.ToBytes();
                 return true;
             }
@@ -40,6 +42,11 @@ namespace FinderOuter.Services.Comparers
                 expected = this.expected.CloneByteArray()
             };
         }
+
+        private readonly Calc calc2 = new();
+        public Calc Calc2 => calc2;
+        public unsafe bool Compare(uint* hPt) => ((Span<byte>)expected).SequenceEqual(Sha256Fo.GetBytes(hPt));
+        public unsafe bool Compare(ulong* hPt) => ((Span<byte>)expected).SequenceEqual(Sha512Fo.GetFirst32Bytes(hPt));
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expected).SequenceEqual(key);
 

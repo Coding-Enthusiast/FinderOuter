@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
+using FinderOuter.Backend.ECC;
 using System;
 using System.Numerics;
 
@@ -16,15 +17,17 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {
-        private readonly SecP256k1 curve = new SecP256k1();
-        private readonly EllipticCurveCalculator calc = new EllipticCurveCalculator();
+        private readonly SecP256k1 curve = new();
+        private readonly EllipticCurveCalculator calc = new();
+        protected readonly Calc calc2 = new();
         private EllipticCurvePoint point;
+        private byte[] pubBa;
 
         public bool Init(string pubHex)
         {
             try
             {
-                byte[] pubBa = Base16.Decode(pubHex);
+                pubBa = Base16.Decode(pubHex);
                 if (PublicKey.TryRead(pubBa, out PublicKey pubKey))
                 {
                     point = pubKey.ToPoint();
@@ -45,10 +48,35 @@ namespace FinderOuter.Services.Comparers
         {
             return new PrvToPubComparer()
             {
-                point = this.point
+                point = this.point,
+                pubBa = this.pubBa
             };
         }
 
+        public Calc Calc2 => calc2;
+        public unsafe bool Compare(uint* hPt)
+        {
+            var key = new Scalar(hPt, out int overflow);
+            if (overflow != 0)
+            {
+                return false;
+            }
+            
+            Span<byte> actual = calc2.GetPubkey(key, pubBa.Length == 33);
+            return actual.SequenceEqual(pubBa);
+        }
+
+        public unsafe bool Compare(ulong* hPt)
+        {
+            var key = new Scalar(hPt, out int overflow);
+            if (overflow != 0)
+            {
+                return false;
+            }
+
+            Span<byte> actual = calc2.GetPubkey(key, pubBa.Length == 33);
+            return actual.SequenceEqual(pubBa);
+        }
 
         public bool Compare(byte[] key)
         {
