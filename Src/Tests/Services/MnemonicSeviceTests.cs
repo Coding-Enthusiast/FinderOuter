@@ -25,20 +25,19 @@ namespace Tests.Services
         [Fact]
         public void TrySetWordListTest()
         {
-            var serv = new MnemonicSevice(null);
             Array wls = Enum.GetValues(typeof(BIP0039.WordLists));
             byte[] space = Encoding.UTF8.GetBytes(" ");
             Assert.Single(space);
 
             foreach (BIP0039.WordLists item in wls)
             {
-                bool b = serv.TrySetWordList(item, out string[] words, out int actualMaxWordLen);
+                bool b = MnemonicSevice.TrySetWordList(item, out string[] words, out int actualMaxWordLen);
                 Assert.True(b);
                 Assert.Equal(2048, words.Length);
 
                 string bigSeed = string.Join(" ", words);
                 int expectedMaxWordLen = 0;
-                FastStream stream = new FastStream(37831);
+                var stream = new FastStream(37831);
                 for (int i = 0; i < words.Length; i++)
                 {
                     byte[] wordBa = Encoding.UTF8.GetBytes(words[i]);
@@ -64,14 +63,13 @@ namespace Tests.Services
         [Fact]
         public void GetSeedByteTest()
         {
-            var serv = new MnemonicSevice(null);
-            byte[] actual = serv.GetSeedByte(12, 3);
+            byte[] actual = MnemonicSevice.GetSeedByte(12, 3);
             Assert.Equal(47, actual.Length);
 
-            actual = serv.GetSeedByte(12, 8);
+            actual = MnemonicSevice.GetSeedByte(12, 8);
             Assert.Equal(107, actual.Length);
 
-            actual = serv.GetSeedByte(24, 33);
+            actual = MnemonicSevice.GetSeedByte(24, 33);
             Assert.Equal(815, actual.Length);
         }
     }

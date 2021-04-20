@@ -3,12 +3,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
@@ -44,7 +42,7 @@ namespace FinderOuter.Services
         private readonly InputService inputService;
         private readonly ECCalc calc;
 
-        private Dictionary<uint, byte[]> wordBytes = new Dictionary<uint, byte[]>(2048);
+        private Dictionary<uint, byte[]> wordBytes = new(2048);
         private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
 
@@ -59,12 +57,6 @@ namespace FinderOuter.Services
         private byte[] mnBytes;
         private BIP0032Path path;
         private ICompareService comparer;
-
-        private readonly BigInteger order = new SecP256k1().N;
-        private const ulong N0 = 0xBFD25E8C_D0364141;
-        private const ulong N1 = 0xBAAEDCE6_AF48A03B;
-        private const ulong N2 = 0xFFFFFFFF_FFFFFFFE;
-        private const ulong N3 = 0xFFFFFFFF_FFFFFFFF;
 
         private int missCount;
         private string[] words;
@@ -87,8 +79,6 @@ namespace FinderOuter.Services
             ulong* seedPt = oPt + 80;
             ulong* ihPt = seedPt + 8;
             ulong* ohPt = ihPt + 8;
-
-            ulong parkey0, parkey1, parkey2, parkey3, carry;
 
             fixed (byte* dPt = &pbkdf2Salt[0])
             fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
@@ -306,15 +296,11 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
-                BigInteger kParent = new BigInteger(Sha512Fo.GetFirst32Bytes(hPt), true, true);
-                if (kParent == 0 || kParent >= order)
+                var sclrParent = new Scalar(hPt, out int overflow);
+                if (overflow != 0)
                 {
                     return false;
                 }
-                parkey0 = hPt[3];
-                parkey1 = hPt[2];
-                parkey2 = hPt[1];
-                parkey3 = hPt[0];
 
                 foreach (var index in path.Indexes)
                 {
@@ -323,53 +309,52 @@ namespace FinderOuter.Services
                         // First _byte_ is zero
                         // private-key is the first 32 bytes (4 items) of hPt (total 33 bytes)
                         // 4 bytes index + SHA padding are also added
-                        uPt[0] = parkey3 >> 8;
-                        uPt[1] = parkey3 << 56 | parkey2 >> 8;
-                        uPt[2] = parkey2 << 56 | parkey1 >> 8;
-                        uPt[3] = parkey1 << 56 | parkey0 >> 8;
-                        uPt[4] = parkey0 << 56 |
+                        uPt[0] = (ulong)sclrParent.b7 << 24 | (ulong)sclrParent.b6 >> 8;
+                        uPt[1] = (ulong)sclrParent.b6 << 56 | (ulong)sclrParent.b5 << 24 | (ulong)sclrParent.b4 >> 8;
+                        uPt[2] = (ulong)sclrParent.b4 << 56 | (ulong)sclrParent.b3 << 24 | (ulong)sclrParent.b2 >> 8;
+                        uPt[3] = (ulong)sclrParent.b2 << 56 | (ulong)sclrParent.b1 << 24 | (ulong)sclrParent.b0 >> 8;
+                        uPt[4] = (ulong)sclrParent.b0 << 56 |
                                  (ulong)index << 24 |
                                  0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
                     }
                     else
                     {
-                        var point = calc.MultiplyByG(kParent);
-                        byte[] xBytes = point.X.ToByteArray(true, true).PadLeft(32);
-                        fixed (byte* pubXPt = &xBytes[0])
+                        Span<byte> pubkeyBytes = comparer.Calc2.GetPubkey(sclrParent, true);
+                        fixed (byte* pubXPt = &pubkeyBytes[0])
                         {
-                            uPt[0] = (point.Y.IsEven ? 0x0200000000000000UL : 0x0300000000000000UL) |
-                                     (ulong)pubXPt[0] << 48 |
-                                     (ulong)pubXPt[1] << 40 |
-                                     (ulong)pubXPt[2] << 32 |
-                                     (ulong)pubXPt[3] << 24 |
-                                     (ulong)pubXPt[4] << 16 |
-                                     (ulong)pubXPt[5] << 8 |
-                                            pubXPt[6];
-                            uPt[1] = (ulong)pubXPt[7] << 56 |
-                                     (ulong)pubXPt[8] << 48 |
-                                     (ulong)pubXPt[9] << 40 |
-                                     (ulong)pubXPt[10] << 32 |
-                                     (ulong)pubXPt[11] << 24 |
-                                     (ulong)pubXPt[12] << 16 |
-                                     (ulong)pubXPt[13] << 8 |
-                                            pubXPt[14];
-                            uPt[2] = (ulong)pubXPt[15] << 56 |
-                                     (ulong)pubXPt[16] << 48 |
-                                     (ulong)pubXPt[17] << 40 |
-                                     (ulong)pubXPt[18] << 32 |
-                                     (ulong)pubXPt[19] << 24 |
-                                     (ulong)pubXPt[20] << 16 |
-                                     (ulong)pubXPt[21] << 8 |
-                                            pubXPt[22];
-                            uPt[3] = (ulong)pubXPt[23] << 56 |
-                                     (ulong)pubXPt[24] << 48 |
-                                     (ulong)pubXPt[25] << 40 |
-                                     (ulong)pubXPt[26] << 32 |
-                                     (ulong)pubXPt[27] << 24 |
-                                     (ulong)pubXPt[28] << 16 |
-                                     (ulong)pubXPt[29] << 8 |
-                                            pubXPt[30];
-                            uPt[4] = (ulong)pubXPt[31] << 56 |
+                            uPt[0] = (ulong)pubXPt[0] << 56 |
+                                     (ulong)pubXPt[1] << 48 |
+                                     (ulong)pubXPt[2] << 40 |
+                                     (ulong)pubXPt[3] << 32 |
+                                     (ulong)pubXPt[4] << 24 |
+                                     (ulong)pubXPt[5] << 16 |
+                                     (ulong)pubXPt[6] << 8 |
+                                            pubXPt[7];
+                            uPt[1] = (ulong)pubXPt[8] << 56 |
+                                     (ulong)pubXPt[9] << 48 |
+                                     (ulong)pubXPt[10] << 40 |
+                                     (ulong)pubXPt[11] << 32 |
+                                     (ulong)pubXPt[12] << 24 |
+                                     (ulong)pubXPt[13] << 16 |
+                                     (ulong)pubXPt[14] << 8 |
+                                            pubXPt[15];
+                            uPt[2] = (ulong)pubXPt[16] << 56 |
+                                     (ulong)pubXPt[17] << 48 |
+                                     (ulong)pubXPt[18] << 40 |
+                                     (ulong)pubXPt[19] << 32 |
+                                     (ulong)pubXPt[20] << 24 |
+                                     (ulong)pubXPt[21] << 16 |
+                                     (ulong)pubXPt[22] << 8 |
+                                            pubXPt[23];
+                            uPt[3] = (ulong)pubXPt[24] << 56 |
+                                     (ulong)pubXPt[25] << 48 |
+                                     (ulong)pubXPt[26] << 40 |
+                                     (ulong)pubXPt[27] << 32 |
+                                     (ulong)pubXPt[28] << 24 |
+                                     (ulong)pubXPt[29] << 16 |
+                                     (ulong)pubXPt[30] << 8 |
+                                            pubXPt[31];
+                            uPt[4] = (ulong)pubXPt[32] << 56 |
                                      (ulong)index << 24 |
                                      0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
                         }
@@ -403,75 +388,17 @@ namespace FinderOuter.Services
 
                     // New private key is (parentPrvKey + int(hPt)) % order
                     // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
-                    kParent = (kParent + new BigInteger(Sha512Fo.GetFirst32Bytes(hPt), true, true)) % order;
-
-                    ulong toAdd = hPt[3];
-                    parkey0 += toAdd;
-                    if (parkey0 < toAdd) parkey1++;
-
-                    toAdd = hPt[2];
-                    parkey1 += toAdd;
-                    if (parkey1 < toAdd) parkey2++;
-
-                    toAdd = hPt[1];
-                    parkey2 += toAdd;
-                    if (parkey2 < toAdd) parkey3++;
-
-                    toAdd = hPt[0];
-                    parkey3 += toAdd;
-                    if (parkey3 < toAdd) carry = 1;
-                    else carry = 0;
-
-                    bool bigger = false;
-                    if (carry == 1)
-                    {
-                        bigger = true;
-                    }
-                    else if (parkey3 == N3)
-                    {
-                        if (parkey2 > N2)
-                        {
-                            bigger = true;
-                        }
-                        else if (parkey2 == N2)
-                        {
-                            if (parkey1 > N1)
-                            {
-                                bigger = true;
-                            }
-                            else if (parkey1 == N1)
-                            {
-                                if (parkey0 >= N0)
-                                {
-                                    bigger = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (bigger)
-                    {
-                        if (parkey0 < N0) parkey1--;
-                        parkey0 -= N0;
-
-                        if (parkey1 < N1) parkey2--;
-                        parkey1 -= N1;
-
-                        if (parkey2 < N2) parkey3--;
-                        parkey2 -= N2;
-
-                        parkey3 -= N3;
-                    }
+                    sclrParent = sclrParent.Add(new Scalar(hPt, out _), out _);
                 }
 
                 // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path
                 // and have been computed already
-                hPt[0] = parkey3;
-                hPt[1] = parkey2;
-                hPt[2] = parkey1;
-                hPt[3] = parkey0;
+                hPt[0] = (ulong)sclrParent.b7 << 32 | sclrParent.b6;
+                hPt[1] = (ulong)sclrParent.b5 << 32 | sclrParent.b4;
+                hPt[2] = (ulong)sclrParent.b3 << 32 | sclrParent.b2;
+                hPt[3] = (ulong)sclrParent.b1 << 32 | sclrParent.b0;
 
-                return comparer.Compare(Sha512Fo.GetFirst32Bytes(hPt));
+                return comparer.Compare(hPt);
             }
         }
 
@@ -482,7 +409,7 @@ namespace FinderOuter.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool MoveNext(uint* items, int len)
+        private static unsafe bool MoveNext(uint* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
@@ -507,8 +434,8 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new Sha512Fo();
-            using Sha256Fo sha256 = new Sha256Fo();
+            using Sha512Fo sha512 = new();
+            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -588,8 +515,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new Sha512Fo();
-                using Sha256Fo sha256 = new Sha256Fo();
+                using Sha512Fo sha512 = new();
+                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -689,8 +616,8 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new Sha512Fo();
-            using Sha256Fo sha256 = new Sha256Fo();
+            using Sha512Fo sha512 = new();
+            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -769,8 +696,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new Sha512Fo();
-                using Sha256Fo sha256 = new Sha256Fo();
+                using Sha512Fo sha512 = new();
+                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -822,8 +749,8 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new Sha512Fo();
-            using Sha256Fo sha256 = new Sha256Fo();
+            using Sha512Fo sha512 = new();
+            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -901,8 +828,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new Sha512Fo();
-                using Sha256Fo sha256 = new Sha256Fo();
+                using Sha512Fo sha512 = new();
+                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -953,8 +880,8 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new Sha512Fo();
-            using Sha256Fo sha256 = new Sha256Fo();
+            using Sha512Fo sha512 = new();
+            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -1031,8 +958,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new Sha512Fo();
-                using Sha256Fo sha256 = new Sha256Fo();
+                using Sha512Fo sha512 = new();
+                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -1082,8 +1009,8 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new Sha512Fo();
-            using Sha256Fo sha256 = new Sha256Fo();
+            using Sha512Fo sha512 = new();
+            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -1162,8 +1089,8 @@ namespace FinderOuter.Services
             {
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
-                using Sha512Fo sha512 = new Sha512Fo();
-                using Sha256Fo sha256 = new Sha256Fo();
+                using Sha512Fo sha512 = new();
+                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -1222,7 +1149,7 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
 
-            using Sha512Fo sha512 = new Sha512Fo();
+            using Sha512Fo sha512 = new();
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
             fixed (uint* wrd = &localWIndex[0], itemsPt = &missingItems[0])
@@ -1324,7 +1251,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new Sha512Fo();
+                using Sha512Fo sha512 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
@@ -1376,9 +1303,9 @@ namespace FinderOuter.Services
         }
 
 
-        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
+        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
 
-        public bool TrySetWordList(BIP0039.WordLists wl, out string[] allWords, out int maxWordLen)
+        public static bool TrySetWordList(BIP0039.WordLists wl, out string[] allWords, out int maxWordLen)
         {
             try
             {
@@ -1401,7 +1328,7 @@ namespace FinderOuter.Services
         /// <param name="seedLen"></param>
         /// <param name="maxWordLen"></param>
         /// <returns></returns>
-        public byte[] GetSeedByte(int seedLen, int maxWordLen) => new byte[(seedLen * maxWordLen) + (seedLen - 1)];
+        public static byte[] GetSeedByte(int seedLen, int maxWordLen) => new byte[(seedLen * maxWordLen) + (seedLen - 1)];
 
 
         public bool TrySplitMnemonic(string mnemonic, char missingChar)
@@ -1418,11 +1345,11 @@ namespace FinderOuter.Services
                     return report.Fail("Invalid mnemonic length.");
                 }
 
-                string miss = new string(new char[] { missingChar });
+                var missCharStr = new string(new char[] { missingChar });
                 bool invalidWord = false;
                 for (int i = 0; i < words.Length; i++)
                 {
-                    if (words[i] != miss && !allWords.Contains(words[i]))
+                    if (words[i] != missCharStr && !allWords.Contains(words[i]))
                     {
                         invalidWord = true;
                         report.Fail($"Given mnemonic contains invalid word at index {i} ({words[i]}).");
@@ -1433,12 +1360,12 @@ namespace FinderOuter.Services
                     words = null;
                     return false;
                 }
-                missCount = words.Count(s => s == miss);
+                missCount = words.Count(s => s == missCharStr);
                 wordIndexes = new uint[words.Length];
                 missingIndexes = new int[missCount];
                 for (int i = 0, j = 0; i < words.Length; i++)
                 {
-                    if (words[i] != miss)
+                    if (words[i] != missCharStr)
                     {
                         wordIndexes[i] = (uint)Array.IndexOf(allWords, words[i]);
                     }
@@ -1471,7 +1398,7 @@ namespace FinderOuter.Services
 
 
         // https://github.com/spesmilo/electrum/blob/1c07777e135d28fffa157019f90ccdaa002b614e/electrum/keystore.py#L984-L1003
-        public string GetElectrumPath(ElectrumMnemonic.MnemonicType value)
+        public static string GetElectrumPath(ElectrumMnemonic.MnemonicType value)
         {
             return value switch
             {
@@ -1486,8 +1413,8 @@ namespace FinderOuter.Services
 
 
         public async void FindMissing(string mnemonic, char missChar, string pass, string extra, InputType extraType,
-                                            string path, MnemonicTypes mnType, BIP0039.WordLists wl,
-                                            ElectrumMnemonic.MnemonicType elecMnType)
+                                      string path, MnemonicTypes mnType, BIP0039.WordLists wl,
+                                      ElectrumMnemonic.MnemonicType elecMnType)
         {
             report.Init();
 
@@ -1508,11 +1435,11 @@ namespace FinderOuter.Services
                     {
                         if (mnType == MnemonicTypes.BIP39)
                         {
-                            using BIP0039 temp = new BIP0039(mnemonic, wl, pass);
+                            using BIP0039 temp = new(mnemonic, wl, pass);
                         }
                         else if (mnType == MnemonicTypes.Electrum)
                         {
-                            using ElectrumMnemonic temp = new ElectrumMnemonic(mnemonic, wl, pass);
+                            using ElectrumMnemonic temp = new(mnemonic, wl, pass);
                         }
 
                         report.Pass($"Given mnemonic is a valid {mnType}.");

@@ -76,7 +76,7 @@ namespace FinderOuter.Backend.ECC
         }
 
 
-        private readonly uint b0, b1, b2, b3, b4, b5, b6, b7;
+        internal readonly uint b0, b1, b2, b3, b4, b5, b6, b7;
 
         // Secp256k1 curve order
         public const uint N0 = 0xD0364141U;
@@ -155,6 +155,66 @@ namespace FinderOuter.Backend.ECC
                 7 => b7,
             };
         }
+
+
+        public readonly Scalar Add(in Scalar other, out int overflow)
+        {
+            ulong t = (ulong)b0 + other.b0;
+            uint r0 = (uint)t; t >>= 32;
+            t += (ulong)b1 + other.b1;
+            uint r1 = (uint)t; t >>= 32;
+            t += (ulong)b2 + other.b2;
+            uint r2 = (uint)t; t >>= 32;
+            t += (ulong)b3 + other.b3;
+            uint r3 = (uint)t; t >>= 32;
+            t += (ulong)b4 + other.b4;
+            uint r4 = (uint)t; t >>= 32;
+            t += (ulong)b5 + other.b5;
+            uint r5 = (uint)t; t >>= 32;
+            t += (ulong)b6 + other.b6;
+            uint r6 = (uint)t; t >>= 32;
+            t += (ulong)b7 + other.b7;
+            uint r7 = (uint)t; t >>= 32;
+
+
+            int yes = 0;
+            int no = 0;
+            no |= (r7 < N7 ? 1 : 0);
+            no |= (r6 < N6 ? 1 : 0);
+            no |= (r5 < N5 ? 1 : 0);
+            no |= (r4 < N4 ? 1 : 0);
+            yes |= (r4 > N4 ? 1 : 0) & ~no;
+            no |= (r3 < N3 ? 1 : 0) & ~yes;
+            yes |= (r3 > N3 ? 1 : 0) & ~no;
+            no |= (r2 < N2 ? 1 : 0) & ~yes;
+            yes |= (r2 > N2 ? 1 : 0) & ~no;
+            no |= (r1 < N1 ? 1 : 0) & ~yes;
+            yes |= (r1 > N1 ? 1 : 0) & ~no;
+            yes |= (r0 >= N0 ? 1 : 0) & ~no;
+
+            overflow = yes | (int)t;
+            Debug.Assert(overflow == 0 || overflow == 1);
+
+            t = (ulong)r0 + (uint)overflow * NC0;
+            r0 = (uint)t; t >>= 32;
+            t += (ulong)r1 + (uint)overflow * NC1;
+            r1 = (uint)t; t >>= 32;
+            t += (ulong)r2 + (uint)overflow * NC2;
+            r2 = (uint)t; t >>= 32;
+            t += (ulong)r3 + (uint)overflow * NC3;
+            r3 = (uint)t; t >>= 32;
+            t += (ulong)r4 + (uint)overflow * NC4;
+            r4 = (uint)t; t >>= 32;
+            t += r5;
+            r5 = (uint)t; t >>= 32;
+            t += r6;
+            r6 = (uint)t; t >>= 32;
+            t += r7;
+            r7 = (uint)t;
+
+            return new Scalar(r0, r1, r2, r3, r4, r5, r6, r7);
+        }
+
 
 
         // All the following methods and operators are useful for testing and not much else

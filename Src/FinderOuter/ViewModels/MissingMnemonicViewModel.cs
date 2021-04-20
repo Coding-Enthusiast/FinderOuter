@@ -88,7 +88,7 @@ namespace FinderOuter.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _selElecMnT, value);
-                KeyPath = MnService.GetElectrumPath(value);
+                KeyPath = MnemonicSevice.GetElectrumPath(value);
             }
         }
 
