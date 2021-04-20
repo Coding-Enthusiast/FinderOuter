@@ -85,6 +85,9 @@
     <Style Selector="TextBox /template/ Border">
       <Setter Property="CornerRadius" Value="3"/>
     </Style>
+    <Style Selector="TextBox /template/ TextBlock">
+      <Setter Property="VerticalAlignment" Value="Top"/>
+    </Style>
 
 
     <Style Selector="NumericUpDown">
