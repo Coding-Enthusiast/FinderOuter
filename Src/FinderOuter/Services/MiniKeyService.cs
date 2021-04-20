@@ -35,7 +35,7 @@ namespace FinderOuter.Services
         private ICompareService comparer;
 
 
-        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
+        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
         private unsafe void SetResultParallel(byte* keyBytes, int len)
         {
@@ -45,7 +45,7 @@ namespace FinderOuter.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool MoveNext(int* items, int len)
+        private static unsafe bool MoveNext(int* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
@@ -66,7 +66,7 @@ namespace FinderOuter.Services
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool Loop23Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
+        private static unsafe bool Loop23Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
         {
             // The added value below is the fixed first char('S')=0x53 shifted left 24 places
             wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
@@ -93,7 +93,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress22(hPt, wPt);
 
-                return comparer.Compare(Sha256Fo.GetBytes(hPt));
+                return comparer.Compare(hPt);
             }
             else
             {
@@ -107,7 +107,7 @@ namespace FinderOuter.Services
             // Second to compute hash of the mini-key (without ?) to use as the private key
             // The mini-key here is 22 bytes. All hashes are single SHA256.
             // All characters are decoded using UTF-8
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
             byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
             int[] missingItems = new int[missCount - 1];
             int firstIndex = missingIndexes[0];
@@ -163,7 +163,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha256Fo sha = new Sha256Fo();
+                using Sha256Fo sha = new();
                 byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
                 int[] missingItems = new int[missCount];
 
@@ -194,7 +194,7 @@ namespace FinderOuter.Services
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool Loop27Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
+        private static unsafe bool Loop27Hash(Sha256Fo sha, uint* wPt, uint* hPt, byte* tmp, ICompareService comparer)
         {
             wPt[0] = 0b01010011_00000000_00000000_00000000U | (uint)tmp[1] << 16 | (uint)tmp[2] << 8 | tmp[3];
             wPt[1] = (uint)tmp[4] << 24 | (uint)tmp[5] << 16 | (uint)tmp[6] << 8 | tmp[7];
@@ -218,7 +218,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress26(hPt, wPt);
 
-                return comparer.Compare(Sha256Fo.GetBytes(hPt));
+                return comparer.Compare(hPt);
             }
             else
             {
@@ -228,7 +228,7 @@ namespace FinderOuter.Services
         private unsafe void Loop27(int firstItem, ICompareService comparer, ParallelLoopState loopState)
         {
             // Same as above but key is 26 chars (26 bytes)
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
             byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
             int[] missingItems = new int[missCount - 1];
             int firstIndex = missingIndexes[0];
@@ -279,7 +279,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha256Fo sha = new Sha256Fo();
+                using Sha256Fo sha = new();
                 byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
                 int[] missingItems = new int[missCount];
 
@@ -335,7 +335,7 @@ namespace FinderOuter.Services
                 sha.Init(hPt);
                 sha.Compress30(hPt, wPt);
 
-                return comparer.Compare(Sha256Fo.GetBytes(hPt));
+                return comparer.Compare(hPt);
             }
             else
             {
