@@ -76,7 +76,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <exception cref="ObjectDisposedException"/>
         /// <param name="data">The byte array to compute hash for</param>
         /// <returns>The computed hash</returns>
-        public byte[] ComputeHash(byte[] data)
+        public byte[] ComputeHash(Span<byte> data)
         {
             if (disposedValue)
                 throw new ObjectDisposedException("Instance was disposed.");
@@ -136,11 +136,10 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
 
-        internal unsafe void DoHash(byte[] data, int len)
+        internal unsafe void DoHash(Span<byte> data, int len)
         {
-            byte[] finalBlock = new byte[64];
-
-            fixed (byte* dPt = data, fPt = &finalBlock[0]) // If data.Length == 0 => &data[0] will throw an exception
+            byte* fPt = stackalloc byte[64];
+            fixed (byte* dPt = data) // If data.Length == 0 => &data[0] will throw an exception
             fixed (uint* hPt = &hashState[0], wPt = &w[0])
             {
                 int remainingBytes = data.Length;
@@ -159,7 +158,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 }
 
                 // Copy the reamaining bytes into a blockSize length buffer so that we can loop through it easily:
-                Buffer.BlockCopy(data, data.Length - remainingBytes, finalBlock, 0, remainingBytes);
+                Buffer.MemoryCopy(dPt + (data.Length - remainingBytes), fPt, 64, remainingBytes);
 
                 // Append 1 bit followed by zeros. Since we only work with bytes, this is 1 whole byte
                 fPt[remainingBytes] = 0b1000_0000;

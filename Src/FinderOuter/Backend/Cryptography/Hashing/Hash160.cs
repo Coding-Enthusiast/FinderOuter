@@ -41,7 +41,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <exception cref="ObjectDisposedException"/>
         /// <param name="data">The byte array to compute hash for</param>
         /// <returns>The computed hash</returns>
-        public unsafe byte[] ComputeHash(byte[] data)
+        public unsafe byte[] ComputeHash(Span<byte> data)
         {
             if (isDisposed)
                 throw new ObjectDisposedException("Instance was disposed.");
@@ -95,7 +95,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
-        public unsafe byte[] Compress22(byte[] data)
+        public unsafe byte[] Compress22(Span<byte> data)
         {
             fixed (byte* dPt = data)
             fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
@@ -151,7 +151,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <summary>
         /// Returns HASH160(OP_0 | Push(HASH160(33_bytes)))
         /// </summary>
-        public unsafe byte[] Compress33_P2sh(byte[] data)
+        public unsafe byte[] Compress33_P2sh(Span<byte> data)
         {
             fixed (byte* dPt = data)
             fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
@@ -227,7 +227,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
-        public unsafe byte[] Compress33(byte[] data)
+        public unsafe byte[] Compress33(Span<byte> data)
         {
             fixed (byte* dPt = data)
             fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
@@ -277,7 +277,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
-        public unsafe byte[] Compress65(byte[] data)
+        public unsafe byte[] Compress65(Span<byte> data)
         {
             fixed (byte* dPt = data)
             fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
