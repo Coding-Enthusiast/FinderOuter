@@ -125,7 +125,7 @@ namespace FinderOuter.Backend.ECC
 
             comp = new byte[33];
             comp[0] = firstByte;
-            uncomp.CopyTo(comp[1..]);
+            uncomp.Slice(1, 32).CopyTo(comp[1..]);
         }
 
 
