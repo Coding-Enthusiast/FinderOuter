@@ -33,7 +33,7 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33(toHash.ToArray());
+            ReadOnlySpan<byte> actual = hash160.Compress33(toHash);
             return actual.SequenceEqual(hash);
         }
 
@@ -47,8 +47,15 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33(toHash.ToArray());
+            ReadOnlySpan<byte> actual = hash160.Compress33(toHash);
             return actual.SequenceEqual(hash);
+        }
+
+        public override bool Compare(in PointJacobian point)
+        {
+            Span<byte> toHash = point.ToPoint().ToByteArray(true);
+            ReadOnlySpan<byte> compHash = hash160.Compress33(toHash);
+            return compHash.SequenceEqual(hash);
         }
 
         public override bool Compare(in EllipticCurvePoint point)

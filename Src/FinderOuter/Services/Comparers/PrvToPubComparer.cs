@@ -78,6 +78,13 @@ namespace FinderOuter.Services.Comparers
             return actual.SequenceEqual(pubBa);
         }
 
+        public bool Compare(in PointJacobian point)
+        {
+            ReadOnlySpan<byte> actual = point.ToPoint().ToByteArray(pubBa.Length == 33);
+            return actual.SequenceEqual(pubBa);
+        }
+
+
         public bool Compare(byte[] key)
         {
             BigInteger kVal = new BigInteger(key, true, true);

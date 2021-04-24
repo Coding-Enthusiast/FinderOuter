@@ -30,6 +30,7 @@ namespace FinderOuter.Services.Comparers
 
         public abstract unsafe bool Compare(uint* hPt);
         public abstract unsafe bool Compare(ulong* hPt);
+        public abstract bool Compare(in PointJacobian point);
 
         public bool Compare(byte[] key)
         {

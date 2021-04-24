@@ -33,13 +33,13 @@ namespace FinderOuter.Services.Comparers
 
             calc2.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(comp.ToArray());
+            ReadOnlySpan<byte> compHash = hash160.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp.ToArray());
+            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
         }
 
@@ -53,14 +53,32 @@ namespace FinderOuter.Services.Comparers
 
             calc2.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(comp.ToArray());
+            ReadOnlySpan<byte> compHash = hash160.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp.ToArray());
+            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
+        }
+
+        public override bool Compare(in PointJacobian point)
+        {
+            Point pub = point.ToPoint();
+
+            Span<byte> uncomp = pub.ToByteArray(out byte firstByte);
+            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
+            if (uncompHash.SequenceEqual(hash))
+            {
+                return true;
+            }
+
+            Span<byte> comp = new byte[33];
+            comp[0] = firstByte;
+            uncomp.Slice(1, 32).CopyTo(comp[1..]);
+            ReadOnlySpan<byte> compHash = hash160.Compress33(comp.ToArray());
+            return compHash.SequenceEqual(hash);
         }
 
         public override bool Compare(in EllipticCurvePoint point)

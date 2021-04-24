@@ -67,6 +67,7 @@ namespace FinderOuter.Services.Comparers
             }
         }
 
+        public bool Compare(in PointJacobian point) => throw new NotImplementedException();
         public bool Compare(in EllipticCurvePoint point) => throw new NotImplementedException();
     }
 }

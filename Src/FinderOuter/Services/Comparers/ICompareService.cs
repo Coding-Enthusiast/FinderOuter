@@ -28,6 +28,8 @@ namespace FinderOuter.Services.Comparers
         /// <returns></returns>
         unsafe bool Compare(ulong* hPt);
 
+        bool Compare(in PointJacobian point);
+
         bool Init(string data);
         ICompareService Clone();
         bool Compare(byte[] key);

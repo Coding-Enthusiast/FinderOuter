@@ -14,7 +14,7 @@ namespace FinderOuter.Services.Comparers
     {
         public override bool Init(string address)
         {
-            AddressService serv = new AddressService();
+            var serv = new AddressService();
             return serv.CheckAndGetHash_P2sh(address, out hash);
         }
 
@@ -36,7 +36,7 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash.ToArray());
+            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
             return actual.SequenceEqual(hash);
         }
 
@@ -50,8 +50,15 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash.ToArray());
+            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
             return actual.SequenceEqual(hash);
+        }
+
+        public override bool Compare(in PointJacobian point)
+        {
+            Span<byte> toHash = point.ToPoint().ToByteArray(true);
+            ReadOnlySpan<byte> compHash = hash160.Compress33_P2sh(toHash);
+            return compHash.SequenceEqual(hash);
         }
 
         public override bool Compare(in EllipticCurvePoint point)
