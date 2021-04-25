@@ -109,6 +109,7 @@ namespace FinderOuter.Backend.ECC
         public const uint NH6 = 0xFFFFFFFFU;
         public const uint NH7 = 0x7FFFFFFFU;
 
+        public bool IsZero => (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7) == 0;
 
         private int GetOverflow()
         {
