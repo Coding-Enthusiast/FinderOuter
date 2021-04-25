@@ -12,7 +12,8 @@ namespace Tests
     /// </summary>
     public static class KeyHelper
     {
-        internal static PrivateKey Prv1 => new PrivateKey("L28Peud5cQcijrtMthAdUS8FynpM8PKZtnoUZb1VAio9WxKoebHt");
+        internal static string Prv1Wif = "L28Peud5cQcijrtMthAdUS8FynpM8PKZtnoUZb1VAio9WxKoebHt";
+        internal static PrivateKey Prv1 => new PrivateKey(Prv1Wif);
         internal static PublicKey Pub1
         {
             get

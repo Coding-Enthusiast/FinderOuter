@@ -4,9 +4,11 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace Tests.Services.Comparers
@@ -68,6 +70,51 @@ namespace Tests.Services.Comparers
             key = new SecP256k1().N.ToByteArray(true, true);
             b = comp.Compare(key);
             Assert.False(b);
+        }
+
+
+        public static IEnumerable<object[]> GetCases()
+        {
+            var comp = new PrvToAddrNestedComparer();
+            Assert.True(comp.Init(KeyHelper.Pub1NestedSegwit));
+
+            yield return new object[] { comp, new byte[32], false };
+            yield return new object[] { comp, Enumerable.Repeat((byte)255, 32).ToArray(), false };
+            yield return new object[] { comp, KeyHelper.Prv1.ToBytes(), true };
+            yield return new object[] { comp, KeyHelper.Prv2.ToBytes(), false };
+        }
+
+        [Theory]
+        [MemberData(nameof(GetCases))]
+        public unsafe void Compare_Sha256Hpt_Test(PrvToAddrNestedComparer comp, byte[] key, bool expected)
+        {
+            uint* hPt = stackalloc uint[8];
+            Helper.WriteToHpt(key, hPt);
+            bool actual = comp.Compare(hPt);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetCases))]
+        public unsafe void Compare_Sha512Hpt_Test(PrvToAddrNestedComparer comp, byte[] key, bool expected)
+        {
+            ulong* hPt = stackalloc ulong[8];
+            Helper.WriteToHpt32(key, hPt);
+            bool actual = comp.Compare(hPt);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetCases))]
+        public unsafe void Compare_PointJ_Test(PrvToAddrNestedComparer comp, byte[] key, bool expected)
+        {
+            var sc = new Scalar(key, out int overflow);
+            if (overflow == 0 && !sc.IsZero)
+            {
+                PointJacobian point = Helper.Calc.MultiplyByG(sc);
+                bool actual = comp.Compare(point);
+                Assert.Equal(expected, actual);
+            }
         }
     }
 }

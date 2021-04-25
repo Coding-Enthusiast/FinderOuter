@@ -3,18 +3,21 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend.ECC;
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.IO;
 using System.Reflection;
-using System.Text;
 using Xunit;
 
 namespace Tests
 {
     public class Helper
     {
+        private static readonly Calc calc2 = new();
+        public static Calc Calc => calc2;
+
+
         internal static JsonSerializerSettings jSetting = new JsonSerializerSettings
         {
             Converters = { new ByteArrayHexConverter() },
@@ -91,7 +94,7 @@ namespace Tests
         {
             if (string.IsNullOrEmpty(hex))
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
             if (hex.Length % 2 != 0)
             {
@@ -136,5 +139,33 @@ namespace Tests
             return new string(ca);
         }
 
+
+        internal static unsafe void WriteToHpt(byte[] data, uint* hPt)
+        {
+            Assert.True(data.Length == 32);
+
+            hPt[0] = (uint)((data[00] << 24) | (data[01] << 16) | (data[02] << 8) | data[3]);
+            hPt[1] = (uint)((data[04] << 24) | (data[05] << 16) | (data[06] << 8) | data[07]);
+            hPt[2] = (uint)((data[08] << 24) | (data[09] << 16) | (data[10] << 8) | data[11]);
+            hPt[3] = (uint)((data[12] << 24) | (data[13] << 16) | (data[14] << 8) | data[15]);
+            hPt[4] = (uint)((data[16] << 24) | (data[17] << 16) | (data[18] << 8) | data[19]);
+            hPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | data[23]);
+            hPt[6] = (uint)((data[24] << 24) | (data[25] << 16) | (data[26] << 8) | data[27]);
+            hPt[7] = (uint)((data[28] << 24) | (data[29] << 16) | (data[30] << 8) | data[31]);
+        }
+
+        internal static unsafe void WriteToHpt32(byte[] data, ulong* hPt)
+        {
+            Assert.True(data.Length == 32);
+
+            hPt[0] = ((ulong)data[00] << 56) | ((ulong)data[01] << 48) | ((ulong)data[02] << 40) | ((ulong)data[03] << 32) |
+                     ((ulong)data[04] << 24) | ((ulong)data[05] << 16) | ((ulong)data[06] << 8) | data[07];
+            hPt[1] = ((ulong)data[08] << 56) | ((ulong)data[09] << 48) | ((ulong)data[10] << 40) | ((ulong)data[11] << 32) |
+                     ((ulong)data[12] << 24) | ((ulong)data[13] << 16) | ((ulong)data[14] << 8) | data[15];
+            hPt[2] = ((ulong)data[16] << 56) | ((ulong)data[17] << 48) | ((ulong)data[18] << 40) | ((ulong)data[19] << 32) |
+                     ((ulong)data[20] << 24) | ((ulong)data[21] << 16) | ((ulong)data[22] << 8) | data[23];
+            hPt[3] = ((ulong)data[24] << 56) | ((ulong)data[25] << 48) | ((ulong)data[26] << 40) | ((ulong)data[27] << 32) |
+                     ((ulong)data[28] << 24) | ((ulong)data[29] << 16) | ((ulong)data[30] << 8) | data[31];
+        }
     }
 }

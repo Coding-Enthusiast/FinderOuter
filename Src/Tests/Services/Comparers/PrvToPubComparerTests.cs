@@ -110,5 +110,35 @@ namespace Tests.Services.Comparers
                 Assert.True(actual);
             }
         }
+
+
+        public static IEnumerable<object[]> GetCases()
+        {
+            var comp = new PrvToPubComparer();
+            Assert.True(comp.Init(KeyHelper.Pub1CompHex));
+
+            yield return new object[] { comp, KeyHelper.Prv1.ToBytes(), true };
+            yield return new object[] { comp, KeyHelper.Prv2.ToBytes(), false };
+        }
+
+        [Theory]
+        [MemberData(nameof(GetCases))]
+        public unsafe void Compare_Sha256Hpt_Test(PrvToPubComparer comp, byte[] key, bool expected)
+        {
+            uint* hPt = stackalloc uint[8];
+            Helper.WriteToHpt(key, hPt);
+            bool actual = comp.Compare(hPt);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetCases))]
+        public unsafe void Compare_Sha512Hpt_Test(PrvToPubComparer comp, byte[] key, bool expected)
+        {
+            ulong* hPt = stackalloc ulong[8];
+            Helper.WriteToHpt32(key, hPt);
+            bool actual = comp.Compare(hPt);
+            Assert.Equal(expected, actual);
+        }
     }
 }
