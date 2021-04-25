@@ -10,6 +10,7 @@ using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
@@ -206,18 +207,25 @@ namespace FinderOuter.Services
             var calc = new ECCalc();
             EllipticCurvePoint point = calc.MultiplyByG(start);
 
+            var calc2 = new Calc();
+            var sc = new Scalar(Base58.Decode(smallWif).SubArray(1, 32), out int overflow);
+            PointJacobian pt = calc2.MultiplyByG(sc);
+            Point g = Calc.G;
+
             for (long i = 0; i < (long)diff; i++)
             {
                 // The first point is the smallKey * G the next is smallKey+1 * G
                 // And there is one extra addition at the end which shouldn't matter speed-wise
-                if (comparer.Compare(point))
+                if (comparer.Compare(pt))
                 {
-                    using PrivateKey tempKey = new PrivateKey(start + i);
+                    using PrivateKey tempKey = new(start + i);
                     string tempWif = tempKey.ToWif(compressed);
                     report.AddMessageSafe($"Found the key: {tempWif}");
                     report.FoundAnyResult = true;
+                    
+                    break;
                 }
-                point = calc.AddChecked(point, curve.G);
+                pt = pt.AddVariable(g);
             }
         }
 
