@@ -125,6 +125,52 @@ namespace FinderOuter.Services
             return true;
         }
 
+
+        private const int WifEndDiv = 1_000_000;
+        private bool isWifEndCompressed;
+        private BigInteger wifEndStart;
+        private void SetResultParallelWifEnd(int added)
+        {
+            using PrivateKey tempKey = new(wifEndStart + added);
+            string tempWif = tempKey.ToWif(isWifEndCompressed);
+            report.AddMessageSafe($"Found the key: {tempWif}");
+            report.FoundAnyResult = true;
+        }
+        private void WifLoopMissingEnd(in Scalar smallKey, int start, long max,
+                                       ICompareService comparer, ParallelLoopState loopState)
+        {
+            if (loopState.IsStopped)
+            {
+                return;
+            }
+
+            var calc2 = new Calc();
+            var toAddSc = new Scalar((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
+            Scalar initial = smallKey.Add(toAddSc, out int overflow);
+            if (overflow != 0)
+            {
+                return;
+            }
+            PointJacobian pt = calc2.MultiplyByG(initial);
+            Point g = Calc.G;
+
+            for (int i = 0; i < max; i++)
+            {
+                // The first point is the smallKey * G the next is smallKey+1 * G
+                // And there is one extra addition at the end which shouldn't matter speed-wise
+                if (comparer.Compare(pt))
+                {
+                    SetResultParallelWifEnd((start * WifEndDiv) + i);
+
+                    loopState.Stop();
+                    break;
+                }
+                pt = pt.AddVariable(g);
+            }
+
+            report.IncrementProgress();
+        }
+
         private void WifLoopMissingEnd(bool compressed)
         {
             // Numbers are approximates, values usually are ±1
@@ -210,24 +256,18 @@ namespace FinderOuter.Services
 
             var calc2 = new Calc();
             var sc = new Scalar(Base58.Decode(smallWif).SubArray(1, 32), out int overflow);
-            PointJacobian pt = calc2.MultiplyByG(sc);
-            Point g = Calc.G;
 
-            for (long i = 0; i < (long)diff; i++)
-            {
-                // The first point is the smallKey * G the next is smallKey+1 * G
-                // And there is one extra addition at the end which shouldn't matter speed-wise
-                if (comparer.Compare(pt))
-                {
-                    using PrivateKey tempKey = new(start + i);
-                    string tempWif = tempKey.ToWif(compressed);
-                    report.AddMessageSafe($"Found the key: {tempWif}");
-                    report.FoundAnyResult = true;
-                    
-                    break;
-                }
-                pt = pt.AddVariable(g);
-            }
+            isWifEndCompressed = compressed;
+            wifEndStart = start;
+
+            int loopLastMax = (int)((long)diff % WifEndDiv);
+            int loopCount = (int)((long)diff / WifEndDiv) + (loopLastMax == 0 ? 0 : 1);
+
+            report.AddMessageSafe("Running in parallel.");
+            report.SetProgressStep(loopCount);
+
+            Parallel.For(0, loopCount, (i, state) =>
+                             WifLoopMissingEnd(sc, i, i == loopCount - 1 ? loopLastMax : WifEndDiv, comparer.Clone(), state));
         }
 
 
@@ -418,7 +458,7 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopUncomp()
         {
-            if (IsMissingFromEnd() && missCount <= 9)
+            if (IsMissingFromEnd() && missCount <= 10)
             {
                 WifLoopMissingEnd(false);
             }
