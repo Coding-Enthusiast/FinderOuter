@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -102,7 +103,7 @@ namespace FinderOuter.Services
         }
 
 
-        private BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
+        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
         private bool IsMissingFromEnd()
         {
@@ -179,7 +180,7 @@ namespace FinderOuter.Services
             {
                 for (int i = 0; i < (int)diff; i++)
                 {
-                    using PrivateKey tempKey = new PrivateKey(start + i);
+                    using PrivateKey tempKey = new(start + i);
                     string tempWif = tempKey.ToWif(compressed);
                     if (tempWif.Contains(baseWif))
                     {
@@ -251,7 +252,8 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
-        private unsafe bool MoveNext(uint* cartesian, int len)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(uint* cartesian, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
@@ -272,7 +274,7 @@ namespace FinderOuter.Services
 
         private unsafe void LoopComp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
@@ -363,7 +365,7 @@ namespace FinderOuter.Services
 
         private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
@@ -609,7 +611,7 @@ namespace FinderOuter.Services
             }
 
             // SHA must be defined here for this method to be thread safe
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
 
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             fixed (uint* keyPt = &keyValueInts[0])
@@ -636,7 +638,7 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
@@ -719,7 +721,7 @@ namespace FinderOuter.Services
 
         private unsafe void Loop58(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new Sha256Fo();
+            using Sha256Fo sha = new();
 
             uint[] temp = new uint[precomputed.Length];
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
