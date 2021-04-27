@@ -118,12 +118,12 @@ namespace FinderOuter.ViewModels
                     $"Estimated time: <1 sec"
                 },
                 {
-                    "0c28fca386c7a227600?2fe50b7cae11ec?6d3b?1fbe471be89827e19d72aa1d",
+                    "0c28fca386c7a227600?2fe50b7cae11ec?6d3b?1fbe?71be8?827e19d72aa1d",
                     '?',
                     "1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK",
                     2,
                     $"bitcoin wiki.{Environment.NewLine}" +
-                    $"This example is missing three character (b, 8, f).{Environment.NewLine}" +
+                    $"This example is missing 5 character (b, 8, f, 4, 9).{Environment.NewLine}" +
                     $"Note the usage of a different missing character and input type here.{Environment.NewLine}" +
                     $"Also note the multi-thread usage (parallelism).{Environment.NewLine}" +
                     $"Estimated time: <30 sec"

@@ -3,17 +3,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -36,7 +36,8 @@ namespace FinderOuter.Services
         private string key;
 
 
-        private unsafe bool MoveNext(int* items, int len)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(int* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
@@ -69,9 +70,9 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
-        private unsafe void Loop(int firstItem, in EllipticCurvePoint smallPub, ParallelLoopState loopState)
+        private unsafe void Loop(int firstItem, in PointJacobian smallPub, ParallelLoopState loopState)
         {
-            var calc = new ECCalc();
+            var calc = new Calc();
             var missingItems = new int[missCount - 1];
             var localComp = comparer.Clone();
 
@@ -109,9 +110,10 @@ namespace FinderOuter.Services
                         }
                     }
 
-                    BigInteger tempVal = new BigInteger(temp, true, true);
-                    EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
-                    EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
+                    var tempVal = new Scalar(temp, out _);
+                    PointJacobian tempPub = calc.MultiplyByG(in tempVal);
+                    PointJacobian pub = tempPub.AddVariable(smallPub);
+
                     if (comparer.Compare(pub))
                     {
                         SetResultParallel(itemsPt, firstItem);
@@ -126,9 +128,9 @@ namespace FinderOuter.Services
         }
         private unsafe void Loop(byte[] preComputed)
         {
-            ECCalc calc = new ECCalc();
-            BigInteger smallVal = new BigInteger(preComputed, true, true);
-            EllipticCurvePoint smallPub = calc.MultiplyByG(smallVal);
+            var calc = new Calc();
+            var smallVal = new Scalar(preComputed, out _);
+            PointJacobian smallPub = calc.MultiplyByG(smallVal);
 
             if (missCount == 1)
             {
@@ -153,9 +155,9 @@ namespace FinderOuter.Services
                             tmp[index] |= (byte)i;
                         }
 
-                        BigInteger tempVal = new BigInteger(temp, true, true);
-                        EllipticCurvePoint tempPub = calc.MultiplyByG(tempVal);
-                        EllipticCurvePoint pub = calc.AddChecked(tempPub, smallPub);
+                        var tempVal = new Scalar(temp, out _);
+                        PointJacobian tempPub = calc.MultiplyByG(tempVal);
+                        PointJacobian pub = tempPub.AddVariable(smallPub);
                         if (comparer.Compare(pub))
                         {
                             char[] origHex = key.ToCharArray();
@@ -176,7 +178,7 @@ namespace FinderOuter.Services
             }
         }
 
-        private char GetHex(int val)
+        private static char GetHex(int val)
         {
             return val switch
             {
@@ -200,7 +202,7 @@ namespace FinderOuter.Services
             };
         }
 
-        public bool IsInputValid(string key, char missingChar)
+        public static bool IsInputValid(string key, char missingChar)
         {
             return !string.IsNullOrEmpty(key) &&
                     key.All(c => c == missingChar || ConstantsFO.Base16Chars.Contains(char.ToLower(c)));
@@ -227,7 +229,7 @@ namespace FinderOuter.Services
                 {
                     try
                     {
-                        using PrivateKey prv = new PrivateKey(Base16.Decode(key));
+                        using PrivateKey prv = new(Base16.Decode(key));
                         bool check = new AddressService().Compare(AdditionalInput, extraType, prv, out string msg);
                         if (check)
                         {
@@ -250,7 +252,7 @@ namespace FinderOuter.Services
 
                 this.key = key;
 
-                BigInteger total = BigInteger.Pow(16, missCount);
+                var total = BigInteger.Pow(16, missCount);
                 report.AddMessage($"The given key is missing {missCount} characters and there are {total:n0} keys to check.");
                 Stopwatch watch = Stopwatch.StartNew();
 
