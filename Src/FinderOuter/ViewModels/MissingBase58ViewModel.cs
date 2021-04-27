@@ -19,7 +19,7 @@ namespace FinderOuter.ViewModels
         public MissingBase58ViewModel()
         {
             // Don't move this line, service must be instantiated here
-            InputService inServ = new InputService();
+            var inServ = new InputService();
             b58Service = new Base58Sevice(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
@@ -158,7 +158,7 @@ namespace FinderOuter.ViewModels
                     $"Note that since these characters are all missing from the end, FinderOuter automatically chooses " +
                     $"an optimized algorithm that only checks 1 key instead of 656,356,768 greatly increasing the speed." +
                     $"{Environment.NewLine}" +
-                    $"Also note that this cas doesn't need any additional input to check against since it only checks " +
+                    $"Also note that this case doesn't need any additional input to check against since it only checks " +
                     $"one key.{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
                 },
@@ -173,9 +173,21 @@ namespace FinderOuter.ViewModels
                     $"Note that since these characters are all missing from the end, FinderOuter automatically chooses " +
                     $"an optimized algorithm that only checks 117 keys instead of 128 trillion (128,063,081,718,016) " +
                     $"greatly increasing the speed.{Environment.NewLine}" +
-                    $"Also note that this optimized method requires an additional input such as public key or address " +
-                    $"of this private key to check each result against it since all of them are valid.{Environment.NewLine}" +
+                    $"Also note that this optimized method requires an additional input (the corresponding public key or " +
+                    $"address) to check each result against it and only return the correct key.{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
+                },
+                {
+                    "KxpWVF8Cr71MZi2vfgDjxdUCW5CovBsTZShoj7gtu***********",
+                    '*',
+                    0,
+                    "1DjPqd6oBjii7PQh7JY1yAmPpHEHPWcaF3",
+                    0,
+                    $"random key{Environment.NewLine}" +
+                    $"This is the same as previous example but they key is missing 11 characters.{Environment.NewLine}" +
+                    $"Instead of checking 24 quadrillion keys, FinderOuter only checks 22 million.{Environment.NewLine}" +
+                    $"Note the usage of multi-threading (parallelism){Environment.NewLine}" +
+                    $"Estimated time: <2 min"
                 },
                 {
                     "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNy*YXYB9KF",

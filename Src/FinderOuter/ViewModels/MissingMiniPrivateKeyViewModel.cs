@@ -18,7 +18,7 @@ namespace FinderOuter.ViewModels
         public MissingMiniPrivateKeyViewModel()
         {
             // Don't move this line, service must be instantiated here
-            InputService inServ = new InputService();
+            var inServ = new InputService();
             miniService = new MiniKeyService(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
@@ -115,7 +115,7 @@ namespace FinderOuter.ViewModels
                     "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR",
                     0,
                     $"bitcoin wiki.{Environment.NewLine}" +
-                    $"This example is missing 2 characters (q, m).{Environment.NewLine}" +
+                    $"This example is a 22 digit long mini-key and is missing 2 (q, m).{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
                 },
                 {
@@ -124,7 +124,7 @@ namespace FinderOuter.ViewModels
                     "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
                     4,
                     $"bitcoin wiki.{Environment.NewLine}" +
-                    $"This example is missing 2 characters (f, v).{Environment.NewLine}" +
+                    $"This example is a 22 digit long mini-key and is missing 2 (f, v).{Environment.NewLine}" +
                     $"Note the usage of a different missing character and extra input type (pubkey).{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
                 },
@@ -134,19 +134,19 @@ namespace FinderOuter.ViewModels
                     "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW",
                     1,
                     $"bitcoin wiki.{Environment.NewLine}" +
-                    $"This example is missing 3 characters (j, Y, R).{Environment.NewLine}" +
+                    $"This example is a 30 digit long mini-key missing 3 (j, Y, R).{Environment.NewLine}" +
                     $"Note the usage of a different extra input type (address using uncompressed pubkey).{Environment.NewLine}" +
                     $"Estimated time: <10 sec"
                 },
                 {
-                    "SzavMBLo*U6kD**tU*mffv",
+                    "SzavMBLo*U6*D**tU*mffv",
                     '*',
                     "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
                     4,
                     $"bitcoin wiki.{Environment.NewLine}" +
-                    $"This example is missing 4 characters (X, r, q, V).{Environment.NewLine}" +
+                    $"This example is missing 5 characters (X, k, r, q, V).{Environment.NewLine}" +
                     $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
-                    $"Estimated time: <6 min"
+                    $"Estimated time: <1 min"
                 }
             };
         }
