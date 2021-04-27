@@ -181,7 +181,7 @@ namespace FinderOuter.Services
             // 8   ->        29,817 ;            117
             // 9   ->     1,729,387 ;          6,756
             // 10  ->   100,304,420 ;        391,815
-            // 11  -> 5,817,656,406 ;     22,725,222
+            // 11  -> 5,817,656,406 ;     22,725,222  <-- FinderOuter limits the search to 11
             // 12  ->               ;  1,318,062,780
 
             string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
@@ -458,7 +458,7 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopUncomp()
         {
-            if (IsMissingFromEnd() && missCount <= 10)
+            if (IsMissingFromEnd() && missCount <= 11)
             {
                 WifLoopMissingEnd(false);
             }
