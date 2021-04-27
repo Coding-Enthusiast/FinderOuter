@@ -207,7 +207,7 @@ namespace FinderOuter.ViewModels
                     $"m/44'/0'/0'/0/0: 1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN Kybku8EdkM3ndLU6gnWhATyn67WUsRqJENZT5xKttPDFbMrPFcBn{Environment.NewLine}" +
                     $"m/44'/0'/0'/0/1: 1Ga41FCgn5f196Bp5aQVijN61rHwE8asUk L21gjCRzGPd9rQFi7wgryCaH4EjqDYpJqq6bux9Db9PmbvXV5wVy{Environment.NewLine}" +
                     $"m/44'/0'/0'/0/2: 142FTStohZfzH563BL35gCX11CNBg8HDfv Kwy7EuvNH2E178irnBJMxFjytCSMkAupXHZiRtcgGSiBTPJy5gUt{Environment.NewLine}" +
-                    $"Estimated time: <2 sec"
+                    $"Estimated time: <1 sec"
                 },
                 {
                     "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic",
@@ -227,7 +227,7 @@ namespace FinderOuter.ViewModels
                     $"m/44'/0'/0'/0/0: 1FCptKjDovTGKYz2vLGVtswGqwgp6JmfyN Kybku8EdkM3ndLU6gnWhATyn67WUsRqJENZT5xKttPDFbMrPFcBn{Environment.NewLine}" +
                     $"m/44'/0'/0'/0/1: 1Ga41FCgn5f196Bp5aQVijN61rHwE8asUk L21gjCRzGPd9rQFi7wgryCaH4EjqDYpJqq6bux9Db9PmbvXV5wVy{Environment.NewLine}" +
                     $"m/44'/0'/0'/0/2: 142FTStohZfzH563BL35gCX11CNBg8HDfv Kwy7EuvNH2E178irnBJMxFjytCSMkAupXHZiRtcgGSiBTPJy5gUt{Environment.NewLine}" +
-                    $"Estimated time: <2 sec"
+                    $"Estimated time: <1 sec"
                 },
                 {
                     "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil - fabuleux pizza diminuer gagner oisillon trafic imposer",
@@ -242,7 +242,8 @@ namespace FinderOuter.ViewModels
                     $"random.{Environment.NewLine}" +
                     $"This example is missing one word (lézard).{Environment.NewLine}" +
                     $"Note the usage of a different language (French), different derivation path (BIP-141 m/0), different " +
-                    $"missing character type and different extra input type (nested SegWit address).{Environment.NewLine}" +
+                    $"missing character type and different extra input type (nested SegWit address also known as P2SH-P2WPKH)." +
+                    $"{Environment.NewLine}" +
                     $"The following addresses are derived from it:{Environment.NewLine}" +
                     $"m/0/0: 3L5EM1AiF95RBTuZkEMCEeE4eHoRRbc7Sd{Environment.NewLine}" +
                     $"m/0/1: 3LvkAVV5Y4BQT7XFoMPXkxAQm4TFxQgdBP{Environment.NewLine}" +
@@ -264,31 +265,13 @@ namespace FinderOuter.ViewModels
                     $"Note the usage of a different word length (24), different derivation path (BIP-84 m/84'/0'/0'/0) and " +
                     $"different extra input type (5th bech32 address at index 4).{Environment.NewLine}" +
                     $"Also note the multi-thread usage (parallelism).{Environment.NewLine}" +
-                    $"This is currently affected by issue #9 and runs slower than it should.{Environment.NewLine}" +
                     $"The following addresses are derived from it:{Environment.NewLine}" +
                     $"m/84'/0'/0'/0/0: bc1qdw0n7ausyak5xeng2e524v0sfwpt0dh8e785pr{Environment.NewLine}" +
                     $"m/84'/0'/0'/0/1: bc1q9qhpj3vmgfxxvmf8wm9m67a99l0uqm922nwp8p{Environment.NewLine}" +
                     $"m/84'/0'/0'/0/2: bc1qkfaq84rdaevpzz3hy04gnmfm76qm3kqdhp5p3r{Environment.NewLine}" +
                     $"m/84'/0'/0'/0/3: bc1qjdx97svvkqxkvs7g3402ksyd80fk4l9ddlvje2{Environment.NewLine}" +
                     $"m/84'/0'/0'/0/4: bc1qzqm9vplw0fkk7t9dka82quer95e77levpppmj9{Environment.NewLine}" +
-                    $"Estimated time: <7 min"
-                },
-                {
-                    "duck firm october practice soccer * result regret unveil * uncle ginger",
-                    '*',
-                    0, // WordList
-                    0, // MnemonicType
-                    0, // Electrum mnemonic type
-                    null,
-                    "m/0'/0'",
-                    "L5fdNeFhX5Kgqnmbn6urPVt77eUocpbCF9f2ScEMu2HZwiFL3Viw",
-                    5,
-                    $"random.{Environment.NewLine}" +
-                    $"This example is missing two words (coast, slow).{Environment.NewLine}" +
-                    $"This is an attempt to address issue #9. Whenever there is no non-hardened indices in the path " +
-                    $"there won't be any ECC involved ergo the code can utilize the entire CPU power and runs at maximum " +
-                    $"efficiency.{Environment.NewLine}" +
-                    $"Estimated time: <1 min"
+                    $"Estimated time: <10 sec"
                 },
                 {
                     "wild father tree among universe such mobile favorite target dynamic * identify",
@@ -319,7 +302,7 @@ namespace FinderOuter.ViewModels
                     $"Electrum test vectors.{Environment.NewLine}" +
                     $"This example is missing 2 words (mobile, credit).{Environment.NewLine}" +
                     $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
-                    $"Estimated time: <9 sec"
+                    $"Estimated time: <1 sec"
                 },
             };
         }
