@@ -9,6 +9,7 @@ using FinderOuter.Models;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FinderOuter.ViewModels
 {
@@ -59,30 +60,121 @@ namespace FinderOuter.ViewModels
         }
 
 
+        private bool HasValidChars(ReadOnlySpan<char> charSet, string input)
+        {
+            bool b = true;
+
+            ReadOnlySpan<char> arr = input.AsSpan();
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (!charSet.Contains(arr[i]))
+                {
+                    Result.AddMessage($"Invalid character ({arr[i]}) found at index {i}.");
+                    b = false;
+                }
+            }
+            return b;
+        }
+
+        private byte[] CheckBase16()
+        {
+            string input = Input;
+            if (Input.StartsWith(Base16.Prefix))
+            {
+                input = Input.Replace(Base16.Prefix, "");
+            }
+
+            if (HasValidChars(Base16.CharSet, input.ToLower()))
+            {
+                if (Input.Length % 2 != 0)
+                {
+                    Result.AddMessage("Input length is invalid (has to be divisible by 2).");
+                }
+                else
+                {
+                    bool b = Base16.TryDecode(Input, out byte[] result);
+                    Debug.Assert(b && result != null);
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        private byte[] CheckBase43()
+        {
+            if (HasValidChars(Base43.CharSet, Input))
+            {
+                bool b = Base43.TryDecode(Input, out byte[] result);
+                Debug.Assert(b && result != null);
+                return result;
+            }
+            return null;
+        }
+
+        private byte[] CheckBase58(bool checksum)
+        {
+            if (HasValidChars(Base58.CharSet, Input))
+            {
+                if (checksum)
+                {
+                    if (Base58.IsValidWithChecksum(Input))
+                    {
+                        bool b = Base58.TryDecodeWithChecksum(Input, out byte[] result);
+                        Debug.Assert(b && result != null);
+                        return result;
+                    }
+                    else
+                    {
+                        Result.AddMessage("Input has an invalid checksum. Skipping checksum validation.");
+                        bool b = Base58.TryDecode(Input, out byte[] result);
+                        Debug.Assert(b && result != null);
+                        return result;
+                    }
+                }
+                else
+                {
+                    bool b = Base58.TryDecode(Input, out byte[] result);
+                    Debug.Assert(b && result != null);
+                    return result;
+                }
+            }
+            return null;
+        }
+
         public void Decode(EncodingName name)
         {
             Result.Init();
+            if (string.IsNullOrEmpty(Input))
+            {
+                Result.AddMessage("Input can not be null or empty.");
+                Result.Finalize();
+                return;
+            }
+
+            Result.AddMessage($"Input has {Input.Length} character{(Input.Length > 1 ? "s" : "")}.");
 
             try
             {
                 byte[] ba = name switch
                 {
-                    EncodingName.Base16 => Base16.Decode(Input),
-                    EncodingName.Base43 => Base43.Decode(Input),
-                    EncodingName.Base58 => Base58.Decode(Input),
-                    EncodingName.Base58Check => Base58.DecodeWithChecksum(Input),
+                    EncodingName.Base16 => CheckBase16(),
+                    EncodingName.Base43 => CheckBase43(),
+                    EncodingName.Base58 => CheckBase58(false),
+                    EncodingName.Base58Check => CheckBase58(true),
                     EncodingName.Base64 => Convert.FromBase64String(Input),
                     _ => throw new NotImplementedException(),
                 };
 
-                Result.FoundAnyResult = true;
-                Result.AddMessage($"{ba.Length} bytes: {ba.ToBase16()}");
+                if (ba != null)
+                {
+                    Result.FoundAnyResult = true;
+                    Result.AddMessage($"Decoded data has {ba.Length} bytes.{Environment.NewLine}Data in Base-16: {ba.ToBase16()}");
+                }
             }
             catch (Exception ex)
             {
-                Result.AddMessage(ex.Message);
+                Result.AddMessage($"Decoder threw an exception: {ex.Message}");
             }
-
 
             Result.Finalize();
         }
