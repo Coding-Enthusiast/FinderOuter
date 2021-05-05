@@ -9,17 +9,18 @@ technical knowledge. It uses a simple user interface with a list of recovery opt
 hints helping user figure out what is needed. It always consist of filling some text boxes and selecting some options and finally
 clicking the `Find` button. This eliminates the need to read long guide pages on how to use the application. Each option also has
 some example cases that can show a simple preview of how each option should be filled for different cases.  
-Each recovery option and their parts are written from scratch and all those parts down to the basic cryptography used (such as SHA,
-ECC,...) are specialized for maximum efficiency.
 
-Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) this tool 
+FinderOuter is specialized for maximum efficiency, each recovery option and their parts are written from scratch and all those parts 
+down to the basic cryptography used (such as SHA, ECC,...) are specialized for that operation.  
+
+Thanks to [.Net core](https://github.com/dotnet/core) and [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia) FinderOuter 
 can run on all operating systems.  
-This project is written fully in C# and is 100% open source.  
+This project is written fully in C# and is 100% open source and will always remain free to use. You can make a donation if you found this tool useful.  
 FinderOuter is still in beta and under development. New features are slowly added and everything is optimized.  
 Contribution is always welcome. Please report any bugs you find or any improvement suggestions you have by creating a new 
 [issue](https://github.com/Coding-Enthusiast/FinderOuter/issues/new/choose).
 
-## Preview
+## Quick guide
 1. Select an option from this list depending on what you want to recover
 2. Read the instructions
 3. Fill in the required information
@@ -30,6 +31,7 @@ Contribution is always welcome. Please report any bugs you find or any improveme
 8. Progressbar showing the progress percentage shows up for options that use multi-threading 
 (take more than a couple of seconds to complete)
 9. All recovery options come with examples, click this button repeatedly to cycle through them
+10. Some parts have a help button that brings up the respective FinderOuter knowledge base page
 
 ![Preview](/Doc/Images/MainPreview.jpg)
 
@@ -85,61 +87,62 @@ Base-58 with checksum and Base-64. All inputs will be converted to hexadecimal.
 * SIMD code
 * GPU support
 
-## How to use The FinderOuter
+## Getting started
 #### Step 1: Preparation
+You can ignore this step at your own risk and skip to step 2.  
 Since this project deals with _sensative information_ such as private keys, mnemonics, etc. the safest approach is to run it 
 on a clean and [air-gapped](https://en.wikipedia.org/wiki/Air_gap_(networking)) computer. Easiest way of acheiving that is using
 a live Linux:  
 1. Download [Ubuntu](https://ubuntu.com/download/desktop) or any other Linux OS (all FinderOuter releases are tested on 64-bit
 Ubuntu 20.04 before being published)
 2. Verify Ubuntu's iso ([link](https://ubuntu.com/tutorials/tutorial-how-to-verify-ubuntu#1-overview))
-3. Disconnect network cable (to remain offline)
-4. Burn that ISO on a DVD or could be a USB disk 
+3. Follow step 2 while you are still online
+4. Disconnect network cable (to remain offline)
+5. Burn that ISO on a DVD or could be a USB disk 
 ([link](https://ubuntu.com/tutorials/try-ubuntu-before-you-install#1-getting-started))
-5. Take the steps in next section (Download and build)
-6. After you are done, shut down Ubuntu and remove the medium used in step 4
+5. Boot into Ubuntu to run FinderOuter
+6. After you are done, shut down Ubuntu and remove the medium used in step 5
 
 #### Step 2: Download and build
+If you cannot or do not want to build you can go to [releases](https://github.com/Coding-Enthusiast/FinderOuter/releases) where
+the ready to run binaires are found for 3 different x64 operating systems: Windows, Linux and MacOS. 
+the other two files named `Source code.zip` and `Source code.tar.gz` are the project's source code that GitHub automatically adds
+at that release version's commit.  
+
+**To build FinderOuter:**  
 If you have [Visual Studio](https://visualstudio.microsoft.com/downloads/) you can clone this repository and build the included
-[solution file](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter.sln).  
-Building is also possible through these steps: 
+solution file called [FinderOuter.sln](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter.sln).  
+Building is also possible through these steps using command line: 
 1. Get Git: https://git-scm.com/downloads
-2. Get .NET 5.0 SDK: https://www.microsoft.com/net/download (see `TargetFramework` in
+2. Get .NET 5.0 SDK: https://dotnet.microsoft.com/download (see `TargetFramework` in
 [FinderOuter.csproj](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj)
 for the required .net version in case readme wasn't updated)
-3. clone FinderOuter `git clone https://github.com/Coding-Enthusiast/FinderOuter.git`
-4. Build using `dotnet build`  
+3. Clone FinderOuter `git clone https://github.com/Coding-Enthusiast/FinderOuter.git`
+4. Build using `dotnet publish -c Release -r <RID> --self-contained true` (replace `<RID>` with [RID](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
+of the operating system you want to build for. e.g. `win-x64` for x64 Windows or `linux-arm64` for Linux x64 ARM)
 
-**Notes:**  
+**Important notes:**  
 - Remember to build the project using `release` [configuration](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build)
 to benefit from compiler optimizations.  
-- .Net applications could be compiled as [self contained](https://docs.microsoft.com/en-us/dotnet/core/deploying/) which will 
-increase the size of the binray by including the required framework in it. That helps running the application on any system 
+- .Net applications can be published as [self contained](https://docs.microsoft.com/en-us/dotnet/core/deploying/) which will 
+increase the size of the binray by including the required framework in it. That helps running the application on any computer 
 (like the live Linux explained above) without needing to install .Net separately. The size can be reduced by selecting the
 `Trim unused assemblies` option.  
-- This project can be built on and executed from any operating system  
-
-If for any reason you can't or don't want to build the project yourself, we provide compiled binaries under 
-[releases](https://github.com/Coding-Enthusiast/FinderOuter/releases). These are each version compiled as a self-contained 
-application but *only for for 64-bit Linux operating system* because we want to encourage security as explained in Preparation
-section.  
-There are 3 files found in "releases" page, the bigger file on top is the compiled version and the other two named
-`Source code.zip` and `Source code.tar.gz` are the project's source code that GitHub automatically adds. There is no need to
-download the last two files if you are looking for compiled version, however they could be useful if you are trying to build the
-same version at the given commit.  
+- This project can be built on and used on any operating system, use `-r|--runtime <RUNTIME_IDENTIFIER>` to specify OS
+with the correct [RID](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog).  
 
 #### Step 3: Run
 If you have compiled FinderOuter as SCD or downloaded the provided binaries there is no need to download .Net Core, otherwise it
-has to be downloaded and installed on the system that needs to run FinderOuter.  
-FinderOuter can be run by using `dotnet FinderOuter.dll` in console on any operating system (Windows, Mac and Linux) or by running
-the `FinderOuter.exe` on Windows.  
+has to be [downloaded and installed](https://dotnet.microsoft.com/download) on the system that needs to run FinderOuter.  
+FinderOuter can be run by using console/terminal command `dotnet FinderOuter.dll` for Linux, `dotnet FinderOuter` on MacOs and running the 
+`FinderOuter.exe` on Windows.  
 Linux may require providing persmissions first
 ([more info](https://stackoverflow.com/questions/46843863/how-to-run-net-core-console-app-on-linux)):  
 1. Provide execute permissions `chmod 777 ./FinderOuter`
 2. Execute application `./FinderOuter`
 
 ## Contributing
-Please check out [conventions](https://github.com/Autarkysoft/Conventions) for information about coding styles, 
+Please first check out [conventions](https://github.com/Autarkysoft/Conventions) for information about coding styles, 
 versioning, making pull requests, and more.
 
 ## Donations
