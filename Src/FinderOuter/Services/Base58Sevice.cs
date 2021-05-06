@@ -475,206 +475,6 @@ namespace FinderOuter.Services
             }
         }
 
-        private unsafe bool SpecialLoopComp(string key)
-        {
-            byte[] padded;
-            int uLen;
-
-            // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
-            uLen = 10;
-            uint[] powers58 = new uint[ConstantsFO.PrivKeyCompWifLen * uLen];
-            padded = new byte[4 * uLen];
-
-            for (int i = 0, j = 0; i < ConstantsFO.PrivKeyCompWifLen; i++)
-            {
-                BigInteger val = BigInteger.Pow(58, i);
-                byte[] temp = val.ToByteArray(true, false);
-
-                Array.Clear(padded, 0, padded.Length);
-                Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
-
-                for (int k = 0; k < padded.Length; j++, k += 4)
-                {
-                    powers58[j] = (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
-                }
-            }
-
-            int[] values = new int[key.Length];
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = ConstantsFO.Base58Chars.IndexOf(key[i]);
-            }
-
-            uint[] precomputed = new uint[uLen];
-
-            fixed (uint* pre = &precomputed[0], pow = &powers58[0])
-            {
-                // i starts from 1 becaue it is compressed (K or L)
-                for (int i = 1; i < ConstantsFO.PrivKeyCompWifLen - 2; i++)
-                {
-                    for (int j = i + 1; j < ConstantsFO.PrivKeyCompWifLen - 1; j++)
-                    {
-                        for (int k = j + 1; k < ConstantsFO.PrivKeyCompWifLen; k++)
-                        {
-                            ((Span<uint>)precomputed).Clear();
-
-                            for (int index = 0; index < i; index++)
-                            {
-                                ulong carry = 0;
-                                ulong val = (ulong)values[index];
-                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
-                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                {
-                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
-                                    pre[m] = (uint)result;
-                                    carry = (uint)(result >> 32);
-                                }
-                            }
-
-                            for (int index = i + 1; index < j; index++)
-                            {
-                                ulong carry = 0;
-                                ulong val = (ulong)values[index - 1];
-                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
-                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                {
-                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
-                                    pre[m] = (uint)result;
-                                    carry = (uint)(result >> 32);
-                                }
-                            }
-
-                            for (int index = j + 1; index < k; index++)
-                            {
-                                ulong carry = 0;
-                                ulong val = (ulong)values[index - 2];
-                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
-                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                {
-                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
-                                    pre[m] = (uint)result;
-                                    carry = (uint)(result >> 32);
-                                }
-                            }
-
-                            for (int index = k + 1; index < ConstantsFO.PrivKeyCompWifLen; index++)
-                            {
-                                ulong carry = 0;
-                                ulong val = (ulong)values[index - 3];
-                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
-                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                {
-                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
-                                    pre[m] = (uint)result;
-                                    carry = (uint)(result >> 32);
-                                }
-                            }
-
-                            var cancelToken = new CancellationTokenSource();
-                            var options = new ParallelOptions
-                            {
-                                CancellationToken = cancelToken.Token,
-                            };
-
-                            try
-                            {
-                                Parallel.For(0, 58, options, (c1, loopState) =>
-                                {
-                                    for (int c2 = 0; c2 < 58; c2++)
-                                    {
-                                        for (int c3 = 0; c3 < 58; c3++)
-                                        {
-                                            options.CancellationToken.ThrowIfCancellationRequested();
-
-                                            Span<uint> temp = new uint[uLen];
-                                            ((ReadOnlySpan<uint>)precomputed).CopyTo(temp);
-
-                                            ulong carry = 0;
-                                            ulong val = (ulong)c1;
-                                            int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - i) * uLen;
-                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                            {
-                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
-                                                temp[m] = (uint)result;
-                                                carry = (uint)(result >> 32);
-                                            }
-
-                                            carry = 0;
-                                            val = (ulong)c2;
-                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - j) * uLen;
-                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                            {
-                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
-                                                temp[m] = (uint)result;
-                                                carry = (uint)(result >> 32);
-                                            }
-
-                                            carry = 0;
-                                            val = (ulong)c3;
-                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - k) * uLen;
-                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
-                                            {
-                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
-                                                temp[m] = (uint)result;
-                                                carry = (uint)(result >> 32);
-                                            }
-
-                                            if (ComputeSpecialHash(temp))
-                                            {
-                                                string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}")
-                                                                     .Insert(j, $"{ConstantsFO.Base58Chars[c2]}")
-                                                                     .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
-                                                report.AddMessageSafe($"Found a key: {foundRes}");
-                                                //Task.Run(() => cancelToken.Cancel());
-                                                report.FoundAnyResult = true;
-                                            }
-                                        }
-                                    }
-                                });
-                            }
-                            catch (Exception)
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        private unsafe bool ComputeSpecialHash(Span<uint> keyValueInts)
-        {
-            if (((keyValueInts[0] & 0xffffff00) | (keyValueInts[^2] & 0x000000ff)) != 0x00008001)
-            {
-                return false;
-            }
-
-            // SHA must be defined here for this method to be thread safe
-            using Sha256Fo sha = new();
-
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
-            fixed (uint* keyPt = &keyValueInts[0])
-            {
-                wPt[0] = (keyPt[0] << 16) | (keyPt[1] >> 16);
-                wPt[1] = (keyPt[1] << 16) | (keyPt[2] >> 16);
-                wPt[2] = (keyPt[2] << 16) | (keyPt[3] >> 16);
-                wPt[3] = (keyPt[3] << 16) | (keyPt[4] >> 16);
-                wPt[4] = (keyPt[4] << 16) | (keyPt[5] >> 16);
-                wPt[5] = (keyPt[5] << 16) | (keyPt[6] >> 16);
-                wPt[6] = (keyPt[6] << 16) | (keyPt[7] >> 16);
-                wPt[7] = (keyPt[7] << 16) | (keyPt[8] >> 16);
-                wPt[8] = (keyPt[8] << 16) | 0b00000000_00000000_10000000_00000000U;
-                // from 9 to 14 =0
-                wPt[15] = 272; // 34 *8 = 272
-
-                Sha256Fo.Init(hPt);
-                sha.CompressDouble34(hPt, wPt);
-
-                return hPt[0] == keyPt[9];
-            }
-        }
-
 
         private unsafe void Loop21(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
@@ -844,16 +644,364 @@ namespace FinderOuter.Services
 
 
 
+        private unsafe bool SpecialLoopComp1(string key, bool comp)
+        {
+            int maxKeyLen = comp ? ConstantsFO.PrivKeyCompWifLen : ConstantsFO.PrivKeyUncompWifLen;
+
+            byte[] padded;
+            int uLen;
+
+            // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+            uLen = 10;
+            uint[] powers58 = new uint[maxKeyLen * uLen];
+            padded = new byte[4 * uLen];
+
+            for (int i = 0, j = 0; i < maxKeyLen; i++)
+            {
+                BigInteger val = BigInteger.Pow(58, i);
+                byte[] temp = val.ToByteArray(true, false);
+
+                Array.Clear(padded, 0, padded.Length);
+                Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
+
+                for (int k = 0; k < padded.Length; j++, k += 4)
+                {
+                    powers58[j] = (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
+                }
+            }
+
+            int[] values = new int[key.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = ConstantsFO.Base58Chars.IndexOf(key[i]);
+            }
+
+            Span<uint> precomputed = new uint[uLen];
+
+            fixed (uint* pre = &precomputed[0], pow = &powers58[0])
+            {
+                // i starts from 1 becaue it is compressed (K or L)
+                for (int i = 1; i < maxKeyLen; i++)
+                {
+                    precomputed.Clear();
+
+                    for (int index = 0; index < i; index++)
+                    {
+                        ulong carry = 0;
+                        ulong val = (ulong)values[index];
+                        int powIndex = (maxKeyLen - 1 - index) * uLen;
+                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                        {
+                            ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                            pre[m] = (uint)result;
+                            carry = (uint)(result >> 32);
+                        }
+                    }
+
+                    for (int index = i + 1; index < maxKeyLen; index++)
+                    {
+                        ulong carry = 0;
+                        ulong val = (ulong)values[index - 1];
+                        int powIndex = (maxKeyLen - 1 - index) * uLen;
+                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                        {
+                            ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                            pre[m] = (uint)result;
+                            carry = (uint)(result >> 32);
+                        }
+                    }
+
+                    for (int c1 = 0; c1 < 58; c1++)
+                    {
+                        Span<uint> temp = new uint[precomputed.Length];
+                        precomputed.CopyTo(temp);
+
+                        ulong carry = 0;
+                        ulong val = (ulong)c1;
+                        int powIndex = (maxKeyLen - 1 - i) * uLen;
+                        for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                        {
+                            ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                            temp[m] = (uint)result;
+                            carry = (uint)(result >> 32);
+                        }
+
+                        bool checksum = comp ? ComputeSpecialCompHash(temp) : ComputeSpecialUncompHash(temp);
+                        if (checksum)
+                        {
+                            string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}");
+                            report.AddMessageSafe($"Found a key: {foundRes}");
+                            report.FoundAnyResult = true;
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private unsafe bool SpecialLoopComp3(string key)
+        {
+            byte[] padded;
+            int uLen;
+
+            // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+            uLen = 10;
+            uint[] powers58 = new uint[ConstantsFO.PrivKeyCompWifLen * uLen];
+            padded = new byte[4 * uLen];
+
+            for (int i = 0, j = 0; i < ConstantsFO.PrivKeyCompWifLen; i++)
+            {
+                BigInteger val = BigInteger.Pow(58, i);
+                byte[] temp = val.ToByteArray(true, false);
+
+                Array.Clear(padded, 0, padded.Length);
+                Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
+
+                for (int k = 0; k < padded.Length; j++, k += 4)
+                {
+                    powers58[j] = (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
+                }
+            }
+
+            int[] values = new int[key.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = ConstantsFO.Base58Chars.IndexOf(key[i]);
+            }
+
+            uint[] precomputed = new uint[uLen];
+
+            fixed (uint* pre = &precomputed[0], pow = &powers58[0])
+            {
+                // i starts from 1 becaue it is compressed (K or L)
+                for (int i = 1; i < ConstantsFO.PrivKeyCompWifLen - 2; i++)
+                {
+                    for (int j = i + 1; j < ConstantsFO.PrivKeyCompWifLen - 1; j++)
+                    {
+                        for (int k = j + 1; k < ConstantsFO.PrivKeyCompWifLen; k++)
+                        {
+                            ((Span<uint>)precomputed).Clear();
+
+                            for (int index = 0; index < i; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index];
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = i + 1; index < j; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 1];
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = j + 1; index < k; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 2];
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            for (int index = k + 1; index < ConstantsFO.PrivKeyCompWifLen; index++)
+                            {
+                                ulong carry = 0;
+                                ulong val = (ulong)values[index - 3];
+                                int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - index) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                    pre[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+                            }
+
+                            var cancelToken = new CancellationTokenSource();
+                            var options = new ParallelOptions
+                            {
+                                CancellationToken = cancelToken.Token,
+                            };
+
+                            try
+                            {
+                                Parallel.For(0, 58, options, (c1, loopState) =>
+                                {
+                                    for (int c2 = 0; c2 < 58; c2++)
+                                    {
+                                        for (int c3 = 0; c3 < 58; c3++)
+                                        {
+                                            options.CancellationToken.ThrowIfCancellationRequested();
+
+                                            Span<uint> temp = new uint[uLen];
+                                            ((ReadOnlySpan<uint>)precomputed).CopyTo(temp);
+
+                                            ulong carry = 0;
+                                            ulong val = (ulong)c1;
+                                            int powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - i) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
+
+                                            carry = 0;
+                                            val = (ulong)c2;
+                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - j) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
+
+                                            carry = 0;
+                                            val = (ulong)c3;
+                                            powIndex = (ConstantsFO.PrivKeyCompWifLen - 1 - k) * uLen;
+                                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                            {
+                                                ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                                temp[m] = (uint)result;
+                                                carry = (uint)(result >> 32);
+                                            }
+
+                                            if (ComputeSpecialCompHash(temp))
+                                            {
+                                                string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}")
+                                                                     .Insert(j, $"{ConstantsFO.Base58Chars[c2]}")
+                                                                     .Insert(k, $"{ConstantsFO.Base58Chars[c3]}");
+                                                report.AddMessageSafe($"Found a key: {foundRes}");
+                                                //Task.Run(() => cancelToken.Cancel());
+                                                report.FoundAnyResult = true;
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            catch (Exception)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static unsafe bool ComputeSpecialUncompHash(Span<uint> keyValueInts)
+        {
+            if (keyValueInts[0] != 0x00000080)
+            {
+                return false;
+            }
+
+            // SHA must be defined here for this method to be thread safe
+            using Sha256Fo sha = new();
+
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (uint* keyPt = &keyValueInts[0])
+            {
+                wPt[0] = (keyPt[0] << 24) | (keyPt[1] >> 8);
+                wPt[1] = (keyPt[1] << 24) | (keyPt[2] >> 8);
+                wPt[2] = (keyPt[2] << 24) | (keyPt[3] >> 8);
+                wPt[3] = (keyPt[3] << 24) | (keyPt[4] >> 8);
+                wPt[4] = (keyPt[4] << 24) | (keyPt[5] >> 8);
+                wPt[5] = (keyPt[5] << 24) | (keyPt[6] >> 8);
+                wPt[6] = (keyPt[6] << 24) | (keyPt[7] >> 8);
+                wPt[7] = (keyPt[7] << 24) | (keyPt[8] >> 8);
+                wPt[8] = (keyPt[8] << 24) | 0b00000000_10000000_00000000_00000000U;
+                // from 9 to 14 = 0
+                wPt[15] = 264; // 33 *8 = 264
+
+                Sha256Fo.Init(hPt);
+                sha.CompressDouble33(hPt, wPt);
+
+                return hPt[0] == keyPt[9];
+            }
+        }
+
+        private static unsafe bool ComputeSpecialCompHash(Span<uint> keyValueInts)
+        {
+            if (((keyValueInts[0] & 0xffffff00) | (keyValueInts[^2] & 0x000000ff)) != 0x00008001)
+            {
+                return false;
+            }
+
+            // SHA must be defined here for this method to be thread safe
+            using Sha256Fo sha = new();
+
+            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            fixed (uint* keyPt = &keyValueInts[0])
+            {
+                wPt[0] = (keyPt[0] << 16) | (keyPt[1] >> 16);
+                wPt[1] = (keyPt[1] << 16) | (keyPt[2] >> 16);
+                wPt[2] = (keyPt[2] << 16) | (keyPt[3] >> 16);
+                wPt[3] = (keyPt[3] << 16) | (keyPt[4] >> 16);
+                wPt[4] = (keyPt[4] << 16) | (keyPt[5] >> 16);
+                wPt[5] = (keyPt[5] << 16) | (keyPt[6] >> 16);
+                wPt[6] = (keyPt[6] << 16) | (keyPt[7] >> 16);
+                wPt[7] = (keyPt[7] << 16) | (keyPt[8] >> 16);
+                wPt[8] = (keyPt[8] << 16) | 0b00000000_00000000_10000000_00000000U;
+                // from 9 to 14 =0
+                wPt[15] = 272; // 34 *8 = 272
+
+                Sha256Fo.Init(hPt);
+                sha.CompressDouble34(hPt, wPt);
+
+                return hPt[0] == keyPt[9];
+            }
+        }
+
+        public async Task<bool> FindUnknownLocation1(string key, bool comp)
+        {
+            // [51! / 1! *((51-1)!)] * 58^1
+            BigInteger total = 51 * 58;
+            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
+
+            Stopwatch watch = Stopwatch.StartNew();
+            bool success = await Task.Run(() =>
+            {
+                return SpecialLoopComp1(key, comp);
+            }
+            );
+
+            watch.Stop();
+            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
+
+            return success;
+        }
+
         public async Task<bool> FindUnknownLocation3(string key)
         {
-            // 51! / 3! *((51-3)!)
+            // [51! / 3! *((51-3)!)] * 58^3
             BigInteger total = ((51 * 50 * 49) / (3 * 2 * 1)) * BigInteger.Pow(58, 3);
             report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
 
             Stopwatch watch = Stopwatch.StartNew();
             bool success = await Task.Run(() =>
             {
-                return SpecialLoopComp(key);
+                return SpecialLoopComp3(key);
             }
             );
 
@@ -915,6 +1063,10 @@ namespace FinderOuter.Services
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
                     }
+                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 1)
+                    {
+                        await FindUnknownLocation1(key, true);
+                    }
                     else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
                     {
                         await FindUnknownLocation3(key);
@@ -930,6 +1082,10 @@ namespace FinderOuter.Services
                     {
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
+                    }
+                    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 1)
+                    {
+                        await FindUnknownLocation1(key, false);
                     }
                     else
                     {
