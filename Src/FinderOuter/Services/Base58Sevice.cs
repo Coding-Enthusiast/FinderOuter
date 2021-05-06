@@ -352,7 +352,7 @@ namespace FinderOuter.Services
                         // from 9 to 14 =0
                         wPt[15] = 272; // 34 *8 = 272
 
-                        sha.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha.CompressDouble34(hPt, wPt);
 
                         if (hPt[0] == tmp[9])
@@ -443,7 +443,7 @@ namespace FinderOuter.Services
                         // from 9 to 14 = 0
                         wPt[15] = 264; // 33 *8 = 264
 
-                        sha.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha.CompressDouble33(hPt, wPt);
 
                         if (hPt[0] == tmp[9])
@@ -668,7 +668,7 @@ namespace FinderOuter.Services
                 // from 9 to 14 =0
                 wPt[15] = 272; // 34 *8 = 272
 
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble34(hPt, wPt);
 
                 return hPt[0] == keyPt[9];
@@ -714,7 +714,7 @@ namespace FinderOuter.Services
                     // from 6 to 14 = 0
                     wPt[15] = 168; // 21 *8 = 168
 
-                    sha.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha.CompressDouble21(hPt, wPt);
 
                     if (hPt[0] == tmp[6])
@@ -798,7 +798,7 @@ namespace FinderOuter.Services
                     // from 10 to 14 = 0
                     wPt[15] = 312; // 39 *8 = 168
 
-                    sha.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha.CompressDouble39(hPt, wPt);
 
                     if (hPt[0] == tmp[10])

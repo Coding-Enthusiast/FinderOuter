@@ -478,7 +478,7 @@ namespace FinderOuter.Services
                     wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
                     wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
-                    sha256.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha256.Compress32(hPt, wPt);
 
                     if ((byte)wrd[23] == hPt[0] >> 24)
@@ -586,7 +586,7 @@ namespace FinderOuter.Services
                         //                                         -> LLLL_LLLM MMMM_MMMM MMNN_NNNN NNNN_NOOO
                         wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
-                        sha256.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha256.Compress32(hPt, wPt);
 
                         if ((byte)wrd[23] == hPt[0] >> 24)
@@ -659,7 +659,7 @@ namespace FinderOuter.Services
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
                     wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
-                    sha256.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha256.Compress28(hPt, wPt);
 
                     if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
@@ -719,7 +719,7 @@ namespace FinderOuter.Services
                         wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
                         wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
-                        sha256.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha256.Compress28(hPt, wPt);
 
                         if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
@@ -791,7 +791,7 @@ namespace FinderOuter.Services
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
                     wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
-                    sha256.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha256.Compress24(hPt, wPt);
 
                     if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
@@ -850,7 +850,7 @@ namespace FinderOuter.Services
                         wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
                         wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
-                        sha256.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha256.Compress24(hPt, wPt);
 
                         if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
@@ -921,7 +921,7 @@ namespace FinderOuter.Services
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
                     wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
-                    sha256.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha256.Compress20(hPt, wPt);
 
                     if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
@@ -979,7 +979,7 @@ namespace FinderOuter.Services
                         wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
                         wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
-                        sha256.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha256.Compress20(hPt, wPt);
 
                         if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
@@ -1050,7 +1050,7 @@ namespace FinderOuter.Services
                     wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
                     wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
-                    sha256.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha256.Compress16(hPt, wPt);
 
                     if ((wrd[11] & 0b1111) == hPt[0] >> 28)
@@ -1109,7 +1109,7 @@ namespace FinderOuter.Services
                         wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
                         wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
-                        sha256.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha256.Compress16(hPt, wPt);
 
                         if ((wrd[11] & 0b1111) == hPt[0] >> 28)

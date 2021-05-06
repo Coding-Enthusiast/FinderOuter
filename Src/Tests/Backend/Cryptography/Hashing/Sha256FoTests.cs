@@ -262,7 +262,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[15] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16)) | 0b00000000_00000000_10000000_00000000U;
 
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressBlock(hPt, wPt);
                 // Next block:
                 for (int i = 0; i < 15; i++)
@@ -293,7 +293,7 @@ namespace Tests.Backend.Cryptography.Hashing
                     wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
                 }
 
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressBlock(hPt, wPt);
                 // Next block:
                 wPt[0] = 0b10000000_00000000_00000000_00000000U;
@@ -327,7 +327,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress16(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -353,7 +353,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[5] = 0b10000000_00000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress20(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -379,7 +379,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | 0b00000000_00000000_10000000_00000000U);
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress22(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -405,7 +405,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | 0b00000000_00000000_00000000_10000000U);
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress23(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -431,7 +431,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[6] = 0b10000000_00000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress24(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -457,7 +457,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[6] = (uint)data[24] << 24 | (uint)data[25] << 16 | 0b00000000_00000000_10000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress26(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -483,7 +483,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[6] = (uint)data[24] << 24 | (uint)data[25] << 16 | (uint)data[26] << 8 | 0b00000000_00000000_00000000_10000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress27(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -509,7 +509,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[7] = 0b10000000_00000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress28(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -535,7 +535,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[7] = (uint)((data[28] << 24) | (data[29] << 16) | 0b00000000_00000000_10000000_00000000U);
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress30(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -561,7 +561,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[7] = (uint)((data[28] << 24) | (data[29] << 16) | (data[30] << 8) | 0b00000000_00000000_00000000_10000000U);
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress31(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -587,7 +587,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[8] = 0b10000000_00000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress32(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -613,7 +613,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 wPt[8] = (uint)data[32] << 24 | 0b00000000_10000000_00000000_00000000U;
 
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress33(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -632,7 +632,7 @@ namespace Tests.Backend.Cryptography.Hashing
             fixed (byte* dPt = &data[0])
             fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.Compress65(dPt, hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -658,7 +658,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[4] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble16(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -683,7 +683,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[5] = (uint)((data[20] << 24) | 0b00000000_10000000_00000000_00000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble21(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -708,7 +708,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | 0b00000000_00000000_10000000_00000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble22(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -733,7 +733,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[5] = (uint)((data[20] << 24) | (data[21] << 16) | (data[22] << 8) | 0b00000000_00000000_00000000_10000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble23(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -758,7 +758,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[8] = 0b10000000_00000000_00000000_00000000U;
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble32(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -783,7 +783,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[8] = (uint)((data[32] << 24) | 0b00000000_10000000_00000000_00000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble33(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -808,7 +808,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[8] = (uint)((data[32] << 24) | (data[33] << 16) | 0b00000000_00000000_10000000_00000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble34(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 
@@ -833,7 +833,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 }
                 wPt[9] = (uint)((data[36] << 24) | (data[37] << 16) | (data[38] << 8) | 0b00000000_00000000_00000000_10000000U);
                 wPt[15] = (uint)dataLen * 8;
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressDouble39(hPt, wPt);
                 byte[] actual = Sha256Fo.GetBytes(hPt);
 

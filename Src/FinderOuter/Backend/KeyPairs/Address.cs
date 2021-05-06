@@ -108,7 +108,7 @@ namespace FinderOuter.Backend.KeyPairs
                     {
                         return AddressType.P2WPKH;
                     }
-                    else if (decoded.Length == witHashFunc.BlockByteSize)
+                    else if (decoded.Length == Sha256Fo.BlockByteSize)
                     {
                         return AddressType.P2WSH;
                     }

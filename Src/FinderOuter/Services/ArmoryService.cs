@@ -44,7 +44,7 @@ namespace FinderOuter.Services
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe bool MoveNext(byte* items, int len)
+        private static unsafe bool MoveNext(byte* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
@@ -83,7 +83,7 @@ namespace FinderOuter.Services
                 // Compute chain-code
                 // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
                 // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
                 wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
                 wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
@@ -125,7 +125,7 @@ namespace FinderOuter.Services
                 wPt[14] = 0x6f74204b; // ot K
                 wPt[15] = 0x65798000; // ey + 0x80 pad
 
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressBlock(hPt, wPt);
 
                 wPt[0] = 0;
@@ -157,7 +157,7 @@ namespace FinderOuter.Services
                 wPt[14] = hPt[6];
                 wPt[15] = hPt[7];
 
-                sha.Init(hPt);
+                Sha256Fo.Init(hPt);
                 sha.CompressBlock(hPt, wPt);
 
                 wPt[0] = 0b10000000_00000000_00000000_00000000U;
@@ -249,7 +249,7 @@ namespace FinderOuter.Services
                     // From 9 to 14 remain 0
                     wPt[15] = 128;
 
-                    sha.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha.CompressDouble16(hPt, wPt);
 
                     if ((hPt[0] & mask1) == comp1)
@@ -275,7 +275,7 @@ namespace FinderOuter.Services
                             // From 9 to 14 remain 0
                             wPt[15] = 128;
 
-                            sha.Init(hPt);
+                            Sha256Fo.Init(hPt);
                             sha.CompressDouble16(hPt, wPt);
 
                             if ((hPt[0] & mask2) == comp2)
@@ -390,7 +390,7 @@ namespace FinderOuter.Services
                     // From 9 to 14 remain 0
                     wPt[15] = 128;
 
-                    sha.Init(hPt);
+                    Sha256Fo.Init(hPt);
                     sha.CompressDouble16(hPt, wPt);
 
                     if ((hPt[0] & mask1) == cs1)
@@ -474,7 +474,7 @@ namespace FinderOuter.Services
                         // From 9 to 14 remain 0
                         wPt[15] = 128;
 
-                        sha.Init(hPt);
+                        Sha256Fo.Init(hPt);
                         sha.CompressDouble16(hPt, wPt);
 
                         BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);

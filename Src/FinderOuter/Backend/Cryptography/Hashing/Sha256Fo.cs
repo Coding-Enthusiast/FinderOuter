@@ -40,8 +40,11 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <summary>
         /// Size of the blocks used in each round (=64 bytes).
         /// </summary>
-        public int BlockByteSize => 64;
+        public const int BlockByteSize = 64;
 
+
+        public const int HashStateSize = 8;
+        public const int WorkingVectorSize = 64;
 
         public uint[] hashState = new uint[8];
         public uint[] w = new uint[64];
@@ -90,6 +93,17 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             return GetBytes();
         }
 
+        public static unsafe byte[] ComputeHash_Static(Span<byte> data)
+        {
+            uint* pt = stackalloc uint[HashStateSize + WorkingVectorSize];
+            Init(pt);
+            fixed (byte* dPt = data)
+            {
+                CompressData(dPt, data.Length, data.Length, pt);
+            }
+            return GetBytes(pt);
+        }
+
 
         public unsafe void Init()
         {
@@ -100,7 +114,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init(uint* hPt)
+        public static unsafe void Init(uint* hPt)
         {
             hPt[0] = 0x6a09e667;
             hPt[1] = 0xbb67ae85;
@@ -135,6 +149,66 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             };
         }
 
+
+        internal static unsafe void CompressData(byte* dPt, int dataLen, int totalLen, uint* pt)
+        {
+            Span<byte> finalBlock = new byte[64];
+
+            fixed (byte* fPt = &finalBlock[0])
+            {
+                uint* wPt = pt + HashStateSize;
+                int dIndex = 0;
+                while (dataLen >= BlockByteSize)
+                {
+                    for (int i = 0; i < 16; i++, dIndex += 4)
+                    {
+                        wPt[i] = (uint)((dPt[dIndex] << 24) | (dPt[dIndex + 1] << 16) | (dPt[dIndex + 2] << 8) | dPt[dIndex + 3]);
+                    }
+                    SetW(wPt);
+                    CompressBlockWithWSet(pt);
+
+                    dataLen -= BlockByteSize;
+                }
+
+                // Copy the reamaining bytes into a blockSize length buffer so that we can loop through it easily:
+                Buffer.MemoryCopy(dPt + dIndex, fPt, finalBlock.Length, dataLen);
+
+                // Append 1 bit followed by zeros. Since we only work with bytes, this is 1 whole byte
+                fPt[dataLen] = 0b1000_0000;
+
+                if (dataLen >= 56) // blockSize - pad2.Len = 64 - 8
+                {
+                    // This means we have an additional block to compress, which we do it here:
+
+                    for (int i = 0, j = 0; i < 16; i++, j += 4)
+                    {
+                        wPt[i] = (uint)((fPt[j] << 24) | (fPt[j + 1] << 16) | (fPt[j + 2] << 8) | fPt[j + 3]);
+                    }
+                    SetW(wPt);
+                    CompressBlockWithWSet(pt);
+
+                    // Zero out all the items in FinalBlock so it can be reused
+                    finalBlock.Clear();
+                }
+
+                // Add length in bits as the last 8 bytes of final block in big-endian order
+                // See MessageLengthTest in Test project to understand what the following shifts are
+                fPt[63] = (byte)(totalLen << 3);
+                fPt[62] = (byte)(totalLen >> 5);
+                fPt[61] = (byte)(totalLen >> 13);
+                fPt[60] = (byte)(totalLen >> 21);
+                fPt[59] = (byte)(totalLen >> 29);
+                // The remainig 3 bytes are always zero
+                // The remaining 56 bytes are already set
+
+                for (int i = 0, j = 0; i < 16; i++, j += 4)
+                {
+                    wPt[i] = (uint)((fPt[j] << 24) | (fPt[j + 1] << 16) | (fPt[j + 2] << 8) | fPt[j + 3]);
+                }
+                SetW(wPt);
+                CompressBlockWithWSet(pt);
+            }
+        }
 
         internal unsafe void DoHash(Span<byte> data, int len)
         {
@@ -1818,9 +1892,10 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             CompressBlockWithWSet(hPt, wPt);
         }
 
-        public unsafe void SetW(uint* wPt, int start = 16)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void SetW(uint* wPt, int start = 16)
         {
-            for (int i = start; i < w.Length; i++)
+            for (int i = start; i < WorkingVectorSize; i++)
             {
                 wPt[i] = SSIG1(wPt[i - 2]) + wPt[i - 7] + SSIG0(wPt[i - 15]) + wPt[i - 16];
             }
@@ -1970,24 +2045,93 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[7] += h;
         }
 
+        internal static unsafe void CompressBlockWithWSet(uint* pt)
+        {
+            uint a = pt[0];
+            uint b = pt[1];
+            uint c = pt[2];
+            uint d = pt[3];
+            uint e = pt[4];
+            uint f = pt[5];
+            uint g = pt[6];
+            uint h = pt[7];
+
+            uint temp, aa, bb, cc, dd, ee, ff, hh, gg;
+
+            fixed (uint* kPt = &Ks[0])
+            {
+                for (int j = 0; j < 64;)
+                {
+                    temp = h + BSIG1(e) + CH(e, f, g) + kPt[j] + pt[HashStateSize + j];
+                    ee = d + temp;
+                    aa = temp + BSIG0(a) + MAJ(a, b, c);
+                    j++;
+
+                    temp = g + BSIG1(ee) + CH(ee, e, f) + kPt[j] + pt[HashStateSize + j];
+                    ff = c + temp;
+                    bb = temp + BSIG0(aa) + MAJ(aa, a, b);
+                    j++;
+
+                    temp = f + BSIG1(ff) + CH(ff, ee, e) + kPt[j] + pt[HashStateSize + j];
+                    gg = b + temp;
+                    cc = temp + BSIG0(bb) + MAJ(bb, aa, a);
+                    j++;
+
+                    temp = e + BSIG1(gg) + CH(gg, ff, ee) + kPt[j] + pt[HashStateSize + j];
+                    hh = a + temp;
+                    dd = temp + BSIG0(cc) + MAJ(cc, bb, aa);
+                    j++;
+
+                    temp = ee + BSIG1(hh) + CH(hh, gg, ff) + kPt[j] + pt[HashStateSize + j];
+                    h = aa + temp;
+                    d = temp + BSIG0(dd) + MAJ(dd, cc, bb);
+                    j++;
+
+                    temp = ff + BSIG1(h) + CH(h, hh, gg) + kPt[j] + pt[HashStateSize + j];
+                    g = bb + temp;
+                    c = temp + BSIG0(d) + MAJ(d, dd, cc);
+                    j++;
+
+                    temp = gg + BSIG1(g) + CH(g, h, hh) + kPt[j] + pt[HashStateSize + j];
+                    f = cc + temp;
+                    b = temp + BSIG0(c) + MAJ(c, d, dd);
+                    j++;
+
+                    temp = hh + BSIG1(f) + CH(f, g, h) + kPt[j] + pt[HashStateSize + j];
+                    e = dd + temp;
+                    a = temp + BSIG0(b) + MAJ(b, c, d);
+                    j++;
+                }
+            }
+
+            pt[0] += a;
+            pt[1] += b;
+            pt[2] += c;
+            pt[3] += d;
+            pt[4] += e;
+            pt[5] += f;
+            pt[6] += g;
+            pt[7] += h;
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint CH(uint x, uint y, uint z) => z ^ (x & (y ^ z));
+        private static uint CH(uint x, uint y, uint z) => z ^ (x & (y ^ z));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint MAJ(uint x, uint y, uint z) => (x & y) | (z & (x | y));
+        private static uint MAJ(uint x, uint y, uint z) => (x & y) | (z & (x | y));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint BSIG0(uint x) => (x >> 2 | x << 30) ^ (x >> 13 | x << 19) ^ (x >> 22 | x << 10);
+        private static uint BSIG0(uint x) => (x >> 2 | x << 30) ^ (x >> 13 | x << 19) ^ (x >> 22 | x << 10);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint BSIG1(uint x) => (x >> 6 | x << 26) ^ (x >> 11 | x << 21) ^ (x >> 25 | x << 7);
+        private static uint BSIG1(uint x) => (x >> 6 | x << 26) ^ (x >> 11 | x << 21) ^ (x >> 25 | x << 7);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint SSIG0(uint x) => (x >> 7 | x << 25) ^ (x >> 18 | x << 14) ^ (x >> 3);
+        internal static uint SSIG0(uint x) => (x >> 7 | x << 25) ^ (x >> 18 | x << 14) ^ (x >> 3);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint SSIG1(uint x) => (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10);
+        internal static uint SSIG1(uint x) => (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10);
 
 
         private bool disposedValue = false;

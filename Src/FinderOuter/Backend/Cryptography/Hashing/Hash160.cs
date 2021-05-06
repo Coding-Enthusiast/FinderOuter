@@ -102,7 +102,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             {
                 // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
                 // so we just pass RIPEMD160 block as HashState of SHA256
-                sha.Init(rip_blkPt);
+                Sha256Fo.Init(rip_blkPt);
 
                 sh_wPt[0] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
                 sh_wPt[1] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
@@ -173,7 +173,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 sh_wPt[14] = 0;
                 sh_wPt[15] = 264;
 
-                sha.Init(rip_blkPt);
+                Sha256Fo.Init(rip_blkPt);
                 sha.Compress33(rip_blkPt, sh_wPt);
 
                 for (int i = 0; i < 8; i++)
@@ -207,7 +207,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 // 9 to 14 are already 0
                 sh_wPt[15] = 176; // 22*8
 
-                sha.Init(rip_blkPt);
+                Sha256Fo.Init(rip_blkPt);
                 sha.Compress22(rip_blkPt, sh_wPt);
 
                 for (int i = 0; i < 8; i++)
@@ -234,7 +234,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             {
                 // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
                 // so we just pass RIPEMD160 block as HashState of SHA256
-                sha.Init(rip_blkPt);
+                Sha256Fo.Init(rip_blkPt);
 
                 int dIndex = 0;
                 for (int i = 0; i < 8; i++, dIndex += 4)
@@ -284,7 +284,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             {
                 // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
                 // so we just pass RIPEMD160 block as HashState of SHA256
-                sha.Init(rip_blkPt);
+                Sha256Fo.Init(rip_blkPt);
                 sha.Compress65(dPt, rip_blkPt, sh_wPt);
 
                 // SHA256 compression is over and the result is already inside RIPEMD160 Block
