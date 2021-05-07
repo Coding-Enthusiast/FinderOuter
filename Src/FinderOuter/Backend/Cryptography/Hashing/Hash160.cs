@@ -97,44 +97,45 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         public unsafe byte[] Compress22(Span<byte> data)
         {
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (byte* dPt = data)
-            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
+            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0])
             {
                 // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
-                // so we just pass RIPEMD160 block as HashState of SHA256
-                Sha256Fo.Init(rip_blkPt);
+                Sha256Fo.Init(pt);
 
-                sh_wPt[0] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
-                sh_wPt[1] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
-                sh_wPt[2] = (uint)((dPt[8] << 24) | (dPt[9] << 16) | (dPt[10] << 8) | dPt[11]);
-                sh_wPt[3] = (uint)((dPt[12] << 24) | (dPt[13] << 16) | (dPt[14] << 8) | dPt[15]);
-                sh_wPt[4] = (uint)((dPt[16] << 24) | (dPt[17] << 16) | (dPt[18] << 8) | dPt[19]);
-                sh_wPt[5] = (uint)((dPt[20] << 24) | (dPt[21] << 16) | 0b00000000_00000000_10000000_00000000U);
-                sh_wPt[6] = 0;
-                sh_wPt[7] = 0;
-                sh_wPt[8] = 0;
-                sh_wPt[9] = 0;
-                sh_wPt[10] = 0;
-                sh_wPt[11] = 0;
-                sh_wPt[12] = 0;
-                sh_wPt[13] = 0;
+                pt[8] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
+                pt[9] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
+                pt[10] = (uint)((dPt[8] << 24) | (dPt[9] << 16) | (dPt[10] << 8) | dPt[11]);
+                pt[11] = (uint)((dPt[12] << 24) | (dPt[13] << 16) | (dPt[14] << 8) | dPt[15]);
+                pt[12] = (uint)((dPt[16] << 24) | (dPt[17] << 16) | (dPt[18] << 8) | dPt[19]);
+                pt[13] = (uint)((dPt[20] << 24) | (dPt[21] << 16) | 0b00000000_00000000_10000000_00000000U);
+                pt[14] = 0;
+                pt[15] = 0;
+                pt[16] = 0;
+                pt[17] = 0;
+                pt[18] = 0;
+                pt[19] = 0;
+                pt[20] = 0;
+                pt[21] = 0;
+                pt[22] = 0;
+                pt[23] = 176; // 22*8
 
-                sh_wPt[14] = 0;
-                sh_wPt[15] = 176; // 22*8
-
-                sha.Compress22(rip_blkPt, sh_wPt);
+                Sha256Fo.Compress22(pt);
 
                 // SHA256 compression is over and the result is already inside RIPEMD160 Block
                 // But SHA256 endianness is reverse of RIPEMD160, so we have to do an endian swap
-
+                // RIPEMD160 hashstate has 5 items while SHA256 has 8 => w starts at index 6
                 // 32 byte or 8 uint items coming from SHA256
-                for (int i = 0; i < 8; i++)
-                {
-                    // RIPEMD160 uses little-endian while SHA256 uses big-endian
-                    rip_blkPt[i] =
-                        (rip_blkPt[i] >> 24) | (rip_blkPt[i] << 24) |                       // Swap byte 1 and 4
-                        ((rip_blkPt[i] >> 8) & 0xff00) | ((rip_blkPt[i] << 8) & 0xff0000);  // Swap byte 2 and 3
-                }
+                rip_blkPt[0] = (pt[0] >> 24) | (pt[0] << 24) |                       // Swap byte 1 and 4
+                               ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);  // Swap byte 2 and 3
+                rip_blkPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                rip_blkPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                rip_blkPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                rip_blkPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                rip_blkPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                rip_blkPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                rip_blkPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
                 rip_blkPt[8] = 0b00000000_00000000_00000000_10000000U;
                 rip_blkPt[14] = 256;
                 // rip_blkPt[15] = 0;
@@ -153,36 +154,39 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public unsafe byte[] Compress33_P2sh(Span<byte> data)
         {
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (byte* dPt = data)
-            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
+            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0])
             {
-                sh_wPt[0] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
-                sh_wPt[1] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
-                sh_wPt[2] = (uint)((dPt[8] << 24) | (dPt[9] << 16) | (dPt[10] << 8) | dPt[11]);
-                sh_wPt[3] = (uint)((dPt[12] << 24) | (dPt[13] << 16) | (dPt[14] << 8) | dPt[15]);
-                sh_wPt[4] = (uint)((dPt[16] << 24) | (dPt[17] << 16) | (dPt[18] << 8) | dPt[19]);
-                sh_wPt[5] = (uint)((dPt[20] << 24) | (dPt[21] << 16) | (dPt[22] << 8) | dPt[23]);
-                sh_wPt[6] = (uint)((dPt[24] << 24) | (dPt[25] << 16) | (dPt[26] << 8) | dPt[27]);
-                sh_wPt[7] = (uint)((dPt[28] << 24) | (dPt[29] << 16) | (dPt[30] << 8) | dPt[31]);
-                sh_wPt[8] = (uint)((dPt[32] << 24) | 0b00000000_10000000_00000000_00000000U);
-                sh_wPt[9] = 0;
-                sh_wPt[10] = 0;
-                sh_wPt[11] = 0;
-                sh_wPt[12] = 0;
-                sh_wPt[13] = 0;
-                sh_wPt[14] = 0;
-                sh_wPt[15] = 264;
+                pt[8] = (uint)((dPt[0] << 24) | (dPt[1] << 16) | (dPt[2] << 8) | dPt[3]);
+                pt[9] = (uint)((dPt[4] << 24) | (dPt[5] << 16) | (dPt[6] << 8) | dPt[7]);
+                pt[10] = (uint)((dPt[8] << 24) | (dPt[9] << 16) | (dPt[10] << 8) | dPt[11]);
+                pt[11] = (uint)((dPt[12] << 24) | (dPt[13] << 16) | (dPt[14] << 8) | dPt[15]);
+                pt[12] = (uint)((dPt[16] << 24) | (dPt[17] << 16) | (dPt[18] << 8) | dPt[19]);
+                pt[13] = (uint)((dPt[20] << 24) | (dPt[21] << 16) | (dPt[22] << 8) | dPt[23]);
+                pt[14] = (uint)((dPt[24] << 24) | (dPt[25] << 16) | (dPt[26] << 8) | dPt[27]);
+                pt[15] = (uint)((dPt[28] << 24) | (dPt[29] << 16) | (dPt[30] << 8) | dPt[31]);
+                pt[16] = (uint)((dPt[32] << 24) | 0b00000000_10000000_00000000_00000000U);
+                pt[17] = 0;
+                pt[18] = 0;
+                pt[19] = 0;
+                pt[20] = 0;
+                pt[21] = 0;
+                pt[22] = 0;
+                pt[23] = 264;
 
-                Sha256Fo.Init(rip_blkPt);
-                sha.Compress33(rip_blkPt, sh_wPt);
+                Sha256Fo.Init(pt);
+                Sha256Fo.Compress33(pt);
 
-                for (int i = 0; i < 8; i++)
-                {
-                    // RIPEMD160 uses little-endian while SHA256 uses big-endian
-                    rip_blkPt[i] =
-                        (rip_blkPt[i] >> 24) | (rip_blkPt[i] << 24) |                       // Swap byte 1 and 4
-                        ((rip_blkPt[i] >> 8) & 0xff00) | ((rip_blkPt[i] << 8) & 0xff0000);  // Swap byte 2 and 3
-                }
+                rip_blkPt[0] = (pt[0] >> 24) | (pt[0] << 24) |                       // Swap byte 1 and 4
+                               ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);  // Swap byte 2 and 3
+                rip_blkPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                rip_blkPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                rip_blkPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                rip_blkPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                rip_blkPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                rip_blkPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                rip_blkPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
                 rip_blkPt[8] = 0b00000000_00000000_00000000_10000000U;
                 rip_blkPt[14] = 256;
 
@@ -190,33 +194,35 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 rip.CompressBlock(rip_blkPt, rip_hPt);
 
                 // Compute second HASH160
-                sh_wPt[0] = 0x00140000U | ((rip_hPt[0] << 8) & 0xff00) | ((rip_hPt[0] >> 8) & 0xff);
-                sh_wPt[1] = ((rip_hPt[0] << 8) & 0xff000000) | ((rip_hPt[0] >> 8) & 0x00ff0000) | 
-                            ((rip_hPt[1] << 8) & 0x0000ff00) | ((rip_hPt[1] >> 8) & 0x000000ff);
-                sh_wPt[2] = ((rip_hPt[1] << 8) & 0xff000000) | ((rip_hPt[1] >> 8) & 0x00ff0000) |
-                            ((rip_hPt[2] << 8) & 0x0000ff00) | ((rip_hPt[2] >> 8) & 0x000000ff);
-                sh_wPt[3] = ((rip_hPt[2] << 8) & 0xff000000) | ((rip_hPt[2] >> 8) & 0x00ff0000) |
-                            ((rip_hPt[3] << 8) & 0x0000ff00) | ((rip_hPt[3] >> 8) & 0x000000ff);
-                sh_wPt[4] = ((rip_hPt[3] << 8) & 0xff000000) | ((rip_hPt[3] >> 8) & 0x00ff0000) |
-                            ((rip_hPt[4] << 8) & 0x0000ff00) | ((rip_hPt[4] >> 8) & 0x000000ff);
-                sh_wPt[5] = ((rip_hPt[4] << 8) & 0xff000000) | ((rip_hPt[4] >> 8) & 0x00ff0000) |
-                            0b00000000_00000000_10000000_00000000U;
-                sh_wPt[6] = 0;
-                sh_wPt[7] = 0;
-                sh_wPt[8] = 0;
+                pt[8] = 0x00140000U | ((rip_hPt[0] << 8) & 0xff00) | ((rip_hPt[0] >> 8) & 0xff);
+                pt[9] = ((rip_hPt[0] << 8) & 0xff000000) | ((rip_hPt[0] >> 8) & 0x00ff0000) |
+                        ((rip_hPt[1] << 8) & 0x0000ff00) | ((rip_hPt[1] >> 8) & 0x000000ff);
+                pt[10] = ((rip_hPt[1] << 8) & 0xff000000) | ((rip_hPt[1] >> 8) & 0x00ff0000) |
+                         ((rip_hPt[2] << 8) & 0x0000ff00) | ((rip_hPt[2] >> 8) & 0x000000ff);
+                pt[11] = ((rip_hPt[2] << 8) & 0xff000000) | ((rip_hPt[2] >> 8) & 0x00ff0000) |
+                         ((rip_hPt[3] << 8) & 0x0000ff00) | ((rip_hPt[3] >> 8) & 0x000000ff);
+                pt[12] = ((rip_hPt[3] << 8) & 0xff000000) | ((rip_hPt[3] >> 8) & 0x00ff0000) |
+                         ((rip_hPt[4] << 8) & 0x0000ff00) | ((rip_hPt[4] >> 8) & 0x000000ff);
+                pt[13] = ((rip_hPt[4] << 8) & 0xff000000) | ((rip_hPt[4] >> 8) & 0x00ff0000) |
+                         0b00000000_00000000_10000000_00000000U;
+                pt[14] = 0;
+                pt[15] = 0;
+                pt[16] = 0;
                 // 9 to 14 are already 0
-                sh_wPt[15] = 176; // 22*8
+                pt[23] = 176; // 22*8
 
-                Sha256Fo.Init(rip_blkPt);
-                sha.Compress22(rip_blkPt, sh_wPt);
+                Sha256Fo.Init(pt);
+                Sha256Fo.Compress22(pt);
 
-                for (int i = 0; i < 8; i++)
-                {
-                    // RIPEMD160 uses little-endian while SHA256 uses big-endian
-                    rip_blkPt[i] =
-                        (rip_blkPt[i] >> 24) | (rip_blkPt[i] << 24) |                       // Swap byte 1 and 4
-                        ((rip_blkPt[i] >> 8) & 0xff00) | ((rip_blkPt[i] << 8) & 0xff0000);  // Swap byte 2 and 3
-                }
+                rip_blkPt[0] = (pt[0] >> 24) | (pt[0] << 24) |                       // Swap byte 1 and 4
+                               ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);  // Swap byte 2 and 3
+                rip_blkPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                rip_blkPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                rip_blkPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                rip_blkPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                rip_blkPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                rip_blkPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                rip_blkPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
                 rip_blkPt[8] = 0b00000000_00000000_00000000_10000000U;
                 rip_blkPt[14] = 256;
 
@@ -229,41 +235,43 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         public unsafe byte[] Compress33(Span<byte> data)
         {
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (byte* dPt = data)
-            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0], sh_wPt = &sha.w[0])
+            fixed (uint* rip_blkPt = &rip.block[0], rip_hPt = &rip.hashState[0])
             {
                 // Step 1: compute SHA256 of data then copy result of hash (HashState) into RIPEMD160 block
                 // so we just pass RIPEMD160 block as HashState of SHA256
-                Sha256Fo.Init(rip_blkPt);
+                Sha256Fo.Init(pt);
 
                 int dIndex = 0;
-                for (int i = 0; i < 8; i++, dIndex += 4)
+                for (int i = 8; i < 16; i++, dIndex += 4)
                 {
-                    sh_wPt[i] = (uint)((dPt[dIndex] << 24) | (dPt[dIndex + 1] << 16) | (dPt[dIndex + 2] << 8) | dPt[dIndex + 3]);
+                    pt[i] = (uint)((dPt[dIndex] << 24) | (dPt[dIndex + 1] << 16) | (dPt[dIndex + 2] << 8) | dPt[dIndex + 3]);
                 }
-                sh_wPt[8] = (uint)((dPt[dIndex] << 24) | 0b00000000_10000000_00000000_00000000U);
-                sh_wPt[9] = 0;
-                sh_wPt[10] = 0;
-                sh_wPt[11] = 0;
-                sh_wPt[12] = 0;
-                sh_wPt[13] = 0;
+                pt[16] = (uint)((dPt[dIndex] << 24) | 0b00000000_10000000_00000000_00000000U);
+                pt[17] = 0;
+                pt[18] = 0;
+                pt[19] = 0;
+                pt[20] = 0;
+                pt[21] = 0;
+                pt[22] = 0; // Message length for pad2, 33 byte or 264 bits
+                pt[23] = 264;
 
-                sh_wPt[14] = 0; // Message length for pad2, 33 byte or 264 bits
-                sh_wPt[15] = 264;
-
-                sha.Compress33(rip_blkPt, sh_wPt);
+                Sha256Fo.Compress33(pt);
 
                 // SHA256 compression is over and the result is already inside RIPEMD160 Block
                 // But SHA256 endianness is reverse of RIPEMD160, so we have to do an endian swap
 
                 // 32 byte or 8 uint items coming from SHA256
-                for (int i = 0; i < 8; i++)
-                {
-                    // RIPEMD160 uses little-endian while SHA256 uses big-endian
-                    rip_blkPt[i] =
-                        (rip_blkPt[i] >> 24) | (rip_blkPt[i] << 24) |                       // Swap byte 1 and 4
-                        ((rip_blkPt[i] >> 8) & 0xff00) | ((rip_blkPt[i] << 8) & 0xff0000);  // Swap byte 2 and 3
-                }
+                rip_blkPt[0] = (pt[0] >> 24) | (pt[0] << 24) |                       // Swap byte 1 and 4
+                               ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);  // Swap byte 2 and 3
+                rip_blkPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                rip_blkPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                rip_blkPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                rip_blkPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                rip_blkPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                rip_blkPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                rip_blkPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
                 rip_blkPt[8] = 0b00000000_00000000_00000000_10000000U;
                 rip_blkPt[14] = 256;
                 // rip_blkPt[15] = 0;

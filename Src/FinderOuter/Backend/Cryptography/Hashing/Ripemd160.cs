@@ -28,6 +28,13 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public const int BlockByteSize = 64;
 
+        public const int HashStateSize = 5;
+        public const int WorkingVectorSize = 16;
+        /// <summary>
+        /// Size of UInt32[] buffer = 21
+        /// </summary>
+        public const int UBufferSize = HashStateSize + WorkingVectorSize;
+
         internal uint[] block = new uint[16];
         internal uint[] hashState = new uint[5];
 
