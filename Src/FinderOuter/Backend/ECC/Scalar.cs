@@ -36,7 +36,43 @@ namespace FinderOuter.Backend.ECC
             overflow = GetOverflow();
         }
 
-        public Scalar(Span<byte> data, out int overflow)
+        public unsafe Scalar(byte* pt, out int overflow)
+        {
+            b0 = pt[31] | (uint)pt[30] << 8 | (uint)pt[29] << 16 | (uint)pt[28] << 24;
+            b1 = pt[27] | (uint)pt[26] << 8 | (uint)pt[25] << 16 | (uint)pt[24] << 24;
+            b2 = pt[23] | (uint)pt[22] << 8 | (uint)pt[21] << 16 | (uint)pt[20] << 24;
+            b3 = pt[19] | (uint)pt[18] << 8 | (uint)pt[17] << 16 | (uint)pt[16] << 24;
+            b4 = pt[15] | (uint)pt[14] << 8 | (uint)pt[13] << 16 | (uint)pt[12] << 24;
+            b5 = pt[11] | (uint)pt[10] << 8 | (uint)pt[09] << 16 | (uint)pt[08] << 24;
+            b6 = pt[07] | (uint)pt[06] << 8 | (uint)pt[05] << 16 | (uint)pt[04] << 24;
+            b7 = pt[03] | (uint)pt[02] << 8 | (uint)pt[01] << 16 | (uint)pt[00] << 24;
+
+            overflow = GetOverflow();
+
+            Debug.Assert(overflow == 0 || overflow == 1);
+
+            ulong t = (ulong)b0 + (uint)overflow * NC0;
+            b0 = (uint)t; t >>= 32;
+            t += (ulong)b1 + (uint)overflow * NC1;
+            b1 = (uint)t; t >>= 32;
+            t += (ulong)b2 + (uint)overflow * NC2;
+            b2 = (uint)t; t >>= 32;
+            t += (ulong)b3 + (uint)overflow * NC3;
+            b3 = (uint)t; t >>= 32;
+            t += (ulong)b4 + (uint)overflow * NC4;
+            b4 = (uint)t; t >>= 32;
+            t += b5;
+            b5 = (uint)t; t >>= 32;
+            t += b6;
+            b6 = (uint)t; t >>= 32;
+            t += b7;
+            b7 = (uint)t;
+
+            Debug.Assert((overflow == 1 && t >> 32 == 1) || (overflow == 0 && t >> 32 == 0));
+            Debug.Assert(GetOverflow() == 0);
+        }
+
+        public Scalar(ReadOnlySpan<byte> data, out int overflow)
         {
             if (data.Length != 32)
                 throw new ArgumentOutOfRangeException(nameof(data));

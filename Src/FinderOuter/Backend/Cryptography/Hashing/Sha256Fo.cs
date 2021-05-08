@@ -363,130 +363,66 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         /// <summary>
         /// Computes _single_ SHA256 hash for the second block of
-        /// (data.Length == 62) and (wPt[0] to wPt[14] is set to zero and wPt[15] to 496)
-        /// hPt is the result of compressing the previous block and shouldn't change
-        /// </summary>
-        /// <param name="hPt">HashState pointer</param>
-        /// <param name="wPt">Working vector pointer</param>
-        public unsafe void Compress62SecondBlock(uint* hPt, uint* wPt)
-        {
-            // w0 to w14 = 0
-            // w15 = 496
-            wPt[16] = 0x00000000;
-            wPt[17] = 0x00c60000;
-            wPt[18] = 0x00000000;
-            wPt[19] = 0xc00031fb;
-            wPt[20] = 0x00000000;
-            wPt[21] = 0x1ef2980c;
-            wPt[22] = 0x000001f0;
-            wPt[23] = 0x1f003001;
-            wPt[24] = 0x018c0000;
-            wPt[25] = 0x1e076c6c;
-            wPt[26] = 0x400095f2;
-            wPt[27] = 0x5bbc0d18;
-            wPt[28] = 0x774a0031;
-            wPt[29] = 0x8739cb9a;
-            wPt[30] = 0x3f7f780a;
-            wPt[31] = 0xde2bdef9;
-            wPt[32] = 0xf12c402b;
-            wPt[33] = 0xd55af419;
-            wPt[34] = 0xe7e7d117;
-            wPt[35] = 0x5c04b8e7;
-            wPt[36] = 0x57ab7422;
-            wPt[37] = 0x0a6654ff;
-            wPt[38] = 0xc08aae86;
-            wPt[39] = 0xf1420679;
-            wPt[40] = 0xda7273ec;
-            wPt[41] = 0x13bb5720;
-            wPt[42] = 0x4c49a91a;
-            wPt[43] = 0x60e3f08d;
-            wPt[44] = 0xba7dbe21;
-            wPt[45] = 0x9ba73cdf;
-            wPt[46] = 0xb9834f89;
-            wPt[47] = 0x8c3e571b;
-            wPt[48] = 0x670ac0aa;
-            wPt[49] = 0xca6921b9;
-            wPt[50] = 0x6c26c8e4;
-            wPt[51] = 0x5eae6abf;
-            wPt[52] = 0x1b3027d5;
-            wPt[53] = 0x7a3b844f;
-            wPt[54] = 0xd034a12b;
-            wPt[55] = 0x68ff3fe4;
-            wPt[56] = 0x00f84d7d;
-            wPt[57] = 0x4f4ddc16;
-            wPt[58] = 0xc5081411;
-            wPt[59] = 0x0d6177c1;
-            wPt[60] = 0xa0e9299b;
-            wPt[61] = 0xd898de59;
-            wPt[62] = 0x87b282d2;
-            wPt[63] = 0xea0e6a56;
-
-
-            CompressBlockWithWSet(hPt, wPt);
-        }
-
-        /// <summary>
-        /// Computes _single_ SHA256 hash for the second block of
         /// (data.Length == 64) and (wPt[0] is the padding wPt[1] to wPt[14] is set to zero and wPt[15] to 512)
         /// hPt is the result of compressing the previous block and shouldn't change
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <param name="wPt">Working vector pointer</param>
-        public unsafe void Compress64SecondBlock(uint* hPt, uint* wPt)
+        public static unsafe void Compress64SecondBlock(uint* pt)
         {
             // w0 = 0b10000000_00000000_00000000_00000000U
             // w1 to w14 = 0
             // w15 = 512
-            wPt[16] = 0x80000000;
-            wPt[17] = 0x01400000;
-            wPt[18] = 0x00205000;
-            wPt[19] = 0x00005088;
-            wPt[20] = 0x22000800;
-            wPt[21] = 0x22550014;
-            wPt[22] = 0x05089742;
-            wPt[23] = 0xa0000020;
-            wPt[24] = 0x5a880000;
-            wPt[25] = 0x005c9400;
-            wPt[26] = 0x0016d49d;
-            wPt[27] = 0xfa801f00;
-            wPt[28] = 0xd33225d0;
-            wPt[29] = 0x11675959;
-            wPt[30] = 0xf6e6bfda;
-            wPt[31] = 0xb30c1549;
-            wPt[32] = 0x08b2b050;
-            wPt[33] = 0x9d7c4c27;
-            wPt[34] = 0x0ce2a393;
-            wPt[35] = 0x88e6e1ea;
-            wPt[36] = 0xa52b4335;
-            wPt[37] = 0x67a16f49;
-            wPt[38] = 0xd732016f;
-            wPt[39] = 0x4eeb2e91;
-            wPt[40] = 0x5dbf55e5;
-            wPt[41] = 0x8eee2335;
-            wPt[42] = 0xe2bc5ec2;
-            wPt[43] = 0xa83f4394;
-            wPt[44] = 0x45ad78f7;
-            wPt[45] = 0x36f3d0cd;
-            wPt[46] = 0xd99c05e8;
-            wPt[47] = 0xb0511dc7;
-            wPt[48] = 0x69bc7ac4;
-            wPt[49] = 0xbd11375b;
-            wPt[50] = 0xe3ba71e5;
-            wPt[51] = 0x3b209ff2;
-            wPt[52] = 0x18feee17;
-            wPt[53] = 0xe25ad9e7;
-            wPt[54] = 0x13375046;
-            wPt[55] = 0x0515089d;
-            wPt[56] = 0x4f0d0f04;
-            wPt[57] = 0x2627484e;
-            wPt[58] = 0x310128d2;
-            wPt[59] = 0xc668b434;
-            wPt[60] = 0x420841cc;
-            wPt[61] = 0x62d311b8;
-            wPt[62] = 0xe59ba771;
-            wPt[63] = 0x85a7a484;
+            pt[24] = 0x80000000;
+            pt[25] = 0x01400000;
+            pt[26] = 0x00205000;
+            pt[27] = 0x00005088;
+            pt[28] = 0x22000800;
+            pt[29] = 0x22550014;
+            pt[30] = 0x05089742;
+            pt[31] = 0xa0000020;
+            pt[32] = 0x5a880000;
+            pt[33] = 0x005c9400;
+            pt[34] = 0x0016d49d;
+            pt[35] = 0xfa801f00;
+            pt[36] = 0xd33225d0;
+            pt[37] = 0x11675959;
+            pt[38] = 0xf6e6bfda;
+            pt[39] = 0xb30c1549;
+            pt[40] = 0x08b2b050;
+            pt[41] = 0x9d7c4c27;
+            pt[42] = 0x0ce2a393;
+            pt[43] = 0x88e6e1ea;
+            pt[44] = 0xa52b4335;
+            pt[45] = 0x67a16f49;
+            pt[46] = 0xd732016f;
+            pt[47] = 0x4eeb2e91;
+            pt[48] = 0x5dbf55e5;
+            pt[49] = 0x8eee2335;
+            pt[50] = 0xe2bc5ec2;
+            pt[51] = 0xa83f4394;
+            pt[52] = 0x45ad78f7;
+            pt[53] = 0x36f3d0cd;
+            pt[54] = 0xd99c05e8;
+            pt[55] = 0xb0511dc7;
+            pt[56] = 0x69bc7ac4;
+            pt[57] = 0xbd11375b;
+            pt[58] = 0xe3ba71e5;
+            pt[59] = 0x3b209ff2;
+            pt[60] = 0x18feee17;
+            pt[61] = 0xe25ad9e7;
+            pt[62] = 0x13375046;
+            pt[63] = 0x0515089d;
+            pt[64] = 0x4f0d0f04;
+            pt[65] = 0x2627484e;
+            pt[66] = 0x310128d2;
+            pt[67] = 0xc668b434;
+            pt[68] = 0x420841cc;
+            pt[69] = 0x62d311b8;
+            pt[70] = 0xe59ba771;
+            pt[71] = 0x85a7a484;
 
-            CompressBlockWithWSet(hPt, wPt);
+            CompressBlockWithWSet(pt);
         }
 
 
@@ -1238,6 +1174,88 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress65(uint* pt, byte* dPt)
+        {
+            uint* wPt = pt + HashStateSize;
+            // Set and compress first block (64 bytes)
+            int dIndex = 0;
+            for (int i = 0; i < 16; i++, dIndex += 4)
+            {
+                wPt[i] = (uint)((dPt[dIndex] << 24) | (dPt[dIndex + 1] << 16) | (dPt[dIndex + 2] << 8) | dPt[dIndex + 3]);
+            }
+            SetW(wPt);
+            CompressBlockWithWSet(pt);
+
+            // Set, pad and compress second block (1 byte data -> 64 byte block)
+            wPt[0] = (uint)((dPt[dIndex] << 24) | 0b00000000_10000000_00000000_00000000U);
+            wPt[1] = 0;
+            wPt[2] = 0;
+            wPt[3] = 0;
+            wPt[4] = 0;
+            wPt[5] = 0;
+            wPt[6] = 0;
+            wPt[7] = 0;
+            wPt[8] = 0;
+            wPt[9] = 0;
+            wPt[10] = 0;
+            wPt[11] = 0;
+            wPt[12] = 0;
+            wPt[13] = 0;
+            wPt[14] = 0;
+            wPt[15] = 520;
+
+            wPt[16] = wPt[0];
+            wPt[17] = 21299200;
+            wPt[18] = SSIG1(wPt[16]);
+            wPt[19] = SSIG1(wPt[17]);
+            wPt[20] = SSIG1(wPt[18]);
+            wPt[21] = SSIG1(wPt[19]);
+            wPt[22] = SSIG1(wPt[20]) + 520;
+            wPt[23] = SSIG1(wPt[21]) + wPt[16];
+            wPt[24] = SSIG1(wPt[22]) + wPt[17];
+            wPt[25] = SSIG1(wPt[23]) + wPt[18];
+            wPt[26] = SSIG1(wPt[24]) + wPt[19];
+            wPt[27] = SSIG1(wPt[25]) + wPt[20];
+            wPt[28] = SSIG1(wPt[26]) + wPt[21];
+            wPt[29] = SSIG1(wPt[27]) + wPt[22];
+            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 276955205;
+            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 520;
+            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
+            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
+            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
+            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
+            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
+            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
+            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
+            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
+            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
+            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
+            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
+            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
+            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
+            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
+            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
+            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
+            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
+            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
+            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
+            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
+            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
+            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
+            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
+            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
+            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
+            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
+            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
+            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
+            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
+            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
+            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
+            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+
+            CompressBlockWithWSet(pt);
+        }
+
         public unsafe void Compress65(byte* dPt, uint* hPt, uint* wPt)
         {
             // Set and compress first block (64 bytes)
@@ -1325,67 +1343,64 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// <para/> Note: wPt[5], wPt[6], wPt[7] and wPt[8] must be set to zero on consecutive calls since 
         /// <see cref="DoSecondHash(uint*, uint*)"/> changes them.
         /// </summary>
-        /// <param name="hPt">HashState pointer</param>
-        /// <param name="wPt">Working vector pointer</param>
-        public unsafe void CompressDouble16(uint* hPt, uint* wPt)
+        public static unsafe void CompressDouble16(uint* pt)
         {
             // w4 = 0b10000000_10000000_00000000_00000000U
             // w5 to w14 = 0
             // w15 = 128
-            wPt[16] = SSIG0(wPt[1]) + wPt[0];
-            wPt[17] = 5242880 + SSIG0(wPt[2]) + wPt[1];
-            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
-            wPt[19] = SSIG1(wPt[17]) + 285220864 + wPt[3];
-            wPt[20] = SSIG1(wPt[18]) + 2147483648;
-            wPt[21] = SSIG1(wPt[19]);
-            wPt[22] = SSIG1(wPt[20]) + 128;
-            wPt[23] = SSIG1(wPt[21]) + wPt[16];
-            wPt[24] = SSIG1(wPt[22]) + wPt[17];
-            wPt[25] = SSIG1(wPt[23]) + wPt[18];
-            wPt[26] = SSIG1(wPt[24]) + wPt[19];
-            wPt[27] = SSIG1(wPt[25]) + wPt[20];
-            wPt[28] = SSIG1(wPt[26]) + wPt[21];
-            wPt[29] = SSIG1(wPt[27]) + wPt[22];
-            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 2097169;
-            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 128;
-            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
-            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
-            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
-            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
-            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
-            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
-            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
-            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
-            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
-            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
-            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
-            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
-            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
-            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
-            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
-            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
-            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
-            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
-            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
-            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
-            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
-            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
-            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
-            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
-            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
-            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
-            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
-            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
-            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
-            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
-            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
-            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+            pt[24] = SSIG0(pt[9]) + pt[8];
+            pt[25] = 5242880 + SSIG0(pt[10]) + pt[9];
+            pt[26] = SSIG1(pt[24]) + SSIG0(pt[11]) + pt[10];
+            pt[27] = SSIG1(pt[25]) + 285220864 + pt[11];
+            pt[28] = SSIG1(pt[26]) + 2147483648;
+            pt[29] = SSIG1(pt[27]);
+            pt[30] = SSIG1(pt[28]) + 128;
+            pt[31] = SSIG1(pt[29]) + pt[24];
+            pt[32] = SSIG1(pt[30]) + pt[25];
+            pt[33] = SSIG1(pt[31]) + pt[26];
+            pt[34] = SSIG1(pt[32]) + pt[27];
+            pt[35] = SSIG1(pt[33]) + pt[28];
+            pt[36] = SSIG1(pt[34]) + pt[29];
+            pt[37] = SSIG1(pt[35]) + pt[30];
+            pt[38] = SSIG1(pt[36]) + pt[31] + 2097169;
+            pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 128;
+            pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
+            pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
+            pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
+            pt[43] = SSIG1(pt[41]) + pt[36] + SSIG0(pt[28]) + pt[27];
+            pt[44] = SSIG1(pt[42]) + pt[37] + SSIG0(pt[29]) + pt[28];
+            pt[45] = SSIG1(pt[43]) + pt[38] + SSIG0(pt[30]) + pt[29];
+            pt[46] = SSIG1(pt[44]) + pt[39] + SSIG0(pt[31]) + pt[30];
+            pt[47] = SSIG1(pt[45]) + pt[40] + SSIG0(pt[32]) + pt[31];
+            pt[48] = SSIG1(pt[46]) + pt[41] + SSIG0(pt[33]) + pt[32];
+            pt[49] = SSIG1(pt[47]) + pt[42] + SSIG0(pt[34]) + pt[33];
+            pt[50] = SSIG1(pt[48]) + pt[43] + SSIG0(pt[35]) + pt[34];
+            pt[51] = SSIG1(pt[49]) + pt[44] + SSIG0(pt[36]) + pt[35];
+            pt[52] = SSIG1(pt[50]) + pt[45] + SSIG0(pt[37]) + pt[36];
+            pt[53] = SSIG1(pt[51]) + pt[46] + SSIG0(pt[38]) + pt[37];
+            pt[54] = SSIG1(pt[52]) + pt[47] + SSIG0(pt[39]) + pt[38];
+            pt[55] = SSIG1(pt[53]) + pt[48] + SSIG0(pt[40]) + pt[39];
+            pt[56] = SSIG1(pt[54]) + pt[49] + SSIG0(pt[41]) + pt[40];
+            pt[57] = SSIG1(pt[55]) + pt[50] + SSIG0(pt[42]) + pt[41];
+            pt[58] = SSIG1(pt[56]) + pt[51] + SSIG0(pt[43]) + pt[42];
+            pt[59] = SSIG1(pt[57]) + pt[52] + SSIG0(pt[44]) + pt[43];
+            pt[60] = SSIG1(pt[58]) + pt[53] + SSIG0(pt[45]) + pt[44];
+            pt[61] = SSIG1(pt[59]) + pt[54] + SSIG0(pt[46]) + pt[45];
+            pt[62] = SSIG1(pt[60]) + pt[55] + SSIG0(pt[47]) + pt[46];
+            pt[63] = SSIG1(pt[61]) + pt[56] + SSIG0(pt[48]) + pt[47];
+            pt[64] = SSIG1(pt[62]) + pt[57] + SSIG0(pt[49]) + pt[48];
+            pt[65] = SSIG1(pt[63]) + pt[58] + SSIG0(pt[50]) + pt[49];
+            pt[66] = SSIG1(pt[64]) + pt[59] + SSIG0(pt[51]) + pt[50];
+            pt[67] = SSIG1(pt[65]) + pt[60] + SSIG0(pt[52]) + pt[51];
+            pt[68] = SSIG1(pt[66]) + pt[61] + SSIG0(pt[53]) + pt[52];
+            pt[69] = SSIG1(pt[67]) + pt[62] + SSIG0(pt[54]) + pt[53];
+            pt[70] = SSIG1(pt[68]) + pt[63] + SSIG0(pt[55]) + pt[54];
+            pt[71] = SSIG1(pt[69]) + pt[64] + SSIG0(pt[56]) + pt[55];
 
-
-            CompressBlockWithWSet(hPt, wPt);
+            CompressBlockWithWSet(pt);
 
             // Perform second hash
-            DoSecondHash(hPt, wPt);
+            DoSecondHash(pt);
         }
 
         /// <summary>
@@ -1592,64 +1607,64 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <param name="wPt">Working vector pointer</param>
-        public unsafe void CompressDouble32(uint* hPt, uint* wPt)
+        public static unsafe void CompressDouble32(uint* pt)
         {
             // w8 = 0b10000000_00000000_00000000_00000000U 
             // w9 to w14 = 0
             // w15 = 256
-            wPt[16] = SSIG0(wPt[1]) + wPt[0];
-            wPt[17] = 10485760 + SSIG0(wPt[2]) + wPt[1];
-            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
-            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
-            wPt[20] = SSIG1(wPt[18]) + SSIG0(wPt[5]) + wPt[4];
-            wPt[21] = SSIG1(wPt[19]) + SSIG0(wPt[6]) + wPt[5];
-            wPt[22] = SSIG1(wPt[20]) + 256 + SSIG0(wPt[7]) + wPt[6];
-            wPt[23] = SSIG1(wPt[21]) + wPt[16] + 285220864 + wPt[7];
-            wPt[24] = SSIG1(wPt[22]) + wPt[17] + 2147483648;
-            wPt[25] = SSIG1(wPt[23]) + wPt[18];
-            wPt[26] = SSIG1(wPt[24]) + wPt[19];
-            wPt[27] = SSIG1(wPt[25]) + wPt[20];
-            wPt[28] = SSIG1(wPt[26]) + wPt[21];
-            wPt[29] = SSIG1(wPt[27]) + wPt[22];
-            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 4194338;
-            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 256;
-            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
-            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
-            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
-            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
-            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
-            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
-            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
-            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
-            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
-            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
-            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
-            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
-            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
-            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
-            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
-            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
-            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
-            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
-            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
-            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
-            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
-            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
-            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
-            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
-            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
-            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
-            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
-            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
-            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
-            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
-            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
-            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
+            pt[24] = SSIG0(pt[9]) + pt[8];
+            pt[25] = 10485760 + SSIG0(pt[10]) + pt[9];
+            pt[26] = SSIG1(pt[24]) + SSIG0(pt[11]) + pt[10];
+            pt[27] = SSIG1(pt[25]) + SSIG0(pt[12]) + pt[11];
+            pt[28] = SSIG1(pt[26]) + SSIG0(pt[13]) + pt[12];
+            pt[29] = SSIG1(pt[27]) + SSIG0(pt[14]) + pt[13];
+            pt[30] = SSIG1(pt[28]) + 256 + SSIG0(pt[15]) + pt[14];
+            pt[31] = SSIG1(pt[29]) + pt[24] + 285220864 + pt[15];
+            pt[32] = SSIG1(pt[30]) + pt[25] + 2147483648;
+            pt[33] = SSIG1(pt[31]) + pt[26];
+            pt[34] = SSIG1(pt[32]) + pt[27];
+            pt[35] = SSIG1(pt[33]) + pt[28];
+            pt[36] = SSIG1(pt[34]) + pt[29];
+            pt[37] = SSIG1(pt[35]) + pt[30];
+            pt[38] = SSIG1(pt[36]) + pt[31] + 4194338;
+            pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 256;
+            pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
+            pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
+            pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
+            pt[43] = SSIG1(pt[41]) + pt[36] + SSIG0(pt[28]) + pt[27];
+            pt[44] = SSIG1(pt[42]) + pt[37] + SSIG0(pt[29]) + pt[28];
+            pt[45] = SSIG1(pt[43]) + pt[38] + SSIG0(pt[30]) + pt[29];
+            pt[46] = SSIG1(pt[44]) + pt[39] + SSIG0(pt[31]) + pt[30];
+            pt[47] = SSIG1(pt[45]) + pt[40] + SSIG0(pt[32]) + pt[31];
+            pt[48] = SSIG1(pt[46]) + pt[41] + SSIG0(pt[33]) + pt[32];
+            pt[49] = SSIG1(pt[47]) + pt[42] + SSIG0(pt[34]) + pt[33];
+            pt[50] = SSIG1(pt[48]) + pt[43] + SSIG0(pt[35]) + pt[34];
+            pt[51] = SSIG1(pt[49]) + pt[44] + SSIG0(pt[36]) + pt[35];
+            pt[52] = SSIG1(pt[50]) + pt[45] + SSIG0(pt[37]) + pt[36];
+            pt[53] = SSIG1(pt[51]) + pt[46] + SSIG0(pt[38]) + pt[37];
+            pt[54] = SSIG1(pt[52]) + pt[47] + SSIG0(pt[39]) + pt[38];
+            pt[55] = SSIG1(pt[53]) + pt[48] + SSIG0(pt[40]) + pt[39];
+            pt[56] = SSIG1(pt[54]) + pt[49] + SSIG0(pt[41]) + pt[40];
+            pt[57] = SSIG1(pt[55]) + pt[50] + SSIG0(pt[42]) + pt[41];
+            pt[58] = SSIG1(pt[56]) + pt[51] + SSIG0(pt[43]) + pt[42];
+            pt[59] = SSIG1(pt[57]) + pt[52] + SSIG0(pt[44]) + pt[43];
+            pt[60] = SSIG1(pt[58]) + pt[53] + SSIG0(pt[45]) + pt[44];
+            pt[61] = SSIG1(pt[59]) + pt[54] + SSIG0(pt[46]) + pt[45];
+            pt[62] = SSIG1(pt[60]) + pt[55] + SSIG0(pt[47]) + pt[46];
+            pt[63] = SSIG1(pt[61]) + pt[56] + SSIG0(pt[48]) + pt[47];
+            pt[64] = SSIG1(pt[62]) + pt[57] + SSIG0(pt[49]) + pt[48];
+            pt[65] = SSIG1(pt[63]) + pt[58] + SSIG0(pt[50]) + pt[49];
+            pt[66] = SSIG1(pt[64]) + pt[59] + SSIG0(pt[51]) + pt[50];
+            pt[67] = SSIG1(pt[65]) + pt[60] + SSIG0(pt[52]) + pt[51];
+            pt[68] = SSIG1(pt[66]) + pt[61] + SSIG0(pt[53]) + pt[52];
+            pt[69] = SSIG1(pt[67]) + pt[62] + SSIG0(pt[54]) + pt[53];
+            pt[70] = SSIG1(pt[68]) + pt[63] + SSIG0(pt[55]) + pt[54];
+            pt[71] = SSIG1(pt[69]) + pt[64] + SSIG0(pt[56]) + pt[55];
 
-            CompressBlockWithWSet(hPt, wPt);
+            CompressBlockWithWSet(pt);
 
             // Perform second hash
-            DoSecondHash(hPt, wPt);
+            DoSecondHash(pt);
         }
 
         /// <summary>
@@ -1851,17 +1866,17 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// (data.Length == 65)
         /// </summary>
         /// <param name="data">65 byte data</param>
-        public unsafe byte[] CompressDouble65(byte[] data)
+        public static unsafe byte[] CompressDouble65(Span<byte> data)
         {
             Debug.Assert(data != null && data.Length == 65);
 
+            uint* pt = stackalloc uint[UBufferSize];
             fixed (byte* dPt = &data[0])
-            fixed (uint* hPt = &hashState[0], wPt = &w[0])
             {
-                Init(hPt);
-                Compress65(dPt, hPt, wPt);
-                DoSecondHash(hPt, wPt);
-                return GetBytes(hPt);
+                Init(pt);
+                Compress65(pt, dPt);
+                DoSecondHash(pt);
+                return GetBytes(pt);
             }
         }
 

@@ -8,6 +8,7 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
@@ -34,6 +35,7 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
         private readonly ECCalc calc;
+        Calc calc2 = new Calc();
 
         private ICompareService comparer;
         private int[] missingIndexes;
@@ -71,8 +73,10 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe BigInteger ComputeKey(Sha256Fo sha, uint* hPt, uint* wPt, uint* oPt, byte* kPt)
+        private unsafe BigInteger ComputeKey(uint* pt, byte* kPt)
         {
+            uint* oPt = pt + Sha256Fo.UBufferSize;
+
             byte[] chainCode;
             if (hasChainCode)
             {
@@ -83,125 +87,118 @@ namespace FinderOuter.Services
                 // Compute chain-code
                 // h1 = SHA256( SHA256(SHA256(key)) XOR 0x36 | "Derive Chaincode from Root Key")
                 // Chain-code = SHA256( SHA256(SHA256(key)) XOR 0x5c | h1)
-                Sha256Fo.Init(hPt);
-                wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
-                wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
-                wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
-                wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
-                wPt[4] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
-                wPt[5] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
-                wPt[6] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
-                wPt[7] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
-                wPt[8] = 0b10000000_00000000_00000000_00000000U;
+                Sha256Fo.Init(pt);
+                pt[8] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+                pt[9] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+                pt[10] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+                pt[11] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+                pt[12] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+                pt[13] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+                pt[14] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+                pt[15] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+                pt[16] = 0b10000000_00000000_00000000_00000000U;
                 // From 9 to 14 remain 0
-                wPt[15] = 256;
+                pt[23] = 256;
 
-                sha.CompressDouble32(hPt, wPt);
+                Sha256Fo.CompressDouble32(pt);
 
                 // Use hPt in both iPt and oPt here before it is changed
-                oPt[0] = hPt[0] ^ 0x5c5c5c5cU;
-                oPt[1] = hPt[1] ^ 0x5c5c5c5cU;
-                oPt[2] = hPt[2] ^ 0x5c5c5c5cU;
-                oPt[3] = hPt[3] ^ 0x5c5c5c5cU;
-                oPt[4] = hPt[4] ^ 0x5c5c5c5cU;
-                oPt[5] = hPt[5] ^ 0x5c5c5c5cU;
-                oPt[6] = hPt[6] ^ 0x5c5c5c5cU;
-                oPt[7] = hPt[7] ^ 0x5c5c5c5cU;
+                oPt[0] = pt[0] ^ 0x5c5c5c5cU;
+                oPt[1] = pt[1] ^ 0x5c5c5c5cU;
+                oPt[2] = pt[2] ^ 0x5c5c5c5cU;
+                oPt[3] = pt[3] ^ 0x5c5c5c5cU;
+                oPt[4] = pt[4] ^ 0x5c5c5c5cU;
+                oPt[5] = pt[5] ^ 0x5c5c5c5cU;
+                oPt[6] = pt[6] ^ 0x5c5c5c5cU;
+                oPt[7] = pt[7] ^ 0x5c5c5c5cU;
 
-                wPt[0] = hPt[0] ^ 0x36363636U;
-                wPt[1] = hPt[1] ^ 0x36363636U;
-                wPt[2] = hPt[2] ^ 0x36363636U;
-                wPt[3] = hPt[3] ^ 0x36363636U;
-                wPt[4] = hPt[4] ^ 0x36363636U;
-                wPt[5] = hPt[5] ^ 0x36363636U;
-                wPt[6] = hPt[6] ^ 0x36363636U;
-                wPt[7] = hPt[7] ^ 0x36363636U;
-                wPt[8] = 0x44657269;  // Deri
-                wPt[9] = 0x76652043;  // ve C
-                wPt[10] = 0x6861696e; // hain
-                wPt[11] = 0x636f6465; // code
-                wPt[12] = 0x2066726f; //  fro
-                wPt[13] = 0x6d20526f; // m Ro
-                wPt[14] = 0x6f74204b; // ot K
-                wPt[15] = 0x65798000; // ey + 0x80 pad
+                pt[8] = pt[0] ^ 0x36363636U;
+                pt[9] = pt[1] ^ 0x36363636U;
+                pt[10] = pt[2] ^ 0x36363636U;
+                pt[11] = pt[3] ^ 0x36363636U;
+                pt[12] = pt[4] ^ 0x36363636U;
+                pt[13] = pt[5] ^ 0x36363636U;
+                pt[14] = pt[6] ^ 0x36363636U;
+                pt[15] = pt[7] ^ 0x36363636U;
+                pt[16] = 0x44657269;  // Deri
+                pt[17] = 0x76652043;  // ve C
+                pt[18] = 0x6861696e; // hain
+                pt[19] = 0x636f6465; // code
+                pt[20] = 0x2066726f; //  fro
+                pt[21] = 0x6d20526f; // m Ro
+                pt[22] = 0x6f74204b; // ot K
+                pt[23] = 0x65798000; // ey + 0x80 pad
 
-                Sha256Fo.Init(hPt);
-                sha.CompressBlock(hPt, wPt);
+                Sha256Fo.Init(pt);
+                Sha256Fo.SetW(pt + Sha256Fo.HashStateSize);
+                Sha256Fo.CompressBlockWithWSet(pt);
 
-                wPt[0] = 0;
-                wPt[1] = 0;
-                wPt[2] = 0;
-                wPt[3] = 0;
-                wPt[4] = 0;
-                wPt[5] = 0;
-                wPt[6] = 0;
-                wPt[7] = 0;
-                wPt[8] = 0;
-                wPt[9] = 0;
-                wPt[10] = 0;
-                wPt[11] = 0;
-                wPt[12] = 0;
-                wPt[13] = 0;
-                wPt[14] = 0;
-                wPt[15] = 496; // 32+30 * 8
+                pt[8] = 0;
+                pt[9] = 0;
+                pt[10] = 0;
+                pt[11] = 0;
+                pt[12] = 0;
+                pt[13] = 0;
+                pt[14] = 0;
+                pt[15] = 0;
+                pt[16] = 0;
+                pt[17] = 0;
+                pt[18] = 0;
+                pt[19] = 0;
+                pt[20] = 0;
+                pt[21] = 0;
+                pt[22] = 0;
+                pt[23] = 496; // 32+30 * 8
 
-                sha.Compress62SecondBlock(hPt, wPt);
+                Sha256Fo.Compress62SecondBlock(pt);
 
-                *(Block32*)wPt = *(Block32*)oPt;
-                wPt[8] = hPt[0];
-                wPt[9] = hPt[1];
-                wPt[10] = hPt[2];
-                wPt[11] = hPt[3];
-                wPt[12] = hPt[4];
-                wPt[13] = hPt[5];
-                wPt[14] = hPt[6];
-                wPt[15] = hPt[7];
+                *(Block32*)(pt + Sha256Fo.HashStateSize) = *(Block32*)oPt;
+                *(Block32*)(pt + Sha256Fo.HashStateSize + 8) = *(Block32*)pt;
 
-                Sha256Fo.Init(hPt);
-                sha.CompressBlock(hPt, wPt);
+                Sha256Fo.Init(pt);
+                Sha256Fo.SetW(pt + Sha256Fo.HashStateSize);
+                Sha256Fo.CompressBlockWithWSet(pt);
 
-                wPt[0] = 0b10000000_00000000_00000000_00000000U;
-                wPt[1] = 0;
-                wPt[2] = 0;
-                wPt[3] = 0;
-                wPt[4] = 0;
-                wPt[5] = 0;
-                wPt[6] = 0;
-                wPt[7] = 0;
-                wPt[8] = 0;
-                wPt[9] = 0;
-                wPt[10] = 0;
-                wPt[11] = 0;
-                wPt[12] = 0;
-                wPt[13] = 0;
-                wPt[14] = 0;
-                wPt[15] = 512; // 32+32 * 8
+                pt[8] = 0b10000000_00000000_00000000_00000000U;
+                pt[9] = 0;
+                pt[10] = 0;
+                pt[11] = 0;
+                pt[12] = 0;
+                pt[13] = 0;
+                pt[14] = 0;
+                pt[15] = 0;
+                pt[16] = 0;
+                pt[17] = 0;
+                pt[18] = 0;
+                pt[19] = 0;
+                pt[20] = 0;
+                pt[21] = 0;
+                pt[22] = 0;
+                pt[23] = 512; // 32+32 * 8
 
-                sha.Compress64SecondBlock(hPt, wPt);
+                Sha256Fo.Compress64SecondBlock(pt);
 
                 // TODO: this could be improved a bit
-                chainCode = Sha256Fo.GetBytes(hPt);
+                chainCode = Sha256Fo.GetBytes(pt);
             }
 
             // hPt is chain-code now
-            ReadOnlySpan<byte> key = new ReadOnlySpan<byte>(kPt, 32);
-            BigInteger k = new BigInteger(key, true, true);
-            EllipticCurvePoint point = calc.MultiplyByG(k);
-            byte[] pubBa = new byte[65];
-            pubBa[0] = 4;
-            byte[] xBytes = point.X.ToByteArray(true, true);
-            byte[] yBytes = point.Y.ToByteArray(true, true);
-            Buffer.BlockCopy(xBytes, 0, pubBa, 33 - xBytes.Length, xBytes.Length);
-            Buffer.BlockCopy(yBytes, 0, pubBa, 65 - yBytes.Length, yBytes.Length);
+            var key = new ReadOnlySpan<byte>(kPt, 32);
+            var scalar = new Scalar(key, out int overflow);
+            Debug.Assert(overflow == 0);
 
-            byte[] chainXor = sha.CompressDouble65(pubBa);
+            Span<byte> pubBa = calc2.GetPubkey(scalar, false);
+            Debug.Assert(pubBa.Length == 65);
+
+            Span<byte> chainXor = Sha256Fo.CompressDouble65(pubBa);
             for (var i = 0; i < chainXor.Length; i++)
             {
                 chainXor[i] ^= chainCode[i];
             }
 
-            BigInteger A = new BigInteger(chainXor, true, true);
-            BigInteger B = new BigInteger(key, true, true);
+            // TODO: change this to UInt256
+            var A = new BigInteger(chainXor, true, true);
+            var B = new BigInteger(key, true, true);
 
             BigInteger secexp = (A * B).Mod(N);
             return secexp;
@@ -218,14 +215,12 @@ namespace FinderOuter.Services
             // ChainCode is result of HMAC with 2x hash of private key as HMAC key 
             // and "Derive Chaincode from Root Key" as its message
 
-            using Sha256Fo sha = new Sha256Fo();
             byte* kPt = stackalloc byte[32 + missingIndexes.Length];
             byte* item1 = kPt + 32;
             byte* item2 = item1 + missCount1;
-            uint* oPt = stackalloc uint[8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + 8];
             fixed (byte* pre = &preComputed[0])
             fixed (int* mi = &missingIndexes[0])
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
             {
                 do
                 {
@@ -237,22 +232,22 @@ namespace FinderOuter.Services
                         kPt[index / 2] |= (index % 2 == 0) ? (byte)(item1[i] << 4) : item1[i];
                     }
 
-                    wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
-                    wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
-                    wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
-                    wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
-                    wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[5] = 0;
-                    wPt[6] = 0;
-                    wPt[7] = 0;
-                    wPt[8] = 0;
+                    pt[8] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+                    pt[9] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+                    pt[10] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+                    pt[11] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+                    pt[12] = 0b10000000_00000000_00000000_00000000U;
+                    pt[13] = 0;
+                    pt[14] = 0;
+                    pt[15] = 0;
+                    pt[16] = 0;
                     // From 9 to 14 remain 0
-                    wPt[15] = 128;
+                    pt[23] = 128;
 
-                    Sha256Fo.Init(hPt);
-                    sha.CompressDouble16(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.CompressDouble16(pt);
 
-                    if ((hPt[0] & mask1) == comp1)
+                    if ((pt[0] & mask1) == comp1)
                     {
                         int mIndexInternal = mIndex;
                         do
@@ -263,24 +258,24 @@ namespace FinderOuter.Services
                                 kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
                             }
 
-                            wPt[0] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
-                            wPt[1] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
-                            wPt[2] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
-                            wPt[3] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
-                            wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                            wPt[5] = 0;
-                            wPt[6] = 0;
-                            wPt[7] = 0;
-                            wPt[8] = 0;
+                            pt[8] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+                            pt[9] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+                            pt[10] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+                            pt[11] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+                            pt[12] = 0b10000000_00000000_00000000_00000000U;
+                            pt[13] = 0;
+                            pt[14] = 0;
+                            pt[15] = 0;
+                            pt[16] = 0;
                             // From 9 to 14 remain 0
-                            wPt[15] = 128;
+                            pt[23] = 128;
 
-                            Sha256Fo.Init(hPt);
-                            sha.CompressDouble16(hPt, wPt);
+                            Sha256Fo.Init(pt);
+                            Sha256Fo.CompressDouble16(pt);
 
-                            if ((hPt[0] & mask2) == comp2)
+                            if ((pt[0] & mask2) == comp2)
                             {
-                                BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                                BigInteger secexp = ComputeKey(pt, kPt);
                                 if (comparer.Compare(secexp))
                                 {
                                     SetResult(kPt);
@@ -307,14 +302,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop2NoCS(byte[] preComputed, int missCount1, int missCount2)
         {
-            using Sha256Fo sha = new Sha256Fo();
             byte* kPt = stackalloc byte[32 + missingIndexes.Length];
             byte* item1 = kPt + 32;
             byte* item2 = item1 + missCount1;
-            uint* oPt = stackalloc uint[8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + 8];
             fixed (byte* pre = &preComputed[0])
             fixed (int* mi = &missingIndexes[0])
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
             {
                 do
                 {
@@ -335,7 +328,7 @@ namespace FinderOuter.Services
                             kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
                         }
 
-                        BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                        BigInteger secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);
@@ -359,14 +352,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop2NoCS2(byte[] preComputed, int missCount1, int missCount2, uint mask1, uint cs1)
         {
-            using Sha256Fo sha = new Sha256Fo();
             byte* kPt = stackalloc byte[32 + missingIndexes.Length];
             byte* item1 = kPt + 32;
             byte* item2 = item1 + missCount1;
-            uint* oPt = stackalloc uint[8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + 8];
             fixed (byte* pre = &preComputed[0])
             fixed (int* mi = &missingIndexes[0])
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
             {
                 do
                 {
@@ -378,22 +369,22 @@ namespace FinderOuter.Services
                         kPt[index / 2] |= (index % 2 == 0) ? (byte)(item1[i] << 4) : item1[i];
                     }
 
-                    wPt[0] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
-                    wPt[1] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
-                    wPt[2] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
-                    wPt[3] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
-                    wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[5] = 0;
-                    wPt[6] = 0;
-                    wPt[7] = 0;
-                    wPt[8] = 0;
+                    pt[8] = (uint)((kPt[0] << 24) | (kPt[1] << 16) | (kPt[2] << 8) | kPt[3]);
+                    pt[9] = (uint)((kPt[4] << 24) | (kPt[5] << 16) | (kPt[6] << 8) | kPt[7]);
+                    pt[10] = (uint)((kPt[8] << 24) | (kPt[9] << 16) | (kPt[10] << 8) | kPt[11]);
+                    pt[11] = (uint)((kPt[12] << 24) | (kPt[13] << 16) | (kPt[14] << 8) | kPt[15]);
+                    pt[12] = 0b10000000_00000000_00000000_00000000U;
+                    pt[13] = 0;
+                    pt[14] = 0;
+                    pt[15] = 0;
+                    pt[16] = 0;
                     // From 9 to 14 remain 0
-                    wPt[15] = 128;
+                    pt[23] = 128;
 
-                    Sha256Fo.Init(hPt);
-                    sha.CompressDouble16(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.CompressDouble16(pt);
 
-                    if ((hPt[0] & mask1) == cs1)
+                    if ((pt[0] & mask1) == cs1)
                     {
                         int mIndexInternal = mIndex;
                         do
@@ -406,7 +397,7 @@ namespace FinderOuter.Services
 
                             // Second checksum is missing so we can't compute second part's hash to reject invalid
                             // keys, instead all keys must be checked using the ICompareService instance.
-                            BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                            BigInteger secexp = ComputeKey(pt, kPt);
                             if (comparer.Compare(secexp))
                             {
                                 SetResult(kPt);
@@ -431,14 +422,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop2NoCS1(byte[] preComputed, int missCount1, int missCount2, uint mask2, uint cs2)
         {
-            using Sha256Fo sha = new Sha256Fo();
             byte* kPt = stackalloc byte[32 + missingIndexes.Length];
             byte* item1 = kPt + 32;
             byte* item2 = item1 + missCount1;
-            uint* oPt = stackalloc uint[8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + 8];
             fixed (byte* pre = &preComputed[0])
             fixed (int* mi = &missingIndexes[0])
-            fixed (uint* wPt = &sha.w[0], hPt = &sha.hashState[0])
             {
                 do
                 {
@@ -462,22 +451,22 @@ namespace FinderOuter.Services
                             kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
                         }
 
-                        wPt[0] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
-                        wPt[1] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
-                        wPt[2] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
-                        wPt[3] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
-                        wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                        wPt[5] = 0;
-                        wPt[6] = 0;
-                        wPt[7] = 0;
-                        wPt[8] = 0;
+                        pt[8] = (uint)((kPt[16] << 24) | (kPt[17] << 16) | (kPt[18] << 8) | kPt[19]);
+                        pt[9] = (uint)((kPt[20] << 24) | (kPt[21] << 16) | (kPt[22] << 8) | kPt[23]);
+                        pt[10] = (uint)((kPt[24] << 24) | (kPt[25] << 16) | (kPt[26] << 8) | kPt[27]);
+                        pt[11] = (uint)((kPt[28] << 24) | (kPt[29] << 16) | (kPt[30] << 8) | kPt[31]);
+                        pt[12] = 0b10000000_00000000_00000000_00000000U;
+                        pt[13] = 0;
+                        pt[14] = 0;
+                        pt[15] = 0;
+                        pt[16] = 0;
                         // From 9 to 14 remain 0
-                        wPt[15] = 128;
+                        pt[23] = 128;
 
-                        Sha256Fo.Init(hPt);
-                        sha.CompressDouble16(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.CompressDouble16(pt);
 
-                        BigInteger secexp = ComputeKey(sha, hPt, wPt, oPt, kPt);
+                        BigInteger secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);
@@ -510,7 +499,7 @@ namespace FinderOuter.Services
             byte[] full = new byte[18];
             Buffer.BlockCopy(data.ToArray(), 0, full, 0, data.Length);
 
-            using Sha256Fo sha256 = new Sha256Fo(true);
+            using Sha256Fo sha256 = new(true);
             byte[] cs = sha256.ComputeHash(data.ToArray()).SubArray(0, 2);
             full[16] = cs[0];
             full[17] = cs[1];
@@ -547,7 +536,7 @@ namespace FinderOuter.Services
         {
             Debug.Assert(s.Length == 36);
 
-            List<int> temp = new List<int>(36);
+            var temp = new List<int>(36);
             for (int i = 0; i < 32; i++)
             {
                 int index = ConstantsFO.ArmoryChars.IndexOf(s[i]);
