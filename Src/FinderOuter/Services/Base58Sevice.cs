@@ -403,10 +403,8 @@ namespace FinderOuter.Services
 
         private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new();
-
             uint[] temp = new uint[precomputed.Length];
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[misStart])
@@ -429,22 +427,22 @@ namespace FinderOuter.Services
 
                     if (tmp[0] == 0x00000080)
                     {
-                        wPt[0] = (tmp[0] << 24) | (tmp[1] >> 8);
-                        wPt[1] = (tmp[1] << 24) | (tmp[2] >> 8);
-                        wPt[2] = (tmp[2] << 24) | (tmp[3] >> 8);
-                        wPt[3] = (tmp[3] << 24) | (tmp[4] >> 8);
-                        wPt[4] = (tmp[4] << 24) | (tmp[5] >> 8);
-                        wPt[5] = (tmp[5] << 24) | (tmp[6] >> 8);
-                        wPt[6] = (tmp[6] << 24) | (tmp[7] >> 8);
-                        wPt[7] = (tmp[7] << 24) | (tmp[8] >> 8);
-                        wPt[8] = (tmp[8] << 24) | 0b00000000_10000000_00000000_00000000U;
+                        pt[8] = (tmp[0] << 24) | (tmp[1] >> 8);
+                        pt[9] = (tmp[1] << 24) | (tmp[2] >> 8);
+                        pt[10] = (tmp[2] << 24) | (tmp[3] >> 8);
+                        pt[11] = (tmp[3] << 24) | (tmp[4] >> 8);
+                        pt[12] = (tmp[4] << 24) | (tmp[5] >> 8);
+                        pt[13] = (tmp[5] << 24) | (tmp[6] >> 8);
+                        pt[14] = (tmp[6] << 24) | (tmp[7] >> 8);
+                        pt[15] = (tmp[7] << 24) | (tmp[8] >> 8);
+                        pt[16] = (tmp[8] << 24) | 0b00000000_10000000_00000000_00000000U;
                         // from 9 to 14 = 0
-                        wPt[15] = 264; // 33 *8 = 264
+                        pt[23] = 264; // 33 *8 = 264
 
-                        Sha256Fo.Init(hPt);
-                        sha.CompressDouble33(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.CompressDouble33(pt);
 
-                        if (hPt[0] == tmp[9])
+                        if (pt[0] == tmp[9])
                         {
                             SetResultParallel(missingItems, firstItem);
                         }
@@ -476,8 +474,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new();
-
             uint[] temp = new uint[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
@@ -559,8 +555,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop58(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            using Sha256Fo sha = new();
-
             uint[] temp = new uint[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
@@ -913,28 +907,25 @@ namespace FinderOuter.Services
                 return false;
             }
 
-            // SHA must be defined here for this method to be thread safe
-            using Sha256Fo sha = new();
-
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* keyPt = &keyValueInts[0])
             {
-                wPt[0] = (keyPt[0] << 24) | (keyPt[1] >> 8);
-                wPt[1] = (keyPt[1] << 24) | (keyPt[2] >> 8);
-                wPt[2] = (keyPt[2] << 24) | (keyPt[3] >> 8);
-                wPt[3] = (keyPt[3] << 24) | (keyPt[4] >> 8);
-                wPt[4] = (keyPt[4] << 24) | (keyPt[5] >> 8);
-                wPt[5] = (keyPt[5] << 24) | (keyPt[6] >> 8);
-                wPt[6] = (keyPt[6] << 24) | (keyPt[7] >> 8);
-                wPt[7] = (keyPt[7] << 24) | (keyPt[8] >> 8);
-                wPt[8] = (keyPt[8] << 24) | 0b00000000_10000000_00000000_00000000U;
+                pt[8] = (keyPt[0] << 24) | (keyPt[1] >> 8);
+                pt[9] = (keyPt[1] << 24) | (keyPt[2] >> 8);
+                pt[10] = (keyPt[2] << 24) | (keyPt[3] >> 8);
+                pt[11] = (keyPt[3] << 24) | (keyPt[4] >> 8);
+                pt[12] = (keyPt[4] << 24) | (keyPt[5] >> 8);
+                pt[13] = (keyPt[5] << 24) | (keyPt[6] >> 8);
+                pt[14] = (keyPt[6] << 24) | (keyPt[7] >> 8);
+                pt[15] = (keyPt[7] << 24) | (keyPt[8] >> 8);
+                pt[16] = (keyPt[8] << 24) | 0b00000000_10000000_00000000_00000000U;
                 // from 9 to 14 = 0
-                wPt[15] = 264; // 33 *8 = 264
+                pt[23] = 264; // 33 *8 = 264
 
-                Sha256Fo.Init(hPt);
-                sha.CompressDouble33(hPt, wPt);
+                Sha256Fo.Init(pt);
+                Sha256Fo.CompressDouble33(pt);
 
-                return hPt[0] == keyPt[9];
+                return pt[0] == keyPt[9];
             }
         }
 
