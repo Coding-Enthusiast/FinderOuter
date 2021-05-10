@@ -163,7 +163,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             {
                 if (key.Length > Sha512Fo.BlockByteSize)
                 {
-                    hashFunc.Init(hPt);
+                    Sha512Fo.Init(hPt);
                     hashFunc.DoHash(key, key.Length);
 
                     for (int i = 0; i < 8; i++) // 8 items in HashState = 8*8 = 64 byte
@@ -210,7 +210,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 // Final result is SHA512(outer_pad | SHA512(inner_pad | data))
 
                 // 1. Compute SHA512(inner_pad | data)
-                hashFunc.Init(hPt);
+                Sha512Fo.Init(hPt);
                 hashFunc.CompressBlock(hPt, iPt);
                 hashFunc.DoHash(data, data.Length + 128); // len + hashFunc.BlockByteSize
 
@@ -227,7 +227,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 wPt[14] = 0;
                 wPt[15] = 1536;
 
-                hashFunc.Init(hPt);
+                Sha512Fo.Init(hPt);
                 hashFunc.CompressBlock(hPt, oPt);
                 hashFunc.CompressBlock(hPt, wPt);
             }
@@ -260,7 +260,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 // Final result is SHA512(outer_pad | SHA256(inner_pad | data))
 
                 // 1. Compute SHA512(inner_pad | data)
-                hashFunc.Init(hPt);
+                Sha512Fo.Init(hPt);
                 hashFunc.CompressBlock(hPt, iPt);
                 hashFunc.DoHash(data, data.Length + 128); // len + hashFunc.BlockByteSize
 
@@ -277,7 +277,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 wPt[14] = 0;
                 wPt[15] = 1536;
 
-                hashFunc.Init(hPt);
+                Sha512Fo.Init(hPt);
                 hashFunc.CompressBlock(hPt, oPt);
                 hashFunc.CompressBlock(hPt, wPt);
             }

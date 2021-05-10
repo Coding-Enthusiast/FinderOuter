@@ -306,23 +306,22 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256Fo sha = new();
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 4; i++, dIndex += 4)
             {
-                int dIndex = 0;
-                for (int i = 0; i < 4; i++, dIndex += 4)
-                {
-                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-                }
-                wPt[4] = 0b10000000_00000000_00000000_00000000U;
-
-                wPt[15] = (uint)dataLen * 8;
-                Sha256Fo.Init(hPt);
-                sha.Compress16(hPt, wPt);
-                byte[] actual = Sha256Fo.GetBytes(hPt);
-
-                Assert.Equal(expected, actual);
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
             }
+            wPt[4] = 0b10000000_00000000_00000000_00000000U;
+
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Init(hPt);
+            Sha256Fo.Compress16(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -332,23 +331,22 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256Fo sha = new();
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 5; i++, dIndex += 4)
             {
-                int dIndex = 0;
-                for (int i = 0; i < 5; i++, dIndex += 4)
-                {
-                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-                }
-                wPt[5] = 0b10000000_00000000_00000000_00000000U;
-
-                wPt[15] = (uint)dataLen * 8;
-                Sha256Fo.Init(hPt);
-                sha.Compress20(hPt, wPt);
-                byte[] actual = Sha256Fo.GetBytes(hPt);
-
-                Assert.Equal(expected, actual);
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
             }
+            wPt[5] = 0b10000000_00000000_00000000_00000000U;
+
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Init(hPt);
+            Sha256Fo.Compress20(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -408,23 +406,22 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256Fo sha = new();
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 6; i++, dIndex += 4)
             {
-                int dIndex = 0;
-                for (int i = 0; i < 6; i++, dIndex += 4)
-                {
-                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-                }
-                wPt[6] = 0b10000000_00000000_00000000_00000000U;
-
-                wPt[15] = (uint)dataLen * 8;
-                Sha256Fo.Init(hPt);
-                sha.Compress24(hPt, wPt);
-                byte[] actual = Sha256Fo.GetBytes(hPt);
-
-                Assert.Equal(expected, actual);
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
             }
+            wPt[6] = 0b10000000_00000000_00000000_00000000U;
+
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Init(hPt);
+            Sha256Fo.Compress24(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -484,23 +481,22 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256Fo sha = new();
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 7; i++, dIndex += 4)
             {
-                int dIndex = 0;
-                for (int i = 0; i < 7; i++, dIndex += 4)
-                {
-                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-                }
-                wPt[7] = 0b10000000_00000000_00000000_00000000U;
-
-                wPt[15] = (uint)dataLen * 8;
-                Sha256Fo.Init(hPt);
-                sha.Compress28(hPt, wPt);
-                byte[] actual = Sha256Fo.GetBytes(hPt);
-
-                Assert.Equal(expected, actual);
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
             }
+            wPt[7] = 0b10000000_00000000_00000000_00000000U;
+
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Init(hPt);
+            Sha256Fo.Compress28(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -560,23 +556,22 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] data = GetRandomBytes(dataLen);
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha256Fo sha = new();
-            fixed (uint* hPt = &sha.hashState[0], wPt = &sha.w[0])
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 8; i++, dIndex += 4)
             {
-                int dIndex = 0;
-                for (int i = 0; i < 8; i++, dIndex += 4)
-                {
-                    wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
-                }
-                wPt[8] = 0b10000000_00000000_00000000_00000000U;
-
-                wPt[15] = (uint)dataLen * 8;
-                Sha256Fo.Init(hPt);
-                sha.Compress32(hPt, wPt);
-                byte[] actual = Sha256Fo.GetBytes(hPt);
-
-                Assert.Equal(expected, actual);
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
             }
+            wPt[8] = 0b10000000_00000000_00000000_00000000U;
+
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Init(hPt);
+            Sha256Fo.Compress32(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]

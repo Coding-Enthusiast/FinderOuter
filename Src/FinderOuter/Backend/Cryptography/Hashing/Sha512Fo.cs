@@ -93,7 +93,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init(ulong* hPt)
+        public static unsafe void Init(ulong* hPt)
         {
             hPt[0] = 0x6a09e667f3bcc908;
             hPt[1] = 0xbb67ae8584caa73b;
@@ -111,7 +111,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init_InnerPad_Bitcoinseed(ulong* hPt)
+        public static unsafe void Init_InnerPad_Bitcoinseed(ulong* hPt)
         {
             hPt[0] = 0x2e2af459060c1873UL;
             hPt[1] = 0x7894b868dc88433aUL;
@@ -129,7 +129,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init_OuterPad_Bitcoinseed(ulong* hPt)
+        public static unsafe void Init_OuterPad_Bitcoinseed(ulong* hPt)
         {
             hPt[0] = 0xbbd27bac212e9dbdUL;
             hPt[1] = 0xdd0bc55e7e4037c1UL;
@@ -148,7 +148,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init_InnerPad_SeedVersion(ulong* hPt)
+        public static unsafe void Init_InnerPad_SeedVersion(ulong* hPt)
         {
             hPt[0] = 0x1197a4930cdcdf99UL;
             hPt[1] = 0x546bbb7463b748ecUL;
@@ -166,7 +166,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Init_OuterPad_SeedVersion(ulong* hPt)
+        public static unsafe void Init_OuterPad_SeedVersion(ulong* hPt)
         {
             hPt[0] = 0x81dbfcd8ccef4fd9UL;
             hPt[1] = 0xe6d72480c338f2f2UL;
@@ -244,7 +244,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <returns></returns>
-        public unsafe byte[] GetSecond32Bytes(ulong* hPt)
+        public static unsafe byte[] GetSecond32Bytes(ulong* hPt)
         {
             return new byte[32]
             {

@@ -98,7 +98,7 @@ namespace FinderOuter.Services
                 if (mnLen > Sha512Fo.BlockByteSize)
                 {
                     // Key bytes must be hashed first
-                    sha.Init(hPt);
+                    Sha512Fo.Init(hPt);
                     sha.CompressData(mnPt, mnLen, mnLen, hPt, wPt);
                     // Set pads to be used as working vectors
                     iPt[0] = 0x3636363636363636U ^ hPt[0];
@@ -164,7 +164,7 @@ namespace FinderOuter.Services
 
                 // Final result is SHA512(outer_pad | SHA512(inner_pad | data)) where data is pbkdf2Salt
                 // 1. Compute SHA512(inner_pad | data)
-                sha.Init(hPt);
+                Sha512Fo.Init(hPt);
                 sha.CompressBlock(hPt, iPt);
                 // Make a copy of hashState of inner-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ihPt = *(Block64*)hPt;
@@ -181,7 +181,7 @@ namespace FinderOuter.Services
                 wPt[14] = 0;
                 wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
 
-                sha.Init(hPt);
+                Sha512Fo.Init(hPt);
                 sha.CompressBlock(hPt, oPt);
                 // Make a copy of hashState of outer-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ohPt = *(Block64*)hPt;
@@ -244,7 +244,7 @@ namespace FinderOuter.Services
 
                 // Final result is SHA512(outer_pad | SHA512(inner_pad | data)) where data is 64-byte seed
                 // 1. Compute SHA512(inner_pad | data)
-                sha.Init_InnerPad_Bitcoinseed(hPt);
+                Sha512Fo.Init_InnerPad_Bitcoinseed(hPt);
                 *(Block64*)wPt = *(Block64*)seedPt;
                 // from wPt[8] to wPt[15] didn't change
                 sha.Compress192SecondBlock(hPt, wPt);
@@ -252,7 +252,7 @@ namespace FinderOuter.Services
                 // 2. Compute SHA512(outer_pad | hash)
                 *(Block64*)wPt = *(Block64*)hPt; // ** Copy hashState before changing it **
                 // from wPt[8] to wPt[15] didn't change
-                sha.Init_OuterPad_Bitcoinseed(hPt);
+                Sha512Fo.Init_OuterPad_Bitcoinseed(hPt);
                 sha.Compress192SecondBlock(hPt, wPt);
                 // Master key is set. PrivateKey= first 32-bytes of hPt and ChainCode is second 32-bytes
 
@@ -374,7 +374,7 @@ namespace FinderOuter.Services
                     oPt[2] = 0x5c5c5c5c5c5c5c5cU ^ hPt[6];
                     oPt[3] = 0x5c5c5c5c5c5c5c5cU ^ hPt[7];
 
-                    sha.Init(hPt);
+                    Sha512Fo.Init(hPt);
                     sha.CompressBlock(hPt, iPt);
                     sha.Compress165SecondBlock(hPt, uPt);
 
@@ -382,7 +382,7 @@ namespace FinderOuter.Services
                     *(Block64*)wPt = *(Block64*)hPt;
 
                     // from wPt[8] to wPt[15] didn't change
-                    sha.Init(hPt);
+                    Sha512Fo.Init(hPt);
                     sha.CompressBlock(hPt, oPt);
                     sha.Compress192SecondBlock(hPt, wPt);
 
@@ -435,7 +435,6 @@ namespace FinderOuter.Services
             var localComp = comparer.Clone();
 
             using Sha512Fo sha512 = new();
-            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -445,14 +444,14 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
-                wPt[8] = 0b10000000_00000000_00000000_00000000U;
-                wPt[15] = 256;
+                pt[16] = 0b10000000_00000000_00000000_00000000U;
+                pt[23] = 256;
                 wrd[firstIndex] = (uint)firstItem;
 
                 do
@@ -469,19 +468,19 @@ namespace FinderOuter.Services
                         j++;
                     }
 
-                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
-                    wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
-                    wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
-                    wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
+                    pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                    pt[14] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
+                    pt[15] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
-                    Sha256Fo.Init(hPt);
-                    sha256.Compress32(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.Compress32(pt);
 
-                    if ((byte)wrd[23] == hPt[0] >> 24)
+                    if ((byte)wrd[23] == pt[0] >> 24)
                     {
                         int mnLen = 0;
                         for (int i = 0; i < 24; i++)
@@ -516,16 +515,16 @@ namespace FinderOuter.Services
             else
             {
                 using Sha512Fo sha512 = new();
-                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+                fixed (uint* wrd = &wordIndexes[0])
                 fixed (int* mi = &missingIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
-                    wPt[8] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[15] = 256;
+                    pt[16] = 0b10000000_00000000_00000000_00000000U;
+                    pt[23] = 256;
 
                     for (uint item = 0; item < 2048; item++)
                     {
@@ -535,61 +534,61 @@ namespace FinderOuter.Services
                         // 0000_0000 0000_0000 0000_0222 2222_2222 -> 0000_0000 0002_2222 2222_2200 0000_0000
                         // 0000_0000 0000_0000 0000_0333 3333_3333 -> 0000_0000 0000_0000 0000_0033 3333_3333 -> 3
                         //                                            1111_1111 1112_2222 2222_2233 3333_3333
-                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
 
                         // 0000_0000 0000_0000 0000_0000 0000_0003 -> 3000_0000 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0444 4444_4444 -> 0444_4444 4444_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0555 5555_5555 -> 0000_0000 0000_5555 5555_5550 0000_0000
                         // 0000_0000 0000_0000 0000_0666 6666_6666 -> 0000_0000 0000_0000 0000_0006 6666_6666 -> 66
                         //                                            3444_4444 4444_5555 5555_5556 6666_6666
-                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
 
                         // 0000_0000 0000_0000 0000_0000 0000_0066 -> 6600_0000 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0777 7777_7777 -> 0077_7777 7777_7000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0888 8888_8888 -> 0000_0000 0000_0888 8888_8888 0000_0000
                         // 0000_0000 0000_0000 0000_0999 9999_9999 -> 0000_0000 0000_0000 0000_0000 9999_9999 -> 999
                         //                                            6677_7777 7777_7888 8888_8888 9999_9999
-                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
 
                         // 0000_0000 0000_0000 0000_0000 0000_0999 -> 9990_0000 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0AAA AAAA_AAAA -> 000A_AAAA AAAA_AA00 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0BBB BBBB_BBBB -> 0000_0000 0000_00BB BBBB_BBBB B000_0000
                         // 0000_0000 0000_0000 0000_0CCC CCCC_CCCC -> 0000_0000 0000_0000 0000_0000 0CCC_CCCC -> CCCC
                         //                                            999A_AAAA AAAA_AABB BBBB_BBBB BCCC_CCCC
-                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                        pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
                         // 0000_0000 0000_0000 0000_0000 0000_CCCC -> CCCC_0000 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0DDD DDDD_DDDD -> 0000_DDDD DDDD_DDD0 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0EEE EEEE_EEEE -> 0000_0000 0000_000E EEEE_EEEE EE00_0000
                         // 0000_0000 0000_0000 0000_0FFF FFFF_FFFF -> 0000_0000 0000_0000 0000_0000 00FF_FFFF -> FFFF_F
                         //                                            CCCC_DDDD DDDD_DDDE EEEE_EEEE EEFF_FFFF
-                        wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                        pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
                         // 0000_0000 0000_0000 0000_0000 000F_FFFF -> FFFF_F000 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0GGG GGGG_GGGG -> 0000_0GGG GGGG_GGGG 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0HHH HHHH_HHHH -> 0000_0000 0000_0000 HHHH_HHHH HHH0_0000
                         // 0000_0000 0000_0000 0000_0III IIII_IIII -> 0000_0000 0000_0000 0000_0000 000I_IIII -> IIII_II
                         //                                         -> FFFF_FGGG GGGG_GGGG HHHH_HHHH HHHI_IIII
-                        wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                        pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
                         // 0000_0000 0000_0000 0000_0000 00II_IIII -> IIII_II00 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0JJJ JJJJ_JJJJ -> 0000_00JJ JJJJ_JJJJ J000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0KKK KKKK_KKKK -> 0000_0000 0000_0000 0KKK_KKKK KKKK_0000
                         // 0000_0000 0000_0000 0000_0LLL LLLL_LLLL -> 0000_0000 0000_0000 0000_0000 0000_LLLL -> LLLL_LLL
                         //                                         -> IIII_IIJJ JJJJ_JJJJ JKKK_KKKK KKKK_LLLL
-                        wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
+                        pt[14] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
                         // 0000_0000 0000_0000 0000_0000 0LLL_LLLL -> LLLL_LLL0 0000_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0MMM MMMM_MMMM -> 0000_000M MMMM_MMMM MM00_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0NNN NNNN_NNNN -> 0000_0000 0000_0000 00NN_NNNN NNNN_N000
                         // 0000_0000 0000_0000 0000_0OOO OOOO_OOOO -> 0000_0000 0000_0000 0000_0000 0000_0OOO -> OOOO_OOOO
                         //                                         -> LLLL_LLLM MMMM_MMMM MMNN_NNNN NNNN_NOOO
-                        wPt[7] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
+                        pt[15] = wrd[20] << 25 | wrd[21] << 14 | wrd[22] << 3 | wrd[23] >> 8;
 
-                        Sha256Fo.Init(hPt);
-                        sha256.Compress32(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.Compress32(pt);
 
-                        if ((byte)wrd[23] == hPt[0] >> 24)
+                        if ((byte)wrd[23] == pt[0] >> 24)
                         {
                             int mnLen = 0;
                             for (int i = 0; i < 24; i++)
@@ -617,7 +616,6 @@ namespace FinderOuter.Services
             var localComp = comparer.Clone();
 
             using Sha512Fo sha512 = new();
-            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -627,14 +625,14 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
-                wPt[7] = 0b10000000_00000000_00000000_00000000U;
-                wPt[15] = 224;
+                pt[15] = 0b10000000_00000000_00000000_00000000U;
+                pt[23] = 224;
                 wrd[firstIndex] = (uint)firstItem;
 
                 do
@@ -651,18 +649,18 @@ namespace FinderOuter.Services
                         j++;
                     }
 
-                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
-                    wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
-                    wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
+                    pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                    pt[14] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
-                    Sha256Fo.Init(hPt);
-                    sha256.Compress28(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.Compress28(pt);
 
-                    if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
+                    if ((wrd[20] & 0b111_1111) == pt[0] >> 25)
                     {
                         int mnLen = 0;
                         for (int i = 0; i < 21; i++)
@@ -697,32 +695,32 @@ namespace FinderOuter.Services
             else
             {
                 using Sha512Fo sha512 = new();
-                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+                fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
-                    wPt[7] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[15] = 224;
+                    pt[15] = 0b10000000_00000000_00000000_00000000U;
+                    pt[23] = 224;
 
                     for (uint item = 0; item < 2048; item++)
                     {
                         wrd[misIndex] = item;
 
-                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                        wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
-                        wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
-                        wPt[6] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
+                        pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                        pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                        pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                        pt[14] = wrd[17] << 26 | wrd[18] << 15 | wrd[19] << 4 | wrd[20] >> 7;
 
-                        Sha256Fo.Init(hPt);
-                        sha256.Compress28(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.Compress28(pt);
 
-                        if ((wrd[20] & 0b111_1111) == hPt[0] >> 25)
+                        if ((wrd[20] & 0b111_1111) == pt[0] >> 25)
                         {
                             int mnLen = 0;
                             for (int i = 0; i < 21; i++)
@@ -750,7 +748,6 @@ namespace FinderOuter.Services
             var localComp = comparer.Clone();
 
             using Sha512Fo sha512 = new();
-            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -760,14 +757,14 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
-                wPt[6] = 0b10000000_00000000_00000000_00000000U;
-                wPt[15] = 192;
+                pt[14] = 0b10000000_00000000_00000000_00000000U;
+                pt[23] = 192;
                 wrd[firstIndex] = (uint)firstItem;
 
                 do
@@ -784,17 +781,17 @@ namespace FinderOuter.Services
                         j++;
                     }
 
-                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
-                    wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                    pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
-                    Sha256Fo.Init(hPt);
-                    sha256.Compress24(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.Compress24(pt);
 
-                    if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
+                    if ((wrd[17] & 0b11_1111) == pt[0] >> 26)
                     {
                         int mnLen = 0;
                         for (int i = 0; i < 18; i++)
@@ -829,31 +826,31 @@ namespace FinderOuter.Services
             else
             {
                 using Sha512Fo sha512 = new();
-                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+                fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
-                    wPt[6] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[15] = 192;
+                    pt[14] = 0b10000000_00000000_00000000_00000000U;
+                    pt[23] = 192;
 
                     for (uint item = 0; item < 2048; item++)
                     {
                         wrd[misIndex] = item;
 
-                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                        wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
-                        wPt[5] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
+                        pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                        pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                        pt[13] = wrd[14] << 27 | wrd[15] << 16 | wrd[16] << 5 | wrd[17] >> 6;
 
-                        Sha256Fo.Init(hPt);
-                        sha256.Compress24(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.Compress24(pt);
 
-                        if ((wrd[17] & 0b11_1111) == hPt[0] >> 26)
+                        if ((wrd[17] & 0b11_1111) == pt[0] >> 26)
                         {
                             int mnLen = 0;
                             for (int i = 0; i < 18; i++)
@@ -881,7 +878,6 @@ namespace FinderOuter.Services
             var localComp = comparer.Clone();
 
             using Sha512Fo sha512 = new();
-            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -891,14 +887,15 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
 
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
-                wPt[5] = 0b10000000_00000000_00000000_00000000U;
-                wPt[15] = 160;
+                pt[13] = 0b10000000_00000000_00000000_00000000U;
+                pt[23] = 160;
                 wrd[firstIndex] = (uint)firstItem;
 
                 do
@@ -915,16 +912,16 @@ namespace FinderOuter.Services
                         j++;
                     }
 
-                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                    wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                    pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
-                    Sha256Fo.Init(hPt);
-                    sha256.Compress20(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.Compress20(pt);
 
-                    if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
+                    if ((wrd[14] & 0b1_1111) == pt[0] >> 27)
                     {
                         int mnLen = 0;
                         for (int i = 0; i < 15; i++)
@@ -959,30 +956,30 @@ namespace FinderOuter.Services
             else
             {
                 using Sha512Fo sha512 = new();
-                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+                fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
-                    wPt[5] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[15] = 160;
+                    pt[13] = 0b10000000_00000000_00000000_00000000U;
+                    pt[23] = 160;
 
                     for (uint item = 0; item < 2048; item++)
                     {
                         wrd[misIndex] = item;
 
-                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
-                        wPt[4] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
+                        pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                        pt[12] = wrd[11] << 28 | wrd[12] << 17 | wrd[13] << 6 | wrd[14] >> 5;
 
-                        Sha256Fo.Init(hPt);
-                        sha256.Compress20(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.Compress20(pt);
 
-                        if ((wrd[14] & 0b1_1111) == hPt[0] >> 27)
+                        if ((wrd[14] & 0b1_1111) == pt[0] >> 27)
                         {
                             int mnLen = 0;
                             for (int i = 0; i < 15; i++)
@@ -1010,7 +1007,6 @@ namespace FinderOuter.Services
             var localComp = comparer.Clone();
 
             using Sha512Fo sha512 = new();
-            using Sha256Fo sha256 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -1020,14 +1016,15 @@ namespace FinderOuter.Services
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
 
-            fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &localWIndex[0])
+            fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
             fixed (byte* mnPt = &localMnBytes[0])
             {
-                wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                wPt[15] = 128;
+                pt[12] = 0b10000000_00000000_00000000_00000000U;
+                pt[23] = 128;
 
                 wrd[firstIndex] = (uint)firstItem;
 
@@ -1045,15 +1042,15 @@ namespace FinderOuter.Services
                         j++;
                     }
 
-                    wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                    wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                    wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                    wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                    pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                    pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                    pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                    pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
-                    Sha256Fo.Init(hPt);
-                    sha256.Compress16(hPt, wPt);
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.Compress16(pt);
 
-                    if ((wrd[11] & 0b1111) == hPt[0] >> 28)
+                    if ((wrd[11] & 0b1111) == pt[0] >> 28)
                     {
                         int mnLen = 0;
                         for (int i = 0; i < 12; i++)
@@ -1090,29 +1087,30 @@ namespace FinderOuter.Services
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
                 using Sha512Fo sha512 = new();
-                using Sha256Fo sha256 = new();
 
                 int misIndex = missingIndexes[0];
                 ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
-                fixed (uint* wPt = &sha256.w[0], hPt = &sha256.hashState[0], wrd = &wordIndexes[0])
+                uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+
+                fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
-                    wPt[4] = 0b10000000_00000000_00000000_00000000U;
-                    wPt[15] = 128;
+                    pt[12] = 0b10000000_00000000_00000000_00000000U;
+                    pt[23] = 128;
 
                     for (uint item = 0; item < 2048; item++)
                     {
                         wrd[misIndex] = item;
 
-                        wPt[0] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
-                        wPt[1] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
-                        wPt[2] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
-                        wPt[3] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
+                        pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
+                        pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
+                        pt[10] = wrd[5] << 30 | wrd[6] << 19 | wrd[7] << 8 | wrd[8] >> 3;
+                        pt[11] = wrd[8] << 29 | wrd[9] << 18 | wrd[10] << 7 | wrd[11] >> 4;
 
-                        Sha256Fo.Init(hPt);
-                        sha256.Compress16(hPt, wPt);
+                        Sha256Fo.Init(pt);
+                        Sha256Fo.Compress16(pt);
 
-                        if ((wrd[11] & 0b1111) == hPt[0] >> 28)
+                        if ((wrd[11] & 0b1111) == pt[0] >> 28)
                         {
                             int mnLen = 0;
                             for (int i = 0; i < 12; i++)
@@ -1186,7 +1184,7 @@ namespace FinderOuter.Services
 
                     // Compute HMACSHA512("Seed version", normalized_mnemonic)
                     // 1. Compute SHA512(inner_pad | data)
-                    sha512.Init_InnerPad_SeedVersion(hPt);
+                    Sha512Fo.Init_InnerPad_SeedVersion(hPt);
                     sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
@@ -1199,7 +1197,7 @@ namespace FinderOuter.Services
                     wPt[13] = 0;
                     wPt[14] = 0;
                     wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
-                    sha512.Init_OuterPad_SeedVersion(hPt);
+                    Sha512Fo.Init_OuterPad_SeedVersion(hPt);
                     sha512.Compress192SecondBlock(hPt, wPt);
 
                     if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, localComp))
@@ -1276,7 +1274,7 @@ namespace FinderOuter.Services
 
                         // Compute HMACSHA512("Seed version", normalized_mnemonic)
                         // 1. Compute SHA512(inner_pad | data)
-                        sha512.Init_InnerPad_SeedVersion(hPt);
+                        Sha512Fo.Init_InnerPad_SeedVersion(hPt);
                         sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
 
                         // 2. Compute SHA512(outer_pad | hash)
@@ -1289,7 +1287,7 @@ namespace FinderOuter.Services
                         wPt[13] = 0;
                         wPt[14] = 0;
                         wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
-                        sha512.Init_OuterPad_SeedVersion(hPt);
+                        Sha512Fo.Init_OuterPad_SeedVersion(hPt);
                         sha512.Compress192SecondBlock(hPt, wPt);
 
                         if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, comparer))
