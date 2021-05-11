@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
 
@@ -33,13 +34,13 @@ namespace FinderOuter.Services.Comparers
 
             calc2.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(comp);
+            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
         }
 
@@ -53,13 +54,13 @@ namespace FinderOuter.Services.Comparers
 
             calc2.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(comp);
+            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
         }
 
@@ -68,7 +69,7 @@ namespace FinderOuter.Services.Comparers
             Point pub = point.ToPoint();
 
             Span<byte> uncomp = pub.ToByteArray(out byte firstByte);
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
             if (uncompHash.SequenceEqual(hash))
             {
                 return true;
@@ -77,7 +78,7 @@ namespace FinderOuter.Services.Comparers
             Span<byte> comp = new byte[33];
             comp[0] = firstByte;
             uncomp.Slice(1, 32).CopyTo(comp[1..]);
-            ReadOnlySpan<byte> compHash = hash160.Compress33(comp.ToArray());
+            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp.ToArray());
             return compHash.SequenceEqual(hash);
         }
 
@@ -88,7 +89,7 @@ namespace FinderOuter.Services.Comparers
             toHash[0] = point.Y.IsEven ? (byte)2 : (byte)3;
             Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress33(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress33(toHash);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
@@ -98,7 +99,7 @@ namespace FinderOuter.Services.Comparers
             toHash[0] = 4;
             Buffer.BlockCopy(yBytes, 0, toHash, 65 - yBytes.Length, yBytes.Length);
 
-            ReadOnlySpan<byte> uncompHash = hash160.Compress65(toHash);
+            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(toHash);
 
             return uncompHash.SequenceEqual(hash);
         }

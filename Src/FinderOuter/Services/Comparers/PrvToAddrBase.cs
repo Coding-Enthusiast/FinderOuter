@@ -4,20 +4,17 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
-using System;
 using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
-    public abstract class PrvToAddrBase : ICompareService, IDisposable
+    public abstract class PrvToAddrBase : ICompareService
     {
         protected readonly BigInteger order = new SecP256k1().N;
         protected readonly EllipticCurveCalculator calc = new();
         protected readonly Calc calc2 = new();
         protected byte[] hash;
-        protected readonly Hash160 hash160 = new();
 
         public virtual bool Init(string address)
         {
@@ -45,7 +42,5 @@ namespace FinderOuter.Services.Comparers
         public bool Compare(BigInteger key) => Compare(calc.MultiplyByG(key));
 
         public abstract bool Compare(in EllipticCurvePoint point);
-
-        public void Dispose() => hash160.Dispose();
     }
 }

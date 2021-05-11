@@ -8,21 +8,12 @@ using System.Runtime.CompilerServices;
 
 namespace FinderOuter.Backend.Cryptography.Hashing
 {
-    public class Ripemd160 : IDisposable
+    public static class Ripemd160Fo
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Ripemd160"/>.
-        /// </summary>
-        public Ripemd160()
-        {
-        }
-
-
         /// <summary>
         /// Size of the hash result in bytes.
         /// </summary>
         public const int HashByteSize = 20;
-
         /// <summary>
         /// Size of the blocks used in each round.
         /// </summary>
@@ -35,63 +26,12 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public const int UBufferSize = HashStateSize + WorkingVectorSize;
 
-        internal uint[] block = new uint[16];
-        internal uint[] hashState = new uint[5];
-
-
-
-        /// <summary>
-        /// Computes the hash value for the specified byte array.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="ObjectDisposedException"/>
-        /// <param name="data">The byte array to compute hash for</param>
-        /// <returns>The computed hash</returns>
-        public byte[] ComputeHash(byte[] data)
+        public static unsafe byte[] ComputeHash_Static(Span<byte> data)
         {
-            if (isDisposed)
-                throw new ObjectDisposedException("Instance was disposed.");
-            if (data == null)
-                throw new ArgumentNullException(nameof(data), "Data can not be null.");
+            uint* pt = stackalloc uint[UBufferSize];
+            uint* xPt = pt + HashStateSize;
+            Init(pt);
 
-            Init();
-
-            DoHash(data);
-
-            return GetBytes();
-        }
-
-
-        internal unsafe byte[] GetBytes()
-        {
-            fixed (uint* hPt = &hashState[0])
-                return GetBytes(hPt);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe byte[] GetBytes(uint* hPt)
-        {
-            byte[] res = new byte[HashByteSize];
-            fixed (byte* bPt = &res[0])
-            {
-                for (int i = 0, j = 0; i < res.Length; i += 4, j++)
-                {
-                    bPt[i] = (byte)hPt[j];
-                    bPt[i + 1] = (byte)(hPt[j] >> 8);
-                    bPt[i + 2] = (byte)(hPt[j] >> 16);
-                    bPt[i + 3] = (byte)(hPt[j] >> 24);
-                }
-            }
-            return res;
-        }
-
-
-        /* 
-         * Since RIPEMD160 is only performed on small byte arrays (like result of SHA256=32 bytes) unlike SHA256 implemenetation
-         * here we simply pad the data first then loop through that. 
-         * If data sizes increase this method will be slow due to Buffer.BlockCopy being slower
-         */
-        internal unsafe void DoHash(byte[] data)
-        {
             // According to RIPEMD160 paper (https://homes.esat.kuleuven.be/~bosselae/ripemd160/pdf/AB-9601/AB-9601.pdf)
             // padding is identical to MD4 (https://tools.ietf.org/html/rfc1320)
 
@@ -100,7 +40,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             int padLen = 64 - ((data.Length + 8) & 63);
 
             byte[] dataToHash = new byte[data.Length + 8 + padLen];
-            Buffer.BlockCopy(data, 0, dataToHash, 0, data.Length);
+            Buffer.BlockCopy(data.ToArray(), 0, dataToHash, 0, data.Length);
 
             fixed (byte* dPt = dataToHash)
             {
@@ -125,29 +65,34 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
                 dPt[data.Length] = 0b1000_0000;
 
-                fixed (uint* xPt = &block[0], hPt = &hashState[0])
+                int dIndex = 0;
+                while (dIndex < dataToHash.Length)
                 {
-                    int dIndex = 0;
-                    while (dIndex < dataToHash.Length)
+                    for (int i = 0; i < WorkingVectorSize; i++, dIndex += 4)
                     {
-                        for (int i = 0; i < block.Length; i++, dIndex += 4)
-                        {
-                            xPt[i] = (uint)(dPt[dIndex] | (dPt[dIndex + 1] << 8) | (dPt[dIndex + 2] << 16) | (dPt[dIndex + 3] << 24));
-                        }
-                        CompressBlock(xPt, hPt);
+                        xPt[i] = (uint)(dPt[dIndex] | (dPt[dIndex + 1] << 8) | (dPt[dIndex + 2] << 16) | (dPt[dIndex + 3] << 24));
                     }
+                    CompressBlock(pt);
                 }
             }
+            return GetBytes(pt);
         }
 
-
-        internal unsafe void Init()
-        {
-            fixed (uint* hPt = &hashState[0])
-                Init(hPt);
-        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe void Init(uint* hPt)
+        internal static unsafe byte[] GetBytes(uint* hPt)
+        {
+            return new byte[20]
+            {
+                (byte)hPt[0], (byte)(hPt[0] >> 8), (byte)(hPt[0] >> 16), (byte)(hPt[0] >> 24),
+                (byte)hPt[1], (byte)(hPt[1] >> 8), (byte)(hPt[1] >> 16), (byte)(hPt[1] >> 24),
+                (byte)hPt[2], (byte)(hPt[2] >> 8), (byte)(hPt[2] >> 16), (byte)(hPt[2] >> 24),
+                (byte)hPt[3], (byte)(hPt[3] >> 8), (byte)(hPt[3] >> 16), (byte)(hPt[3] >> 24),
+                (byte)hPt[4], (byte)(hPt[4] >> 8), (byte)(hPt[4] >> 16), (byte)(hPt[4] >> 24),
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe void Init(uint* hPt)
         {
             hPt[0] = 0x67452301U;
             hPt[1] = 0xefcdab89U;
@@ -156,14 +101,15 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[4] = 0xc3d2e1f0U;
         }
 
-
-        internal unsafe void CompressBlock(uint* xPt, uint* hPt)
+        internal static unsafe void CompressBlock(uint* pt)
         {
-            uint aa = hPt[0];
-            uint bb = hPt[1];
-            uint cc = hPt[2];
-            uint dd = hPt[3];
-            uint ee = hPt[4];
+            uint* xPt = pt + HashStateSize;
+
+            uint aa = pt[0];
+            uint bb = pt[1];
+            uint cc = pt[2];
+            uint dd = pt[3];
+            uint ee = pt[4];
 
             uint aaa = aa;
             uint bbb = bb;
@@ -674,40 +620,12 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
 
             /* combine results */
-            ddd += cc + hPt[1];               /* final result for MDbuf[0] */
-            hPt[1] = hPt[2] + dd + eee;
-            hPt[2] = hPt[3] + ee + aaa;
-            hPt[3] = hPt[4] + aa + bbb;
-            hPt[4] = hPt[0] + bb + ccc;
-            hPt[0] = ddd;
+            ddd += cc + pt[1];               /* final result for MDbuf[0] */
+            pt[1] = pt[2] + dd + eee;
+            pt[2] = pt[3] + ee + aaa;
+            pt[3] = pt[4] + aa + bbb;
+            pt[4] = pt[0] + bb + ccc;
+            pt[0] = ddd;
         }
-
-
-
-        private bool isDisposed = false;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!isDisposed)
-            {
-                if (disposing)
-                {
-                    if (block != null)
-                        Array.Clear(block, 0, block.Length);
-                    block = null;
-
-                    if (hashState != null)
-                        Array.Clear(hashState, 0, hashState.Length);
-                    hashState = null;
-                }
-
-                isDisposed = true;
-            }
-        }
-
-        /// <summary>
-        /// Releases all resources used by the current instance of the <see cref="Ripemd160"/> class.
-        /// </summary>
-        public void Dispose() => Dispose(true);
     }
 }

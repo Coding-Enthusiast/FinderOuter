@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Blockchain.Scripts;
+using Autarkysoft.Bitcoin.Cryptography.Hashing;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend.Cryptography.Hashing;
 using System;
@@ -15,8 +16,7 @@ namespace FinderOuter.Backend.KeyPairs
     {
         public Address()
         {
-            hashFunc = new Hash160();
-            witHashFunc = new Sha256Fo();
+            hashFunc = new();
 
             versionByte_P2pkh_MainNet = 0;
             versionByte_P2pkh_TestNet = 111;
@@ -33,8 +33,7 @@ namespace FinderOuter.Backend.KeyPairs
 
 
 
-        private readonly Hash160 hashFunc;
-        private readonly Sha256Fo witHashFunc;
+        private readonly Ripemd160Sha256 hashFunc;
         private readonly byte versionByte_P2pkh_MainNet, versionByte_P2pkh_TestNet, versionByte_P2pkh_RegTest;
         private readonly byte versionByte_P2sh_MainNet, versionByte_P2sh_TestNet, versionByte_P2sh_RegTest;
         private readonly string hrp_MainNet, hrp_TestNet, hrp_RegTest;
@@ -45,22 +44,18 @@ namespace FinderOuter.Backend.KeyPairs
             /// An invalid address
             /// </summary>
             Invalid,
-
             /// <summary>
             /// Pay to Pubkey Hash
             /// </summary>
             P2PKH,
-
             /// <summary>
             /// Pay to Script Hash
             /// </summary>
             P2SH,
-
             /// <summary>
             /// Pay to Witness Public Key Hash
             /// </summary>
             P2WPKH,
-
             /// <summary>
             /// Pay to Witness Script Hash
             /// </summary>
@@ -127,7 +122,7 @@ namespace FinderOuter.Backend.KeyPairs
                 PubkeyScriptType.P2PKH => GetP2pkh(pubkey, netType, compressed),
                 PubkeyScriptType.P2WPKH => GetP2wpkh(pubkey, 0, netType),
                 PubkeyScriptType.P2WSH => GetP2wsh(pubkey, 0, netType),
-                _ => throw new ArgumentException($"Address is not defined for {addrType.ToString()} type of script."),
+                _ => throw new ArgumentException($"Address is not defined for {addrType} type of script."),
             };
         }
 

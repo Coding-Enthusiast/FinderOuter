@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
 
@@ -36,7 +37,7 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
+            ReadOnlySpan<byte> actual = Hash160.Compress33_P2sh(toHash);
             return actual.SequenceEqual(hash);
         }
 
@@ -50,14 +51,14 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, true);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
+            ReadOnlySpan<byte> actual = Hash160.Compress33_P2sh(toHash);
             return actual.SequenceEqual(hash);
         }
 
         public override bool Compare(in PointJacobian point)
         {
             Span<byte> toHash = point.ToPoint().ToByteArray(true);
-            ReadOnlySpan<byte> compHash = hash160.Compress33_P2sh(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress33_P2sh(toHash);
             return compHash.SequenceEqual(hash);
         }
 
@@ -68,7 +69,7 @@ namespace FinderOuter.Services.Comparers
             toHash[0] = point.Y.IsEven ? (byte)2 : (byte)3;
             Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
 
-            ReadOnlySpan<byte> actual = hash160.Compress33_P2sh(toHash);
+            ReadOnlySpan<byte> actual = Hash160.Compress33_P2sh(toHash);
             return actual.SequenceEqual(hash);
         }
     }

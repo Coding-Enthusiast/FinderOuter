@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
 
@@ -33,7 +34,7 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, false);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
 
@@ -47,14 +48,14 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = calc2.GetPubkey(in key, false);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
 
         public override bool Compare(in PointJacobian point)
         {
             Span<byte> toHash = point.ToPoint().ToByteArray(false);
-            ReadOnlySpan<byte> compHash = hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
 
@@ -67,7 +68,7 @@ namespace FinderOuter.Services.Comparers
             Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
             Buffer.BlockCopy(yBytes, 0, toHash, 65 - yBytes.Length, yBytes.Length);
 
-            ReadOnlySpan<byte> compHash = hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
     }
