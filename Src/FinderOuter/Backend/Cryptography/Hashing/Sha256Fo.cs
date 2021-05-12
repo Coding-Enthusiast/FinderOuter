@@ -13,35 +13,16 @@ namespace FinderOuter.Backend.Cryptography.Hashing
     /// Implementation of 256-bit Secure Hash Algorithm (SHA) base on RFC-6234
     /// <para/> https://tools.ietf.org/html/rfc6234
     /// </summary>
-    public class Sha256Fo : IDisposable
+    public static class Sha256Fo
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Sha256Fo"/>.
-        /// </summary>
-        /// <param name="isDouble">Determines whether the hash should be performed twice.</param>
-        public Sha256Fo(bool isDouble = false)
-        {
-            IsDouble = isDouble;
-        }
-
-
-
-        /// <summary>
-        /// Indicates whether the hash function should be performed twice on message.
-        /// For example Double SHA256 that bitcoin uses.
-        /// </summary>
-        public bool IsDouble { get; set; }
-
         /// <summary>
         /// Size of the hash result in bytes (=32 bytes).
         /// </summary>
         public const int HashByteSize = 32;
-
         /// <summary>
         /// Size of the blocks used in each round (=64 bytes).
         /// </summary>
         public const int BlockByteSize = 64;
-
 
         public const int HashStateSize = 8;
         public const int WorkingVectorSize = 64;
@@ -49,9 +30,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// Size of UInt32[] buffer = 72
         /// </summary>
         public const int UBufferSize = HashStateSize + WorkingVectorSize;
-
-        public uint[] hashState = new uint[8];
-        public uint[] w = new uint[64];
 
 
         private static readonly uint[] Ks =
@@ -74,28 +52,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
         };
 
-
-
-        /// <summary>
-        /// Computes the hash value for the specified byte array.
-        /// </summary>
-        /// <exception cref="ArgumentNullException"/>
-        /// <exception cref="ObjectDisposedException"/>
-        /// <param name="data">The byte array to compute hash for</param>
-        /// <returns>The computed hash</returns>
-        public byte[] ComputeHash(Span<byte> data)
-        {
-            if (disposedValue)
-                throw new ObjectDisposedException("Instance was disposed.");
-            if (data == null)
-                throw new ArgumentNullException(nameof(data), "Data can not be null.");
-
-            Init();
-
-            DoHash(data, data.Length);
-
-            return GetBytes();
-        }
 
         public static unsafe byte[] ComputeHash_Static(Span<byte> data)
         {
@@ -120,15 +76,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             return GetBytes(pt);
         }
 
-
-        public unsafe void Init()
-        {
-            fixed (uint* hPt = &hashState[0])
-            {
-                Init(hPt);
-            }
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Init(uint* hPt)
         {
@@ -140,13 +87,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[5] = 0x9b05688c;
             hPt[6] = 0x1f83d9ab;
             hPt[7] = 0x5be0cd19;
-        }
-
-
-        public unsafe byte[] GetBytes()
-        {
-            fixed (uint* hPt = &hashState[0])
-                return GetBytes(hPt);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,80 +165,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 CompressBlockWithWSet(pt);
             }
         }
-
-        internal unsafe void DoHash(Span<byte> data, int len)
-        {
-            byte* fPt = stackalloc byte[64];
-            fixed (byte* dPt = data) // If data.Length == 0 => &data[0] will throw an exception
-            fixed (uint* hPt = &hashState[0], wPt = &w[0])
-            {
-                int remainingBytes = data.Length;
-                int dIndex = 0;
-                while (remainingBytes >= BlockByteSize)
-                {
-                    for (int i = 0; i < 16; i++, dIndex += 4)
-                    {
-                        wPt[i] = (uint)((dPt[dIndex] << 24) | (dPt[dIndex + 1] << 16) | (dPt[dIndex + 2] << 8) | dPt[dIndex + 3]);
-                    }
-
-                    SetW(wPt);
-                    CompressBlockWithWSet(hPt, wPt);
-
-                    remainingBytes -= BlockByteSize;
-                }
-
-                // Copy the reamaining bytes into a blockSize length buffer so that we can loop through it easily:
-                Buffer.MemoryCopy(dPt + (data.Length - remainingBytes), fPt, 64, remainingBytes);
-
-                // Append 1 bit followed by zeros. Since we only work with bytes, this is 1 whole byte
-                fPt[remainingBytes] = 0b1000_0000;
-
-                if (remainingBytes >= 56) // blockSize - pad2.Len = 64 - 8
-                {
-                    // This means we have an additional block to compress, which we do it here:
-
-                    for (int i = 0, j = 0; i < 16; i++, j += 4)
-                    {
-                        wPt[i] = (uint)((fPt[j] << 24) | (fPt[j + 1] << 16) | (fPt[j + 2] << 8) | fPt[j + 3]);
-                    }
-
-                    SetW(wPt);
-                    CompressBlockWithWSet(hPt, wPt);
-
-                    // Zero out all the items in FinalBlock so it can be reused
-                    for (int i = 0; i < 8; i++)
-                    {
-                        ((ulong*)fPt)[i] = 0;
-                    }
-                }
-
-                // Add length in bits as the last 8 bytes of final block in big-endian order
-                // See MessageLengthTest in Test project to understand what the following shifts are
-                fPt[63] = (byte)(len << 3);
-                fPt[62] = (byte)(len >> 5);
-                fPt[61] = (byte)(len >> 13);
-                fPt[60] = (byte)(len >> 21);
-                fPt[59] = (byte)(len >> 29);
-                // The remainig 3 bytes are always zero
-                // The remaining 56 bytes are already set
-
-                for (int i = 0, j = 0; i < 16; i++, j += 4)
-                {
-                    wPt[i] = (uint)((fPt[j] << 24) | (fPt[j + 1] << 16) | (fPt[j + 2] << 8) | fPt[j + 3]);
-                }
-
-                SetW(wPt);
-                CompressBlockWithWSet(hPt, wPt);
-
-
-                if (IsDouble)
-                {
-                    DoSecondHash(hPt, wPt);
-                }
-            }
-        }
-
-
 
         /// <summary>
         /// Computes _single_ SHA256 hash for the second block of
@@ -1868,85 +1734,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             CompressBlockWithWSet(pt);
         }
 
-        internal unsafe void DoSecondHash(uint* hPt, uint* wPt)
-        {
-            // Result of previous hash (hashState[]) is now our new block. So copy it here:
-            wPt[0] = hPt[0];
-            wPt[1] = hPt[1];
-            wPt[2] = hPt[2];
-            wPt[3] = hPt[3];
-            wPt[4] = hPt[4];
-            wPt[5] = hPt[5];
-            wPt[6] = hPt[6];
-            wPt[7] = hPt[7]; // 8*4 = 32 byte hash result
-
-            wPt[8] = 0b10000000_00000000_00000000_00000000U; // 1 followed by 0 bits to fill pad1
-            wPt[9] = 0;
-            wPt[10] = 0;
-            wPt[11] = 0;
-            wPt[12] = 0;
-            wPt[13] = 0;
-
-            wPt[14] = 0; // Message length for pad2, since message is the 32 byte result of previous hash, length is 256 bit
-            wPt[15] = 256;
-
-            // Set the rest of working vector from 16 to 64
-            wPt[16] = SSIG0(wPt[1]) + wPt[0];
-            wPt[17] = 10485760 + SSIG0(wPt[2]) + wPt[1];
-            wPt[18] = SSIG1(wPt[16]) + SSIG0(wPt[3]) + wPt[2];
-            wPt[19] = SSIG1(wPt[17]) + SSIG0(wPt[4]) + wPt[3];
-            wPt[20] = SSIG1(wPt[18]) + SSIG0(wPt[5]) + wPt[4];
-            wPt[21] = SSIG1(wPt[19]) + SSIG0(wPt[6]) + wPt[5];
-            wPt[22] = SSIG1(wPt[20]) + 256 + SSIG0(wPt[7]) + wPt[6];
-            wPt[23] = SSIG1(wPt[21]) + wPt[16] + 285220864 + wPt[7];
-            wPt[24] = SSIG1(wPt[22]) + wPt[17] + 0b10000000_00000000_00000000_00000000U;
-            wPt[25] = SSIG1(wPt[23]) + wPt[18];
-            wPt[26] = SSIG1(wPt[24]) + wPt[19];
-            wPt[27] = SSIG1(wPt[25]) + wPt[20];
-            wPt[28] = SSIG1(wPt[26]) + wPt[21];
-            wPt[29] = SSIG1(wPt[27]) + wPt[22];
-            wPt[30] = SSIG1(wPt[28]) + wPt[23] + 4194338;
-            wPt[31] = SSIG1(wPt[29]) + wPt[24] + SSIG0(wPt[16]) + 256;
-            wPt[32] = SSIG1(wPt[30]) + wPt[25] + SSIG0(wPt[17]) + wPt[16];
-            wPt[33] = SSIG1(wPt[31]) + wPt[26] + SSIG0(wPt[18]) + wPt[17];
-            wPt[34] = SSIG1(wPt[32]) + wPt[27] + SSIG0(wPt[19]) + wPt[18];
-            wPt[35] = SSIG1(wPt[33]) + wPt[28] + SSIG0(wPt[20]) + wPt[19];
-            wPt[36] = SSIG1(wPt[34]) + wPt[29] + SSIG0(wPt[21]) + wPt[20];
-            wPt[37] = SSIG1(wPt[35]) + wPt[30] + SSIG0(wPt[22]) + wPt[21];
-            wPt[38] = SSIG1(wPt[36]) + wPt[31] + SSIG0(wPt[23]) + wPt[22];
-            wPt[39] = SSIG1(wPt[37]) + wPt[32] + SSIG0(wPt[24]) + wPt[23];
-            wPt[40] = SSIG1(wPt[38]) + wPt[33] + SSIG0(wPt[25]) + wPt[24];
-            wPt[41] = SSIG1(wPt[39]) + wPt[34] + SSIG0(wPt[26]) + wPt[25];
-            wPt[42] = SSIG1(wPt[40]) + wPt[35] + SSIG0(wPt[27]) + wPt[26];
-            wPt[43] = SSIG1(wPt[41]) + wPt[36] + SSIG0(wPt[28]) + wPt[27];
-            wPt[44] = SSIG1(wPt[42]) + wPt[37] + SSIG0(wPt[29]) + wPt[28];
-            wPt[45] = SSIG1(wPt[43]) + wPt[38] + SSIG0(wPt[30]) + wPt[29];
-            wPt[46] = SSIG1(wPt[44]) + wPt[39] + SSIG0(wPt[31]) + wPt[30];
-            wPt[47] = SSIG1(wPt[45]) + wPt[40] + SSIG0(wPt[32]) + wPt[31];
-            wPt[48] = SSIG1(wPt[46]) + wPt[41] + SSIG0(wPt[33]) + wPt[32];
-            wPt[49] = SSIG1(wPt[47]) + wPt[42] + SSIG0(wPt[34]) + wPt[33];
-            wPt[50] = SSIG1(wPt[48]) + wPt[43] + SSIG0(wPt[35]) + wPt[34];
-            wPt[51] = SSIG1(wPt[49]) + wPt[44] + SSIG0(wPt[36]) + wPt[35];
-            wPt[52] = SSIG1(wPt[50]) + wPt[45] + SSIG0(wPt[37]) + wPt[36];
-            wPt[53] = SSIG1(wPt[51]) + wPt[46] + SSIG0(wPt[38]) + wPt[37];
-            wPt[54] = SSIG1(wPt[52]) + wPt[47] + SSIG0(wPt[39]) + wPt[38];
-            wPt[55] = SSIG1(wPt[53]) + wPt[48] + SSIG0(wPt[40]) + wPt[39];
-            wPt[56] = SSIG1(wPt[54]) + wPt[49] + SSIG0(wPt[41]) + wPt[40];
-            wPt[57] = SSIG1(wPt[55]) + wPt[50] + SSIG0(wPt[42]) + wPt[41];
-            wPt[58] = SSIG1(wPt[56]) + wPt[51] + SSIG0(wPt[43]) + wPt[42];
-            wPt[59] = SSIG1(wPt[57]) + wPt[52] + SSIG0(wPt[44]) + wPt[43];
-            wPt[60] = SSIG1(wPt[58]) + wPt[53] + SSIG0(wPt[45]) + wPt[44];
-            wPt[61] = SSIG1(wPt[59]) + wPt[54] + SSIG0(wPt[46]) + wPt[45];
-            wPt[62] = SSIG1(wPt[60]) + wPt[55] + SSIG0(wPt[47]) + wPt[46];
-            wPt[63] = SSIG1(wPt[61]) + wPt[56] + SSIG0(wPt[48]) + wPt[47];
-
-
-            // Now initialize hashState to compute next round, since this is a new hash
-            Init(hPt);
-
-            // We only have 1 block so there is no need for a loop.
-            CompressBlockWithWSet(hPt, wPt);
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void SetW(uint* wPt, int start = 16)
@@ -1957,149 +1744,6 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
-        // This method will become obsolete soon:
-        public unsafe void CompressBlock(uint* hPt, uint* wPt)
-        {
-            for (int i = 16; i < w.Length; i++)
-            {
-                wPt[i] = SSIG1(wPt[i - 2]) + wPt[i - 7] + SSIG0(wPt[i - 15]) + wPt[i - 16];
-            }
-
-            uint a = hPt[0];
-            uint b = hPt[1];
-            uint c = hPt[2];
-            uint d = hPt[3];
-            uint e = hPt[4];
-            uint f = hPt[5];
-            uint g = hPt[6];
-            uint h = hPt[7];
-
-            uint temp, aa, bb, cc, dd, ee, ff, hh, gg;
-
-            fixed (uint* kPt = &Ks[0])
-            {
-                for (int j = 0; j < 64;)
-                {
-                    temp = h + BSIG1(e) + CH(e, f, g) + kPt[j] + wPt[j];
-                    ee = d + temp;
-                    aa = temp + BSIG0(a) + MAJ(a, b, c);
-                    j++;
-
-                    temp = g + BSIG1(ee) + CH(ee, e, f) + kPt[j] + wPt[j];
-                    ff = c + temp;
-                    bb = temp + BSIG0(aa) + MAJ(aa, a, b);
-                    j++;
-
-                    temp = f + BSIG1(ff) + CH(ff, ee, e) + kPt[j] + wPt[j];
-                    gg = b + temp;
-                    cc = temp + BSIG0(bb) + MAJ(bb, aa, a);
-                    j++;
-
-                    temp = e + BSIG1(gg) + CH(gg, ff, ee) + kPt[j] + wPt[j];
-                    hh = a + temp;
-                    dd = temp + BSIG0(cc) + MAJ(cc, bb, aa);
-                    j++;
-
-                    temp = ee + BSIG1(hh) + CH(hh, gg, ff) + kPt[j] + wPt[j];
-                    h = aa + temp;
-                    d = temp + BSIG0(dd) + MAJ(dd, cc, bb);
-                    j++;
-
-                    temp = ff + BSIG1(h) + CH(h, hh, gg) + kPt[j] + wPt[j];
-                    g = bb + temp;
-                    c = temp + BSIG0(d) + MAJ(d, dd, cc);
-                    j++;
-
-                    temp = gg + BSIG1(g) + CH(g, h, hh) + kPt[j] + wPt[j];
-                    f = cc + temp;
-                    b = temp + BSIG0(c) + MAJ(c, d, dd);
-                    j++;
-
-                    temp = hh + BSIG1(f) + CH(f, g, h) + kPt[j] + wPt[j];
-                    e = dd + temp;
-                    a = temp + BSIG0(b) + MAJ(b, c, d);
-                    j++;
-                }
-            }
-
-            hPt[0] += a;
-            hPt[1] += b;
-            hPt[2] += c;
-            hPt[3] += d;
-            hPt[4] += e;
-            hPt[5] += f;
-            hPt[6] += g;
-            hPt[7] += h;
-        }
-
-        internal unsafe void CompressBlockWithWSet(uint* hPt, uint* wPt)
-        {
-            uint a = hPt[0];
-            uint b = hPt[1];
-            uint c = hPt[2];
-            uint d = hPt[3];
-            uint e = hPt[4];
-            uint f = hPt[5];
-            uint g = hPt[6];
-            uint h = hPt[7];
-
-            uint temp, aa, bb, cc, dd, ee, ff, hh, gg;
-
-            fixed (uint* kPt = &Ks[0])
-            {
-                for (int j = 0; j < 64;)
-                {
-                    temp = h + BSIG1(e) + CH(e, f, g) + kPt[j] + wPt[j];
-                    ee = d + temp;
-                    aa = temp + BSIG0(a) + MAJ(a, b, c);
-                    j++;
-
-                    temp = g + BSIG1(ee) + CH(ee, e, f) + kPt[j] + wPt[j];
-                    ff = c + temp;
-                    bb = temp + BSIG0(aa) + MAJ(aa, a, b);
-                    j++;
-
-                    temp = f + BSIG1(ff) + CH(ff, ee, e) + kPt[j] + wPt[j];
-                    gg = b + temp;
-                    cc = temp + BSIG0(bb) + MAJ(bb, aa, a);
-                    j++;
-
-                    temp = e + BSIG1(gg) + CH(gg, ff, ee) + kPt[j] + wPt[j];
-                    hh = a + temp;
-                    dd = temp + BSIG0(cc) + MAJ(cc, bb, aa);
-                    j++;
-
-                    temp = ee + BSIG1(hh) + CH(hh, gg, ff) + kPt[j] + wPt[j];
-                    h = aa + temp;
-                    d = temp + BSIG0(dd) + MAJ(dd, cc, bb);
-                    j++;
-
-                    temp = ff + BSIG1(h) + CH(h, hh, gg) + kPt[j] + wPt[j];
-                    g = bb + temp;
-                    c = temp + BSIG0(d) + MAJ(d, dd, cc);
-                    j++;
-
-                    temp = gg + BSIG1(g) + CH(g, h, hh) + kPt[j] + wPt[j];
-                    f = cc + temp;
-                    b = temp + BSIG0(c) + MAJ(c, d, dd);
-                    j++;
-
-                    temp = hh + BSIG1(f) + CH(f, g, h) + kPt[j] + wPt[j];
-                    e = dd + temp;
-                    a = temp + BSIG0(b) + MAJ(b, c, d);
-                    j++;
-                }
-            }
-
-            hPt[0] += a;
-            hPt[1] += b;
-            hPt[2] += c;
-            hPt[3] += d;
-            hPt[4] += e;
-            hPt[5] += f;
-            hPt[6] += g;
-            hPt[7] += h;
-        }
 
         public static unsafe void CompressBlockWithWSet(uint* pt)
         {
@@ -2188,35 +1832,5 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static uint SSIG1(uint x) => (x >> 17 | x << 15) ^ (x >> 19 | x << 13) ^ (x >> 10);
-
-
-        private bool disposedValue = false;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    if (hashState != null)
-                        Array.Clear(hashState, 0, hashState.Length);
-                    hashState = null;
-
-                    if (w != null)
-                        Array.Clear(w, 0, w.Length);
-                    w = null;
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        /// <summary>
-        /// Releases all resources used by the current instance of the <see cref="Sha256Fo"/> class.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-        }
     }
 }

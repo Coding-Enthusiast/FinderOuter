@@ -35,7 +35,7 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
         private readonly ECCalc calc;
-        Calc calc2 = new Calc();
+        private readonly Calc calc2 = new();
 
         private ICompareService comparer;
         private int[] missingIndexes;
@@ -499,8 +499,7 @@ namespace FinderOuter.Services
             byte[] full = new byte[18];
             Buffer.BlockCopy(data.ToArray(), 0, full, 0, data.Length);
 
-            using Sha256Fo sha256 = new(true);
-            byte[] cs = sha256.ComputeHash(data.ToArray()).SubArray(0, 2);
+            byte[] cs = Sha256Fo.ComputeHashTwice_Static(data.ToArray()).SubArray(0, 2);
             full[16] = cs[0];
             full[17] = cs[1];
 

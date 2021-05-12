@@ -14,14 +14,16 @@ namespace Tests.Backend.Cryptography.ECC
         [Fact]
         public unsafe void Constructor_FromSha256Test()
         {
-            using Sha256Fo sha = new();
             byte[] data = new byte[] { 1, 2, 3 };
-            byte[] hash = sha.ComputeHash(data);
 
-            fixed (uint* hPt = &sha.hashState[0])
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            fixed (byte* dPt = &data[0])
             {
+                Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
+                byte[] hash = Sha256Fo.GetBytes(pt);
+
                 var val1 = new Scalar(hash, out int of1);
-                var val2 = new Scalar(hPt, out int of2);
+                var val2 = new Scalar(pt, out int of2);
 
                 Assert.Equal(val1, val2);
                 Assert.Equal(of1, of2);

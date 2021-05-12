@@ -6,6 +6,7 @@
 using FinderOuter.Backend.Cryptography.Hashing;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Xunit;
 
@@ -54,20 +55,6 @@ namespace Tests.Backend.Cryptography.Hashing
 
             Assert.Equal(expectedHash, actualHash);
         }
-
-
-        [Fact]
-        public void ComputeHash_ExceptionsTest()
-        {
-            byte[] goodBa = { 1, 2, 3 };
-            Sha256Fo sha = new();
-
-            Assert.Throws<ArgumentNullException>(() => sha.ComputeHash(null));
-
-            sha.Dispose();
-            Assert.Throws<ObjectDisposedException>(() => sha.ComputeHash(goodBa));
-        }
-
 
         [Theory]
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
@@ -122,14 +109,11 @@ namespace Tests.Backend.Cryptography.Hashing
 
         // The original MAJ() and CH() functions are defined differently in RFC documentation.
         // The following tests makes sure the changed function is giving the same result
-        private uint CH_Original(uint x, uint y, uint z)
-        {
-            return (x & y) ^ ((~x) & z);
-        }
-        private uint CH_Changed(uint x, uint y, uint z)
-        {
-            return z ^ (x & (y ^ z));
-        }
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static uint CH_Original(uint x, uint y, uint z) => (x & y) ^ ((~x) & z);
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static uint CH_Changed(uint x, uint y, uint z) => z ^ (x & (y ^ z));
+
         [Fact]
         public void CH_Test()
         {
@@ -145,15 +129,11 @@ namespace Tests.Backend.Cryptography.Hashing
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static uint MAJ_Original(uint x, uint y, uint z) => (x & y) ^ (x & z) ^ (y & z);
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private static uint MAJ_Changed(uint x, uint y, uint z) => (x & y) | (z & (x | y));
 
-        private uint MAJ_Original(uint x, uint y, uint z)
-        {
-            return (x & y) ^ (x & z) ^ (y & z);
-        }
-        private uint MAJ_Changed(uint x, uint y, uint z)
-        {
-            return (x & y) | (z & (x | y));
-        }
         [Fact]
         public void MAJ_Test()
         {

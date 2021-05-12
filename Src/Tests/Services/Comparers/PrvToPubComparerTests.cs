@@ -75,18 +75,21 @@ namespace Tests.Services.Comparers
         public unsafe void Compare_Sha256HashStateTest()
         {
             var comp = new PrvToPubComparer();
-            using Sha256Fo sha = new();
-            sha.ComputeHash(new byte[1]);
-            fixed (uint* hPt = sha.hashState)
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            byte[] data = new byte[1];
+            fixed (byte* dPt = &data[0])
             {
-                var key = new Scalar(hPt, out int overflow);
+                Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
+
+                var key = new Scalar(pt, out int overflow);
                 Assert.Equal(0, overflow);
                 var calc = new Calc();
                 string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
+
                 bool b = comp.Init(pubHex);
                 Assert.True(b);
 
-                bool actual = comp.Compare(hPt);
+                bool actual = comp.Compare(pt);
                 Assert.True(actual);
             }
         }
