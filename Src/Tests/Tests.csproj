@@ -16,12 +16,14 @@
 
   <ItemGroup>
     <None Remove="TestData\HashTestData.json" />
+    <None Remove="TestData\Ripemd160ProgressiveTestData.json" />
     <None Remove="TestData\Sha256NistTestData.json" />
     <None Remove="TestData\Sha512NistTestData.json" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="TestData\HashTestData.json" />
+    <EmbeddedResource Include="TestData\Ripemd160ProgressiveTestData.json" />
     <EmbeddedResource Include="TestData\Sha256NistTestData.json" />
     <EmbeddedResource Include="TestData\Sha512NistTestData.json" />
   </ItemGroup>
