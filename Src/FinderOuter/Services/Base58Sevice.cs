@@ -36,6 +36,7 @@ namespace FinderOuter.Services
         private readonly InputService inputService;
         private ICompareService comparer;
         private uint[] powers58, precomputed;
+        private ulong[] multPow58, preC;
         private int[] missingIndexes;
         private int missCount;
         private string keyToCheck;
@@ -48,7 +49,7 @@ namespace FinderOuter.Services
             Bip38
         }
 
-        private void Initialize(char[] key, char missingChar, InputType keyType)
+        private void Initialize(ReadOnlySpan<char> key, char missingChar, InputType keyType)
         {
             // Compute 58^n for n from 0 to inputLength as uint[]
 
@@ -91,6 +92,99 @@ namespace FinderOuter.Services
                         ulong result = checked((powers58[j] * val) + precomputed[k] + carry);
                         precomputed[k] = (uint)result;
                         carry = (uint)(result >> 32);
+                    }
+                }
+                else
+                {
+                    missingIndexes[mis] = key.Length - i - 1;
+                    mis++;
+                    j += uLen;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Returns powers of 58 multiplied by <paramref name="maxPow"/> then shifts them left so that it doesn't need it later
+        /// when converting to SHA256 working vector
+        /// <para/>0*58^0 0*58^1 ... 0*58^<paramref name="maxPow"/> 1*58^0 ...
+        /// </summary>
+        public static ulong[] GetShiftedMultPow58(int maxPow, int uLen, int shift)
+        {
+            Debug.Assert(shift <= 24 && shift >= 0);
+
+            var padded = new byte[4 * uLen];
+            var multPow = new ulong[maxPow * uLen * 58];
+            for (int i = 0, pindex = 0; i < 58; i++)
+            {
+                for (int j = 0; j < maxPow; j++)
+                {
+                    BigInteger val = BigInteger.Pow(58, j) * i;
+                    byte[] temp = val.ToByteArrayExt(false, true);
+
+                    Array.Clear(padded, 0, padded.Length);
+                    Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
+
+                    for (int k = 0; k < padded.Length; pindex++, k += 4)
+                    {
+                        multPow[pindex] =
+                            (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
+                        multPow[pindex] <<= shift;
+                    }
+                }
+            }
+            return multPow;
+        }
+
+        public void InitializeCompressWif(ReadOnlySpan<char> key, char missingChar)
+        {
+            const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+
+            multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, uLen, 16);
+            preC = new ulong[uLen];
+
+            // calculate what we already have and store missing indexes
+            int mis = 0;
+            for (int i = key.Length - 1, j = 0; i >= 0; i--)
+            {
+                if (key[i] != missingChar)
+                {
+                    int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
+                    int chunk = (index * 520) + (uLen * (key.Length - 1 - i));
+                    ulong carry = 0;
+                    for (int k = uLen - 1; k >= 0; k--, j++)
+                    {
+                        preC[k] += multPow58[k + chunk] + carry;
+                    }
+                }
+                else
+                {
+                    missingIndexes[mis] = key.Length - i - 1;
+                    mis++;
+                    j += uLen;
+                }
+            }
+        }
+
+        public void InitializeUncompressWif(ReadOnlySpan<char> key, char missingChar)
+        {
+            const int uLen = 10;
+
+            multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, uLen, 24);
+            preC = new ulong[uLen];
+
+            // calculate what we already have and store missing indexes
+            int mis = 0;
+            for (int i = key.Length - 1, j = 0; i >= 0; i--)
+            {
+                if (key[i] != missingChar)
+                {
+                    int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
+                    int chunk = (index * key.Length * 10) + (uLen * (key.Length - 1 - i));
+                    ulong carry = 0;
+                    for (int k = uLen - 1; k >= 0; k--, j++)
+                    {
+                        preC[k] += multPow58[k + chunk] + carry;
                     }
                 }
                 else
@@ -312,48 +406,57 @@ namespace FinderOuter.Services
             return false;
         }
 
-        private unsafe void LoopComp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void LoopComp(ulong[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            uint[] temp = new uint[precomputed.Length];
+            ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (ulong* pow = &multPow58[0], pre = &precomputed[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[misStart])
             {
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 40, 40);
+                    Buffer.MemoryCopy(pre, tmp, 80, 80);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (int keyItem in missingItems)
                     {
-                        ulong carry = 0;
-                        for (int k = 9, j = 0; k >= 0; k--, j++)
-                        {
-                            ulong result = (pow[(mi[i] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
-                            tmp[k] = (uint)result;
-                            carry = (uint)(result >> 32);
-                        }
-                        i++;
+                        int chunk = (keyItem * 520) + (10 * mi[i++]);
+
+                        tmp[0] += pow[0 + chunk];
+                        tmp[1] += pow[1 + chunk];
+                        tmp[2] += pow[2 + chunk];
+                        tmp[3] += pow[3 + chunk];
+                        tmp[4] += pow[4 + chunk];
+                        tmp[5] += pow[5 + chunk];
+                        tmp[6] += pow[6 + chunk];
+                        tmp[7] += pow[7 + chunk];
+                        tmp[8] += pow[8 + chunk];
+                        tmp[9] += pow[9 + chunk];
                     }
 
-                    if (((tmp[0] & 0x0000ff00) | (tmp[8] & 0x000000ff)) == 0x00008001)
-                    {
-                        pt[8] = (tmp[0] << 16) | (tmp[1] >> 16);
-                        pt[9] = (tmp[1] << 16) | (tmp[2] >> 16);
-                        pt[10] = (tmp[2] << 16) | (tmp[3] >> 16);
-                        pt[11] = (tmp[3] << 16) | (tmp[4] >> 16);
-                        pt[12] = (tmp[4] << 16) | (tmp[5] >> 16);
-                        pt[13] = (tmp[5] << 16) | (tmp[6] >> 16);
-                        pt[14] = (tmp[6] << 16) | (tmp[7] >> 16);
-                        pt[15] = (tmp[7] << 16) | (tmp[8] >> 16);
-                        pt[16] = (tmp[8] << 16) | 0b00000000_00000000_10000000_00000000U;
-                        // from 9 to 14 =0
-                        pt[23] = 272; // 34 *8 = 272
+                    // Normalize:
+                    tmp[1] += tmp[0] >> 32;
+                    pt[16] = ((uint)tmp[1] & 0xffff0000) | 0b00000000_00000000_10000000_00000000U; tmp[2] += tmp[1] >> 32;
+                    pt[15] = (uint)tmp[2]; tmp[3] += tmp[2] >> 32;
+                    pt[14] = (uint)tmp[3]; tmp[4] += tmp[3] >> 32;
+                    pt[13] = (uint)tmp[4]; tmp[5] += tmp[4] >> 32;
+                    pt[12] = (uint)tmp[5]; tmp[6] += tmp[5] >> 32;
+                    pt[11] = (uint)tmp[6]; tmp[7] += tmp[6] >> 32;
+                    pt[10] = (uint)tmp[7]; tmp[8] += tmp[7] >> 32;
+                    pt[9] = (uint)tmp[8]; tmp[9] += tmp[8] >> 32;
+                    pt[8] = (uint)tmp[9];
+                    Debug.Assert(tmp[9] >> 32 == 0);
 
+                    if (((pt[8] & 0xff000000) | (pt[16] & 0x00ff0000)) == 0x80010000)
+                    {
+                        uint expectedCS = (uint)tmp[0] >> 16 | (uint)tmp[1] << 16;
+
+                        // The following has to be set since second block compression changes it
+                        pt[23] = 272; // 34 *8 = 272
                         Sha256Fo.Init(pt);
                         Sha256Fo.CompressDouble34(pt);
 
-                        if (pt[0] == tmp[9])
+                        if (pt[0] == expectedCS)
                         {
                             SetResultParallel(missingItems, firstItem);
                         }
@@ -363,20 +466,25 @@ namespace FinderOuter.Services
 
             report.IncrementProgress();
         }
-        private unsafe uint[] ParallelPre(int firstItem)
+        private unsafe ulong[] ParallelPre(int firstItem, int len)
         {
-            uint[] localPre = new uint[precomputed.Length];
-            fixed (uint* lpre = &localPre[0], pre = &precomputed[0], pow = &powers58[0])
+            ulong[] localPre = new ulong[preC.Length];
+            fixed (ulong* lpre = &localPre[0], pre = &preC[0], pow = &multPow58[0])
             {
-                Buffer.MemoryCopy(pre, lpre, 40, 40);
+                Buffer.MemoryCopy(pre, lpre, 80, 80);
                 int index = missingIndexes[0];
-                ulong carry = 0;
-                for (int k = 9, j = 0; k >= 0; k--, j++)
-                {
-                    ulong result = (pow[(index * 10) + j] * (ulong)firstItem) + lpre[k] + carry;
-                    lpre[k] = (uint)result;
-                    carry = (uint)(result >> 32);
-                }
+                int chunk = (firstItem * len * 10) + (10 * index);
+
+                lpre[0] += pow[0 + chunk];
+                lpre[1] += pow[1 + chunk];
+                lpre[2] += pow[2 + chunk];
+                lpre[3] += pow[3 + chunk];
+                lpre[4] += pow[4 + chunk];
+                lpre[5] += pow[5 + chunk];
+                lpre[6] += pow[6 + chunk];
+                lpre[7] += pow[7 + chunk];
+                lpre[8] += pow[8 + chunk];
+                lpre[9] += pow[9 + chunk];
             }
 
             return localPre;
@@ -393,56 +501,66 @@ namespace FinderOuter.Services
                 // That makes 5 the optimal number for using parallelization
                 report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
-                Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem), firstItem, 1, new uint[missCount - 1]));
+                Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1, new uint[missCount - 1]));
             }
             else
             {
-                LoopComp(precomputed, -1, 0, new uint[missCount]);
+                LoopComp(preC, -1, 0, new uint[missCount]);
             }
         }
 
-        private unsafe void LoopUncomp(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void LoopUncomp(ulong[] precomputed, int firstItem, int misStart, uint[] missingItems)
         {
-            uint[] temp = new uint[precomputed.Length];
+            ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (ulong* pow = &multPow58[0], pre = &precomputed[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[misStart])
             {
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 40, 40);
+                    Buffer.MemoryCopy(pre, tmp, 80, 80);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (int keyItem in missingItems)
                     {
-                        ulong carry = 0;
-                        for (int k = 9, j = 0; k >= 0; k--, j++)
-                        {
-                            ulong result = (pow[(mi[i] * 10) + j] * (ulong)keyItem) + tmp[k] + carry;
-                            tmp[k] = (uint)result;
-                            carry = (uint)(result >> 32);
-                        }
-                        i++;
+                        int chunk = (keyItem * 510) + (10 * mi[i++]);
+
+                        tmp[0] += pow[0 + chunk];
+                        tmp[1] += pow[1 + chunk];
+                        tmp[2] += pow[2 + chunk];
+                        tmp[3] += pow[3 + chunk];
+                        tmp[4] += pow[4 + chunk];
+                        tmp[5] += pow[5 + chunk];
+                        tmp[6] += pow[6 + chunk];
+                        tmp[7] += pow[7 + chunk];
+                        tmp[8] += pow[8 + chunk];
+                        tmp[9] += pow[9 + chunk];
                     }
 
-                    if (tmp[0] == 0x00000080)
+                    // Normalize:
+                    tmp[1] += tmp[0] >> 32;
+                    pt[16] = ((uint)tmp[1] & 0xff000000) | 0b00000000_10000000_00000000_00000000U; tmp[2] += tmp[1] >> 32;
+                    pt[15] = (uint)tmp[2]; tmp[3] += tmp[2] >> 32;
+                    pt[14] = (uint)tmp[3]; tmp[4] += tmp[3] >> 32;
+                    pt[13] = (uint)tmp[4]; tmp[5] += tmp[4] >> 32;
+                    pt[12] = (uint)tmp[5]; tmp[6] += tmp[5] >> 32;
+                    pt[11] = (uint)tmp[6]; tmp[7] += tmp[6] >> 32;
+                    pt[10] = (uint)tmp[7]; tmp[8] += tmp[7] >> 32;
+                    pt[9] = (uint)tmp[8]; tmp[9] += tmp[8] >> 32;
+                    pt[8] = (uint)tmp[9];
+                    Debug.Assert(tmp[9] >> 32 == 0);
+
+                    if ((pt[8] & 0xff000000) == 0x80000000)
                     {
-                        pt[8] = (tmp[0] << 24) | (tmp[1] >> 8);
-                        pt[9] = (tmp[1] << 24) | (tmp[2] >> 8);
-                        pt[10] = (tmp[2] << 24) | (tmp[3] >> 8);
-                        pt[11] = (tmp[3] << 24) | (tmp[4] >> 8);
-                        pt[12] = (tmp[4] << 24) | (tmp[5] >> 8);
-                        pt[13] = (tmp[5] << 24) | (tmp[6] >> 8);
-                        pt[14] = (tmp[6] << 24) | (tmp[7] >> 8);
-                        pt[15] = (tmp[7] << 24) | (tmp[8] >> 8);
-                        pt[16] = (tmp[8] << 24) | 0b00000000_10000000_00000000_00000000U;
-                        // from 9 to 14 = 0
+                        uint expectedCS = (uint)tmp[0] >> 24 | (uint)tmp[1] << 8;
+
+                        // The following has to be set since second block compression changes it
                         pt[23] = 264; // 33 *8 = 264
 
                         Sha256Fo.Init(pt);
                         Sha256Fo.CompressDouble33(pt);
 
-                        if (pt[0] == tmp[9])
+                        if (pt[0] == expectedCS)
                         {
                             SetResultParallel(missingItems, firstItem);
                         }
@@ -463,11 +581,11 @@ namespace FinderOuter.Services
                 // Same as LoopComp()
                 report.SetProgressStep(58);
                 report.AddMessageSafe("Running in parallel.");
-                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem), firstItem, 1, new uint[missCount - 1]));
+                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1, new uint[missCount - 1]));
             }
             else
             {
-                LoopUncomp(precomputed, -1, 0, new uint[missCount]);
+                LoopUncomp(preC, -1, 0, new uint[missCount]);
             }
         }
 
@@ -1012,19 +1130,19 @@ namespace FinderOuter.Services
                                           $"characters was detected.");
                     report.AddMessageSafe($"Total number of keys to check: {GetTotalCount(missCount):n0}");
 
-                    Initialize(key.ToCharArray(), missingChar, InputType.PrivateKey);
-
                     Stopwatch watch = Stopwatch.StartNew();
 
                     await Task.Run(() =>
                     {
                         if (isComp)
                         {
+                            InitializeCompressWif(key.AsSpan(), missingChar);
                             report.AddMessageSafe("Running compressed loop. Please wait.");
                             LoopComp();
                         }
                         else
                         {
+                            InitializeUncompressWif(key.AsSpan(), missingChar);
                             report.AddMessageSafe("Running uncompressed loop. Please wait.");
                             LoopUncomp();
                         }
