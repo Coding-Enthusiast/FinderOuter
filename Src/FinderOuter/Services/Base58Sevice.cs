@@ -850,6 +850,138 @@ namespace FinderOuter.Services
             return false;
         }
 
+        private unsafe bool SpecialLoopComp2(string key, bool comp)
+        {
+            int maxKeyLen = comp ? ConstantsFO.PrivKeyCompWifLen : ConstantsFO.PrivKeyUncompWifLen;
+
+            byte[] padded;
+
+            // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+            const int uLen = 10;
+            uint[] powers58 = new uint[maxKeyLen * uLen];
+            padded = new byte[4 * uLen];
+
+            for (int i = 0, j = 0; i < maxKeyLen; i++)
+            {
+                BigInteger val = BigInteger.Pow(58, i);
+                byte[] temp = val.ToByteArray(true, false);
+
+                Array.Clear(padded, 0, padded.Length);
+                Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
+
+                for (int k = 0; k < padded.Length; j++, k += 4)
+                {
+                    powers58[j] = (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
+                }
+            }
+
+            int[] values = new int[key.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = ConstantsFO.Base58Chars.IndexOf(key[i]);
+            }
+
+            uint[] precomputed = new uint[uLen];
+            fixed (uint* pre = &precomputed[0], pow = &powers58[0])
+            {
+                // i starts from 1 becaue it is compressed (K or L)
+                for (int i = 1; i < maxKeyLen - 1; i++)
+                {
+                    for (int j = i + 1; j < maxKeyLen; j++)
+                    {
+                        ((Span<uint>)precomputed).Clear();
+
+                        for (int index = 0; index < i; index++)
+                        {
+                            ulong carry = 0;
+                            ulong val = (ulong)values[index];
+                            int powIndex = (maxKeyLen - 1 - index) * uLen;
+                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                            {
+                                ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                pre[m] = (uint)result;
+                                carry = (uint)(result >> 32);
+                            }
+                        }
+
+                        for (int index = i + 1; index < j; index++)
+                        {
+                            ulong carry = 0;
+                            ulong val = (ulong)values[index - 1];
+                            int powIndex = (maxKeyLen - 1 - index) * uLen;
+                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                            {
+                                ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                pre[m] = (uint)result;
+                                carry = (uint)(result >> 32);
+                            }
+                        }
+
+                        for (int index = j + 1; index < maxKeyLen; index++)
+                        {
+                            ulong carry = 0;
+                            ulong val = (ulong)values[index - 2];
+                            int powIndex = (maxKeyLen - 1 - index) * uLen;
+                            for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                            {
+                                ulong result = (pow[powIndex] * val) + pre[m] + carry;
+                                pre[m] = (uint)result;
+                                carry = (uint)(result >> 32);
+                            }
+                        }
+
+                        Debug.Assert(pow[0] == 12);
+
+                        Parallel.For(0, 58, (c1, state) =>
+                        {
+                            for (int c2 = 0; c2 < 58; c2++)
+                            {
+                                if (state.IsStopped)
+                                {
+                                    return;
+                                }
+
+                                Span<uint> temp = new uint[precomputed.Length];
+                                precomputed.CopyTo(temp);
+
+                                ulong carry = 0;
+                                ulong val = (ulong)c1;
+                                int powIndex = (maxKeyLen - 1 - i) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                    temp[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+
+                                carry = 0;
+                                val = (ulong)c2;
+                                powIndex = (maxKeyLen - 1 - j) * uLen;
+                                for (int m = uLen - 1; m >= 0; m--, powIndex++)
+                                {
+                                    ulong result = (powers58[powIndex] * val) + temp[m] + carry;
+                                    temp[m] = (uint)result;
+                                    carry = (uint)(result >> 32);
+                                }
+
+                                bool checksum = comp ? ComputeSpecialCompHash(temp) : ComputeSpecialUncompHash(temp);
+                                if (checksum)
+                                {
+                                    string foundRes = key.Insert(i, $"{ConstantsFO.Base58Chars[c1]}")
+                                                         .Insert(j, $"{ConstantsFO.Base58Chars[c2]}");
+                                    report.AddMessageSafe($"Found a key: {foundRes}");
+                                    report.FoundAnyResult = true;
+                                    state.Stop();
+                                    return;
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            return false;
+        }
+
         private unsafe bool SpecialLoopComp3(string key)
         {
             byte[] padded;
@@ -1083,11 +1215,23 @@ namespace FinderOuter.Services
             report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
 
             Stopwatch watch = Stopwatch.StartNew();
-            bool success = await Task.Run(() =>
-            {
-                return SpecialLoopComp1(key, comp);
-            }
-            );
+            bool success = await Task.Run(() => SpecialLoopComp1(key, comp));
+
+            watch.Stop();
+            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
+            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
+
+            return success;
+        }
+
+        public async Task<bool> FindUnknownLocation2(string key, bool comp)
+        {
+            // [51! / 2! *((51-2)!)] * 58^2
+            BigInteger total = ((51 * 50) / (2 * 1)) * BigInteger.Pow(58, 2);
+            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
+
+            Stopwatch watch = Stopwatch.StartNew();
+            bool success = await Task.Run(() => SpecialLoopComp2(key, comp));
 
             watch.Stop();
             report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
@@ -1171,6 +1315,10 @@ namespace FinderOuter.Services
                     {
                         await FindUnknownLocation1(key, true);
                     }
+                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 2)
+                    {
+                        await FindUnknownLocation2(key, true);
+                    }
                     else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
                     {
                         await FindUnknownLocation3(key);
@@ -1190,6 +1338,10 @@ namespace FinderOuter.Services
                     else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 1)
                     {
                         await FindUnknownLocation1(key, false);
+                    }
+                    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 2)
+                    {
+                        await FindUnknownLocation2(key, false);
                     }
                     else
                     {
