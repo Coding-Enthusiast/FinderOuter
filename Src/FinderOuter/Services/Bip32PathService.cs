@@ -65,12 +65,23 @@ namespace FinderOuter.Services
                     new BIP0032Path("m/0"),
                     new BIP0032Path("m/0'"),
                     new BIP0032Path("m/0'/0/"),
+                    new BIP0032Path("m/0'/0'"),
                     // BIP-44 xprv/xpub P2PKH
                     new BIP0032Path("m/44'/0'/0'/0"),
+                    new BIP0032Path("m/44'/0'/0'"),
                     // BIP-49 yprv/upub P2SH-P2WPKH
                     new BIP0032Path("m/49'/0'/0'/0"),
+                    new BIP0032Path("m/49'/0'/0'"),
                     // BIP-84 zprv/zpub P2WPKH
                     new BIP0032Path("m/84'/0'/0'/0"),
+                    new BIP0032Path("m/84'/0'/0'/"),
+                    new BIP0032Path("m/84'/0'/2147483644'/0"),
+                    new BIP0032Path("m/84'/0'/2147483645'/0"),
+                    new BIP0032Path("m/84'/0'/2147483646'/0"),
+                    new BIP0032Path("m/84'/0'/2147483647'/0"),
+                    new BIP0032Path("m/49'/0'/2147483647'/0"),
+                    new BIP0032Path("m/44'/0'/2147483647'/0"),
+                    new BIP0032Path("m/141'/0'/0'/0"),
                 };
 
 
