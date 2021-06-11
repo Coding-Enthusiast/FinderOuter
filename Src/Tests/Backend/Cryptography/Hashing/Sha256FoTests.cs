@@ -18,14 +18,14 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "SHA256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHashTest(byte[] message, byte[] expectedHash)
         {
-            byte[] actualHash = Sha256Fo.ComputeHash_Static(message);
+            byte[] actualHash = Sha256Fo.ComputeHash(message);
             Assert.Equal(expectedHash, actualHash);
         }
 
         [Fact]
         public void ComputeHash_AMillionATest()
         {
-            byte[] actualHash = Sha256Fo.ComputeHash_Static(HashTestCaseHelper.GetAMillionA());
+            byte[] actualHash = Sha256Fo.ComputeHash(HashTestCaseHelper.GetAMillionA());
             byte[] expectedHash = Helper.HexToBytes("cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
             Assert.Equal(expectedHash, actualHash);
         }
@@ -38,8 +38,8 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] exp1 = Helper.HexToBytes("d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592");
             byte[] exp2 = Helper.HexToBytes("e4c4d8f3bf76b692de791a173e05321150f7a345b46484fe427f6acc7ecc81be");
 
-            byte[] act1 = Sha256Fo.ComputeHash_Static(msg1);
-            byte[] act2 = Sha256Fo.ComputeHash_Static(msg2);
+            byte[] act1 = Sha256Fo.ComputeHash(msg1);
+            byte[] act2 = Sha256Fo.ComputeHash(msg2);
 
             Assert.Equal(exp1, act1);
             Assert.Equal(exp2, act2);
@@ -50,7 +50,7 @@ namespace Tests.Backend.Cryptography.Hashing
         public void ComputeHash_DoubleTest()
         {
             var data = Helper.HexToBytes("fb8049137747e712628240cf6d7056ea2870170cb7d9bc713d91e901b514c6ae7d7dda3cd03ea1b99cf85046a505f3590541123d3f8f2c22c4d7d6e65de65c4ebb9251f09619");
-            byte[] actualHash = Sha256Fo.ComputeHashTwice_Static(data);
+            byte[] actualHash = Sha256Fo.ComputeHashTwice(data);
             byte[] expectedHash = Helper.HexToBytes("d2cee8d3cfaf1819c55cce1214d01cdef1d97446719ccfaad4d76d912a8126f9");
 
             Assert.Equal(expectedHash, actualHash);
@@ -60,7 +60,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistShortTest(byte[] message, byte[] expected)
         {
-            byte[] actual = Sha256Fo.ComputeHash_Static(message);
+            byte[] actual = Sha256Fo.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
 
@@ -68,7 +68,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistLongTest(byte[] message, byte[] expected)
         {
-            byte[] actual = Sha256Fo.ComputeHash_Static(message);
+            byte[] actual = Sha256Fo.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
 
@@ -96,7 +96,7 @@ namespace Tests.Backend.Cryptography.Hashing
 
                     M0 = M1;
                     M1 = M2;
-                    M2 = Sha256Fo.ComputeHash_Static(toHash);
+                    M2 = Sha256Fo.ComputeHash(toHash);
                 }
                 M0 = M2;
                 M1 = M2;

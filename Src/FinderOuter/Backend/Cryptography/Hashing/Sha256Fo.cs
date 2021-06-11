@@ -53,7 +53,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         };
 
 
-        public static unsafe byte[] ComputeHash_Static(Span<byte> data)
+        public static unsafe byte[] ComputeHash(Span<byte> data)
         {
             uint* pt = stackalloc uint[HashStateSize + WorkingVectorSize];
             Init(pt);
@@ -64,7 +64,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             return GetBytes(pt);
         }
 
-        public static unsafe byte[] ComputeHashTwice_Static(Span<byte> data)
+        public static unsafe byte[] ComputeHashTwice(Span<byte> data)
         {
             uint* pt = stackalloc uint[HashStateSize + WorkingVectorSize];
             Init(pt);

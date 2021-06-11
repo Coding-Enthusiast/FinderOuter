@@ -499,7 +499,7 @@ namespace FinderOuter.Services
             byte[] full = new byte[18];
             Buffer.BlockCopy(data.ToArray(), 0, full, 0, data.Length);
 
-            byte[] cs = Sha256Fo.ComputeHashTwice_Static(data.ToArray()).SubArray(0, 2);
+            byte[] cs = Sha256Fo.ComputeHashTwice(data.ToArray()).SubArray(0, 2);
             full[16] = cs[0];
             full[17] = cs[1];
 
