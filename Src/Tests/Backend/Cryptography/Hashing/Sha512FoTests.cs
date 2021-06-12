@@ -17,14 +17,14 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "SHA512", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHashTest(byte[] message, byte[] expectedHash)
         {
-            byte[] actualHash = Sha512Fo.ComputeHash_Static(message);
+            byte[] actualHash = Sha512Fo.ComputeHash(message);
             Assert.Equal(expectedHash, actualHash);
         }
 
         [Fact]
         public void ComputeHash_AMillionATest()
         {
-            byte[] actualHash = Sha512Fo.ComputeHash_Static(HashTestCaseHelper.GetAMillionA());
+            byte[] actualHash = Sha512Fo.ComputeHash(HashTestCaseHelper.GetAMillionA());
             byte[] expectedHash = Helper.HexToBytes("e718483d0ce769644e2e42c7bc15b4638e1f98b13b2044285632a803afa973ebde0ff244877ea60a4cb0432ce577c31beb009c5c2c49aa2e4eadb217ad8cc09b");
 
             Assert.Equal(expectedHash, actualHash);
@@ -38,8 +38,8 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] exp1 = Helper.HexToBytes("07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6");
             byte[] exp2 = Helper.HexToBytes("3eeee1d0e11733ef152a6c29503b3ae20c4f1f3cda4cb26f1bc1a41f91c7fe4ab3bd86494049e201c4bd5155f31ecb7a3c8606843c4cc8dfcab7da11c8ae5045");
 
-            byte[] act1 = Sha512Fo.ComputeHash_Static(msg1);
-            byte[] act2 = Sha512Fo.ComputeHash_Static(msg2);
+            byte[] act1 = Sha512Fo.ComputeHash(msg1);
+            byte[] act2 = Sha512Fo.ComputeHash(msg2);
 
             Assert.Equal(exp1, act1);
             Assert.Equal(exp2, act2);
@@ -49,7 +49,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha512", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistShortTest(byte[] message, byte[] expected)
         {
-            byte[] actual = Sha512Fo.ComputeHash_Static(message);
+            byte[] actual = Sha512Fo.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
 
@@ -57,7 +57,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [MemberData(nameof(HashTestCaseHelper.GetNistLongCases), parameters: "Sha512", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistLongTest(byte[] message, byte[] expected)
         {
-            byte[] actual = Sha512Fo.ComputeHash_Static(message);
+            byte[] actual = Sha512Fo.ComputeHash(message);
             Assert.Equal(expected, actual);
         }
 
@@ -85,7 +85,7 @@ namespace Tests.Backend.Cryptography.Hashing
 
                     M0 = M1;
                     M1 = M2;
-                    M2 = Sha512Fo.ComputeHash_Static(toHash);
+                    M2 = Sha512Fo.ComputeHash(toHash);
                 }
                 M0 = M2;
                 M1 = M2;
@@ -114,7 +114,6 @@ namespace Tests.Backend.Cryptography.Hashing
                             data[j + 7];
             }
 
-            using Sha512Fo sha = new();
             fixed (ulong* hPt = &hashState[0])
             {
                 byte[] actual = Sha512Fo.GetFirst32Bytes(hPt);
@@ -141,7 +140,6 @@ namespace Tests.Backend.Cryptography.Hashing
                             data[j + 7];
             }
 
-            using Sha512Fo sha = new();
             fixed (ulong* hPt = &hashState[0])
             {
                 byte[] actual = Sha512Fo.GetSecond32Bytes(hPt);
@@ -181,12 +179,12 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init_InnerPad_Bitcoinseed(hPt);
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);
@@ -211,12 +209,12 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init_OuterPad_Bitcoinseed(hPt);
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);
@@ -241,12 +239,12 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init_InnerPad_SeedVersion(hPt);
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);
@@ -271,12 +269,12 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init_OuterPad_SeedVersion(hPt);
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);
@@ -310,7 +308,7 @@ namespace Tests.Backend.Cryptography.Hashing
             }
 
             Sha512Fo.SetW(wPt);
-            Sha512Fo.CompressBlockWithWSet_Static(hPt, wPt);
+            Sha512Fo.CompressBlockWithWSet(hPt, wPt);
 
             for (int i = 0; i < 4; i++, dIndex += 8)
             {
@@ -375,7 +373,7 @@ namespace Tests.Backend.Cryptography.Hashing
             }
 
             Sha512Fo.SetW(wPt);
-            Sha512Fo.CompressBlockWithWSet_Static(hPt, wPt);
+            Sha512Fo.CompressBlockWithWSet(hPt, wPt);
 
             for (int i = 0; i < 8; i++, dIndex += 8)
             {
@@ -422,14 +420,14 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init(hPt);
-                sha.CompressHmacBlock_0x36_Bitcoinseed(hPt, wPt);
+                Sha512Fo.CompressHmacBlock_0x36_Bitcoinseed(hPt, wPt);
 
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);
@@ -454,14 +452,14 @@ namespace Tests.Backend.Cryptography.Hashing
 
             byte[] expected = ComputeSingleSha(data);
 
-            using Sha512Fo sha = new();
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (byte* dPt = &data[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 Sha512Fo.Init(hPt);
-                sha.CompressHmacBlock_0x5c_Bitcoinseed(hPt, wPt);
+                Sha512Fo.CompressHmacBlock_0x5c_Bitcoinseed(hPt, wPt);
 
-                sha.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
+                Sha512Fo.CompressData(dPt + 128, extraLen, dataLen, hPt, wPt);
                 byte[] actual = Sha512Fo.GetBytes(hPt);
 
                 Assert.Equal(expected, actual);

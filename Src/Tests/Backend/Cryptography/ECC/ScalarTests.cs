@@ -34,13 +34,14 @@ namespace Tests.Backend.Cryptography.ECC
         [Fact]
         public unsafe void Constructor_FromSha512Test()
         {
-            using Sha512Fo sha = new();
             byte[] data = new byte[] { 1, 2, 3 };
-            // Get hashstate ready first
-            sha.ComputeHash(data);
-
-            fixed (ulong* hPt = &sha.hashState[0])
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
+            fixed (byte* dPt = data)
             {
+                // Get hashstate ready first
+                Sha512Fo.CompressData(dPt, data.Length, data.Length, hPt, wPt);
+
                 byte[] hash = Sha512Fo.GetFirst32Bytes(hPt);
                 var val1 = new Scalar(hash, out int of1);
                 var val2 = new Scalar(hPt, out int of2);
@@ -50,7 +51,5 @@ namespace Tests.Backend.Cryptography.ECC
                 Assert.Equal(0, of1);
             }
         }
-
-
     }
 }

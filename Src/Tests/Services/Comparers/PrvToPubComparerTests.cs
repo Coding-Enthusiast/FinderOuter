@@ -98,10 +98,14 @@ namespace Tests.Services.Comparers
         public unsafe void Compare_Sha512HashStateTest()
         {
             var comp = new PrvToPubComparer();
-            using Sha512Fo sha = new();
-            sha.ComputeHash(new byte[1]);
-            fixed (ulong* hPt = sha.hashState)
+            byte[] data = new byte[] { 1, 2, 3 };
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
+            fixed (byte* dPt = data)
             {
+                // Get hashstate ready first
+                Sha512Fo.CompressData(dPt, data.Length, data.Length, hPt, wPt);
+
                 var key = new Scalar(hPt, out int overflow);
                 Assert.Equal(0, overflow);
                 var calc = new Calc();

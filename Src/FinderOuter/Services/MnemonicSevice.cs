@@ -62,7 +62,7 @@ namespace FinderOuter.Services
         private string[] words;
 
 
-        public unsafe bool SetBip32(Sha512Fo sha, byte* mnPt, int mnLen, ulong* bigBuffer, ICompareService comparer)
+        public unsafe bool SetBip32(byte* mnPt, int mnLen, ulong* bigBuffer, ICompareService comparer)
         {
             // The process is: PBKDF2(password=UTF8(mnemonic), salt=UTF8("mnemonic+passphrase") -> BIP32 seed
             //                 BIP32 -> HMACSHA(data=seed, key=MasterKeyHashKey) -> HMACSHA(data=key|index, key=ChainCode)
@@ -72,7 +72,9 @@ namespace FinderOuter.Services
             // dkLen/HmacLen=1 => only 1 block => no loop needed
             // Salt is the "mnemonic+passPhrase" + blockNumber(=1) => fixed and set during precomputing
 
-            ulong* uPt = bigBuffer;
+            ulong* hPt = bigBuffer;
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
+            ulong* uPt = wPt + Sha512Fo.WorkingVectorSize;
             ulong* iPt = uPt + 80;
             ulong* oPt = iPt + 80;
 
@@ -81,7 +83,6 @@ namespace FinderOuter.Services
             ulong* ohPt = ihPt + 8;
 
             fixed (byte* dPt = &pbkdf2Salt[0])
-            fixed (ulong* hPt = &sha.hashState[0], wPt = &sha.w[0])
             {
                 // Setting values in uTemp that never change
                 uPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
@@ -99,7 +100,7 @@ namespace FinderOuter.Services
                 {
                     // Key bytes must be hashed first
                     Sha512Fo.Init(hPt);
-                    Sha512Fo.CompressData_Static(mnPt, mnLen, mnLen, hPt, wPt);
+                    Sha512Fo.CompressData(mnPt, mnLen, mnLen, hPt, wPt);
                     // Set pads to be used as working vectors
                     iPt[0] = 0x3636363636363636U ^ hPt[0];
                     iPt[1] = 0x3636363636363636U ^ hPt[1];
@@ -166,11 +167,11 @@ namespace FinderOuter.Services
                 // 1. Compute SHA512(inner_pad | data)
                 Sha512Fo.Init(hPt);
                 Sha512Fo.SetW(iPt);
-                Sha512Fo.CompressBlockWithWSet_Static(hPt, iPt);
+                Sha512Fo.CompressBlockWithWSet(hPt, iPt);
                 // Make a copy of hashState of inner-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ihPt = *(Block64*)hPt;
                 // Data length is unknown and an initial block of 128 bytes was already compressed
-                Sha512Fo.CompressData_Static(dPt, pbkdf2Salt.Length, pbkdf2Salt.Length + 128, hPt, wPt);
+                Sha512Fo.CompressData(dPt, pbkdf2Salt.Length, pbkdf2Salt.Length + 128, hPt, wPt);
                 // 2. Compute SHA512(outer_pad | hash)
                 *(Block64*)wPt = *(Block64*)hPt;
                 wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
@@ -184,7 +185,7 @@ namespace FinderOuter.Services
 
                 Sha512Fo.Init(hPt);
                 Sha512Fo.SetW(oPt);
-                Sha512Fo.CompressBlockWithWSet_Static(hPt, oPt);
+                Sha512Fo.CompressBlockWithWSet(hPt, oPt);
                 // Make a copy of hashState of outer-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ohPt = *(Block64*)hPt;
                 Sha512Fo.Compress192SecondBlock(hPt, wPt);
@@ -378,7 +379,7 @@ namespace FinderOuter.Services
 
                     Sha512Fo.Init(hPt);
                     Sha512Fo.SetW(iPt);
-                    Sha512Fo.CompressBlockWithWSet_Static(hPt, iPt);
+                    Sha512Fo.CompressBlockWithWSet(hPt, iPt);
                     Sha512Fo.Compress165SecondBlock(hPt, uPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
@@ -387,7 +388,7 @@ namespace FinderOuter.Services
                     // from wPt[8] to wPt[15] didn't change
                     Sha512Fo.Init(hPt);
                     Sha512Fo.SetW(oPt);
-                    Sha512Fo.CompressBlockWithWSet_Static(hPt, oPt);
+                    Sha512Fo.CompressBlockWithWSet(hPt, oPt);
                     Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                     // New private key is (parentPrvKey + int(hPt)) % order
@@ -438,7 +439,6 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -447,7 +447,7 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
@@ -494,7 +494,7 @@ namespace FinderOuter.Services
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
+                        if (SetBip32(mnPt, mnLen - 1, bigBuffer, localComp))
                         {
                             SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
@@ -518,10 +518,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
                 fixed (int* mi = &missingIndexes[0])
@@ -602,7 +600,7 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
+                            if (SetBip32(mnPt, mnLen - 1, bigBuffer, comparer))
                             {
                                 SetResultParallel(mnPt, mnLen - 1);
                                 return;
@@ -619,7 +617,6 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -628,7 +625,7 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
@@ -674,7 +671,7 @@ namespace FinderOuter.Services
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
+                        if (SetBip32(mnPt, mnLen - 1, bigBuffer, localComp))
                         {
                             SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
@@ -698,10 +695,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
@@ -734,7 +729,7 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
+                            if (SetBip32(mnPt, mnLen - 1, bigBuffer, comparer))
                             {
                                 SetResultParallel(mnPt, mnLen - 1);
                                 break;
@@ -751,7 +746,6 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -760,7 +754,7 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
@@ -805,7 +799,7 @@ namespace FinderOuter.Services
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
+                        if (SetBip32(mnPt, mnLen - 1, bigBuffer, localComp))
                         {
                             SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
@@ -829,10 +823,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
@@ -864,7 +856,7 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
+                            if (SetBip32(mnPt, mnLen - 1, bigBuffer, comparer))
                             {
                                 SetResultParallel(mnPt, mnLen - 1);
                                 break;
@@ -881,7 +873,6 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -890,7 +881,7 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
 
             fixed (uint* wrd = &localWIndex[0])
@@ -935,7 +926,7 @@ namespace FinderOuter.Services
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
+                        if (SetBip32(mnPt, mnLen - 1, bigBuffer, localComp))
                         {
                             SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
@@ -959,10 +950,8 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
                 fixed (byte* mnPt = &mnBytes[0])
@@ -993,7 +982,7 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
+                            if (SetBip32(mnPt, mnLen - 1, bigBuffer, comparer))
                             {
                                 SetResultParallel(mnPt, mnLen - 1);
                                 break;
@@ -1010,7 +999,6 @@ namespace FinderOuter.Services
             var missingItems = new uint[missCount - 1];
             var localComp = comparer.Clone();
 
-            using Sha512Fo sha512 = new();
             byte[] localMnBytes = new byte[mnBytes.Length];
 
             var localCopy = new byte[allWordsBytes.Length][];
@@ -1019,7 +1007,7 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
 
             fixed (uint* wrd = &localWIndex[0])
@@ -1064,7 +1052,7 @@ namespace FinderOuter.Services
                             mnLen += temp.Length;
                         }
 
-                        if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, localComp))
+                        if (SetBip32(mnPt, mnLen - 1, bigBuffer, localComp))
                         {
                             SetResultParallel(mnPt, mnLen - 1);
                             loopState.Stop();
@@ -1090,10 +1078,8 @@ namespace FinderOuter.Services
             {
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
 
                 fixed (uint* wrd = &wordIndexes[0])
@@ -1124,7 +1110,7 @@ namespace FinderOuter.Services
                                 mnLen += temp.Length;
                             }
 
-                            if (SetBip32(sha512, mnPt, mnLen - 1, bigBuffer, comparer))
+                            if (SetBip32(mnPt, mnLen - 1, bigBuffer, comparer))
                             {
                                 SetResultParallel(mnPt, mnLen - 1);
                                 break;
@@ -1150,13 +1136,11 @@ namespace FinderOuter.Services
             uint[] localWIndex = new uint[wordIndexes.Length];
             Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
 
-
-            using Sha512Fo sha512 = new();
-
-            ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+            ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
+            ulong* hPt = bigBuffer;
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (uint* wrd = &localWIndex[0], itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (ulong* hPt = &sha512.hashState[0], wPt = &sha512.w[0])
             fixed (byte* mnPt = &localMnBytes[0])
             {
                 wrd[firstIndex] = (uint)firstItem;
@@ -1189,7 +1173,8 @@ namespace FinderOuter.Services
                     // Compute HMACSHA512("Seed version", normalized_mnemonic)
                     // 1. Compute SHA512(inner_pad | data)
                     Sha512Fo.Init_InnerPad_SeedVersion(hPt);
-                    sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
+                    Sha512Fo.SetW(wPt);
+                    Sha512Fo.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
                     *(Block64*)wPt = *(Block64*)hPt;
@@ -1204,7 +1189,7 @@ namespace FinderOuter.Services
                     Sha512Fo.Init_OuterPad_SeedVersion(hPt);
                     Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
-                    if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, localComp))
+                    if ((hPt[0] & mask) == expected && SetBip32(mnPt, mnLen, bigBuffer, localComp))
                     {
                         SetResultParallel(mnPt, mnLen);
                         loopState.Stop();
@@ -1253,12 +1238,11 @@ namespace FinderOuter.Services
             }
             else
             {
-                using Sha512Fo sha512 = new();
-
                 int misIndex = missingIndexes[0];
-                ulong* bigBuffer = stackalloc ulong[80 + 80 + 80 + 8 + 8 + 8];
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
+                ulong* hPt = bigBuffer;
+                ulong* wPt = bigBuffer + Sha512Fo.HashStateSize;
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (ulong* hPt = &sha512.hashState[0], wPt = &sha512.w[0])
                 fixed (byte* mnPt = &mnBytes[0])
                 {
                     for (uint item = 0; item < 2048; item++)
@@ -1279,7 +1263,8 @@ namespace FinderOuter.Services
                         // Compute HMACSHA512("Seed version", normalized_mnemonic)
                         // 1. Compute SHA512(inner_pad | data)
                         Sha512Fo.Init_InnerPad_SeedVersion(hPt);
-                        sha512.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
+                        Sha512Fo.SetW(wPt);
+                        Sha512Fo.CompressData(mnPt, mnLen, mnLen + 128, hPt, wPt);
 
                         // 2. Compute SHA512(outer_pad | hash)
                         *(Block64*)wPt = *(Block64*)hPt;
@@ -1294,7 +1279,7 @@ namespace FinderOuter.Services
                         Sha512Fo.Init_OuterPad_SeedVersion(hPt);
                         Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
-                        if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, comparer))
+                        if ((hPt[0] & mask) == expected && SetBip32(mnPt, mnLen, bigBuffer, comparer))
                         {
                             SetResultParallel(mnPt, mnLen);
                             break;
