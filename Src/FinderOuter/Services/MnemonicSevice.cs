@@ -99,7 +99,7 @@ namespace FinderOuter.Services
                 {
                     // Key bytes must be hashed first
                     Sha512Fo.Init(hPt);
-                    sha.CompressData(mnPt, mnLen, mnLen, hPt, wPt);
+                    Sha512Fo.CompressData_Static(mnPt, mnLen, mnLen, hPt, wPt);
                     // Set pads to be used as working vectors
                     iPt[0] = 0x3636363636363636U ^ hPt[0];
                     iPt[1] = 0x3636363636363636U ^ hPt[1];
@@ -165,11 +165,12 @@ namespace FinderOuter.Services
                 // Final result is SHA512(outer_pad | SHA512(inner_pad | data)) where data is pbkdf2Salt
                 // 1. Compute SHA512(inner_pad | data)
                 Sha512Fo.Init(hPt);
-                sha.CompressBlock(hPt, iPt);
+                Sha512Fo.SetW(iPt);
+                Sha512Fo.CompressBlockWithWSet_Static(hPt, iPt);
                 // Make a copy of hashState of inner-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ihPt = *(Block64*)hPt;
                 // Data length is unknown and an initial block of 128 bytes was already compressed
-                sha.CompressData(dPt, pbkdf2Salt.Length, pbkdf2Salt.Length + 128, hPt, wPt);
+                Sha512Fo.CompressData_Static(dPt, pbkdf2Salt.Length, pbkdf2Salt.Length + 128, hPt, wPt);
                 // 2. Compute SHA512(outer_pad | hash)
                 *(Block64*)wPt = *(Block64*)hPt;
                 wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
@@ -182,10 +183,11 @@ namespace FinderOuter.Services
                 wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
 
                 Sha512Fo.Init(hPt);
-                sha.CompressBlock(hPt, oPt);
+                Sha512Fo.SetW(oPt);
+                Sha512Fo.CompressBlockWithWSet_Static(hPt, oPt);
                 // Make a copy of hashState of outer-pad to be used in the loop below (explaination in the loop)
                 *(Block64*)ohPt = *(Block64*)hPt;
-                sha.Compress192SecondBlock(hPt, wPt);
+                Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                 // Copy u1 to result of F() to be XOR'ed with each result on iterations, and result of F() is the seed
                 *(Block64*)seedPt = *(Block64*)hPt;
@@ -206,7 +208,7 @@ namespace FinderOuter.Services
 
                     // Replace: sha.Init(hPt); sha.CompressBlockWithWSet(hPt, iPt); with line below:
                     *(Block64*)hPt = *(Block64*)ihPt;
-                    sha.Compress192SecondBlock(hPt, uPt);
+                    Sha512Fo.Compress192SecondBlock(hPt, uPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
                     *(Block64*)wPt = *(Block64*)hPt;
@@ -214,7 +216,7 @@ namespace FinderOuter.Services
 
                     // Replace: sha.Init(hPt); sha.CompressBlock(hPt, oPt); with line below:
                     *(Block64*)hPt = *(Block64*)ohPt;
-                    sha.Compress192SecondBlock(hPt, wPt);
+                    Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                     // result of F() is XOR sum of all u arrays
                     if (Avx2.IsSupported) // AVX512 :(
@@ -247,13 +249,13 @@ namespace FinderOuter.Services
                 Sha512Fo.Init_InnerPad_Bitcoinseed(hPt);
                 *(Block64*)wPt = *(Block64*)seedPt;
                 // from wPt[8] to wPt[15] didn't change
-                sha.Compress192SecondBlock(hPt, wPt);
+                Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                 // 2. Compute SHA512(outer_pad | hash)
                 *(Block64*)wPt = *(Block64*)hPt; // ** Copy hashState before changing it **
                 // from wPt[8] to wPt[15] didn't change
                 Sha512Fo.Init_OuterPad_Bitcoinseed(hPt);
-                sha.Compress192SecondBlock(hPt, wPt);
+                Sha512Fo.Compress192SecondBlock(hPt, wPt);
                 // Master key is set. PrivateKey= first 32-bytes of hPt and ChainCode is second 32-bytes
 
                 // Each child is derived by computing HMAC(data=(hardened? 0|prvKey : pubkey) | index, key=ChainCode)
@@ -375,16 +377,18 @@ namespace FinderOuter.Services
                     oPt[3] = 0x5c5c5c5c5c5c5c5cU ^ hPt[7];
 
                     Sha512Fo.Init(hPt);
-                    sha.CompressBlock(hPt, iPt);
-                    sha.Compress165SecondBlock(hPt, uPt);
+                    Sha512Fo.SetW(iPt);
+                    Sha512Fo.CompressBlockWithWSet_Static(hPt, iPt);
+                    Sha512Fo.Compress165SecondBlock(hPt, uPt);
 
                     // 2. Compute SHA512(outer_pad | hash)
                     *(Block64*)wPt = *(Block64*)hPt;
 
                     // from wPt[8] to wPt[15] didn't change
                     Sha512Fo.Init(hPt);
-                    sha.CompressBlock(hPt, oPt);
-                    sha.Compress192SecondBlock(hPt, wPt);
+                    Sha512Fo.SetW(oPt);
+                    Sha512Fo.CompressBlockWithWSet_Static(hPt, oPt);
+                    Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                     // New private key is (parentPrvKey + int(hPt)) % order
                     // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
@@ -1198,7 +1202,7 @@ namespace FinderOuter.Services
                     wPt[14] = 0;
                     wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
                     Sha512Fo.Init_OuterPad_SeedVersion(hPt);
-                    sha512.Compress192SecondBlock(hPt, wPt);
+                    Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                     if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, localComp))
                     {
@@ -1288,7 +1292,7 @@ namespace FinderOuter.Services
                         wPt[14] = 0;
                         wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
                         Sha512Fo.Init_OuterPad_SeedVersion(hPt);
-                        sha512.Compress192SecondBlock(hPt, wPt);
+                        Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                         if ((hPt[0] & mask) == expected && SetBip32(sha512, mnPt, mnLen, bigBuffer, comparer))
                         {

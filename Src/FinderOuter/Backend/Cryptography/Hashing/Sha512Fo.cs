@@ -32,11 +32,17 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         public const int BlockByteSize = 128;
 
+        public const int HashStateSize = 8;
+        public const int WorkingVectorSize = 80;
+        /// <summary>
+        /// Size of UInt32[] buffer = 88
+        /// </summary>
+        public const int UBufferSize = HashStateSize + WorkingVectorSize;
 
         public ulong[] hashState = new ulong[8];
         public ulong[] w = new ulong[80];
 
-        private readonly ulong[] Ks =
+        private static readonly ulong[] Ks =
         {
             0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
             0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
@@ -81,6 +87,17 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             DoHash(data, data.Length);
 
             return GetBytes();
+        }
+
+        public static unsafe byte[] ComputeHash_Static(Span<byte> data)
+        {
+            ulong* pt = stackalloc ulong[UBufferSize];
+            Init(pt);
+            fixed (byte* dPt = data)
+            {
+                CompressData_Static(dPt, data.Length, data.Length, pt, pt + HashStateSize);
+            }
+            return GetBytes(pt);
         }
 
 
@@ -355,6 +372,90 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             }
         }
 
+        public static unsafe void CompressData_Static(byte* dPt, int dataLen, int totalLen, ulong* hPt, ulong* wPt)
+        {
+            Span<byte> finalBlock = new byte[128];
+
+            fixed (byte* fPt = &finalBlock[0])
+            {
+                int dIndex = 0;
+                while (dataLen >= BlockByteSize)
+                {
+                    for (int i = 0; i < 16; i++, dIndex += 8)
+                    {
+                        wPt[i] =
+                                ((ulong)dPt[dIndex] << 56) |
+                                ((ulong)dPt[dIndex + 1] << 48) |
+                                ((ulong)dPt[dIndex + 2] << 40) |
+                                ((ulong)dPt[dIndex + 3] << 32) |
+                                ((ulong)dPt[dIndex + 4] << 24) |
+                                ((ulong)dPt[dIndex + 5] << 16) |
+                                ((ulong)dPt[dIndex + 6] << 8) |
+                                dPt[dIndex + 7];
+                    }
+
+                    SetW(wPt);
+                    CompressBlockWithWSet_Static(hPt, wPt);
+
+                    dataLen -= BlockByteSize;
+                }
+
+                // Copy the reamaining bytes into a blockSize length buffer so that we can loop through it easily:
+                Buffer.MemoryCopy(dPt + dIndex, fPt, finalBlock.Length, dataLen);
+
+                // Append 1 bit followed by zeros. Since we only work with bytes, this is 1 whole byte
+                fPt[dataLen] = 0b1000_0000;
+
+                if (dataLen >= 112) // blockSize - pad2.Len = 128 - 16
+                {
+                    // This means we have an additional block to compress, which we do it here:
+
+                    for (int i = 0, j = 0; i < 16; i++, j += 8)
+                    {
+                        wPt[i] =
+                            ((ulong)fPt[j] << 56) |
+                            ((ulong)fPt[j + 1] << 48) |
+                            ((ulong)fPt[j + 2] << 40) |
+                            ((ulong)fPt[j + 3] << 32) |
+                            ((ulong)fPt[j + 4] << 24) |
+                            ((ulong)fPt[j + 5] << 16) |
+                            ((ulong)fPt[j + 6] << 8) |
+                            fPt[j + 7];
+                    }
+
+                    SetW(wPt);
+                    CompressBlockWithWSet_Static(hPt, wPt);
+
+                    finalBlock.Clear();
+                }
+
+                // Add length in bits as the last 16 bytes of final block in big-endian order
+                // See MessageLengthTest in SHA256 Test project to understand what the following shifts are
+                fPt[127] = (byte)(totalLen << 3);
+                fPt[126] = (byte)(totalLen >> 5);
+                fPt[125] = (byte)(totalLen >> 13);
+                fPt[124] = (byte)(totalLen >> 21);
+                fPt[123] = (byte)(totalLen >> 29);
+                // The remainig 11 bytes are always zero
+                // The remaining 112 bytes are already set
+
+                for (int i = 0, j = 0; i < 16; i++, j += 8)
+                {
+                    wPt[i] =
+                            ((ulong)fPt[j] << 56) |
+                            ((ulong)fPt[j + 1] << 48) |
+                            ((ulong)fPt[j + 2] << 40) |
+                            ((ulong)fPt[j + 3] << 32) |
+                            ((ulong)fPt[j + 4] << 24) |
+                            ((ulong)fPt[j + 5] << 16) |
+                            ((ulong)fPt[j + 6] << 8) |
+                            fPt[j + 7];
+                }
+
+                SetW(wPt);
+                CompressBlockWithWSet_Static(hPt, wPt); ;
+            }
+        }
 
 
         /// <summary>
@@ -363,7 +464,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <param name="wPt">Working vector pointer</param>
-        public unsafe void Compress165SecondBlock(ulong* hPt, ulong* wPt)
+        public static unsafe void Compress165SecondBlock(ulong* hPt, ulong* wPt)
         {
             // w4 = extra value | 0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL 
             // w5 to w14 = 0
@@ -433,7 +534,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             wPt[78] = SSIG1(wPt[76]) + wPt[71] + SSIG0(wPt[63]) + wPt[62];
             wPt[79] = SSIG1(wPt[77]) + wPt[72] + SSIG0(wPt[64]) + wPt[63];
 
-            CompressBlockWithWSet(hPt, wPt);
+            CompressBlockWithWSet_Static(hPt, wPt);
         }
 
         /// <summary>
@@ -442,7 +543,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
         /// <param name="wPt">Working vector pointer</param>
-        public unsafe void Compress192SecondBlock(ulong* hPt, ulong* wPt)
+        public static unsafe void Compress192SecondBlock(ulong* hPt, ulong* wPt)
         {
             // w8 = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL 
             // w9 to w14 = 0
@@ -512,7 +613,7 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             wPt[78] = SSIG1(wPt[76]) + wPt[71] + SSIG0(wPt[63]) + wPt[62];
             wPt[79] = SSIG1(wPt[77]) + wPt[72] + SSIG0(wPt[64]) + wPt[63];
 
-            CompressBlockWithWSet(hPt, wPt);
+            CompressBlockWithWSet_Static(hPt, wPt);
         }
 
 
@@ -783,6 +884,14 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[7] += h;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void SetW(ulong* wPt, int start = 16)
+        {
+            for (int i = start; i < WorkingVectorSize; i++)
+            {
+                wPt[i] = SSIG1(wPt[i - 2]) + wPt[i - 7] + SSIG0(wPt[i - 15]) + wPt[i - 16];
+            }
+        }
 
         internal unsafe void CompressBlockWithWSet(ulong* hPt, ulong* wPt)
         {
@@ -853,25 +962,93 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             hPt[7] += h;
         }
 
+        public static unsafe void CompressBlockWithWSet_Static(ulong* hPt, ulong* wPt)
+        {
+            ulong a = hPt[0];
+            ulong b = hPt[1];
+            ulong c = hPt[2];
+            ulong d = hPt[3];
+            ulong e = hPt[4];
+            ulong f = hPt[5];
+            ulong g = hPt[6];
+            ulong h = hPt[7];
+
+            ulong temp, aa, bb, cc, dd, ee, ff, hh, gg;
+
+            fixed (ulong* kPt = &Ks[0])
+            {
+                for (int j = 0; j < 80;)
+                {
+                    temp = h + BSIG1(e) + CH(e, f, g) + kPt[j] + wPt[j];
+                    ee = d + temp;
+                    aa = temp + BSIG0(a) + MAJ(a, b, c);
+                    j++;
+
+                    temp = g + BSIG1(ee) + CH(ee, e, f) + kPt[j] + wPt[j];
+                    ff = c + temp;
+                    bb = temp + BSIG0(aa) + MAJ(aa, a, b);
+                    j++;
+
+                    temp = f + BSIG1(ff) + CH(ff, ee, e) + kPt[j] + wPt[j];
+                    gg = b + temp;
+                    cc = temp + BSIG0(bb) + MAJ(bb, aa, a);
+                    j++;
+
+                    temp = e + BSIG1(gg) + CH(gg, ff, ee) + kPt[j] + wPt[j];
+                    hh = a + temp;
+                    dd = temp + BSIG0(cc) + MAJ(cc, bb, aa);
+                    j++;
+
+                    temp = ee + BSIG1(hh) + CH(hh, gg, ff) + kPt[j] + wPt[j];
+                    h = aa + temp;
+                    d = temp + BSIG0(dd) + MAJ(dd, cc, bb);
+                    j++;
+
+                    temp = ff + BSIG1(h) + CH(h, hh, gg) + kPt[j] + wPt[j];
+                    g = bb + temp;
+                    c = temp + BSIG0(d) + MAJ(d, dd, cc);
+                    j++;
+
+                    temp = gg + BSIG1(g) + CH(g, h, hh) + kPt[j] + wPt[j];
+                    f = cc + temp;
+                    b = temp + BSIG0(c) + MAJ(c, d, dd);
+                    j++;
+
+                    temp = hh + BSIG1(f) + CH(f, g, h) + kPt[j] + wPt[j];
+                    e = dd + temp;
+                    a = temp + BSIG0(b) + MAJ(b, c, d);
+                    j++;
+                }
+            }
+
+            hPt[0] += a;
+            hPt[1] += b;
+            hPt[2] += c;
+            hPt[3] += d;
+            hPt[4] += e;
+            hPt[5] += f;
+            hPt[6] += g;
+            hPt[7] += h;
+        }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong CH(ulong x, ulong y, ulong z) => z ^ (x & (y ^ z));
+        private static ulong CH(ulong x, ulong y, ulong z) => z ^ (x & (y ^ z));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong MAJ(ulong x, ulong y, ulong z) => (x & y) | (z & (x | y));
+        private static ulong MAJ(ulong x, ulong y, ulong z) => (x & y) | (z & (x | y));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong BSIG0(ulong x) => (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
+        private static ulong BSIG0(ulong x) => (x >> 28 | x << 36) ^ (x >> 34 | x << 30) ^ (x >> 39 | x << 25);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong BSIG1(ulong x) => (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
+        private static ulong BSIG1(ulong x) => (x >> 14 | x << 50) ^ (x >> 18 | x << 46) ^ (x >> 41 | x << 23);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ulong SSIG0(ulong x) => (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
+        internal static ulong SSIG0(ulong x) => (x >> 1 | x << 63) ^ (x >> 8 | x << 56) ^ (x >> 7);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ulong SSIG1(ulong x) => (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
+        internal static ulong SSIG1(ulong x) => (x >> 19 | x << 45) ^ (x >> 61 | x << 3) ^ (x >> 6);
 
 
 
