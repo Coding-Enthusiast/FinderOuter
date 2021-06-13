@@ -1,10 +1,18 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.10.0.0...master)
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.11.0.0...master)
 * BIP-39 passphrase recovery
 * BIP-38 password recovery
 * SIMD support
 * GPU support
 * Wallet file password recovery
+
+### Release 0.11.0 (2021-06-13)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.10.0.0...v0.11.0.0)  
+* All hash algorithms are static and their arrays are allocated on the stack
+* Added more hard-coded derivation paths for BIP-32 path recovery option
+* Base58 algorithm for WIFs is reworked to increase the recovery speed up to 2.5x
+* Two new special cases are added to WIF recovery for missing 1 and 2 characters at unknown locations
+* Some code cleanup and additional tests
 
 ### Release 0.10.0 (2021-05-05)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.9.0.0...v0.10.0.0)  

@@ -35,7 +35,7 @@ Contribution is always welcome. Please report any bugs you find or any improveme
 
 ![Preview](/Doc/Images/MainPreview.jpg)
 
-## Available options
+## Available recovery options
 #### 1. Message signature verification  
 User can enter a message signature here to verify it. In case there is a problem with the message (except being an 
 actually invalid signature), the code can search to find the common issues that some signing tools have and fix them.
@@ -47,7 +47,7 @@ It works for (1) [WIFs](https://en.bitcoin.it/wiki/Wallet_import_format) (Base-5
 (2) [Addresses](https://en.bitcoin.it/wiki/Address) (Base-58 encoded P2PKH or P2SH address) 
 (3) [BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) (Base-58 encoded encrypted private key).  
 
-There is also a "special case" where a compressed private key is missing 3 characters at _unknown_ positions.
+There is also a "special case" for private keys missing 1, 2 or 3 characters at _unknown_ positions.
 
 #### 3. Missing Base-16 characters
 This option is similar to previous feature but works for base-16 (hexadecimal) private keys. Since there is no checksum in this
