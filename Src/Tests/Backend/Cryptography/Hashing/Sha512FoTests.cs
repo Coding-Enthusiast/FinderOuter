@@ -281,6 +281,43 @@ namespace Tests.Backend.Cryptography.Hashing
             }
         }
 
+        [Theory]
+        [InlineData(1)]
+        [InlineData(50)]
+        [InlineData(100)]
+        [InlineData(108)]
+        public unsafe void CompressSingleBlockTest(int len)
+        {
+            byte[] data = GetRandomBytes(len);
+            byte[] padded = new byte[Sha512Fo.BlockByteSize];
+            Buffer.BlockCopy(data, 0, padded, 0, data.Length);
+            padded[len] = 0x80;
+            padded[127] = (byte)(len << 3);
+            padded[126] = (byte)(len >> 5);
+            padded[125] = (byte)(len >> 13);
+            padded[124] = (byte)(len >> 21);
+            padded[123] = (byte)(len >> 29);
+
+            ulong* hPt1 = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt1 = hPt1 + Sha512Fo.HashStateSize;
+
+            ulong* hPt2 = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt2 = hPt2 + Sha512Fo.HashStateSize;
+
+            fixed (byte* dPt1 = &data[0], dPt2 = &padded[0])
+            {
+                Sha512Fo.Init(hPt1);
+                Sha512Fo.CompressData(dPt1, data.Length, data.Length, hPt1, wPt1);
+                byte[] expected = Sha512Fo.GetBytes(hPt1);
+
+                Sha512Fo.Init(hPt2);
+                Sha512Fo.CompressSingleBlock(dPt2, hPt2, wPt2);
+                byte[] actual = Sha512Fo.GetBytes(hPt2);
+
+                Assert.Equal(expected, actual);
+            }
+        }
+
         [Fact]
         public unsafe void Compress165SecondBlockTest()
         {

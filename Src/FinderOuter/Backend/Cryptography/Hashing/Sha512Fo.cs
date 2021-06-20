@@ -313,10 +313,25 @@ namespace FinderOuter.Backend.Cryptography.Hashing
                 }
 
                 SetW(wPt);
-                CompressBlockWithWSet(hPt, wPt); ;
+                CompressBlockWithWSet(hPt, wPt);
             }
         }
 
+
+        /// <summary>
+        /// Compresses a single block (useful for data length smaller than 112 that only need 1 SHA512 block)
+        /// </summary>
+        public static unsafe void CompressSingleBlock(byte* dPt, ulong* hPt, ulong* wPt)
+        {
+            for (int i = 0, j = 0; i < 16; i++, j += 8)
+            {
+                wPt[i] = ((ulong)dPt[j] << 56) | ((ulong)dPt[j + 1] << 48) | ((ulong)dPt[j + 2] << 40) | ((ulong)dPt[j + 3] << 32) |
+                         ((ulong)dPt[j + 4] << 24) | ((ulong)dPt[j + 5] << 16) | ((ulong)dPt[j + 6] << 8) | dPt[j + 7];
+            }
+
+            SetW(wPt);
+            CompressBlockWithWSet(hPt, wPt);
+        }
 
         /// <summary>
         /// Computes _single_ SHA512 hash for the second block of
