@@ -7,6 +7,12 @@ namespace FinderOuter.Backend
 {
     public struct ConstantsFO
     {
+        public const string LowerCase = "abcdefghijklmnopqrstuvwxyz";
+        public const string UpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        public const string Numbers = "0123456789";
+        // 0x2122232425262728292a2b2c2d2e2f3a3b3c3d3e3f405b5c5d5e5f607b7c7d7e
+        public const string AllSymbols = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
         public const string ArmoryChars = "asdfghjkwertuion";

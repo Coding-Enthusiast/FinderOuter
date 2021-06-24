@@ -46,7 +46,7 @@ namespace FinderOuter.Services
         private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
 
-        private readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
+        internal static readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
         private uint[] wordIndexes;
         private int[] missingIndexes;
         private string[] allWords;
