@@ -13,12 +13,23 @@ using FinderOuter.Services.Comparers;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
+    [Flags]
+    public enum PasswordType : ulong
+    {
+        None = 0,
+        UpperCase = 1 << 0,
+        LowerCase = 1 << 1,
+        Numbers = 1 << 2,
+        Symbols = 1 << 3,
+    }
+
     public class MnemonicExtensionService
     {
         public MnemonicExtensionService(IReport rep)
@@ -329,7 +340,7 @@ namespace FinderOuter.Services
                     if (SetBip32(bigBuffer, comparer))
                     {
                         report.FoundAnyResult = true;
-                        
+
                         byte[] temp = new byte[items.Length];
                         for (int i = 0; i < temp.Length; i++)
                         {
@@ -533,18 +544,38 @@ namespace FinderOuter.Services
             return true;
         }
 
-        private static bool TrySetAllPassValues(int passLength, out byte[] allValues)
+        private static bool TrySetAllPassValues(PasswordType type, out byte[] allValues)
         {
-            allValues = Encoding.UTF8.GetBytes(ConstantsFO.LowerCase);
+            string temp = string.Empty;
+            if (type.HasFlag(PasswordType.UpperCase))
+            {
+                temp += ConstantsFO.UpperCase;
+            }
+            if (type.HasFlag(PasswordType.LowerCase))
+            {
+                temp += ConstantsFO.LowerCase;
+            }
+            if (type.HasFlag(PasswordType.Numbers))
+            {
+                temp += ConstantsFO.Numbers;
+            }
+            if (type.HasFlag(PasswordType.Symbols))
+            {
+                temp += ConstantsFO.AllSymbols;
+            }
 
-            return true;
+            allValues = Encoding.UTF8.GetBytes(temp);
+
+            return allValues != null && allValues.Length != 0;
         }
 
         public async void Find(string mnemonic, MnemonicTypes mnType, BIP0039.WordLists wl,
-                               string extra, InputType extraType, string path, int passLength)
+                               string extra, InputType extraType, string path, int passLength, PasswordType passType)
         {
             report.Init();
 
+            if (mnType != MnemonicTypes.BIP39 && mnType != MnemonicTypes.Electrum)
+                report.Fail("Mnemonic type is not defined.");
             if (!MnemonicSevice.TrySetWordList(wl, out string[] allWords, out int maxWordLen))
                 report.Fail($"Could not find {wl} word list among resources.");
             else if (!TryDecodeMnemonic(mnemonic, mnType, allWords, out byte[] mnBytes))
@@ -555,31 +586,19 @@ namespace FinderOuter.Services
                 report.Fail($"Invalid extra input or input type {extraType}.");
             else if (!TrySetSalt(passLength, mnType, out byte[] salt))
                 return;
-            else if (!TrySetAllPassValues(passLength, out byte[] allValues))
+            else if (!TrySetAllPassValues(passType, out byte[] allValues))
                 report.Fail("Something went wrong.");
             else
             {
                 ulong[] pads = new ulong[16];
                 SetHmacPads(mnBytes, pads);
 
+                var total = BigInteger.Pow(allValues.Length, passLength);
+                report.AddMessageSafe($"Number of passphrases to check: {total:n0}");
+
                 Stopwatch watch = Stopwatch.StartNew();
 
-                if (mnType == MnemonicTypes.BIP39)
-                {
-                    await Task.Run(() => LoopBip39(pads, salt, allValues, passLength));
-                }
-                else if (mnType == MnemonicTypes.Electrum)
-                {
-
-
-                    //await Task.Run(() => LoopElectrum(elecMnType));
-                }
-                else
-                {
-                    report.Fail("Undefined mnemonic type.");
-                    watch.Stop();
-                    return;
-                }
+                await Task.Run(() => LoopBip39(pads, salt, allValues, passLength));
 
                 watch.Stop();
 
