@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             x:Class="FinderOuter.Views.MissingMnemonicPassView"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
+
+  <Design.DataContext>
+    <vm:MissingMnemonicPassViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
+    <TextBox Text="{Binding Mnemonic}"
+             Watermark="Mnemonic (seed phrase), separate each word with a space and replace missing words with the MissingChar"
+             AcceptsReturn="True"
+             Height="86"
+             Grid.Column="0"
+             Grid.Row="0"/>
+    <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
+      <ComboBox Items="{Binding MnemonicTypesList}"
+                SelectedItem="{Binding SelectedMnemonicType}"/>
+      <ComboBox Items="{Binding WordListsList}"
+                SelectedItem="{Binding SelectedWordListType}"/>
+    </StackPanel>
+
+    <TextBox Text="{Binding AdditionalInfo}"
+             Watermark="Additional info (preferably a private key or public key, if not enter an address)"
+             Grid.Column="0"
+             Grid.Row="1"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding ExtraInputKb}"
+            Grid.Column="0"
+            Grid.Row="1"/>
+    <ComboBox Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"
+              Grid.Column="1"
+              Grid.Row="1">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+
+    <TextBox Text="{Binding KeyPath}"
+             Watermark="Complete path of the given key/address above"
+             Grid.Column="0"
+             Grid.Row="2"/>
+
+    <Grid ColumnDefinitions="150,*,2*" RowDefinitions="*,*" Grid.Column="0" Grid.Row="3">
+      <NumericUpDown Value="{Binding PassLength}"
+                     Minimum="1"
+                     Watermark="Passphrase length"
+                     Grid.Column="0"
+                     Grid.RowSpan="2"/>
+      <CheckBox Content="Upper case (A-Z)"
+                IsChecked="{Binding IsUpperCase}"
+                Grid.Column="1"
+                Grid.Row="0"/>
+      <CheckBox Content="Lower case (a-z)"
+                IsChecked="{Binding IsLowerCase}"
+                Grid.Column="1"
+                Grid.Row="1"/>
+      <CheckBox Content="Numbers (0-9)"
+                IsChecked="{Binding IsNumber}"
+                Grid.Column="2"
+                Grid.Row="0"/>
+      <CheckBox Content="{Binding AllSymbols}"
+                IsChecked="{Binding IsSymbol}"
+                Grid.Column="2"
+                Grid.Row="1"/>
+    </Grid>
+
+  </Grid>
+</UserControl>

@@ -24,6 +24,7 @@ namespace FinderOuter.ViewModels
                 new MissingBase16ViewModel(),
                 new MissingMiniPrivateKeyViewModel(),
                 new MissingMnemonicViewModel(),
+                new MissingMnemonicPassViewModel(),
                 new MissingBip32PathViewModel(),
                 new MissingArmoryViewModel(),
                 new MissingEncodingViewModel(),
