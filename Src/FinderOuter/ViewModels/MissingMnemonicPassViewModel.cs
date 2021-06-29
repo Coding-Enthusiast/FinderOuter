@@ -50,7 +50,12 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Mnemonic Pass";
-        public override string Description => "Desc placeholder";
+        public override string Description => "This option can recover missing mnemonic passphrases also known as extra " +
+            "or extension words. Enter the full mnemonic, a child key for comparisson and the full path of that key. " +
+            "The path is the full BIP-32 defined path of the child key including the key's index (eg. m/44'/0'/0'/0)." +
+            $"{Environment.NewLine}" +
+            $"the only available case for now is when you don't know any characters of the passphrase. Enter its exact " +
+            $"length and select the type of characters that were used in the passphrase. And finally click Find.";
 
 
         public MnemonicExtensionService MnService { get; }

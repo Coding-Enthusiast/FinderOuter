@@ -12,8 +12,7 @@
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
     <TextBox Text="{Binding Mnemonic}"
-             Watermark="Mnemonic (seed phrase), separate each word with a space and replace missing words with the MissingChar"
-             AcceptsReturn="True"
+             Watermark="Mnemonic (seed phrase), separate each word with a space"
              Height="86"
              Grid.Column="0"
              Grid.Row="0"/>
