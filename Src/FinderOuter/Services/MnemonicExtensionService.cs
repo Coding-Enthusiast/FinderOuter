@@ -250,7 +250,7 @@ namespace FinderOuter.Services
 
 
         // pads are HMAC inner and outer pad hashstates that are already computed using mnemonic
-        public unsafe void LoopBip39(ulong[] pads, byte[] salt, byte[] allValues, int passLength)
+        public unsafe void LoopBip39(ulong[] pads, byte[] salt, byte[] allValues, int passLength, ParallelLoopState loopState)
         {
             Debug.Assert(pads != null && pads.Length == Sha512Fo.HashStateSize * 2);
             Debug.Assert(salt != null && salt.Length == Sha512Fo.BlockByteSize);
@@ -260,7 +260,7 @@ namespace FinderOuter.Services
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
             ulong* seedPt = wPt + Sha512Fo.WorkingVectorSize;
 
-            int[] items = new int[passLength];
+            int[] items = new int[passLength - 1];
 
             fixed (byte* dPt = &salt[0], valPt = &allValues[0])
             fixed (ulong* iPt = &pads[0], oPt = &pads[Sha512Fo.HashStateSize])
@@ -268,7 +268,12 @@ namespace FinderOuter.Services
             {
                 do
                 {
-                    int startIndex = 8;
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+
+                    int startIndex = 9;
                     for (int i = 0; i < items.Length; i++)
                     {
                         Debug.Assert(itemsPt[i] < allValues.Length);
@@ -354,6 +359,113 @@ namespace FinderOuter.Services
                     }
 
                 } while (MoveNext(itemsPt, items.Length, allValues.Length));
+            }
+        }
+
+
+        private static byte[] ParallelSalt(byte[] salt, byte firstItem)
+        {
+            byte[] result = new byte[salt.Length];
+            Buffer.BlockCopy(salt, 0, result, 0, salt.Length);
+            result[8] = firstItem;
+            return result;
+        }
+        public unsafe void MainLoop(ulong[] pads, byte[] salt, byte[] allValues, int passLength)
+        {
+            Debug.Assert(pads != null && pads.Length == Sha512Fo.HashStateSize * 2);
+            Debug.Assert(salt != null && salt.Length == Sha512Fo.BlockByteSize);
+
+            if (passLength == 1)
+            {
+                ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + Sha512Fo.HashStateSize + (2 * Sha512Fo.WorkingVectorSize)];
+                ulong* hPt = bigBuffer;
+                ulong* wPt = hPt + Sha512Fo.HashStateSize;
+                ulong* seedPt = wPt + Sha512Fo.WorkingVectorSize;
+
+                fixed (byte* dPt = &salt[0], valPt = &allValues[0])
+                fixed (ulong* iPt = &pads[0], oPt = &pads[Sha512Fo.HashStateSize])
+                {
+                    foreach (var val in allValues)
+                    {
+                        dPt[8] = val;
+
+                        // 1. SHA512(inner_pad | data) -> 2 blocks; first one is already compressed
+                        *(Block64*)hPt = *(Block64*)iPt;
+                        // Data length is unknown and an initial block of 128 bytes was already compressed
+                        // but we already reject anything big that needs another block (there is only one more block to compress)
+                        // The pad and data length is also already set
+                        Sha512Fo.CompressSingleBlock(dPt, hPt, wPt);
+
+                        // 2. SHA512(outer_pad | hash) -> 2 blocks; first one is already compressed
+                        // Copy hashstate into next block before changing it
+                        *(Block64*)wPt = *(Block64*)hPt;
+                        wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = 1536; // oPad.Length(=128) + hashState.Lengh(=64) = 192 byte *8 = 1,536 bit
+
+                        *(Block64*)hPt = *(Block64*)oPt;
+                        Sha512Fo.Compress192SecondBlock(hPt, wPt);
+
+                        // Copy u1 to result of F() to be XOR'ed with each result on iterations, and result of F() is the seed
+                        *(Block64*)seedPt = *(Block64*)hPt;
+
+                        // Compute u2 to u(c-1) where c is iteration and each u is the HMAC of previous u
+                        for (int j = 1; j < 2048; j++)
+                        {
+                            // Each u is calculated by computing HMAC(previous_u) where previous_u is 64 bytes hPt
+                            // Start by making a copy of hPt so Init() can be called
+                            *(Block64*)wPt = *(Block64*)hPt;
+
+                            // Final result is SHA512(outer_pad | SHA512(inner_pad | 64_byte_data))
+                            // 1. Compute SHA512(inner_pad | 64_byte_data)
+                            // 2. Compute SHA512(outer_pad | hash)
+                            //    Since pads don't change and each step is Init() then Compress(pad) the hashState is always the same
+                            //    after these 2 steps and is already computed and stored in temp arrays above
+                            //    by doing this 2*2047=4094 SHA512 block compressions are skipped
+
+                            // Replace: sha.Init(hPt); sha.CompressBlockWithWSet(hPt, iPt); with line below:
+                            *(Block64*)hPt = *(Block64*)iPt;
+                            Sha512Fo.Compress192SecondBlock(hPt, wPt);
+
+                            // 2. Compute SHA512(outer_pad | hash)
+                            *(Block64*)wPt = *(Block64*)hPt;
+                            // The rest of wPt is set above and is unchanged
+
+                            // Replace: sha.Init(hPt); sha.CompressBlock(hPt, oPt); with line below:
+                            *(Block64*)hPt = *(Block64*)oPt;
+                            Sha512Fo.Compress192SecondBlock(hPt, wPt);
+
+                            // result of F() is XOR sum of all u arrays
+                            seedPt[0] ^= hPt[0];
+                            seedPt[1] ^= hPt[1];
+                            seedPt[2] ^= hPt[2];
+                            seedPt[3] ^= hPt[3];
+                            seedPt[4] ^= hPt[4];
+                            seedPt[5] ^= hPt[5];
+                            seedPt[6] ^= hPt[6];
+                            seedPt[7] ^= hPt[7];
+                        }
+
+                        if (SetBip32(bigBuffer, comparer))
+                        {
+                            report.FoundAnyResult = true;
+                            string finalResult = Encoding.UTF8.GetString(new byte[] { val });
+                            report.AddMessageSafe($"Passphrase is: {finalResult}");
+
+                            return;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Parallel.For(0, allValues.Length,
+                    (firstItem, state) => LoopBip39(pads, ParallelSalt(salt, allValues[firstItem]), allValues, passLength, state)); 
             }
         }
 
@@ -598,7 +710,7 @@ namespace FinderOuter.Services
 
                 Stopwatch watch = Stopwatch.StartNew();
 
-                await Task.Run(() => LoopBip39(pads, salt, allValues, passLength));
+                await Task.Run(() => MainLoop(pads, salt, allValues, passLength));
 
                 watch.Stop();
 
