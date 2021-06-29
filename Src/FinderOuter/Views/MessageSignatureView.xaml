@@ -18,8 +18,7 @@
     <TextBox Text="{Binding Address}"
              Watermark="Address"/>
     <TextBox Text="{Binding Signature}"
-             Watermark="Signature"
-             AcceptsReturn="True"/>
+             Watermark="Signature"/>
 
     <Button Content="Try to find the problem!"
             Command="{Binding FindProblemCommand}"

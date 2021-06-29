@@ -118,8 +118,6 @@
                       Grid.Row="2"/>
 
       <TextBox Text="{Binding SelectedOption.Result.Message, Mode=OneWay}"
-               TextWrapping="Wrap"
-               AcceptsReturn="True"
                IsVisible="{Binding IsOptionSelected}"
                ScrollViewer.VerticalScrollBarVisibility="Auto"
                IsReadOnly="True"
