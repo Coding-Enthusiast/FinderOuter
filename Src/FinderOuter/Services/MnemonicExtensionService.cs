@@ -260,6 +260,7 @@ namespace FinderOuter.Services
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
             ulong* seedPt = wPt + Sha512Fo.WorkingVectorSize;
 
+            Debug.Assert(passLength - 1 > 0);
             int[] items = new int[passLength - 1];
 
             fixed (byte* dPt = &salt[0], valPt = &allValues[0])
@@ -344,6 +345,7 @@ namespace FinderOuter.Services
 
                     if (SetBip32(bigBuffer, comparer))
                     {
+                        loopState.Stop();
                         report.FoundAnyResult = true;
 
                         byte[] temp = new byte[items.Length];
