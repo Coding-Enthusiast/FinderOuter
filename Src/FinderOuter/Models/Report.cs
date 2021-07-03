@@ -6,6 +6,7 @@
 using Avalonia.Threading;
 using ReactiveUI;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace FinderOuter.Models
@@ -51,6 +52,8 @@ namespace FinderOuter.Models
         }
 
         public bool FoundAnyResult { get; set; }
+
+        public Stopwatch Timer { get; } = new();
 
 
         public void Init()
@@ -125,7 +128,7 @@ namespace FinderOuter.Models
             Dispatcher.UIThread.InvokeAsync(() => IsProgressVisible = true);
         }
 
-        private readonly object lockObj = new object();
+        private readonly object lockObj = new();
         public void IncrementProgress()
         {
             lock (lockObj)

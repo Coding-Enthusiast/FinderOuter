@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace FinderOuter.Models
@@ -15,6 +16,7 @@ namespace FinderOuter.Models
         bool IsProgressVisible { get; set; }
         double Progress { get; set; }
         bool FoundAnyResult { get; set; }
+        Stopwatch Timer { get; }
 
         void Init();
         bool Finalize(bool success);
