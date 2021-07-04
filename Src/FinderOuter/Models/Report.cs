@@ -23,6 +23,19 @@ namespace FinderOuter.Models
 
     public class Report : ReactiveObject, IReport
     {
+        public Report()
+        {
+            UIThread = Dispatcher.UIThread;
+        }
+
+        public Report(IDispatcher dispatcher)
+        {
+            UIThread = dispatcher;
+        }
+
+
+        public IDispatcher UIThread { get; set; }
+
         private State _state;
         public State CurrentState
         {
@@ -64,6 +77,7 @@ namespace FinderOuter.Models
             Progress = 0;
             percent = 0;
             IsProgressVisible = false;
+            Timer.Reset();
         }
 
         public bool Finalize(bool success)
@@ -74,6 +88,12 @@ namespace FinderOuter.Models
 
         public bool Finalize()
         {
+            if (Timer.IsRunning)
+            {
+                Timer.Stop();
+                AddMessageSafe($"Elapsed time: {Timer.Elapsed}");
+            }
+
             CurrentState = FoundAnyResult ? State.FinishedSuccess : State.FinishedFail;
             Progress = 100;
             return FoundAnyResult;
@@ -94,7 +114,7 @@ namespace FinderOuter.Models
         /// <param name="msg"></param>
         public void AddMessageSafe(string msg)
         {
-            Dispatcher.UIThread.InvokeAsync(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
+            UIThread.InvokeAsync(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
         }
 
         public bool Fail(string msg)
@@ -125,7 +145,7 @@ namespace FinderOuter.Models
         public void SetProgressStep(int splitSize)
         {
             percent = (double)100 / splitSize;
-            Dispatcher.UIThread.InvokeAsync(() => IsProgressVisible = true);
+            UIThread.InvokeAsync(() => IsProgressVisible = true);
         }
 
         private readonly object lockObj = new();
