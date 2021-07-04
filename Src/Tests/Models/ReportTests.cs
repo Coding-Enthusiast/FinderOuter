@@ -69,5 +69,23 @@ namespace Tests.Models
                 Assert.Equal("Foo", report.Message);
             }
         }
+
+        [Theory]
+        [InlineData(20, 55)]
+        [InlineData(73, 51.36986301369863)]
+        [InlineData(170, 50.588235294117645)]
+        public void ProgressTest(int step, double expected)
+        {
+            var report = new Report(new MockDispatcher())
+            {
+                Progress = 50,
+            };
+
+            report.SetProgressStep(step);
+            Assert.Equal(50, report.Progress);
+
+            report.IncrementProgress();
+            Assert.Equal(expected, report.Progress);
+        }
     }
 }
