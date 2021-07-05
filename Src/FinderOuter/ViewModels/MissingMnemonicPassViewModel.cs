@@ -247,7 +247,7 @@ namespace FinderOuter.ViewModels
                     $"Random.{Environment.NewLine}" +
                     $"This example is a BIP39 mnemonic with a simple passphrase using numbers and symbols (3+[)." +
                     $"{Environment.NewLine}" +
-                    $"Estimated time: <10 sec"
+                    $"Estimated time: <20 sec"
                 },
             };
         }

@@ -13,7 +13,6 @@ using FinderOuter.Services.Comparers;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -362,6 +361,8 @@ namespace FinderOuter.Services
 
                 } while (MoveNext(itemsPt, items.Length, allValues.Length));
             }
+
+            report.IncrementProgress();
         }
 
 
@@ -466,8 +467,9 @@ namespace FinderOuter.Services
             }
             else
             {
+                report.SetProgressStep(allValues.Length);
                 Parallel.For(0, allValues.Length,
-                    (firstItem, state) => LoopBip39(pads, ParallelSalt(salt, allValues[firstItem]), allValues, passLength, state)); 
+                    (firstItem, state) => LoopBip39(pads, ParallelSalt(salt, allValues[firstItem]), allValues, passLength, state));
             }
         }
 
@@ -707,20 +709,13 @@ namespace FinderOuter.Services
                 ulong[] pads = new ulong[16];
                 SetHmacPads(mnBytes, pads);
 
-                var total = BigInteger.Pow(allValues.Length, passLength);
-                report.AddMessageSafe($"Number of passphrases to check: {total:n0}");
-
-                Stopwatch watch = Stopwatch.StartNew();
+                report.SetTotal(allValues.Length, passLength);
+                report.Timer.Start();
 
                 await Task.Run(() => MainLoop(pads, salt, allValues, passLength));
 
-                watch.Stop();
-
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
                 report.Finalize();
             }
         }
-
-
     }
 }
