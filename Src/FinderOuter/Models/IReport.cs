@@ -17,6 +17,9 @@ namespace FinderOuter.Models
         double Progress { get; set; }
         bool FoundAnyResult { get; set; }
         Stopwatch Timer { get; }
+        BigInteger Total { get; }
+
+        void SetTotal(int value, int exponent);
 
         void Init();
         bool Finalize(bool success);

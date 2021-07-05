@@ -68,6 +68,13 @@ namespace FinderOuter.Models
 
         public Stopwatch Timer { get; } = new();
 
+        public BigInteger Total { get; private set; }
+
+        public void SetTotal(int value, int exponent)
+        {
+            Total = BigInteger.Pow(value, exponent);
+            AddMessageSafe($"Total number of permutations to check: {Total:n0}");
+        }
 
         public void Init()
         {
@@ -78,6 +85,7 @@ namespace FinderOuter.Models
             percent = 0;
             IsProgressVisible = false;
             Timer.Reset();
+            Total = 0;
         }
 
         public bool Finalize(bool success)
@@ -92,6 +100,13 @@ namespace FinderOuter.Models
             {
                 Timer.Stop();
                 AddMessageSafe($"Elapsed time: {Timer.Elapsed}");
+
+                if (Total != BigInteger.Zero)
+                {
+                    BigInteger totalKeys = BigInteger.Multiply(Total, new BigInteger(Progress)) / 100;
+                    string kps = GetKPS(totalKeys, Timer.Elapsed.TotalSeconds);
+                    AddMessageSafe(kps);
+                }
             }
 
             CurrentState = FoundAnyResult ? State.FinishedSuccess : State.FinishedFail;
@@ -144,6 +159,7 @@ namespace FinderOuter.Models
         /// <inheritdoc/>
         public void SetProgressStep(int splitSize)
         {
+            AddMessageSafe("Running in parallel.");
             percent = (double)100 / splitSize;
             UIThread.InvokeAsync(() => IsProgressVisible = true);
         }
