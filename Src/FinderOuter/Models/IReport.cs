@@ -19,6 +19,7 @@ namespace FinderOuter.Models
         Stopwatch Timer { get; }
         BigInteger Total { get; }
 
+        void SetTotal(BigInteger value);
         void SetTotal(int value, int exponent);
 
         void Init();

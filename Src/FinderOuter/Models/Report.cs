@@ -70,6 +70,7 @@ namespace FinderOuter.Models
 
         public BigInteger Total { get; private set; }
 
+        public void SetTotal(BigInteger value) => Total = value;
         public void SetTotal(int value, int exponent)
         {
             Total = BigInteger.Pow(value, exponent);
