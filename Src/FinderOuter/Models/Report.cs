@@ -103,7 +103,9 @@ namespace FinderOuter.Models
 
                 if (Total != BigInteger.Zero)
                 {
-                    BigInteger totalKeys = BigInteger.Multiply(Total, new BigInteger(Progress)) / 100;
+                    BigInteger totalKeys = Progress == 0 || Progress >= 99 ?
+                        Total :
+                        BigInteger.Multiply(Total, new BigInteger(Progress)) / 100;
                     string kps = GetKPS(totalKeys, Timer.Elapsed.TotalSeconds);
                     AddMessageSafe(kps);
                 }
