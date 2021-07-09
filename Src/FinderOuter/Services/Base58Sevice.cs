@@ -197,8 +197,6 @@ namespace FinderOuter.Services
         }
 
 
-        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
-
         private bool IsMissingFromEnd()
         {
             if (missingIndexes[0] != 0)
@@ -357,7 +355,6 @@ namespace FinderOuter.Services
             int loopLastMax = (int)((long)diff % WifEndDiv);
             int loopCount = (int)((long)diff / WifEndDiv) + (loopLastMax == 0 ? 0 : 1);
 
-            report.AddMessageSafe("Running in parallel.");
             report.SetProgressStep(loopCount);
 
             Parallel.For(0, loopCount, (i, state) =>
@@ -500,7 +497,6 @@ namespace FinderOuter.Services
                 // 4 missing chars is 11,316,496 cases and it takes <2 seconds to run.
                 // That makes 5 the optimal number for using parallelization
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1, new uint[missCount - 1]));
             }
             else
@@ -580,7 +576,6 @@ namespace FinderOuter.Services
             {
                 // Same as LoopComp()
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1, new uint[missCount - 1]));
             }
             else
@@ -661,7 +656,6 @@ namespace FinderOuter.Services
             if (missCount >= 5)
             {
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1, new uint[missCount - 1]));
             }
             else
@@ -743,7 +737,6 @@ namespace FinderOuter.Services
             if (missCount >= 5)
             {
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1, new uint[missCount - 1]));
             }
             else
@@ -1212,14 +1205,9 @@ namespace FinderOuter.Services
         {
             // [51! / 1! *((51-1)!)] * 58^1
             BigInteger total = 51 * 58;
-            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
-
-            Stopwatch watch = Stopwatch.StartNew();
+            report.SetTotal(total);
+            report.Timer.Start();
             bool success = await Task.Run(() => SpecialLoopComp1(key, comp));
-
-            watch.Stop();
-            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
 
             return success;
         }
@@ -1228,14 +1216,9 @@ namespace FinderOuter.Services
         {
             // [51! / 2! *((51-2)!)] * 58^2
             BigInteger total = ((51 * 50) / (2 * 1)) * BigInteger.Pow(58, 2);
-            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
-
-            Stopwatch watch = Stopwatch.StartNew();
+            report.SetTotal(total);
+            report.Timer.Start();
             bool success = await Task.Run(() => SpecialLoopComp2(key, comp));
-
-            watch.Stop();
-            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
 
             return success;
         }
@@ -1244,18 +1227,9 @@ namespace FinderOuter.Services
         {
             // [51! / 3! *((51-3)!)] * 58^3
             BigInteger total = ((51 * 50 * 49) / (3 * 2 * 1)) * BigInteger.Pow(58, 3);
-            report.AddMessageSafe($"Start searching.{Environment.NewLine}Total number of keys to check: {total:n0}");
-
-            Stopwatch watch = Stopwatch.StartNew();
-            bool success = await Task.Run(() =>
-            {
-                return SpecialLoopComp3(key);
-            }
-            );
-
-            watch.Stop();
-            report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-            report.SetKeyPerSecSafe(total, watch.Elapsed.TotalSeconds);
+            report.SetTotal(total);
+            report.Timer.Start();
+            bool success = await Task.Run(() => SpecialLoopComp3(key));
 
             return success;
         }
@@ -1272,9 +1246,8 @@ namespace FinderOuter.Services
                     bool isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
                     report.AddMessageSafe($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
                                           $"characters was detected.");
-                    report.AddMessageSafe($"Total number of keys to check: {GetTotalCount(missCount):n0}");
-
-                    Stopwatch watch = Stopwatch.StartNew();
+                    report.SetTotal(58, missCount);
+                    report.Timer.Start();
 
                     await Task.Run(() =>
                     {
@@ -1292,10 +1265,6 @@ namespace FinderOuter.Services
                         }
                     }
                     );
-
-                    watch.Stop();
-                    report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                    report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
                 }
                 else
                 {
@@ -1380,16 +1349,12 @@ namespace FinderOuter.Services
                 Initialize(address.ToCharArray(), missingChar, InputType.Address);
 
                 report.AddMessageSafe($"Base-58 address missing {missCount} characters was detected.");
-                report.AddMessageSafe($"Total number of addresses to check: {GetTotalCount(missCount):n0}");
+                report.SetTotal(58, missCount);
                 report.AddMessageSafe("Going throgh each case. Please wait...");
 
-                Stopwatch watch = Stopwatch.StartNew();
+                report.Timer.Start();
 
                 await Task.Run(() => Loop21());
-
-                watch.Stop();
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
         }
 
@@ -1413,16 +1378,12 @@ namespace FinderOuter.Services
             {
                 missingIndexes = new int[missCount];
                 Initialize(bip38.ToCharArray(), missingChar, InputType.Bip38);
-                report.AddMessageSafe($"Total number of encrypted keys to check: {GetTotalCount(missCount):n0}");
+                report.SetTotal(58, missCount);
                 report.AddMessageSafe("Going throgh each case. Please wait...");
 
-                Stopwatch watch = Stopwatch.StartNew();
+                report.Timer.Start();
 
                 await Task.Run(() => Loop58());
-
-                watch.Stop();
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
             }
         }
 

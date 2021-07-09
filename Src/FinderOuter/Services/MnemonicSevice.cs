@@ -11,7 +11,6 @@ using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -511,7 +510,6 @@ namespace FinderOuter.Services
         {
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => Loop24(firstItem, firstIndex, state));
@@ -688,7 +686,6 @@ namespace FinderOuter.Services
         {
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => Loop21(firstItem, firstIndex, state));
@@ -816,7 +813,6 @@ namespace FinderOuter.Services
         {
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => Loop18(firstItem, firstIndex, state));
@@ -943,7 +939,6 @@ namespace FinderOuter.Services
         {
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => Loop15(firstItem, firstIndex, state));
@@ -1069,7 +1064,6 @@ namespace FinderOuter.Services
         {
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => Loop12(firstItem, firstIndex, state));
@@ -1231,7 +1225,6 @@ namespace FinderOuter.Services
 
             if (missCount > 1)
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(2048);
                 int firstIndex = missingIndexes[0];
                 Parallel.For(0, 2048, (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
@@ -1466,9 +1459,9 @@ namespace FinderOuter.Services
                 }
 
                 report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");
-                report.AddMessageSafe($"A total of {GetTotalCount(missCount):n0} mnemonics should be checked.");
+                report.SetTotal(2048, missCount);
 
-                Stopwatch watch = Stopwatch.StartNew();
+                report.Timer.Start();
 
                 if (mnType == MnemonicTypes.BIP39)
                 {
@@ -1500,7 +1493,7 @@ namespace FinderOuter.Services
                     if (elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
                     {
                         report.Fail("Undefined mnemonic type.");
-                        watch.Stop();
+                        report.Timer.Reset();
                         return;
                     }
 
@@ -1510,14 +1503,9 @@ namespace FinderOuter.Services
                 else
                 {
                     report.Fail("Undefined mnemonic type.");
-                    watch.Stop();
+                    report.Timer.Reset();
                     return;
                 }
-
-                watch.Stop();
-
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
 
                 report.Finalize();
             }

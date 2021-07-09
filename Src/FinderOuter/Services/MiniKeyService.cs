@@ -8,7 +8,6 @@ using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -157,7 +156,6 @@ namespace FinderOuter.Services
                 // 4 missing chars is 11,316,496 cases and due to EC mult it takes longer to run
                 // which makes it the optimal number for using parallelization
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem, state) => Loop23(firstItem, comparer.Clone(), state));
             }
             else
@@ -271,7 +269,6 @@ namespace FinderOuter.Services
             if (missCount >= 4)
             {
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem, state) => Loop27(firstItem, comparer.Clone(), state));
             }
             else
@@ -386,7 +383,6 @@ namespace FinderOuter.Services
             if (missCount >= 4)
             {
                 report.SetProgressStep(58);
-                report.AddMessageSafe("Running in parallel.");
                 Parallel.For(0, 58, (firstItem, state) => Loop31(firstItem, comparer.Clone(), state));
             }
             else
@@ -463,11 +459,9 @@ namespace FinderOuter.Services
                 keyToCheck = key;
                 missingIndexes = new int[missCount];
 
-                report.AddMessageSafe($"A {key.Length} char long mini-key with {missCount} missing characters was detected." +
-                                      $"{Environment.NewLine}" +
-                                      $"Total number of minikeys to test: {GetTotalCount(missCount):n0}{Environment.NewLine}" +
-                                      $"Going throgh each case. Please wait...");
-                Stopwatch watch = Stopwatch.StartNew();
+                report.AddMessageSafe($"A {key.Length} char long mini-key with {missCount} missing characters was detected.");
+                report.SetTotal(58, missCount);
+                report.Timer.Start();
 
                 if (key.Length == ConstantsFO.MiniKeyLen1)
                 {
@@ -491,10 +485,6 @@ namespace FinderOuter.Services
                 {
                     report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen3}.");
                 }
-
-                watch.Stop();
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSecSafe(GetTotalCount(missCount), watch.Elapsed.TotalSeconds);
 
                 report.Finalize();
             }

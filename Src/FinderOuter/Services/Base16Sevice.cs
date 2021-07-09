@@ -10,7 +10,6 @@ using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -172,7 +171,6 @@ namespace FinderOuter.Services
             }
             else
             {
-                report.AddMessageSafe("Running in parallel.");
                 report.SetProgressStep(16);
                 Parallel.For(0, 16, (firstItem, state) => Loop(firstItem, smallPub, state));
             }
@@ -252,9 +250,9 @@ namespace FinderOuter.Services
 
                 this.key = key;
 
-                var total = BigInteger.Pow(16, missCount);
-                report.AddMessage($"The given key is missing {missCount} characters and there are {total:n0} keys to check.");
-                Stopwatch watch = Stopwatch.StartNew();
+                report.AddMessage($"The given key is missing {missCount} characters.");
+                report.SetTotal(16, missCount);
+                report.Timer.Start();
 
                 missingIndexes = new int[missCount];
                 byte[] ba = new byte[32];
@@ -286,10 +284,6 @@ namespace FinderOuter.Services
                 }
 
                 await Task.Run(() => Loop(ba));
-
-                watch.Stop();
-                report.AddMessageSafe($"Elapsed time: {watch.Elapsed}");
-                report.SetKeyPerSec(total, watch.Elapsed.TotalSeconds);
 
                 report.Finalize();
             }
