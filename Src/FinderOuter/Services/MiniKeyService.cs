@@ -453,6 +453,7 @@ namespace FinderOuter.Services
                     report.AddMessageSafe("The given input has no missing characters, verifying it as a complete minikey.");
                     report.AddMessageSafe(inputService.CheckMiniKey(key));
                     report.FoundAnyResult = true;
+                    report.Finalize();
                     return;
                 }
 
