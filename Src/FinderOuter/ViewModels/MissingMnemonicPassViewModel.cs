@@ -91,7 +91,7 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mnemonic, value);
         }
 
-        private int _passLen;
+        private int _passLen = 1;
         public int PassLength
         {
             get => _passLen;
