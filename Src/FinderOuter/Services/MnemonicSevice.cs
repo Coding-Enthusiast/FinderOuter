@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
@@ -1413,20 +1414,49 @@ namespace FinderOuter.Services
                 {
                     try
                     {
-                        if (mnType == MnemonicTypes.BIP39)
+                        BIP0032 temp = mnType switch
                         {
-                            using BIP0039 temp = new(mnemonic, wl, pass);
+                            MnemonicTypes.BIP39 => new BIP0039(mnemonic, wl, pass),
+                            MnemonicTypes.Electrum => new(mnemonic, wl, pass),
+                            _ => throw new ArgumentException("Undefined mnemonic type.")
+                        };
+
+                        report.Pass($"Given input is a valid {mnType} mnemonic.");
+
+                        try
+                        {
+                            this.path = new BIP0032Path(path);
                         }
-                        else if (mnType == MnemonicTypes.Electrum)
+                        catch (Exception ex)
                         {
-                            using ElectrumMnemonic temp = new(mnemonic, wl, pass);
+                            report.Fail($"Invalid path ({ex.Message}).");
+                            return;
                         }
 
-                        report.Pass($"Given mnemonic is a valid {mnType}.");
+                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                        {
+                            report.Fail($"Invalid extra input or input type {extraType}.");
+                            return;
+                        }
+
+                        uint startIndex = this.path.Indexes[^1];
+                        uint[] indices = new uint[this.path.Indexes.Length - 1];
+                        Array.Copy(this.path.Indexes, 0, indices, 0, indices.Length);
+                        var newPath = new BIP0032Path(indices);
+
+                        PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
+                        if (comparer.Compare(keys[0].ToBigInt()))
+                        {
+                            report.Pass($"The given child key is derived from this mnemonic at {this.path} path.");
+                        }
+                        else
+                        {
+                            report.Fail($"The given child key is not derived from this mnemonic or not at {this.path} path.");
+                        }
                     }
                     catch (Exception ex)
                     {
-                        report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}.");
+                        report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}");
                     }
 
                     return;
