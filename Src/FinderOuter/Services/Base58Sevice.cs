@@ -326,8 +326,8 @@ namespace FinderOuter.Services
                         string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
                             $"     Compressed P2PKH address={Address.GetP2pkh(pub, true)}{Environment.NewLine}" +
                             $"     Uncompressed P2PKH address={Address.GetP2pkh(pub, false)}{Environment.NewLine}" +
-                            $"     Compressed P2WPKH address={Address.GetP2wpkh(pub, 0)}{Environment.NewLine}" +
-                            $"     Compressed P2SH-P2WPKH address={Address.GetP2sh_P2wpkh(pub, 0)}";
+                            $"     Compressed P2WPKH address={Address.GetP2wpkh(pub)}{Environment.NewLine}" +
+                            $"     Compressed P2SH-P2WPKH address={Address.GetP2sh_P2wpkh(pub)}";
                         report.AddMessageSafe(msg);
                         report.FoundAnyResult = true;
                     }
