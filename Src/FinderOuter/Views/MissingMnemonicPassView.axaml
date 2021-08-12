@@ -71,5 +71,17 @@
                 Grid.Row="1"/>
     </Grid>
 
+    <ComboBox Items="{Binding PassRecoveryModeList}"
+              SelectedItem="{Binding SelectedPassRecoveryMode}"
+              Grid.Column="1"
+              Grid.Row="3">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+
   </Grid>
 </UserControl>

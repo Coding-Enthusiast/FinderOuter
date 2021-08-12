@@ -10,11 +10,18 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
+    public enum PassRecoveryMode
+    {
+        [Description("A password consisting of random characters")]
+        Alphanumeric
+    }
+
     public class MissingMnemonicPassViewModel : OptionVmBase
     {
         public MissingMnemonicPassViewModel()
@@ -24,6 +31,8 @@ namespace FinderOuter.ViewModels
             InputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
             SelectedInputType = InputTypeList.First();
             MnService = new MnemonicExtensionService(Result);
+            PassRecoveryModeList = ListHelper.GetEnumDescItems<PassRecoveryMode>().ToArray();
+            SelectedPassRecoveryMode = PassRecoveryModeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Mnemonic,
@@ -51,17 +60,17 @@ namespace FinderOuter.ViewModels
 
         public override string OptionName => "Missing Mnemonic Pass";
         public override string Description => "This option can recover missing mnemonic passphrases also known as extra " +
-            "or extension words. Enter the full mnemonic, a child key for comparisson and the full path of that key. " +
+            "or extension words. Enter the mnemonic, a child key or address for comparisson and the full path of that key. " +
             "The path is the full BIP-32 defined path of the child key including the key's index (eg. m/44'/0'/0'/0)." +
             $"{Environment.NewLine}" +
-            $"the only available case for now is when you don't know any characters of the passphrase. Enter its exact " +
-            $"length and select the type of characters that were used in the passphrase. And finally click Find.";
+            $"Choose a recovery mode and enter the required information. Finally click Find button.";
 
 
         public MnemonicExtensionService MnService { get; }
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
         public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
+        public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
         private MnemonicTypes _selMnT;
         public MnemonicTypes SelectedMnemonicType
@@ -84,6 +93,13 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _inT, value);
         }
 
+        private DescriptiveItem<PassRecoveryMode> _recMode;
+        public DescriptiveItem<PassRecoveryMode> SelectedPassRecoveryMode
+        {
+            get => _recMode;
+            set => this.RaiseAndSetIfChanged(ref _recMode, value);
+        }
+
         private string _mnemonic;
         public string Mnemonic
         {
@@ -98,9 +114,7 @@ namespace FinderOuter.ViewModels
             set
             {
                 if (value < 1)
-                {
                     value = 1;
-                }
 
                 this.RaiseAndSetIfChanged(ref _passLen, value);
             }
@@ -148,7 +162,7 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isSymbol, value);
         }
 
-        public string AllSymbols => $"Symbols ({ConstantsFO.AllSymbols})";
+        public static string AllSymbols => $"Symbols ({ConstantsFO.AllSymbols})";
 
 
         public PasswordType PassType
