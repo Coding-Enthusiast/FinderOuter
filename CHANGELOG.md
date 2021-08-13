@@ -1,10 +1,16 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.11.0.0...master)
-* BIP-39 passphrase recovery
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.0.0...master)
 * BIP-38 password recovery
 * SIMD support
 * GPU support
 * Wallet file password recovery
+
+### Release 0.12.0 (2021-08-13)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.11.0.0...v0.12.0.0)  
+* **New recovery option**: recovering mnemonic (BIP39, Electrum) passphrase
+* `Report` is improved to handle timer, progress and give a more accurate key/sec speed
+* Mnemonic recovery option will return a better report when the input is not missing any words
+* Small bug fix, code improvement and some tests
 
 ### Release 0.11.0 (2021-06-13)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.10.0.0...v0.11.0.0)  

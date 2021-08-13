@@ -64,23 +64,30 @@ This option works for both [BIP-39](https://github.com/bitcoin/bips/blob/master/
 that have some missing words. It requires knowing one child (private/public) key or address created from that seed and the 
 exact derivation path of it.
 
-#### 6. Missing BIP-32 derivation path
+#### 6. Missing mnemonic passphrase
+This option is used to recover the extension words (aka passphrase) used in mnemonics. It works for both
+[BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and Electrum mnemonics algorithms. The available
+passphrase recovery modes are:  
+a. Alphanumeric: This is when the passphrase consists of letter, numbers and symbols and is random. Example: `OT!pA?8i`  
+b. _soon_
+
+
+#### 7. Missing BIP-32 derivation path
 This option could be used to find derivation path of a child key (private key, public key or the address) by having the mnemonic
 or the extended master keys (xprv or xpub). It only checks a hard-coded list of popular derivation paths.
 
-#### 7. Missing characters in Armory recovery phrase
+#### 8. Missing characters in Armory recovery phrase
 This option is used to recover Armory paper backups (containing 2 or 4 lines of 36 characters in Base-16 with custom char-set)
 that are missing some of their characters. Since the last 4 characters of each line is the checksum this option can be very fast
 (1 trillion keys/sec) if the checksum is available or extremely slow (100 key/sec) if not.
 
-#### 8. Missing string encoding
+#### 9. Missing string encoding
 This option could be used to determine the encoding of an arbitrary text. It currently supports Base-16, Base-43, Base-58, 
 Base-58 with checksum and Base-64. All inputs will be converted to hexadecimal.
 
 
 ## Future plans
 * Optimization is always at the top of the to-do list
-* BIP-39 passphrase (extention words) recovery
 * File password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
 * BIP-38 password recovery
 * Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
