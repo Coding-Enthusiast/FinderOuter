@@ -347,10 +347,11 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         report.FoundAnyResult = true;
 
-                        byte[] temp = new byte[items.Length];
-                        for (int i = 0; i < temp.Length; i++)
+                        byte[] temp = new byte[items.Length + 1];
+                        temp[0] = dPt[8];
+                        for (int i = 1; i < temp.Length; i++)
                         {
-                            temp[i] = valPt[items[i]];
+                            temp[i] = valPt[items[i - 1]];
                         }
                         string finalResult = Encoding.UTF8.GetString(temp);
 
