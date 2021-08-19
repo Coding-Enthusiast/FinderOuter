@@ -1,9 +1,13 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.0.0...master)
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.1.0...master)
 * BIP-38 password recovery
 * SIMD support
 * GPU support
 * Wallet file password recovery
+
+### Release 0.12.1 (2021-08-19)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.0.0...v0.12.1.0)  
+* BugFix: set the first character of the found mnemonic passphrase correctly
 
 ### Release 0.12.0 (2021-08-13)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.11.0.0...v0.12.0.0)  
