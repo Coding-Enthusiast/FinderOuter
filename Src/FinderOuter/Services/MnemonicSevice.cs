@@ -1417,7 +1417,7 @@ namespace FinderOuter.Services
                         BIP0032 temp = mnType switch
                         {
                             MnemonicTypes.BIP39 => new BIP0039(mnemonic, wl, pass),
-                            MnemonicTypes.Electrum => new(mnemonic, wl, pass),
+                            MnemonicTypes.Electrum => new ElectrumMnemonic(mnemonic, wl, pass),
                             _ => throw new ArgumentException("Undefined mnemonic type.")
                         };
 
