@@ -27,6 +27,7 @@ namespace FinderOuter.Services
         LowerCase = 1 << 1,
         Numbers = 1 << 2,
         Symbols = 1 << 3,
+        Space = 1 << 4
     }
 
     public class MnemonicExtensionService
@@ -679,6 +680,10 @@ namespace FinderOuter.Services
             if (type.HasFlag(PasswordType.Symbols))
             {
                 temp += ConstantsFO.AllSymbols;
+            }
+            if (type.HasFlag(PasswordType.Space))
+            {
+                temp += " ";
             }
 
             allValues = Encoding.UTF8.GetBytes(temp);

@@ -162,6 +162,13 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isSymbol, value);
         }
 
+        private bool _useSpace;
+        public bool UseSpace
+        {
+            get => _useSpace;
+            set => this.RaiseAndSetIfChanged(ref _useSpace, value);
+        }
+
         public static string AllSymbols => $"Symbols ({ConstantsFO.AllSymbols})";
 
 
@@ -185,6 +192,10 @@ namespace FinderOuter.ViewModels
                 if (IsSymbol)
                 {
                     result |= PasswordType.Symbols;
+                }
+                if (UseSpace)
+                {
+                    result |= PasswordType.Space;
                 }
 
                 return result;
