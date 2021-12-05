@@ -1,3 +1,4 @@
+[![.NET-CI](https://github.com/Coding-Enthusiast/FinderOuter/actions/workflows/dotnetCI.yml/badge.svg)](https://github.com/Coding-Enthusiast/FinderOuter/actions/workflows/dotnetCI.yml)
 [![Build Status](https://travis-ci.com/Coding-Enthusiast/FinderOuter.svg?branch=master)](https://travis-ci.com/Coding-Enthusiast/FinderOuter)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/License)
 [![Target](https://img.shields.io/badge/dynamic/xml?color=%23512bd4&label=target&query=%2F%2FTargetFramework%5B1%5D&url=https%3A%2F%2Fraw.githubusercontent.com%2FCoding-Enthusiast%2FFinderOuter%2Fmaster%2FSrc%2FFinderOuter%2FFinderOuter.csproj&logo=.net)](https://github.com/Coding-Enthusiast/FinderOuter/blob/master/Src/FinderOuter/FinderOuter.csproj)
