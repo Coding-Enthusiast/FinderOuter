@@ -23,9 +23,9 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    public class Base58Sevice
+    public class Base58Service
     {
-        public Base58Sevice(IReport rep)
+        public Base58Service(IReport rep)
         {
             inputService = new InputService();
             report = rep;

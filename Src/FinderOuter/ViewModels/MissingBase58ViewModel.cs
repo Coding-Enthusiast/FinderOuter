@@ -20,7 +20,7 @@ namespace FinderOuter.ViewModels
         {
             // Don't move this line, service must be instantiated here
             var inServ = new InputService();
-            b58Service = new Base58Sevice(Result);
+            b58Service = new Base58Service(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input, x => x.MissingChar,
@@ -30,7 +30,7 @@ namespace FinderOuter.ViewModels
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
-            InputTypeList = ListHelper.GetAllEnumValues<Base58Sevice.InputType>();
+            InputTypeList = ListHelper.GetAllEnumValues<Base58Service.InputType>();
             ExtraInputTypeList = ListHelper.GetEnumDescItems(InputType.PrivateKey).ToArray();
             SelectedExtraInputType = ExtraInputTypeList.First();
 
@@ -56,13 +56,13 @@ namespace FinderOuter.ViewModels
             $" and press find.";
 
 
-        private readonly Base58Sevice b58Service;
+        private readonly Base58Service b58Service;
 
-        public IEnumerable<Base58Sevice.InputType> InputTypeList { get; private set; }
+        public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
-        private Base58Sevice.InputType _selInpT;
-        public Base58Sevice.InputType SelectedInputType
+        private Base58Service.InputType _selInpT;
+        public Base58Service.InputType SelectedInputType
         {
             get => _selInpT;
             set => this.RaiseAndSetIfChanged(ref _selInpT, value);
