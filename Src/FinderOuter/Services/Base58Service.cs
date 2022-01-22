@@ -38,6 +38,7 @@ namespace FinderOuter.Services
         private uint[] powers58, precomputed;
         private ulong[] multPow58, preC;
         private int[] missingIndexes;
+        private int missingIndexeMultiplier = 1;
         private int missCount;
         private string keyToCheck;
 
@@ -107,7 +108,7 @@ namespace FinderOuter.Services
         /// <summary>
         /// Returns powers of 58 multiplied by <paramref name="maxPow"/> then shifts them left so that it doesn't need it later
         /// when converting to SHA256 working vector
-        /// <para/>0*58^0 0*58^1 ... 0*58^<paramref name="maxPow"/> 1*58^0 ...
+        /// <para/>[0*58^0, 0*58^1, ..., 0*58^<paramref name="maxPow"/>, 1*58^0, 1*58^1, ...]
         /// </summary>
         public static ulong[] GetShiftedMultPow58(int maxPow, int uLen, int shift)
         {
@@ -136,9 +137,11 @@ namespace FinderOuter.Services
             return multPow;
         }
 
-        public void InitializeCompressWif(ReadOnlySpan<char> key, char missingChar)
+        public static void InitializeCompressWif(ReadOnlySpan<char> key, char missingChar, int[] missingIndexes,
+                                                 out int missingIndexMultiplier, out ulong[] multPow58, out ulong[] preC)
         {
             const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+            missingIndexMultiplier = uLen;
 
             multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, uLen, 16);
             preC = new ulong[uLen];
@@ -159,16 +162,18 @@ namespace FinderOuter.Services
                 }
                 else
                 {
-                    missingIndexes[mis] = key.Length - i - 1;
+                    missingIndexes[mis] = (key.Length - i - 1) * missingIndexMultiplier;
                     mis++;
                     j += uLen;
                 }
             }
         }
 
-        public void InitializeUncompressWif(ReadOnlySpan<char> key, char missingChar)
+        public static void InitializeUncompressWif(ReadOnlySpan<char> key, char missingChar, int[] missingIndexes,
+                                                 out int missingIndexMultiplier, out ulong[] multPow58, out ulong[] preC)
         {
             const int uLen = 10;
+            missingIndexMultiplier = uLen;
 
             multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, uLen, 24);
             preC = new ulong[uLen];
@@ -189,7 +194,7 @@ namespace FinderOuter.Services
                 }
                 else
                 {
-                    missingIndexes[mis] = key.Length - i - 1;
+                    missingIndexes[mis] = (key.Length - i - 1) * missingIndexMultiplier;
                     mis++;
                     j += uLen;
                 }
@@ -208,7 +213,7 @@ namespace FinderOuter.Services
             {
                 for (int i = 1; i < missingIndexes.Length; i++)
                 {
-                    if (missingIndexes[i] - missingIndexes[i - 1] != 1)
+                    if (missingIndexes[i] - missingIndexes[i - 1] != missingIndexeMultiplier)
                     {
                         return false;
                     }
@@ -372,11 +377,11 @@ namespace FinderOuter.Services
             int i = 0;
             if (firstItem != -1)
             {
-                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[firstItem];
+                temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[firstItem];
             }
             foreach (var index in missingItems)
             {
-                temp[temp.Length - missingIndexes[i++] - 1] = ConstantsFO.Base58Chars[(int)index];
+                temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[(int)index];
             }
 
             report.AddMessageSafe(new string(temp));
@@ -384,15 +389,15 @@ namespace FinderOuter.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe bool MoveNext(uint* cartesian, int len)
+        private static unsafe bool MoveNext(uint* itemPt, int len)
         {
             for (int i = len - 1; i >= 0; --i)
             {
-                cartesian[i] += 1;
+                itemPt[i] += 1;
 
-                if (cartesian[i] == 58)
+                if (itemPt[i] == 58)
                 {
-                    cartesian[i] = 0;
+                    itemPt[i] = 0;
                 }
                 else
                 {
@@ -417,7 +422,7 @@ namespace FinderOuter.Services
                     int i = 0;
                     foreach (int keyItem in missingItems)
                     {
-                        int chunk = (keyItem * 520) + (10 * mi[i++]);
+                        int chunk = (keyItem * 520) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -469,8 +474,7 @@ namespace FinderOuter.Services
             fixed (ulong* lpre = &localPre[0], pre = &preC[0], pow = &multPow58[0])
             {
                 Buffer.MemoryCopy(pre, lpre, 80, 80);
-                int index = missingIndexes[0];
-                int chunk = (firstItem * len * 10) + (10 * index);
+                int chunk = (firstItem * len * 10) + missingIndexes[0];
 
                 lpre[0] += pow[0 + chunk];
                 lpre[1] += pow[1 + chunk];
@@ -519,7 +523,7 @@ namespace FinderOuter.Services
                     int i = 0;
                     foreach (int keyItem in missingItems)
                     {
-                        int chunk = (keyItem * 510) + (10 * mi[i++]);
+                        int chunk = (keyItem * 510) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -1253,13 +1257,15 @@ namespace FinderOuter.Services
                     {
                         if (isComp)
                         {
-                            InitializeCompressWif(key.AsSpan(), missingChar);
+                            InitializeCompressWif(key.AsSpan(), missingChar, missingIndexes, out missingIndexeMultiplier,
+                                out multPow58, out preC);
                             report.AddMessageSafe("Running compressed loop. Please wait.");
                             LoopComp();
                         }
                         else
                         {
-                            InitializeUncompressWif(key.AsSpan(), missingChar);
+                            InitializeUncompressWif(key.AsSpan(), missingChar, missingIndexes, out missingIndexeMultiplier,
+                                out multPow58, out preC);
                             report.AddMessageSafe("Running uncompressed loop. Please wait.");
                             LoopUncomp();
                         }
