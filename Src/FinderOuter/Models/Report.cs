@@ -70,7 +70,12 @@ namespace FinderOuter.Models
 
         public BigInteger Total { get; private set; }
 
-        public void SetTotal(BigInteger value) => Total = value;
+        public void SetTotal(BigInteger value)
+        {
+            Total = value;
+            AddMessageSafe($"Total number of permutations to check: {Total:n0}");
+        }
+
         public void SetTotal(int value, int exponent)
         {
             Total = BigInteger.Pow(value, exponent);
