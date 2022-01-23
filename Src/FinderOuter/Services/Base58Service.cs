@@ -881,6 +881,7 @@ namespace FinderOuter.Services
             uint[] precomputed = new uint[uLen];
             fixed (uint* pre = &precomputed[0], pow = &powers58[0])
             {
+                report.SetProgressStep(maxKeyLen);
                 // i starts from 1 becaue it is compressed (K or L)
                 for (int i = 1; i < maxKeyLen - 1; i++)
                 {
@@ -974,6 +975,7 @@ namespace FinderOuter.Services
                             }
                         });
                     }
+                    report.IncrementProgress();
                 }
             }
             return false;
@@ -1013,6 +1015,8 @@ namespace FinderOuter.Services
 
             fixed (uint* pre = &precomputed[0], pow = &powers58[0])
             {
+                report.SetProgressStep(ConstantsFO.PrivKeyCompWifLen);
+
                 // i starts from 1 becaue it is compressed (K or L)
                 for (int i = 1; i < ConstantsFO.PrivKeyCompWifLen - 2; i++)
                 {
@@ -1143,6 +1147,8 @@ namespace FinderOuter.Services
                         }
                     }
                 }
+
+                report.IncrementProgress();
             }
             return false;
         }
