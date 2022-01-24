@@ -23,23 +23,24 @@ namespace Tests.Services
         [InlineData("SzavMBLoXU6kDrqtUVmffv", "Compressed:")]
         public void CheckMiniKeyTest(string key, string expectedMsg)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             string actualMsg = serv.CheckMiniKey(key);
             Assert.Contains(expectedMsg, actualMsg);
         }
 
         [Theory]
-        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", "The given BIP-38 string is valid.")]
-        [InlineData("6PnZki3vKspApf2zym6Anp2jd5hiZbuaZArPfa2ePcgVf196PLGrQNyVUh", "The given BIP-38 string is valid.")]
-        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs$", "The given BIP-38 string contains invalid base-58 characters.")]
-        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs1", "The given BIP-38 string has an invalid checksum.")]
-        [InlineData("2DnRqfF9cUPrMxRSAbprPfviNN37TLoH7Zmgq5uS4CcTQymH9nfcFXvXX", "The given BIP-38 string has an invalid byte length.")]
-        [InlineData("AfEEGJ8HqcGUofEyL7Cr6R73LJbus3tuKFMHEiBmT6X1H8npuj94cMrcai", "The given BIP-38 string has invalid starting bytes.")]
-        [InlineData("6RMoGm8dMt4BH2WLE6jLYNeF6B4SZ4WHmg6PRggwCQYqJPPwU32uVBH8Be", "The given BIP-38 string has invalid starting bytes.")]
-        public void CheckBase58Bip38Test(string bip38, string expectedMsg)
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", true, "The given BIP-38 string is valid.")]
+        [InlineData("6PnZki3vKspApf2zym6Anp2jd5hiZbuaZArPfa2ePcgVf196PLGrQNyVUh", true, "The given BIP-38 string is valid.")]
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs$", false, "The given BIP-38 string contains invalid base-58 characters.")]
+        [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs1", false, "The given BIP-38 string has an invalid checksum.")]
+        [InlineData("2DnRqfF9cUPrMxRSAbprPfviNN37TLoH7Zmgq5uS4CcTQymH9nfcFXvXX", false, "The given BIP-38 string has an invalid byte length.")]
+        [InlineData("AfEEGJ8HqcGUofEyL7Cr6R73LJbus3tuKFMHEiBmT6X1H8npuj94cMrcai", false, "The given BIP-38 string has invalid starting bytes.")]
+        [InlineData("6RMoGm8dMt4BH2WLE6jLYNeF6B4SZ4WHmg6PRggwCQYqJPPwU32uVBH8Be", false, "The given BIP-38 string has invalid starting bytes.")]
+        public void CheckBase58Bip38Test(string bip38, bool expected, string expectedMsg)
         {
-            InputService serv = new InputService();
-            string actualMsg = serv.CheckBase58Bip38(bip38);
+            InputService serv = new();
+            bool actual = serv.CheckBase58Bip38(bip38, out string actualMsg);
+            Assert.Equal(expected, actual);
             Assert.Equal(expectedMsg, actualMsg);
         }
 
@@ -53,7 +54,7 @@ namespace Tests.Services
         [InlineData("34q4KRuJeVGJ79f8jRkexoEnFKP1fRjqp", "The given address starts with an invalid byte.")]
         public void CheckBase58AddressTest(string addr, string expectedMsg)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             string actualMsg = serv.CheckBase58Address(addr);
             Assert.Equal(expectedMsg, actualMsg);
         }
@@ -68,7 +69,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtf*HZH7cAibzG9oK19X(iFzxHgAkz6JK")]
         public void CanBePrivateKeyTest(string key)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.CanBePrivateKey(key, out string error);
             Assert.True(actual, error);
             Assert.Null(error);
@@ -86,7 +87,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK1")]
         public void CanBePrivateKey_FalseTest(string key)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.CanBePrivateKey(key, out _);
             Assert.False(actual);
         }
@@ -106,7 +107,7 @@ namespace Tests.Services
         [InlineData("L53fCHmNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgA", '$')]
         public void CheckIncompletePrivateKeyTest(string key, char missingChar)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.CheckIncompletePrivateKey(key, missingChar, out string error);
             Assert.True(actual, error);
             Assert.Null(error);
@@ -136,7 +137,7 @@ namespace Tests.Services
         [InlineData("mwdMAjGmerYanjeui5SHS7Jkm", '*', "The first character of the given private key is not valid.")]
         public void CheckIncompletePrivateKey_FailTest(string key, char missingChar, string expError)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.CheckIncompletePrivateKey(key, missingChar, out string error);
             Assert.False(actual);
             Assert.Contains(expError, error);
@@ -154,7 +155,7 @@ namespace Tests.Services
         [InlineData('(', false)]
         public void IsMissingCharValidTest(char c, bool expected)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             Assert.Equal(expected, serv.IsMissingCharValid(c));
         }
 
@@ -163,7 +164,7 @@ namespace Tests.Services
         [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", true, "e8df018c7e326cc253faac7e46cdc51e68542c42")]
         public void IsValidAddressTest(string addr, bool ignore, string expectedHash)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
             Assert.True(actual);
             Assert.Equal(Helper.HexToBytes(expectedHash), actualHash);
@@ -181,7 +182,7 @@ namespace Tests.Services
         [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5md2", true)]
         public void IsValidAddress_FalseTest(string addr, bool ignore)
         {
-            InputService serv = new InputService();
+            InputService serv = new();
             bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
             Assert.False(actual);
             Assert.Null(actualHash);

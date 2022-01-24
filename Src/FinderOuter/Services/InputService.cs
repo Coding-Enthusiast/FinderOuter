@@ -51,28 +51,33 @@ namespace FinderOuter.Services
             }
         }
 
-        public string CheckBase58Bip38(string bip38)
+        public bool CheckBase58Bip38(string bip38, out string message)
         {
             if (!Base58.IsValid(bip38))
             {
-                return "The given BIP-38 string contains invalid base-58 characters.";
+                message = "The given BIP-38 string contains invalid base-58 characters.";
+                return false;
             }
             if (!Base58.IsValidWithChecksum(bip38))
             {
-                return "The given BIP-38 string has an invalid checksum.";
+                message = "The given BIP-38 string has an invalid checksum.";
+                return false;
             }
 
             byte[] data = Base58.DecodeWithChecksum(bip38);
             if (data.Length != ConstantsFO.Bip38ByteLen)
             {
-                return "The given BIP-38 string has an invalid byte length.";
+                message = "The given BIP-38 string has an invalid byte length.";
+                return false;
             }
             if (data[0] != 1 || (data[1] != 0x42 && data[1] != 0x43))
             {
-                return "The given BIP-38 string has invalid starting bytes.";
+                message = "The given BIP-38 string has invalid starting bytes.";
+                return false;
             }
 
-            return "The given BIP-38 string is valid.";
+            message = "The given BIP-38 string is valid.";
+            return true;
         }
 
         public string CheckBase58Address(string address)

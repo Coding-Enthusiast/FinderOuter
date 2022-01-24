@@ -1376,7 +1376,8 @@ namespace FinderOuter.Services
             if (missCount == 0)
             {
                 report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
-                report.AddMessageSafe(inputService.CheckBase58Bip38(bip38));
+                _ = inputService.CheckBase58Bip38(bip38, out string msg);
+                report.AddMessageSafe(msg);
             }
             else if (!bip38.StartsWith(ConstantsFO.Bip38Start))
             {
