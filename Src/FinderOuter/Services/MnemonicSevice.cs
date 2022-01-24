@@ -22,12 +22,6 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    public enum MnemonicTypes
-    {
-        BIP39,
-        Electrum,
-    }
-
     public class MnemonicSevice
     {
         public MnemonicSevice(IReport rep)

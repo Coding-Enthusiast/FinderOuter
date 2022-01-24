@@ -19,17 +19,6 @@ using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
-    [Flags]
-    public enum PasswordType : ulong
-    {
-        None = 0,
-        UpperCase = 1 << 0,
-        LowerCase = 1 << 1,
-        Numbers = 1 << 2,
-        Symbols = 1 << 3,
-        Space = 1 << 4
-    }
-
     public class MnemonicExtensionService
     {
         public MnemonicExtensionService(IReport rep)
@@ -103,13 +92,13 @@ namespace FinderOuter.Services
             oPt[14] = 0x5c5c5c5c5c5c5c5cU;
             oPt[15] = 0x5c5c5c5c5c5c5c5cU;
 
-            var sclrParent = new Scalar(hPt, out int overflow);
+            Scalar sclrParent = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
             }
 
-            foreach (var index in path.Indexes)
+            foreach (uint index in path.Indexes)
             {
                 if ((index & 0x80000000) != 0) // IsHardened
                 {
@@ -390,7 +379,7 @@ namespace FinderOuter.Services
                 fixed (byte* dPt = &salt[0], valPt = &allValues[0])
                 fixed (ulong* iPt = &pads[0], oPt = &pads[Sha512Fo.HashStateSize])
                 {
-                    foreach (var val in allValues)
+                    foreach (byte val in allValues)
                     {
                         dPt[8] = val;
 

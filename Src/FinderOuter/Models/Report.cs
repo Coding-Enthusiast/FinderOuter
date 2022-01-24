@@ -11,16 +11,6 @@ using System.Numerics;
 
 namespace FinderOuter.Models
 {
-    public enum State
-    {
-        Ready,
-        Working,
-        Paused,
-        Stopped,
-        FinishedSuccess,
-        FinishedFail
-    }
-
     public class Report : ReactiveObject, IReport
     {
         public Report()
@@ -137,7 +127,7 @@ namespace FinderOuter.Models
         /// <param name="msg"></param>
         public void AddMessageSafe(string msg)
         {
-            UIThread.InvokeAsync(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
+            _ = UIThread.InvokeAsync(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
         }
 
         public bool Fail(string msg)
@@ -155,7 +145,7 @@ namespace FinderOuter.Models
         }
 
 
-        private string GetKPS(BigInteger totalKeys, double totalSecond)
+        private static string GetKPS(BigInteger totalKeys, double totalSecond)
         {
             return totalSecond < 1 ? "k/s= ∞" : $"k/s= {totalKeys / new BigInteger(totalSecond):n0}";
         }
@@ -169,7 +159,7 @@ namespace FinderOuter.Models
         {
             AddMessageSafe("Running in parallel.");
             percent = (double)100 / splitSize;
-            UIThread.InvokeAsync(() => IsProgressVisible = true);
+            _ = UIThread.InvokeAsync(() => IsProgressVisible = true);
         }
 
         private readonly object lockObj = new();

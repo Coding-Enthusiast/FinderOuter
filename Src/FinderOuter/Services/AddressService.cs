@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin.Blockchain.Scripts;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
+using FinderOuter.Models;
 
 namespace FinderOuter.Services
 {
@@ -103,7 +104,7 @@ namespace FinderOuter.Services
                     {
                         if (expectedAddr == comp)
                         {
-                            message = "The given address is derived from the given private key."; 
+                            message = "The given address is derived from the given private key.";
                         }
                         else if (expectedAddr == uncomp)
                         {

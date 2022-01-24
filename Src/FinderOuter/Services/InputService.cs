@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
+using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace FinderOuter.Services
         {
             try
             {
-                using MiniPrivateKey mini = new MiniPrivateKey(key);
+                using MiniPrivateKey mini = new(key);
                 return $"Compressed:{Environment.NewLine}" +
                        $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
                        $"   Address: {Address.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +

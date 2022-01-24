@@ -1399,7 +1399,7 @@ namespace FinderOuter.Services
             }
         }
 
-        public async void Find(string key, char missingChar, InputType t, string extra, Services.InputType extraType)
+        public async void Find(string key, char missingChar, InputType t, string extra, Models.InputType extraType)
         {
             report.Init();
 
