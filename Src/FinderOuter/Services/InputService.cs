@@ -314,5 +314,36 @@ namespace FinderOuter.Services
             norm = s.Normalize(NormalizationForm.FormKD);
             return !s.IsNormalized(NormalizationForm.FormKD);
         }
+
+        public bool TryDecodeBip38(string bip38, out byte[] data, out byte[] salt, out bool isComp, out string error)
+        {
+            isComp = false;
+            salt = null;
+            if (!Base58.TryDecodeWithChecksum(bip38, out data))
+            {
+                error = "Invalid Base-58 encoding.";
+                return false;
+            }
+
+            if (data.Length != ConstantsFO.Bip38ByteLen)
+            {
+                error = "Invalid encrypted bytes length.";
+                data = null;
+                return false;
+            }
+
+            if (!((Span<byte>)data).Slice(0, 2).SequenceEqual(ConstantsFO.Bip38Prefix))
+            {
+                error = "Invalid prefix.";
+                data = null;
+                return false;
+            }
+
+            isComp = (data[2] & 0b0010_0000) != 0;
+            salt = ((Span<byte>)data).Slice(3, 4).ToArray();
+            data = ((Span<byte>)data).Slice(7, 32).ToArray();
+            error = null;
+            return true;
+        }
     }
 }

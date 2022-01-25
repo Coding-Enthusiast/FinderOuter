@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Services;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Tests.Services
@@ -186,6 +187,72 @@ namespace Tests.Services
             bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
             Assert.False(actual);
             Assert.Null(actualHash);
+        }
+
+
+        public static IEnumerable<object[]> GetBip38DecodeCases()
+        {
+            yield return new object[]
+            {
+                "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo",
+                true,
+                Helper.HexToBytes("70e4a0805f15a77efc738f794068d8837c2985a6945f7fe0db3f75dc305eaf7c"),
+                Helper.HexToBytes("43be4179"),
+                true,
+                null
+            };
+            yield return new object[]
+            {
+                "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg",
+                true,
+                Helper.HexToBytes("d357fafb81c71f8375a9a4d0ac02bad5f6c87c4b459fabe34c0c314b33708ec3"),
+                Helper.HexToBytes("e957a24a"),
+                false,
+                null
+            };
+            yield return new object[]
+            {
+                "Foo",
+                false, null, null, false,
+                "Invalid Base-58 encoding."
+            };
+            yield return new object[]
+            {
+                "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUe1",
+                false, null, null, false,
+                "Invalid Base-58 encoding."
+            };
+            yield return new object[]
+            {
+                "142viJrTYHA4TzryiEiuQkYk4Ay5TfpzqW",
+                false, null, null, false,
+                "Invalid encrypted bytes length."
+            };
+            yield return new object[]
+            {
+                "6Mc5gZg3pNQNMsnHDmZeRfhL1QnC24yBd1VERr3HSnKap5x2wcxYaJivvW",
+                false, null, null, false,
+                "Invalid prefix."
+            };
+            yield return new object[]
+            {
+                "6Mc5gZg3pNQNMsnHDmZeRfhL1QnC24yBd1VERr3HSnKap5x2wcxYaJivvW",
+                false, null, null, false,
+                "Invalid prefix."
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetBip38DecodeCases))]
+        public void TryDecodeBip38Test(string bip38, bool expValid, byte[] expData, byte[] expSalt, bool expComp, string expErr)
+        {
+            InputService serv = new();
+            bool actualValid = serv.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out string error);
+
+            Assert.Equal(expValid, actualValid);
+            Assert.Equal(expData, data);
+            Assert.Equal(expSalt, salt);
+            Assert.Equal(expComp, isComp);
+            Assert.Equal(expErr, error);
         }
     }
 }
