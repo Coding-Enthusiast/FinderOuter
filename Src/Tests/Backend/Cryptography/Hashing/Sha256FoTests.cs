@@ -280,6 +280,77 @@ namespace Tests.Backend.Cryptography.Hashing
         }
 
         [Fact]
+        public unsafe void Compress72SecondBlockTest()
+        {
+            int dataLen = 72;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 16; i++, dIndex += 4)
+            {
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            }
+
+            Sha256Fo.Init(hPt);
+            Sha256Fo.SetW(wPt);
+            Sha256Fo.CompressBlockWithWSet(hPt);
+            // Next block:
+            wPt[0] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            dIndex += 4;
+            wPt[1] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            wPt[2] = 0b10000000_00000000_00000000_00000000U;
+            for (int i = 3; i < 15; i++)
+            {
+                wPt[i] = 0;
+            }
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Compress72SecondBlock(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public unsafe void Compress96SecondBlockTest()
+        {
+            int dataLen = 96;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            uint* hPt = stackalloc uint[Sha256Fo.UBufferSize];
+            uint* wPt = hPt + Sha256Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 16; i++, dIndex += 4)
+            {
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            }
+
+            Sha256Fo.Init(hPt);
+            Sha256Fo.SetW(wPt);
+            Sha256Fo.CompressBlockWithWSet(hPt);
+            // Next block:
+            for (int i = 0; i < 8; i++, dIndex += 4)
+            {
+                wPt[i] = (uint)((data[dIndex] << 24) | (data[dIndex + 1] << 16) | (data[dIndex + 2] << 8) | data[dIndex + 3]);
+            }
+            wPt[8] = 0b10000000_00000000_00000000_00000000U;
+            for (int i = 9; i < 15; i++)
+            {
+                wPt[i] = 0;
+            }
+            wPt[15] = (uint)dataLen * 8;
+            Sha256Fo.Compress96SecondBlock(hPt);
+            byte[] actual = Sha256Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
         public unsafe void Compress16Test()
         {
             int dataLen = 16;
