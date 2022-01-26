@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
