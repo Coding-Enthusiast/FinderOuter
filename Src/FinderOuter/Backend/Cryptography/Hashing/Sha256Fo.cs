@@ -419,6 +419,152 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             CompressBlockWithWSet(pt);
         }
 
+
+
+        public static unsafe void Compress8260FinalBlock(uint* pt, uint i)
+        {
+            Debug.Assert(i == 1 || i == 2);
+
+            if (i == 1)
+            {
+                Compress8260FinalBlock_1(pt);
+            }
+            else
+            {
+                Compress8260FinalBlock_2(pt);
+            }
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the final block of
+        /// (data.Length == 8260) and (wPt[0] is 1, wPt[1] is the padding wPt[2] to wPt[14] is set to zero and wPt[15] to 66080)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress8260FinalBlock_1(uint* pt)
+        {
+            // w0 = 1
+            // w1 = 0b10000000_00000000_00000000_00000000U
+            // w2 to w14 = 0
+            // w15 = 66080
+            pt[24] = 0x11002001;
+            pt[25] = 0x21540040;
+            pt[26] = 0x1404eaa8;
+            pt[27] = 0x80204180;
+            pt[28] = 0xe80409b8;
+            pt[29] = 0x28d05804;
+            pt[30] = 0x85d26a20;
+            pt[31] = 0x3808c565;
+            pt[32] = 0x99c92709;
+            pt[33] = 0x8e1523dc;
+            pt[34] = 0x3763cf14;
+            pt[35] = 0x1dba5d38;
+            pt[36] = 0xc7359db2;
+            pt[37] = 0xeb0ece1d;
+            pt[38] = 0xb5efddc0;
+            pt[39] = 0x60c3f47e;
+            pt[40] = 0x39029bf7;
+            pt[41] = 0x45632d59;
+            pt[42] = 0x51aeeba2;
+            pt[43] = 0xa92b652d;
+            pt[44] = 0x970e82b1;
+            pt[45] = 0x88132a11;
+            pt[46] = 0x73e9e088;
+            pt[47] = 0xab3d23fa;
+            pt[48] = 0x8b9fd00c;
+            pt[49] = 0xf2b492d3;
+            pt[50] = 0xd7769ffc;
+            pt[51] = 0xa9dc7351;
+            pt[52] = 0x80adb351;
+            pt[53] = 0x77874ee6;
+            pt[54] = 0xded63e40;
+            pt[55] = 0x8ac57173;
+            pt[56] = 0x7607e2b1;
+            pt[57] = 0x280ce783;
+            pt[58] = 0x9fdac353;
+            pt[59] = 0xea78b34c;
+            pt[60] = 0x41103d4f;
+            pt[61] = 0x1d97d1da;
+            pt[62] = 0xc09cd397;
+            pt[63] = 0x307e167e;
+            pt[64] = 0x443cfeca;
+            pt[65] = 0xa14b22f8;
+            pt[66] = 0x4d5915e9;
+            pt[67] = 0xbfb8540b;
+            pt[68] = 0x5846d90d;
+            pt[69] = 0x6ec6c4bc;
+            pt[70] = 0x711731d8;
+            pt[71] = 0x1e552959;
+
+            CompressBlockWithWSet(pt);
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the final block of
+        /// (data.Length == 8260) and (wPt[0] is 2, wPt[1] is the padding wPt[2] to wPt[14] is set to zero and wPt[15] to 66080)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress8260FinalBlock_2(uint* pt)
+        {
+            // w0 = 2
+            // w1 = 0b10000000_00000000_00000000_00000000U
+            // w2 to w14 = 0
+            // w15 = 66080
+            pt[24] = 0x11002002;
+            pt[25] = 0x21540040;
+            pt[26] = 0x14050aa8;
+            pt[27] = 0x80204180;
+            pt[28] = 0x240409c0;
+            pt[29] = 0x28d05804;
+            pt[30] = 0x85d219a0;
+            pt[31] = 0x3808c566;
+            pt[32] = 0x71192715;
+            pt[33] = 0x8e16e3dc;
+            pt[34] = 0x37949266;
+            pt[35] = 0xd1ba5d31;
+            pt[36] = 0x04429020;
+            pt[37] = 0xeadcd61d;
+            pt[38] = 0x52a5f9b3;
+            pt[39] = 0x7114a835;
+            pt[40] = 0x678a8eb3;
+            pt[41] = 0x29eb9469;
+            pt[42] = 0xfdba0e2b;
+            pt[43] = 0xc3cf1cf7;
+            pt[44] = 0x711b714a;
+            pt[45] = 0xc1260283;
+            pt[46] = 0xc79f796b;
+            pt[47] = 0xcdb9703a;
+            pt[48] = 0xfed80a99;
+            pt[49] = 0x0ffe79cb;
+            pt[50] = 0xee5c7184;
+            pt[51] = 0x1b3dbe4d;
+            pt[52] = 0x8f3b6a74;
+            pt[53] = 0x2e03518a;
+            pt[54] = 0x478462a0;
+            pt[55] = 0xfc7f220c;
+            pt[56] = 0x6713c287;
+            pt[57] = 0x5987cf1c;
+            pt[58] = 0xe2c5f567;
+            pt[59] = 0xb81a11f8;
+            pt[60] = 0x824cfb37;
+            pt[61] = 0x64bdd2e5;
+            pt[62] = 0xd71f2d51;
+            pt[63] = 0xb685336e;
+            pt[64] = 0xd529e091;
+            pt[65] = 0x3b31a954;
+            pt[66] = 0x69a8a83f;
+            pt[67] = 0xa17d486c;
+            pt[68] = 0xfafa5836;
+            pt[69] = 0x630db00e;
+            pt[70] = 0x3420d7dc;
+            pt[71] = 0x3254c739;
+
+            CompressBlockWithWSet(pt);
+        }
+
         /// <summary>
         /// Computes _single_ SHA256 hash for
         /// (data.Length == 16) and (wPt[0] to wPt[15] is set) and (Init() is called)
