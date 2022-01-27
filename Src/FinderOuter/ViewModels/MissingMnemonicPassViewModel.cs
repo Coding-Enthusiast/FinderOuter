@@ -10,18 +10,11 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
-    public enum PassRecoveryMode
-    {
-        [Description("A password consisting of random characters")]
-        Alphanumeric
-    }
-
     public class MissingMnemonicPassViewModel : OptionVmBase
     {
         public MissingMnemonicPassViewModel()

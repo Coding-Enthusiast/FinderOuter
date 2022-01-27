@@ -66,6 +66,13 @@ namespace FinderOuter.Models
     }
 
 
+    public enum PassRecoveryMode
+    {
+        [Description("A password consisting of random characters")]
+        Alphanumeric
+    }
+
+
     [Flags]
     public enum PasswordType : ulong
     {
