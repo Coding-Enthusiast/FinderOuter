@@ -28,6 +28,7 @@ namespace FinderOuter.ViewModels
                 new MissingBip32PathViewModel(),
                 new MissingArmoryViewModel(),
                 new MissingEncodingViewModel(),
+                new MissingBip38PassViewModel(),
             };
 
             WinMan = new WindowManager();

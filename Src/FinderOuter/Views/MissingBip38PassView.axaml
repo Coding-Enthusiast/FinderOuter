@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FinderOuter.Views.MissingBip38PassView">
+
+  <Design.DataContext>
+    <vm:MissingBip38PassViewModel/>
+  </Design.DataContext>
+
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
+    <TextBox Text="{Binding Bip38}"
+             Watermark="BIP-38 string"
+             Grid.Column="0"
+             Grid.Row="0"/>
+
+    <TextBox Text="{Binding CompareString}"
+             Watermark="Compare string (public key or address)"
+             Grid.Column="0"
+             Grid.Row="1"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding ExtraInputKb}"
+            Grid.Column="0"
+            Grid.Row="1"/>
+    <ComboBox Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"
+              Grid.Column="1"
+              Grid.Row="1">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+
+    <Grid ColumnDefinitions="130,auto,auto,auto" RowDefinitions="*,*" Grid.Column="0" Grid.Row="2">
+      <NumericUpDown Value="{Binding PassLength}"
+                     Minimum="1"
+                     Watermark="Passphrase length"
+                     Grid.Column="0"
+                     Grid.RowSpan="2"/>
+      <CheckBox Content="Upper case (A-Z)"
+                IsChecked="{Binding IsUpperCase}"
+                Grid.Column="1"
+                Grid.Row="0"/>
+      <CheckBox Content="Lower case (a-z)"
+                IsChecked="{Binding IsLowerCase}"
+                Grid.Column="1"
+                Grid.Row="1"/>
+      <CheckBox Content="Numbers (0-9)"
+                IsChecked="{Binding IsNumber}"
+                Grid.Column="2"
+                Grid.Row="0"/>
+      <CheckBox Content="{Binding AllSymbols}"
+                IsChecked="{Binding IsSymbol}"
+                Grid.Column="2"
+                Grid.Row="1"/>
+      <CheckBox Content="Space"
+                IsChecked="{Binding UseSpace}"
+                Grid.Column="3"
+                Grid.Row="0"/>
+    </Grid>
+
+    <ComboBox Items="{Binding PassRecoveryModeList}"
+              SelectedItem="{Binding SelectedPassRecoveryMode}"
+              Grid.Column="1"
+              Grid.Row="2">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+
+  </Grid>
+</UserControl>
