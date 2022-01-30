@@ -34,9 +34,9 @@ namespace FinderOuter.Services
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe bool MoveNext(int* items, int len, int max)
+        private static unsafe bool ParallelMoveNext(int* items, int len, int max)
         {
-            for (int i = len - 1; i >= 0; --i)
+            for (int i = len - 1; i > 0; --i)
             {
                 items[i] += 1;
 
@@ -53,7 +53,8 @@ namespace FinderOuter.Services
             return false;
         }
 
-        public unsafe void MainLoop(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength)
+        public unsafe void MainLoop(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength,
+                                    int firstItem, ParallelLoopState loopState)
         {
             Debug.Assert(salt.Length == 4);
             Debug.Assert(passLength <= Sha256Fo.BlockByteSize);
@@ -75,9 +76,10 @@ namespace FinderOuter.Services
             };
 
             uint saltUint = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
+            var localComparer = comparer.Clone();
 
-            // TODO: add -1 to the following when this became parallel
             int[] items = new int[passLength];
+            items[0] = firstItem;
             uint[] passValues = new uint[passLength / 4 + (passLength % 4 != 0 ? 1 : 0)];
 
             uint[] InnerPads = Enumerable.Repeat(0x36363636U, 16).ToArray();
@@ -101,6 +103,10 @@ namespace FinderOuter.Services
             {
                 do
                 {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
                     // * First PBKDF2 (blockcount=256, dkLen=8192, password=pass, salt=salt_4)
                     // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (256x)
 
@@ -315,10 +321,9 @@ namespace FinderOuter.Services
                     }
 
                     Scalar key = new(decryptedResult, out int overflow);
-                    PointJacobian point = comparer.Calc2.MultiplyByG(key);
-                    bool b = comparer.Compare(point);
-                    if (b)
+                    if (overflow == 0 && localComparer.Compare(comparer.Calc2.MultiplyByG(key)))
                     {
+                        loopState.Stop();
                         report.FoundAnyResult = true;
 
                         char[] temp = new char[passLength];
@@ -331,11 +336,13 @@ namespace FinderOuter.Services
                         return;
                     }
 
-                } while (MoveNext(itemsPt, items.Length, allValues.Length));
+                } while (ParallelMoveNext(itemsPt, items.Length, allValues.Length));
             }
+
+            report.IncrementProgress();
         }
 
-        private unsafe void ROMIX(uint* dPt, uint* vPt)
+        private static unsafe void ROMIX(uint* dPt, uint* vPt)
         {
             Buffer.MemoryCopy(dPt, vPt, 1024, 1024);
 
@@ -373,9 +380,9 @@ namespace FinderOuter.Services
             }
         }
 
-        private readonly uint[] blockMixBuffer = new uint[16];
-        private unsafe void BlockMix(uint* srcPt, uint* dstPt)
+        private static unsafe void BlockMix(uint* srcPt, uint* dstPt)
         {
+            uint[] blockMixBuffer = new uint[16];
             fixed (uint* xPt = &blockMixBuffer[0])
             {
                 *(Block64*)xPt = *(Block64*)(srcPt + 256 - 16);
@@ -476,6 +483,12 @@ namespace FinderOuter.Services
         private static uint R(uint a, int b) => unchecked((a << b) | (a >> (32 - b)));
 
 
+        private void StartParallel(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength)
+        {
+            report.SetProgressStep(allValues.Length);
+            Parallel.For(0, allValues.Length,
+                    (firstItem, state) => MainLoop(data, salt, isComp, allValues, passLength, firstItem, state));
+        }
 
         private static bool TrySetAllPassValues(PasswordType type, out byte[] allValues)
         {
@@ -510,6 +523,9 @@ namespace FinderOuter.Services
         {
             report.Init();
 
+            // I don't think anyone has a 1 char password so we take the lazy route and reject it (at least for now)
+            if (passLength <= 1)
+                report.Fail("Passwords smaller than 1 byte are not supported.");
             // Passwords bigger than 64 bytes need to be hashed first inside HMACSHA256 so we needa different MainLoop code
             if (passLength > Sha256Fo.BlockByteSize)
                 report.Fail("Passwords bigger than 64 bytes are not supported yet.");
@@ -526,7 +542,7 @@ namespace FinderOuter.Services
                 report.SetTotal(allValues.Length, passLength);
                 report.Timer.Start();
 
-                await Task.Run(() => MainLoop(data, salt, isComp, allValues, passLength));
+                await Task.Run(() => StartParallel(data, salt, isComp, allValues, passLength));
 
                 report.Finalize();
             }
