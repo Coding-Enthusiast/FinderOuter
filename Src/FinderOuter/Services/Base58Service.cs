@@ -1291,6 +1291,7 @@ namespace FinderOuter.Services
                     {
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
+                        report.FoundAnyResult = true;
                     }
                     else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 1)
                     {
@@ -1315,6 +1316,7 @@ namespace FinderOuter.Services
                     {
                         report.AddMessageSafe("No character is missing, checking validity of the key itself.");
                         report.AddMessageSafe(inputService.CheckPrivateKey(key));
+                        report.FoundAnyResult = true;
                     }
                     else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 1)
                     {
