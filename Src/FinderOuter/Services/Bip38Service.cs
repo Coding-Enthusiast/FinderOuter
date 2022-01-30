@@ -281,15 +281,7 @@ namespace FinderOuter.Services
                         wPt[15] = (64 + 32) * 8; // 768
                         Sha256Fo.Compress96SecondBlock(pt);
 
-                        // Swap endian
-                        final[0] = (pt[0] >> 24) | (pt[0] << 24) | ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);
-                        final[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
-                        final[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
-                        final[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
-                        final[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
-                        final[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
-                        final[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
-                        final[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
+                        *(Block32*)final = *(Block32*)pt;
                         final += 8;
                     }
 
@@ -297,14 +289,14 @@ namespace FinderOuter.Services
 
                     aes.Key = new byte[32]
                     {
-                        (byte)final[8], (byte)(final[8] >> 8), (byte)(final[8] >> 16), (byte)(final[8] >> 24),
-                        (byte)final[9], (byte)(final[9] >> 8), (byte)(final[9] >> 16), (byte)(final[9] >> 24),
-                        (byte)final[10], (byte)(final[10] >> 8), (byte)(final[10] >> 16), (byte)(final[10] >> 24),
-                        (byte)final[11], (byte)(final[11] >> 8), (byte)(final[11] >> 16), (byte)(final[11] >> 24),
-                        (byte)final[12], (byte)(final[12] >> 8), (byte)(final[12] >> 16), (byte)(final[12] >> 24),
-                        (byte)final[13], (byte)(final[13] >> 8), (byte)(final[13] >> 16), (byte)(final[13] >> 24),
-                        (byte)final[14], (byte)(final[14] >> 8), (byte)(final[14] >> 16), (byte)(final[14] >> 24),
-                        (byte)final[15], (byte)(final[15] >> 8), (byte)(final[15] >> 16), (byte)(final[15] >> 24)
+                        (byte)(final[8] >> 24), (byte)(final[8] >> 16), (byte)(final[8] >> 8), (byte)final[8],
+                        (byte)(final[9] >> 24), (byte)(final[9] >> 16), (byte)(final[9] >> 8), (byte)final[9],
+                        (byte)(final[10] >> 24), (byte)(final[10] >> 16), (byte)(final[10] >> 8), (byte)final[10],
+                        (byte)(final[11] >> 24), (byte)(final[11] >> 16), (byte)(final[11] >> 8), (byte)final[11],
+                        (byte)(final[12] >> 24), (byte)(final[12] >> 16), (byte)(final[12] >> 8), (byte)final[12],
+                        (byte)(final[13] >> 24), (byte)(final[13] >> 16), (byte)(final[13] >> 8), (byte)final[13],
+                        (byte)(final[14] >> 24), (byte)(final[14] >> 16), (byte)(final[14] >> 8), (byte)final[14],
+                        (byte)(final[15] >> 24), (byte)(final[15] >> 16), (byte)(final[15] >> 8), (byte)final[15],
                     };
 
                     using ICryptoTransform decryptor = aes.CreateDecryptor();
@@ -314,10 +306,10 @@ namespace FinderOuter.Services
 
                     for (int i = 0, j = 0; i < decryptedResult.Length; i += 4, j++)
                     {
-                        decryptedResult[i] ^= (byte)final[j];
-                        decryptedResult[i + 1] ^= (byte)(final[j] >> 8);
-                        decryptedResult[i + 2] ^= (byte)(final[j] >> 16);
-                        decryptedResult[i + 3] ^= (byte)(final[j] >> 24);
+                        decryptedResult[i] ^= (byte)(final[j] >> 24);
+                        decryptedResult[i + 1] ^= (byte)(final[j] >> 16);
+                        decryptedResult[i + 2] ^= (byte)(final[j] >> 8);
+                        decryptedResult[i + 3] ^= (byte)final[j];
                     }
 
                     Scalar key = new(decryptedResult, out int overflow);
