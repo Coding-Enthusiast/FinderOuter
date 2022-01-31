@@ -69,7 +69,9 @@ namespace FinderOuter.Models
     public enum PassRecoveryMode
     {
         [Description("A password consisting of random characters")]
-        Alphanumeric
+        Alphanumeric,
+        [Description("Custom password characters")]
+        CustomChars
     }
 
 
