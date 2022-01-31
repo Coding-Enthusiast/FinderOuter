@@ -220,30 +220,52 @@ namespace FinderOuter.ViewModels
 
             CompareString = (string)ex[2];
             PassLength = (int)ex[3];
-            PasswordType flag = (PasswordType)(ulong)ex[4];
 
+            temp = (int)ex[4];
+            Debug.Assert(temp < PassRecoveryModeList.Count());
+            SelectedPassRecoveryMode = PassRecoveryModeList.ElementAt(temp);
+
+            CustomChars = (string)ex[5];
+
+            PasswordType flag = (PasswordType)(ulong)ex[6];
             IsUpperCase = flag.HasFlag(PasswordType.UpperCase);
             IsLowerCase = flag.HasFlag(PasswordType.LowerCase);
             IsNumber = flag.HasFlag(PasswordType.Numbers);
             IsSymbol = flag.HasFlag(PasswordType.Symbols);
 
-            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[5]}";
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[7]}";
         }
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, int, string, int, ulong, string>()
+            return new ExampleData<string, int, string, int, int, string, ulong, string>()
             {
                 {
                     "6PRSR1GPq9Y7a6cCDwR2EshQGHXF4tWqGKHy2uU3qwRpcw4zZA4zz7GT1W",
                     1, // InputType
                     "1PSuGX1gXt8iu7gftMVsLg66EVuA1fRDz2",
                     2, // Pass length
+                    0, // Recovery mode
+                    "",
                     2, // Pass type flag
                     $"Random.{Environment.NewLine}" +
-                    $"This example is a BIP38 with a very simple passphrase using only lower case letters (ab)." +
+                    $"This example is a BIP38 with a very simple password using only lower case letters (ab)." +
                     $"{Environment.NewLine}" +
                     $"Estimated time: <1 sec"
+                },
+                {
+                    "6PRKDN49yuCFZ5gzPq4iGY7Av9FZ1YEXXpgsDXTsXEMjZoUVMLtzXBxw5Q",
+                    1, // InputType
+                    "13TQwKK5vsxziCKJucwhATRqi23ogkAh66",
+                    4, // Pass length
+                    1, // Recovery mode
+                    "!jRrSs",
+                    0, // Pass type flag
+                    $"Random.{Environment.NewLine}" +
+                    $"This example is a BIP38 with a longer password using lower and upper case letters and symbols (j!RS). " +
+                    $"But we know the possible characters used in the password so the recovery is a lot faster." +
+                    $"{Environment.NewLine}" +
+                    $"Estimated time: ~20 sec"
                 },
             };
         }
