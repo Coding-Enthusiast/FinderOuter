@@ -511,7 +511,7 @@ namespace FinderOuter.Services
             return allValues != null && allValues.Length != 0;
         }
 
-        public async void Find(string bip38, string extra, InputType extraType, int passLength, PasswordType passType)
+        public async void Find(string bip38, string extra, InputType extraType, int passLength, byte[] allValues)
         {
             report.Init();
 
@@ -525,8 +525,6 @@ namespace FinderOuter.Services
                 report.Fail(msg);
             if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                 report.Fail($"Invalid compare string or compare string type ({extraType}).");
-            else if (!TrySetAllPassValues(passType, out byte[] allValues))
-                report.Fail("Something went wrong.");
             else if (!inputService.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out string error))
                 report.Fail(error);
             else

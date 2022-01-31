@@ -35,6 +35,9 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
+            this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
+                .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
+
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
                 x => x.Result.CurrentState,
@@ -48,9 +51,10 @@ namespace FinderOuter.ViewModels
         public override string OptionName => "Missing BIP38 pass";
         public override string Description => $"This option can recover BIP-38 encryption password.{Environment.NewLine}" +
             $"Note that since BIP-38 algorithm is designed to be very expensive, this option is very slow at recovering " +
-            $"passwordsthis. Don't expect more than 4 checks per second per thread (<100 pass/sec).";
+            $"passwordsthis. Don't expect more than 3 or 4 checks per second per thread.";
 
         public Bip38Service Bip38Service { get; }
+        public IPasswordService PassService { get; set; } = new PasswordService();
         public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
@@ -66,6 +70,15 @@ namespace FinderOuter.ViewModels
         {
             get => _recMode;
             set => this.RaiseAndSetIfChanged(ref _recMode, value);
+        }
+
+        // TODO: this may be better as a different view model and a user interface loaded in UI so that we can have more than
+        // 2 choices (for now it works fine!)
+        private bool _isChkVisible;
+        public bool IsCheckBoxVisible
+        {
+            get => _isChkVisible;
+            set => this.RaiseAndSetIfChanged(ref _isChkVisible, value);
         }
 
         private string _bip38;
@@ -86,6 +99,13 @@ namespace FinderOuter.ViewModels
 
                 this.RaiseAndSetIfChanged(ref _passLen, value);
             }
+        }
+
+        private string _customChars;
+        public string CustomChars
+        {
+            get => _customChars;
+            set => this.RaiseAndSetIfChanged(ref _customChars, value);
         }
 
         private string _comp;
@@ -167,7 +187,24 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            Bip38Service.Find(Bip38, CompareString, SelectedInputType.Value, PassLength, PassType);
+            byte[] allValues = null;
+            string error = null;
+            bool success = SelectedPassRecoveryMode.Value switch
+            {
+                PassRecoveryMode.Alphanumeric => PassService.TryGetAllValues(PassType, out allValues, out error),
+                PassRecoveryMode.CustomChars => PassService.TryGetAllValues(CustomChars, out allValues, out error),
+                _ => false,
+            };
+
+            if (success)
+            {
+                Bip38Service.Find(Bip38, CompareString, SelectedInputType.Value, PassLength, allValues); 
+            }
+            else
+            {
+                Result.Init();
+                Result.Fail(error);
+            }
         }
 
 
