@@ -40,6 +40,9 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
+            this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
+                .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
+
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
                 x => x.Result.CurrentState,
@@ -60,6 +63,7 @@ namespace FinderOuter.ViewModels
 
 
         public MnemonicExtensionService MnService { get; }
+        public IPasswordService PassService { get; set; } = new PasswordService();
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
         public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
@@ -93,6 +97,13 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _recMode, value);
         }
 
+        private bool _isChkVisible;
+        public bool IsCheckBoxVisible
+        {
+            get => _isChkVisible;
+            set => this.RaiseAndSetIfChanged(ref _isChkVisible, value);
+        }
+
         private string _mnemonic;
         public string Mnemonic
         {
@@ -111,6 +122,13 @@ namespace FinderOuter.ViewModels
 
                 this.RaiseAndSetIfChanged(ref _passLen, value);
             }
+        }
+
+        private string _customChars;
+        public string CustomChars
+        {
+            get => _customChars;
+            set => this.RaiseAndSetIfChanged(ref _customChars, value);
         }
 
         private string _additional;
@@ -199,8 +217,25 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            MnService.Find(Mnemonic, SelectedMnemonicType, SelectedWordListType,
-                           AdditionalInfo, SelectedInputType.Value, KeyPath, PassLength, PassType);
+            byte[] allValues = null;
+            string error = null;
+            bool success = SelectedPassRecoveryMode.Value switch
+            {
+                PassRecoveryMode.Alphanumeric => PassService.TryGetAllValues(PassType, out allValues, out error),
+                PassRecoveryMode.CustomChars => PassService.TryGetAllValues(CustomChars, out allValues, out error),
+                _ => false,
+            };
+
+            if (success)
+            {
+                MnService.Find(Mnemonic, SelectedMnemonicType, SelectedWordListType,
+                               AdditionalInfo, SelectedInputType.Value, KeyPath, PassLength, allValues);
+            }
+            else
+            {
+                Result.Init();
+                Result.Fail(error);
+            }
         }
 
 
@@ -224,30 +259,38 @@ namespace FinderOuter.ViewModels
 
             AdditionalInfo = (string)ex[4];
             KeyPath = (string)ex[5];
-            PassLength = (int)ex[6];
-            PasswordType flag = (PasswordType)(ulong)ex[7];
 
+            int temp4 = (int)ex[6];
+            Debug.Assert(temp4 < PassRecoveryModeList.Count());
+            SelectedPassRecoveryMode = PassRecoveryModeList.ElementAt(temp4);
+
+            PassLength = (int)ex[7];
+            PasswordType flag = (PasswordType)(ulong)ex[8];
             IsUpperCase = flag.HasFlag(PasswordType.UpperCase);
             IsLowerCase = flag.HasFlag(PasswordType.LowerCase);
             IsNumber = flag.HasFlag(PasswordType.Numbers);
             IsSymbol = flag.HasFlag(PasswordType.Symbols);
 
-            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[8]}";
+            CustomChars = (string)ex[9];
+
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[10]}";
         }
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, int, int, int, string, string, int, ulong, string>()
+            return new ExampleData<string, int, int, int, string, string, int, int, ulong, string, string>()
             {
                 {
-                    "uphold cotton arch always museum hidden tent grape spot winter impose height curtain awake retire",
-                    0, // MnemonicType
-                    0, // WordList,
-                    0, // InputType
-                    "1K2gAgfcs3oBb2hpa6XodakQJm1my9KuZg",
-                    "m/0'/0",
-                    3, // Pass length
-                    2, // Pass type flag
+                    "uphold cotton arch always museum hidden tent grape spot winter impose height curtain awake retire",//0
+                    0, // 1. MnemonicType
+                    0, // 2. WordList,
+                    0, // 3. InputType
+                    "1K2gAgfcs3oBb2hpa6XodakQJm1my9KuZg", // 4
+                    "m/0'/0", // 5 
+                    0, // 6. Recovery mode
+                    3, // 7. Pass length
+                    2, // 8. Pass type flag
+                    "", // 9.
                     $"Random.{Environment.NewLine}" +
                     $"This example is a BIP39 mnemonic with a simple passphrase using only lower case letters (kqe)." +
                     $"{Environment.NewLine}" +
@@ -260,12 +303,32 @@ namespace FinderOuter.ViewModels
                     0, // InputType
                     "19h1BJtUS7KxZaKd1dBejeZirG9bvwfSu7",
                     "m/0'/0",
+                    0, // Recovery mode
                     3, // Pass length
                     12, // Pass type flag
+                    "",
                     $"Random.{Environment.NewLine}" +
                     $"This example is a BIP39 mnemonic with a simple passphrase using numbers and symbols (3+[)." +
                     $"{Environment.NewLine}" +
                     $"Estimated time: <20 sec"
+                },
+                {
+                    "armed dolphin saddle virus day journey high ladder glide age prosper harbor daughter aisle debris",
+                    0, // MnemonicType
+                    0, // WordList,
+                    4, // InputType
+                    "02b1839ba74861e906c080a9a7256bf64b944b6869ce6252c4f9c33ed677ef95b7",
+                    "m/84'/0'/0'/0/0",
+                    1, // Recovery mode
+                    4, // Pass length
+                    0, // Pass type flag
+                    "ABCabc+-=uUyY",
+                    $"Random.{Environment.NewLine}" +
+                    $"This example is a BIP39 mnemonic with a longer and more complicated passphrase using upper/lowe-case " +
+                    $"characters, numbers and symbols (y+uB). But since the possible characters are defined and limited, " +
+                    $"it can be recovered a lot faster." +
+                    $"{Environment.NewLine}" +
+                    $"Estimated time: <30 sec"
                 },
             };
         }

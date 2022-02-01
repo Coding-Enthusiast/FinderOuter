@@ -11,7 +11,7 @@ namespace FinderOuter.Models
 {
     public class ExampleData : IEnumerable<object[]>
     {
-        readonly List<object[]> data = new List<object[]>();
+        readonly List<object[]> data = new();
 
         public int Total => data.Count;
 
@@ -279,6 +279,31 @@ namespace FinderOuter.Models
         public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9, T10 p10)[] values)
         {
             AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7, x.p8, x.p9, x.p10 }));
+        }
+    }
+
+
+
+    public class ExampleData<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : ExampleData
+    {
+        public ExampleData(IEnumerable<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)> values)
+        {
+            AddRange(values.ToArray());
+        }
+
+        public ExampleData(params (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)[] values)
+        {
+            AddRange(values);
+        }
+
+        public void Add(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9, T10 p10, T11 p11)
+        {
+            AddRow(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11);
+        }
+
+        public void AddRange(params (T1 p1, T2 p2, T3 p3, T4 p4, T5 p5, T6 p6, T7 p7, T8 p8, T9 p9, T10 p10, T11 p11)[] values)
+        {
+            AddRows(values.Select(x => new object[] { x.p1, x.p2, x.p3, x.p4, x.p5, x.p6, x.p7, x.p8, x.p9, x.p10, x.p11 }));
         }
     }
 }

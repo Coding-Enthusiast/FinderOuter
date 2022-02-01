@@ -652,37 +652,8 @@ namespace FinderOuter.Services
             return true;
         }
 
-        private static bool TrySetAllPassValues(PasswordType type, out byte[] allValues)
-        {
-            string temp = string.Empty;
-            if (type.HasFlag(PasswordType.UpperCase))
-            {
-                temp += ConstantsFO.UpperCase;
-            }
-            if (type.HasFlag(PasswordType.LowerCase))
-            {
-                temp += ConstantsFO.LowerCase;
-            }
-            if (type.HasFlag(PasswordType.Numbers))
-            {
-                temp += ConstantsFO.Numbers;
-            }
-            if (type.HasFlag(PasswordType.Symbols))
-            {
-                temp += ConstantsFO.AllSymbols;
-            }
-            if (type.HasFlag(PasswordType.Space))
-            {
-                temp += " ";
-            }
-
-            allValues = Encoding.UTF8.GetBytes(temp);
-
-            return allValues != null && allValues.Length != 0;
-        }
-
         public async void Find(string mnemonic, MnemonicTypes mnType, BIP0039.WordLists wl,
-                               string extra, InputType extraType, string path, int passLength, PasswordType passType)
+                               string extra, InputType extraType, string path, int passLength, byte[] allValues)
         {
             report.Init();
 
@@ -698,8 +669,6 @@ namespace FinderOuter.Services
                 report.Fail($"Invalid extra input or input type {extraType}.");
             else if (!TrySetSalt(passLength, mnType, out byte[] salt))
                 return;
-            else if (!TrySetAllPassValues(passType, out byte[] allValues))
-                report.Fail("Something went wrong.");
             else
             {
                 ulong[] pads = new ulong[16];
