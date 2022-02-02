@@ -1,9 +1,16 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.1.0...master)
-* BIP-38 password recovery
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.13.0.0...master)
 * SIMD support
 * GPU support
 * Wallet file password recovery
+
+### Release 0.13.0 (2022-02-02)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.1.0...v0.13.0.0)  
+* **New recovery option**: recovering BIP38 passwords
+* Passwords can now include space
+* Password recovery options (BIP38 and BIP39) can now accept a custom set of characters
+* Base58 recovery of WIFs with unknown missing char position updates progress bar now
+* Small bug fix, optimization and tests
 
 ### Release 0.12.1 (2021-08-19)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.0.0...v0.12.1.0)  
