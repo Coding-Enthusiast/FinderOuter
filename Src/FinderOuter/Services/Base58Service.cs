@@ -241,14 +241,13 @@ namespace FinderOuter.Services
                 return;
             }
 
-            var calc2 = new Calc();
-            var toAddSc = new Scalar((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
+            Scalar toAddSc = new((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
             Scalar initial = smallKey.Add(toAddSc, out int overflow);
             if (overflow != 0)
             {
                 return;
             }
-            PointJacobian pt = calc2.MultiplyByG(initial);
+            PointJacobian pt = comparer.Calc2.MultiplyByG(initial);
             Point g = Calc.G;
 
             for (int i = 0; i < max; i++)
@@ -307,7 +306,7 @@ namespace FinderOuter.Services
                 return;
             }
 
-            var diff = end - start + 1;
+            BigInteger diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
             var curve = new SecP256k1();
@@ -347,12 +346,7 @@ namespace FinderOuter.Services
                 return;
             }
 
-            // TODO: this part could run in parallel ICompareService is instantiated here for each thread.
-            var calc = new ECCalc();
-            EllipticCurvePoint point = calc.MultiplyByG(start);
-
-            var calc2 = new Calc();
-            var sc = new Scalar(Base58.Decode(smallWif).SubArray(1, 32), out int overflow);
+            Scalar sc = new(Base58.Decode(smallWif).SubArray(1, 32), out int overflow);
 
             isWifEndCompressed = compressed;
             wifEndStart = start;
@@ -360,6 +354,7 @@ namespace FinderOuter.Services
             int loopLastMax = (int)((long)diff % WifEndDiv);
             int loopCount = (int)((long)diff / WifEndDiv) + (loopLastMax == 0 ? 0 : 1);
 
+            report.SetTotal(diff);
             report.SetProgressStep(loopCount);
 
             Parallel.For(0, loopCount, (i, state) =>
