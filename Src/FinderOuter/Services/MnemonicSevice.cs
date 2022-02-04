@@ -6,7 +6,6 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
@@ -29,13 +28,11 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
-            calc = new ECCalc();
         }
 
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private readonly ECCalc calc;
 
         private Dictionary<uint, byte[]> wordBytes = new(2048);
         private readonly byte[][] allWordsBytes = new byte[2048][];

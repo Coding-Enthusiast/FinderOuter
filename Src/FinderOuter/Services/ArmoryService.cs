@@ -6,7 +6,6 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
@@ -27,15 +26,13 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
-            calc = new ECCalc();
         }
 
 
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private readonly ECCalc calc;
-        private readonly Calc calc2 = new();
+        private readonly Calc calc = new();
 
         private ICompareService comparer;
         private int[] missingIndexes;
@@ -187,7 +184,7 @@ namespace FinderOuter.Services
             var scalar = new Scalar(key, out int overflow);
             Debug.Assert(overflow == 0);
 
-            Span<byte> pubBa = calc2.GetPubkey(scalar, false);
+            Span<byte> pubBa = calc.GetPubkey(scalar, false);
             Debug.Assert(pubBa.Length == 65);
 
             Span<byte> chainXor = Sha256Fo.CompressDouble65(pubBa);

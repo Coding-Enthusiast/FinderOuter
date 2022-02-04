@@ -5,8 +5,6 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend;
-using FinderOuter.Backend.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
@@ -26,17 +24,13 @@ namespace FinderOuter.Services
         {
             report = rep;
             inputService = new InputService();
-            calc = new ECCalc();
         }
 
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private readonly ECCalc calc;
-
         private BIP0032Path path;
         private ICompareService comparer;
-
 
 
         public unsafe bool SetBip32(ulong* bigBuffer, ICompareService comparer)
