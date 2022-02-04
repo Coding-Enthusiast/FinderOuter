@@ -53,7 +53,7 @@ namespace FinderOuter.Services.Comparers
             };
         }
 
-        public Calc Calc2 => calc2;
+        public Calc Calc => calc2;
         public unsafe bool Compare(uint* hPt)
         {
             var key = new Scalar(hPt, out int overflow);

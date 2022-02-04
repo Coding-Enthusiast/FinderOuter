@@ -11,8 +11,7 @@ namespace FinderOuter.Services.Comparers
 {
     public interface ICompareService
     {
-        // TODO: fix this bad name when migration is complete
-        public Calc Calc2 { get; }
+        public Calc Calc { get; }
 
         /// <summary>
         /// Builds the private key using the <see cref="Backend.Cryptography.Hashing.Sha256Fo.hashState"/> pointer

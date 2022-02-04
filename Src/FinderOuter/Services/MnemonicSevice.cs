@@ -314,7 +314,7 @@ namespace FinderOuter.Services
                     }
                     else
                     {
-                        Span<byte> pubkeyBytes = comparer.Calc2.GetPubkey(sclrParent, true);
+                        Span<byte> pubkeyBytes = comparer.Calc.GetPubkey(sclrParent, true);
                         fixed (byte* pubXPt = &pubkeyBytes[0])
                         {
                             uPt[0] = (ulong)pubXPt[0] << 56 |

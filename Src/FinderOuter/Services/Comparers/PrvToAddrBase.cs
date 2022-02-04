@@ -23,7 +23,7 @@ namespace FinderOuter.Services.Comparers
         }
 
         public abstract ICompareService Clone();
-        public Calc Calc2 => calc2;
+        public Calc Calc => calc2;
 
         public abstract unsafe bool Compare(uint* hPt);
         public abstract unsafe bool Compare(ulong* hPt);
@@ -31,12 +31,13 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key)
         {
-            var kVal = new BigInteger(key, true, true);
-            if (kVal >= order || kVal == 0)
+            Scalar k = new(key, out int overflow);
+            if (overflow != 0)
             {
                 return false;
             }
-            return Compare(kVal);
+            PointJacobian pt = calc2.MultiplyByG(k);
+            return Compare(pt);
         }
 
         public bool Compare(BigInteger key) => Compare(calc.MultiplyByG(key));

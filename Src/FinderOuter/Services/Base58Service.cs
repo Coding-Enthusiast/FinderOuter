@@ -246,7 +246,7 @@ namespace FinderOuter.Services
             {
                 return;
             }
-            PointJacobian pt = comparer.Calc2.MultiplyByG(initial);
+            PointJacobian pt = comparer.Calc.MultiplyByG(initial);
             Point g = Calc.G;
 
             for (int i = 0; i < max; i++)

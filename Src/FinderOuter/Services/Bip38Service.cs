@@ -313,7 +313,7 @@ namespace FinderOuter.Services
                     }
 
                     Scalar key = new(decryptedResult, out int overflow);
-                    if (overflow == 0 && localComparer.Compare(comparer.Calc2.MultiplyByG(key)))
+                    if (overflow == 0 && localComparer.Compare(comparer.Calc.MultiplyByG(key)))
                     {
                         loopState.Stop();
                         report.FoundAnyResult = true;

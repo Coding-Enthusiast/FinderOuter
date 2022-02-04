@@ -44,7 +44,7 @@ namespace FinderOuter.Services.Comparers
         }
 
         private readonly Calc calc2 = new();
-        public Calc Calc2 => calc2;
+        public Calc Calc => calc2;
         public unsafe bool Compare(uint* hPt) => ((Span<byte>)expected).SequenceEqual(Sha256Fo.GetBytes(hPt));
         public unsafe bool Compare(ulong* hPt) => ((Span<byte>)expected).SequenceEqual(Sha512Fo.GetFirst32Bytes(hPt));
 
