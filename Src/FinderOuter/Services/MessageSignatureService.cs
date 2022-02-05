@@ -5,8 +5,9 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.Hashing;
-using FinderOuter.Backend.KeyPairs;
+using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Models;
 using System;
 using System.Numerics;
@@ -20,7 +21,6 @@ namespace FinderOuter.Services
         public MessageSignatureService(IReport rep)
         {
             calc = new EllipticCurveCalculator();
-            addressBuilder = new Address();
             inputService = new InputService();
             report = rep;
         }
@@ -28,11 +28,10 @@ namespace FinderOuter.Services
 
         private readonly IReport report;
         private readonly EllipticCurveCalculator calc;
-        private readonly Address addressBuilder;
         private readonly InputService inputService;
 
 
-        private Signature CreateFromRecId(byte[] sigBa)
+        private static Signature CreateFromRecId(byte[] sigBa)
         {
             if (!Signature.TryReadWithRecId(sigBa, out Signature result, out string error))
             {
@@ -42,24 +41,28 @@ namespace FinderOuter.Services
             return result;
         }
 
-        private bool CheckAddress(string addr, out Address.AddressType addrType)
+        private static bool CheckAddress(string addr, out AddressType addrType)
         {
-            addrType = addressBuilder.GetAddressType(addr);
-            return addrType != Address.AddressType.Invalid && addrType != Address.AddressType.P2WSH;
+            addrType = Address.GetAddressType(addr, NetworkType.MainNet);
+
+            return addrType != AddressType.Unknown &&
+                   addrType != AddressType.Invalid &&
+                   addrType != AddressType.P2WSH &&
+                   addrType != AddressType.P2TR;
         }
 
-        private bool CheckMessage(string message, out byte[] toSign)
+        private static bool CheckMessage(string message, out byte[] toSign)
         {
             try
             {
-                FastStream stream = new FastStream();
+                FastStream stream = new();
                 byte[] msgBa = Encoding.UTF8.GetBytes(message);
                 stream.Write((byte)Constants.MsgSignConst.Length);
                 stream.Write(Encoding.UTF8.GetBytes(Constants.MsgSignConst));
                 new CompactInt((ulong)msgBa.Length).WriteToStream(stream);
                 stream.Write(msgBa);
 
-                using Sha256 hash = new Sha256();
+                using Sha256 hash = new();
                 toSign = hash.ComputeHashTwice(stream.ToByteArray());
 
                 return true;
@@ -71,7 +74,7 @@ namespace FinderOuter.Services
             }
         }
 
-        private bool CheckSignature(string sig, out byte[] sigBa)
+        private static bool CheckSignature(string sig, out byte[] sigBa)
         {
             try
             {
@@ -85,39 +88,38 @@ namespace FinderOuter.Services
             }
         }
 
-        private bool CheckPubkeys(Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve.Signature sig, byte[] toSign, string address, Address.AddressType addrType)
+        private bool CheckPubkeys(Signature sig, byte[] toSign, string address, AddressType addrType)
         {
             if (calc.TryRecoverPublicKeys(toSign, sig, out EllipticCurvePoint[] pubkeys))
             {
-                PublicKey pub = new PublicKey();
                 foreach (var pt in pubkeys)
                 {
-                    pub.Initialize(pt);
+                    PublicKey pub = new(pt);
 
-                    if (addrType == Address.AddressType.P2PKH)
+                    if (addrType == AddressType.P2PKH)
                     {
-                        if (addressBuilder.GetP2pkh(pub, NetworkType.MainNet, true) == address)
+                        if (Address.GetP2pkh(pub, true) == address)
                         {
                             report.AddMessageSafe("Signature is valid (address type is compressed P2PKH).");
                             return true;
                         }
-                        else if (addressBuilder.GetP2pkh(pub, NetworkType.MainNet, false) == address)
+                        else if (Address.GetP2pkh(pub, false) == address)
                         {
                             report.AddMessageSafe("Signature is valid (address type is uncompressed P2PKH).");
                             return true;
                         }
                     }
-                    else if (addrType == Address.AddressType.P2SH)
+                    else if (addrType == AddressType.P2SH)
                     {
-                        if (addressBuilder.GetToP2SH_P2WPKH(pub, NetworkType.MainNet) == address)
+                        if (Address.GetP2sh_P2wpkh(pub) == address)
                         {
                             report.AddMessageSafe("Signature is valid (address type is nested SegWit).");
                             return true;
                         }
                     }
-                    else if (addrType == Address.AddressType.P2WPKH)
+                    else if (addrType == AddressType.P2WPKH)
                     {
-                        if (addressBuilder.GetP2wpkh(pub, 0, NetworkType.MainNet) == address)
+                        if (Address.GetP2wpkh(pub) == address)
                         {
                             report.AddMessageSafe("Signature is valid (address type is compressed P2WPKH).");
                             return true;
@@ -125,7 +127,7 @@ namespace FinderOuter.Services
                     }
                     else
                     {
-                        report.AddMessageSafe("Unexpected invalid address type.");
+                        report.AddMessageSafe("Unexpected address type.");
                         return false;
                     }
                 }
@@ -150,12 +152,27 @@ namespace FinderOuter.Services
                 message = norm;
                 report.AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");
             }
+
             if (!CheckMessage(message, out byte[] toSign))
                 return report.Fail("Invalid message UTF8 format.");
-            if (!CheckAddress(address, out Address.AddressType addrType))
-                return addrType == Address.AddressType.P2WSH ?
-                            report.Fail("Signature verification is not defined for P2WSH address types.") :
-                            report.Fail("Invalid address format.");
+            if (!CheckAddress(address, out AddressType addrType))
+            {
+                if (addrType == AddressType.P2WSH)
+                {
+                    report.Fail("Signature verification is not defined for P2WSH address types.");
+                }
+                else if (addrType == AddressType.P2TR)
+                {
+                    report.Fail("Signature verification is not defined for P2TR address types.");
+                }
+                else
+                {
+                    report.Fail("Invalid address format.");
+                }
+
+                return false;
+            }
+
             if (!CheckSignature(signature, out byte[] sigBa))
                 return report.Fail("Invalid signature base-64 format.");
             if (sigBa.Length != 1 + 32 + 32) // 65 bytes
@@ -168,7 +185,7 @@ namespace FinderOuter.Services
 
 
 
-        private bool ChangeSigAndCheck(string message, string address, Address.AddressType addrType, byte[] sigBa)
+        private bool ChangeSigAndCheck(string message, string address, AddressType addrType, byte[] sigBa)
         {
             CheckMessage(message, out byte[] toSign);
 
@@ -210,7 +227,7 @@ namespace FinderOuter.Services
                     // 1. big-endian padded s
                     r = sigBa.SubArray(1, 32).ToBigInt(true, true);
                     s = sigBa.SubArray(34, 32).ToBigInt(true, true);
-                    Signature temp = new Signature(r, s, sigBa[0]);
+                    Signature temp = new(r, s, sigBa[0]);
                     if (CheckPubkeys(temp, toSign, address, addrType))
                     {
                         report.AddMessageSafe($"Modified signature is: {temp.ToByteArrayWithRecId().ToBase64()}");
@@ -232,7 +249,7 @@ namespace FinderOuter.Services
                     return false;
                 }
 
-                Signature sig = new Signature(r, s, sigBa[0]);
+                Signature sig = new(r, s, sigBa[0]);
                 return CheckPubkeys(sig, toSign, address, addrType);
             }
             if (sigBa.Length == 1 + 32 + 32)
@@ -322,7 +339,7 @@ namespace FinderOuter.Services
                 report.AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");
             }
             if (!CheckMessage(message, out _) ||
-                !CheckAddress(address, out Address.AddressType addrType) ||
+                !CheckAddress(address, out AddressType addrType) ||
                 !CheckSignature(signature, out byte[] sigBa))
             {
                 return report.Fail("Input formats are bad, Noting can be done.");
