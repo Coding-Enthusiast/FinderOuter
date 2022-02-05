@@ -70,19 +70,25 @@
                  Margin="3"
                  Grid.Row="1"/>
 
-      <Button Content="About"
-              Command="{Binding OpenAbout}"
-              Width="70"
-              Grid.Column="0"
-              Grid.Row="4"/>
+      <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="4" Background="#e5e5e5">
+        <Button Command="{Binding OpenAbout}"
+                ToolTip.Tip="About and Donate"
+                BorderThickness="0"
+                Background="Transparent"
+                Width="60"
+                Grid.Column="0"
+                Grid.RowSpan="2">
+          <Image Source="/Assets/Donate.png"/>
+        </Button>
 
-      <Border BorderThickness="1" BorderBrush="Blue" Margin="3" Grid.Row="5">
-        <TextBlock Text="{Binding VerString, Mode=OneTime}"
-                   FontWeight="Bold"
-                   FontFamily="Comic Sans MS"
-                   TextAlignment="Center"
-                   Background="#FFADD8EC"/>
-      </Border>
+        <Border BorderThickness="1" BorderBrush="Blue" Background="#FFADD8EC" Margin="8" Grid.Column="1">
+          <TextBlock Text="{Binding VerString, Mode=OneTime}"
+                     FontWeight="Bold"
+                     FontFamily="Comic Sans MS"
+                     TextAlignment="Center"/>
+        </Border>
+      </Grid>
+
     </Grid>
 
     <!--Right side collumn (containing find button and selected VM)-->
