@@ -357,6 +357,70 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         /// <summary>
         /// Computes _single_ SHA256 hash for the second block of
+        /// (data.Length == 76) and (wPt[3] is the padding wPt[4] to wPt[14] is set to zero and wPt[15] to 608)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress76SecondBlock(uint* pt)
+        {
+            // w3 = 0b10000000_00000000_00000000_00000000U
+            // w4 to w14 = 0
+            // w15 = 608
+            pt[24] = SSIG0(pt[9]) + pt[8];
+            pt[25] = 24903680 + SSIG0(pt[10]) + pt[9];
+            pt[26] = SSIG1(pt[24]) + 285220864 + pt[10];
+            pt[27] = SSIG1(pt[25]) + 2147483648;
+            pt[28] = SSIG1(pt[26]);
+            pt[29] = SSIG1(pt[27]);
+            pt[30] = SSIG1(pt[28]) + 608;
+            pt[31] = SSIG1(pt[29]) + pt[24];
+            pt[32] = SSIG1(pt[30]) + pt[25];
+            pt[33] = SSIG1(pt[31]) + pt[26];
+            pt[34] = SSIG1(pt[32]) + pt[27];
+            pt[35] = SSIG1(pt[33]) + pt[28];
+            pt[36] = SSIG1(pt[34]) + pt[29];
+            pt[37] = SSIG1(pt[35]) + pt[30];
+            pt[38] = SSIG1(pt[36]) + pt[31] + 3231187016;
+            pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 608;
+            pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
+            pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
+            pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
+            pt[43] = SSIG1(pt[41]) + pt[36] + SSIG0(pt[28]) + pt[27];
+            pt[44] = SSIG1(pt[42]) + pt[37] + SSIG0(pt[29]) + pt[28];
+            pt[45] = SSIG1(pt[43]) + pt[38] + SSIG0(pt[30]) + pt[29];
+            pt[46] = SSIG1(pt[44]) + pt[39] + SSIG0(pt[31]) + pt[30];
+            pt[47] = SSIG1(pt[45]) + pt[40] + SSIG0(pt[32]) + pt[31];
+            pt[48] = SSIG1(pt[46]) + pt[41] + SSIG0(pt[33]) + pt[32];
+            pt[49] = SSIG1(pt[47]) + pt[42] + SSIG0(pt[34]) + pt[33];
+            pt[50] = SSIG1(pt[48]) + pt[43] + SSIG0(pt[35]) + pt[34];
+            pt[51] = SSIG1(pt[49]) + pt[44] + SSIG0(pt[36]) + pt[35];
+            pt[52] = SSIG1(pt[50]) + pt[45] + SSIG0(pt[37]) + pt[36];
+            pt[53] = SSIG1(pt[51]) + pt[46] + SSIG0(pt[38]) + pt[37];
+            pt[54] = SSIG1(pt[52]) + pt[47] + SSIG0(pt[39]) + pt[38];
+            pt[55] = SSIG1(pt[53]) + pt[48] + SSIG0(pt[40]) + pt[39];
+            pt[56] = SSIG1(pt[54]) + pt[49] + SSIG0(pt[41]) + pt[40];
+            pt[57] = SSIG1(pt[55]) + pt[50] + SSIG0(pt[42]) + pt[41];
+            pt[58] = SSIG1(pt[56]) + pt[51] + SSIG0(pt[43]) + pt[42];
+            pt[59] = SSIG1(pt[57]) + pt[52] + SSIG0(pt[44]) + pt[43];
+            pt[60] = SSIG1(pt[58]) + pt[53] + SSIG0(pt[45]) + pt[44];
+            pt[61] = SSIG1(pt[59]) + pt[54] + SSIG0(pt[46]) + pt[45];
+            pt[62] = SSIG1(pt[60]) + pt[55] + SSIG0(pt[47]) + pt[46];
+            pt[63] = SSIG1(pt[61]) + pt[56] + SSIG0(pt[48]) + pt[47];
+            pt[64] = SSIG1(pt[62]) + pt[57] + SSIG0(pt[49]) + pt[48];
+            pt[65] = SSIG1(pt[63]) + pt[58] + SSIG0(pt[50]) + pt[49];
+            pt[66] = SSIG1(pt[64]) + pt[59] + SSIG0(pt[51]) + pt[50];
+            pt[67] = SSIG1(pt[65]) + pt[60] + SSIG0(pt[52]) + pt[51];
+            pt[68] = SSIG1(pt[66]) + pt[61] + SSIG0(pt[53]) + pt[52];
+            pt[69] = SSIG1(pt[67]) + pt[62] + SSIG0(pt[54]) + pt[53];
+            pt[70] = SSIG1(pt[68]) + pt[63] + SSIG0(pt[55]) + pt[54];
+            pt[71] = SSIG1(pt[69]) + pt[64] + SSIG0(pt[56]) + pt[55];
+
+            CompressBlockWithWSet(pt);
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the second block of
         /// (data.Length == 96) and (wPt[8] is the padding wPt[9] to wPt[14] is set to zero and wPt[15] to 768)
         /// hPt is the result of compressing the previous block and shouldn't change
         /// </summary>
