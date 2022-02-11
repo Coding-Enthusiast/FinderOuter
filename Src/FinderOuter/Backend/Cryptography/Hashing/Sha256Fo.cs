@@ -549,6 +549,151 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
 
 
+        public static unsafe void Compress196FinalBlock(uint* pt, uint i)
+        {
+            Debug.Assert(i == 1 || i == 2);
+
+            if (i == 1)
+            {
+                Compress196FinalBlock_1(pt);
+            }
+            else
+            {
+                Compress196FinalBlock_2(pt);
+            }
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the final block of
+        /// (data.Length == 8260) and (wPt[0] is 1, wPt[1] is the padding wPt[2] to wPt[14] is set to zero and wPt[15] to 66080)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress196FinalBlock_1(uint* pt)
+        {
+            // w0 = 1
+            // w1 = 0b10000000_00000000_00000000_00000000U
+            // w2 to w14 = 0
+            // w15 = 1568
+            pt[24] = 0x11002001;
+            pt[25] = 0x83d40001;
+            pt[26] = 0x1404eaa8;
+            pt[27] = 0x80200490;
+            pt[28] = 0xe80409b8;
+            pt[29] = 0x02fa5815;
+            pt[30] = 0x85d16e20;
+            pt[31] = 0x7808bfb5;
+            pt[32] = 0x1ec9260a;
+            pt[33] = 0x5c36fbd2;
+            pt[34] = 0x37e40384;
+            pt[35] = 0x8a8871db;
+            pt[36] = 0x84b9bc23;
+            pt[37] = 0xbcc58429;
+            pt[38] = 0xa3455d21;
+            pt[39] = 0x998a44c5;
+            pt[40] = 0x85d09965;
+            pt[41] = 0x8e96b26b;
+            pt[42] = 0x2e6cc38a;
+            pt[43] = 0x02f3870d;
+            pt[44] = 0x5ae956b8;
+            pt[45] = 0x63e10168;
+            pt[46] = 0xeb15a7ec;
+            pt[47] = 0xfcc15025;
+            pt[48] = 0x265b2b76;
+            pt[49] = 0x1b3f7696;
+            pt[50] = 0xe5e6c837;
+            pt[51] = 0x73a76f8a;
+            pt[52] = 0xcbaa8a44;
+            pt[53] = 0x026a1460;
+            pt[54] = 0xbd91fdbb;
+            pt[55] = 0x068adfa2;
+            pt[56] = 0xccaaf58c;
+            pt[57] = 0xca162632;
+            pt[58] = 0xc1f1dfe4;
+            pt[59] = 0xd4d2b9d1;
+            pt[60] = 0xce73eaa0;
+            pt[61] = 0xdaaa88f7;
+            pt[62] = 0x7a41412f;
+            pt[63] = 0x011a5d01;
+            pt[64] = 0x6c122ad0;
+            pt[65] = 0x03cd2aa2;
+            pt[66] = 0xcc5400d0;
+            pt[67] = 0xa49443b5;
+            pt[68] = 0x6be81419;
+            pt[69] = 0x45d88c7f;
+            pt[70] = 0xba768d31;
+            pt[71] = 0x87ad7f56;
+
+            CompressBlockWithWSet(pt);
+        }
+
+        /// <summary>
+        /// Computes _single_ SHA256 hash for the final block of
+        /// (data.Length == 8260) and (wPt[0] is 2, wPt[1] is the padding wPt[2] to wPt[14] is set to zero and wPt[15] to 66080)
+        /// hPt is the result of compressing the previous block and shouldn't change
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void Compress196FinalBlock_2(uint* pt)
+        {
+            // w0 = 2
+            // w1 = 0b10000000_00000000_00000000_00000000U
+            // w2 to w14 = 0
+            // w15 = 66080
+            pt[24] = 0x11002002;
+            pt[25] = 0x83d40001;
+            pt[26] = 0x14050aa8;
+            pt[27] = 0x80200490;
+            pt[28] = 0x240409c0;
+            pt[29] = 0x02fa5815;
+            pt[30] = 0x85d11da0;
+            pt[31] = 0x7808bfb6;
+            pt[32] = 0x31192616;
+            pt[33] = 0x5c38fbd2;
+            pt[34] = 0x37e59d76;
+            pt[35] = 0x86887565;
+            pt[36] = 0x80127c7e;
+            pt[37] = 0xba10ef28;
+            pt[38] = 0x2b215512;
+            pt[39] = 0xa97b7aa7;
+            pt[40] = 0x00d7fd6a;
+            pt[41] = 0x9de9cb04;
+            pt[42] = 0xcbc6562e;
+            pt[43] = 0x63b0a873;
+            pt[44] = 0x7c554502;
+            pt[45] = 0x86247fa6;
+            pt[46] = 0x85a795c3;
+            pt[47] = 0x8cab72b1;
+            pt[48] = 0x9947c61f;
+            pt[49] = 0x8cfc2489;
+            pt[50] = 0x7e063447;
+            pt[51] = 0x0bf24ec2;
+            pt[52] = 0x60e7e031;
+            pt[53] = 0x22eb1fbf;
+            pt[54] = 0x48a7e159;
+            pt[55] = 0x5a25e117;
+            pt[56] = 0x02b1943e;
+            pt[57] = 0x3a14c311;
+            pt[58] = 0x90febf0d;
+            pt[59] = 0x18af655b;
+            pt[60] = 0x69a51112;
+            pt[61] = 0x9f9c8294;
+            pt[62] = 0xb89ee315;
+            pt[63] = 0x3e39d32a;
+            pt[64] = 0x8cc6f5fb;
+            pt[65] = 0xfe27cfa6;
+            pt[66] = 0x51f04fa1;
+            pt[67] = 0x2a80f4f7;
+            pt[68] = 0xecacdf0c;
+            pt[69] = 0x844db4c1;
+            pt[70] = 0xd8f396e0;
+            pt[71] = 0x6d2389d7;
+
+            CompressBlockWithWSet(pt);
+        }
+
+
         public static unsafe void Compress8260FinalBlock(uint* pt, uint i)
         {
             Debug.Assert(i == 1 || i == 2);
@@ -1779,6 +1924,72 @@ namespace FinderOuter.Backend.Cryptography.Hashing
 
         /// <summary>
         /// Computes double SHA256 hash for
+        /// (data.Length == 24) and (wPt[0] to wPt[15] is set) and (Init() is called)
+        /// <para/> Note: wPt[6], wPt[7] and wPt[8] must be set to zero on consecutive calls since 
+        /// <see cref="DoSecondHash(uint*, uint*)"/> changes them.
+        /// </summary>
+        public static unsafe void CompressDouble24(uint* pt)
+        {
+            // w6 = extra values | 0b10000000_00000000_00000000_00000000U
+            // w7 to w14 = 0
+            // w15 = 192
+            pt[24] = SSIG0(pt[9]) + pt[8];
+            pt[25] = 7864320 + SSIG0(pt[10]) + pt[9];
+            pt[26] = SSIG1(pt[24]) + SSIG0(pt[11]) + pt[10];
+            pt[27] = SSIG1(pt[25]) + SSIG0(pt[12]) + pt[11];
+            pt[28] = SSIG1(pt[26]) + SSIG0(pt[13]) + pt[12];
+            pt[29] = SSIG1(pt[27]) + 285220864 + pt[13];
+            pt[30] = SSIG1(pt[28]) + 192 + 2147483648;
+            pt[31] = SSIG1(pt[29]) + pt[24];
+            pt[32] = SSIG1(pt[30]) + pt[25];
+            pt[33] = SSIG1(pt[31]) + pt[26];
+            pt[34] = SSIG1(pt[32]) + pt[27];
+            pt[35] = SSIG1(pt[33]) + pt[28];
+            pt[36] = SSIG1(pt[34]) + pt[29];
+            pt[37] = SSIG1(pt[35]) + pt[30];
+            pt[38] = SSIG1(pt[36]) + pt[31] + 2150629401;
+            pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 192;
+            pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
+            pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
+            pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
+            pt[43] = SSIG1(pt[41]) + pt[36] + SSIG0(pt[28]) + pt[27];
+            pt[44] = SSIG1(pt[42]) + pt[37] + SSIG0(pt[29]) + pt[28];
+            pt[45] = SSIG1(pt[43]) + pt[38] + SSIG0(pt[30]) + pt[29];
+            pt[46] = SSIG1(pt[44]) + pt[39] + SSIG0(pt[31]) + pt[30];
+            pt[47] = SSIG1(pt[45]) + pt[40] + SSIG0(pt[32]) + pt[31];
+            pt[48] = SSIG1(pt[46]) + pt[41] + SSIG0(pt[33]) + pt[32];
+            pt[49] = SSIG1(pt[47]) + pt[42] + SSIG0(pt[34]) + pt[33];
+            pt[50] = SSIG1(pt[48]) + pt[43] + SSIG0(pt[35]) + pt[34];
+            pt[51] = SSIG1(pt[49]) + pt[44] + SSIG0(pt[36]) + pt[35];
+            pt[52] = SSIG1(pt[50]) + pt[45] + SSIG0(pt[37]) + pt[36];
+            pt[53] = SSIG1(pt[51]) + pt[46] + SSIG0(pt[38]) + pt[37];
+            pt[54] = SSIG1(pt[52]) + pt[47] + SSIG0(pt[39]) + pt[38];
+            pt[55] = SSIG1(pt[53]) + pt[48] + SSIG0(pt[40]) + pt[39];
+            pt[56] = SSIG1(pt[54]) + pt[49] + SSIG0(pt[41]) + pt[40];
+            pt[57] = SSIG1(pt[55]) + pt[50] + SSIG0(pt[42]) + pt[41];
+            pt[58] = SSIG1(pt[56]) + pt[51] + SSIG0(pt[43]) + pt[42];
+            pt[59] = SSIG1(pt[57]) + pt[52] + SSIG0(pt[44]) + pt[43];
+            pt[60] = SSIG1(pt[58]) + pt[53] + SSIG0(pt[45]) + pt[44];
+            pt[61] = SSIG1(pt[59]) + pt[54] + SSIG0(pt[46]) + pt[45];
+            pt[62] = SSIG1(pt[60]) + pt[55] + SSIG0(pt[47]) + pt[46];
+            pt[63] = SSIG1(pt[61]) + pt[56] + SSIG0(pt[48]) + pt[47];
+            pt[64] = SSIG1(pt[62]) + pt[57] + SSIG0(pt[49]) + pt[48];
+            pt[65] = SSIG1(pt[63]) + pt[58] + SSIG0(pt[50]) + pt[49];
+            pt[66] = SSIG1(pt[64]) + pt[59] + SSIG0(pt[51]) + pt[50];
+            pt[67] = SSIG1(pt[65]) + pt[60] + SSIG0(pt[52]) + pt[51];
+            pt[68] = SSIG1(pt[66]) + pt[61] + SSIG0(pt[53]) + pt[52];
+            pt[69] = SSIG1(pt[67]) + pt[62] + SSIG0(pt[54]) + pt[53];
+            pt[70] = SSIG1(pt[68]) + pt[63] + SSIG0(pt[55]) + pt[54];
+            pt[71] = SSIG1(pt[69]) + pt[64] + SSIG0(pt[56]) + pt[55];
+
+            CompressBlockWithWSet(pt);
+
+            // Perform second hash
+            DoSecondHash(pt);
+        }
+
+        /// <summary>
+        /// Computes double SHA256 hash for
         /// (data.Length == 32) and (wPt[0] to wPt[15] is set) and (Init() is called)
         /// </summary>
         /// <param name="hPt">HashState pointer</param>
@@ -1998,6 +2209,72 @@ namespace FinderOuter.Backend.Cryptography.Hashing
             pt[37] = SSIG1(pt[35]) + pt[30];
             pt[38] = SSIG1(pt[36]) + pt[31] + 1884160037;
             pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 312;
+            pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
+            pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
+            pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
+            pt[43] = SSIG1(pt[41]) + pt[36] + SSIG0(pt[28]) + pt[27];
+            pt[44] = SSIG1(pt[42]) + pt[37] + SSIG0(pt[29]) + pt[28];
+            pt[45] = SSIG1(pt[43]) + pt[38] + SSIG0(pt[30]) + pt[29];
+            pt[46] = SSIG1(pt[44]) + pt[39] + SSIG0(pt[31]) + pt[30];
+            pt[47] = SSIG1(pt[45]) + pt[40] + SSIG0(pt[32]) + pt[31];
+            pt[48] = SSIG1(pt[46]) + pt[41] + SSIG0(pt[33]) + pt[32];
+            pt[49] = SSIG1(pt[47]) + pt[42] + SSIG0(pt[34]) + pt[33];
+            pt[50] = SSIG1(pt[48]) + pt[43] + SSIG0(pt[35]) + pt[34];
+            pt[51] = SSIG1(pt[49]) + pt[44] + SSIG0(pt[36]) + pt[35];
+            pt[52] = SSIG1(pt[50]) + pt[45] + SSIG0(pt[37]) + pt[36];
+            pt[53] = SSIG1(pt[51]) + pt[46] + SSIG0(pt[38]) + pt[37];
+            pt[54] = SSIG1(pt[52]) + pt[47] + SSIG0(pt[39]) + pt[38];
+            pt[55] = SSIG1(pt[53]) + pt[48] + SSIG0(pt[40]) + pt[39];
+            pt[56] = SSIG1(pt[54]) + pt[49] + SSIG0(pt[41]) + pt[40];
+            pt[57] = SSIG1(pt[55]) + pt[50] + SSIG0(pt[42]) + pt[41];
+            pt[58] = SSIG1(pt[56]) + pt[51] + SSIG0(pt[43]) + pt[42];
+            pt[59] = SSIG1(pt[57]) + pt[52] + SSIG0(pt[44]) + pt[43];
+            pt[60] = SSIG1(pt[58]) + pt[53] + SSIG0(pt[45]) + pt[44];
+            pt[61] = SSIG1(pt[59]) + pt[54] + SSIG0(pt[46]) + pt[45];
+            pt[62] = SSIG1(pt[60]) + pt[55] + SSIG0(pt[47]) + pt[46];
+            pt[63] = SSIG1(pt[61]) + pt[56] + SSIG0(pt[48]) + pt[47];
+            pt[64] = SSIG1(pt[62]) + pt[57] + SSIG0(pt[49]) + pt[48];
+            pt[65] = SSIG1(pt[63]) + pt[58] + SSIG0(pt[50]) + pt[49];
+            pt[66] = SSIG1(pt[64]) + pt[59] + SSIG0(pt[51]) + pt[50];
+            pt[67] = SSIG1(pt[65]) + pt[60] + SSIG0(pt[52]) + pt[51];
+            pt[68] = SSIG1(pt[66]) + pt[61] + SSIG0(pt[53]) + pt[52];
+            pt[69] = SSIG1(pt[67]) + pt[62] + SSIG0(pt[54]) + pt[53];
+            pt[70] = SSIG1(pt[68]) + pt[63] + SSIG0(pt[55]) + pt[54];
+            pt[71] = SSIG1(pt[69]) + pt[64] + SSIG0(pt[56]) + pt[55];
+
+            CompressBlockWithWSet(pt);
+
+            // Perform second hash
+            DoSecondHash(pt);
+        }
+
+        /// <summary>
+        /// Computes double SHA256 hash for
+        /// (data.Length == 40) and (wPt[0] to wPt[15] is set) and (Init() is called)
+        /// </summary>
+        /// <param name="hPt">HashState pointer</param>
+        /// <param name="wPt">Working vector pointer</param>
+        public static unsafe void CompressDouble40(uint* pt)
+        {
+            // w10 = 0b10000000_00000000_00000000_00000000U 
+            // w11 to w14 = 0
+            // w15 = 320
+            pt[24] = pt[17] + SSIG0(pt[9]) + pt[8];
+            pt[25] = 8912896 + 2147483648 + SSIG0(pt[10]) + pt[9];
+            pt[26] = SSIG1(pt[24]) + SSIG0(pt[11]) + pt[10];
+            pt[27] = SSIG1(pt[25]) + SSIG0(pt[12]) + pt[11];
+            pt[28] = SSIG1(pt[26]) + SSIG0(pt[13]) + pt[12];
+            pt[29] = SSIG1(pt[27]) + SSIG0(pt[14]) + pt[13];
+            pt[30] = SSIG1(pt[28]) + 320 + SSIG0(pt[15]) + pt[14];
+            pt[31] = SSIG1(pt[29]) + pt[24] + SSIG0(pt[16]) + pt[15];
+            pt[32] = SSIG1(pt[30]) + pt[25] + SSIG0(pt[17]) + pt[16];
+            pt[33] = SSIG1(pt[31]) + pt[26] + 285220864 + pt[17];
+            pt[34] = SSIG1(pt[32]) + pt[27] + 2147483648;
+            pt[35] = SSIG1(pt[33]) + pt[28];
+            pt[36] = SSIG1(pt[34]) + pt[29];
+            pt[37] = SSIG1(pt[35]) + pt[30];
+            pt[38] = SSIG1(pt[36]) + pt[31] + 2152726570;
+            pt[39] = SSIG1(pt[37]) + pt[32] + SSIG0(pt[24]) + 320;
             pt[40] = SSIG1(pt[38]) + pt[33] + SSIG0(pt[25]) + pt[24];
             pt[41] = SSIG1(pt[39]) + pt[34] + SSIG0(pt[26]) + pt[25];
             pt[42] = SSIG1(pt[40]) + pt[35] + SSIG0(pt[27]) + pt[26];
