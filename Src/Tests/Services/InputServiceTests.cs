@@ -199,6 +199,8 @@ namespace Tests.Services
                 Helper.HexToBytes("70e4a0805f15a77efc738f794068d8837c2985a6945f7fe0db3f75dc305eaf7c"),
                 Helper.HexToBytes("43be4179"),
                 true,
+                false,
+                false,
                 null
             };
             yield return new object[]
@@ -208,50 +210,111 @@ namespace Tests.Services
                 Helper.HexToBytes("d357fafb81c71f8375a9a4d0ac02bad5f6c87c4b459fabe34c0c314b33708ec3"),
                 Helper.HexToBytes("e957a24a"),
                 false,
+                false,
+                false,
                 null
             };
             yield return new object[]
             {
                 "Foo",
-                false, null, null, false,
+                false, null, null, false, false, false,
                 "Invalid Base-58 encoding."
             };
             yield return new object[]
             {
                 "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUe1",
-                false, null, null, false,
+                false, null, null, false, false, false,
                 "Invalid Base-58 encoding."
             };
             yield return new object[]
             {
                 "142viJrTYHA4TzryiEiuQkYk4Ay5TfpzqW",
-                false, null, null, false,
+                false, null, null, false, false, false,
                 "Invalid encrypted bytes length."
             };
             yield return new object[]
             {
                 "6Mc5gZg3pNQNMsnHDmZeRfhL1QnC24yBd1VERr3HSnKap5x2wcxYaJivvW",
-                false, null, null, false,
+                false, null, null, false, false, false,
                 "Invalid prefix."
             };
             yield return new object[]
             {
                 "6Mc5gZg3pNQNMsnHDmZeRfhL1QnC24yBd1VERr3HSnKap5x2wcxYaJivvW",
-                false, null, null, false,
+                false, null, null, false, false, false,
                 "Invalid prefix."
+            };
+            yield return new object[]
+            {
+                "6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX",
+                true,
+                Helper.HexToBytes("a50dba6772cb938331a7c4ec3b84deba1749e6be9706cf334fed7df565c0c9fb"),
+                Helper.HexToBytes("62b5b722"),
+                false,
+                true,
+                false,
+                null
+            };
+            yield return new object[]
+            {
+                "6PfLGnQs6VZnrNpmVKfjotbnQuaJK4KZoPFrAjx1JMJUa1Ft8gnf5WxfKd",
+                true,
+                Helper.HexToBytes("67010a95734189066214de0ae75c4e2b99b224951e2654eb8c3e3c6ee5373fe3"),
+                Helper.HexToBytes("059a5481"),
+                false,
+                true,
+                false,
+                null
+            };
+            yield return new object[]
+            {
+                "6PgNBNNzDkKdhkT6uJntUXwwzQV8Rr2tZcbkDcuC9DZRsS6AtHts4Ypo1j",
+                true,
+                Helper.HexToBytes("4fca5a974040f00169b14acff7bf5b659d43f73f9274631308ee405700fc8585"),
+                Helper.HexToBytes("bb458cef"),
+                false,
+                true,
+                true,
+                null
+            };
+            yield return new object[]
+            {
+                "6PgGWtx25kUg8QWvwuJAgorN6k9FbE25rv5dMRwu5SKMnfpfVe5mar2ngH",
+                true,
+                Helper.HexToBytes("c40ea76fc501a001fb67c883b966b6ff3c39b90264cbdc3b762d55182866c44c"),
+                Helper.HexToBytes("494af136"),
+                false,
+                true,
+                true,
+                null
+            };
+            yield return new object[]
+            {
+                "6PnTB7C3RDmPZsp4LraT77XU8NuiS5grF9iJG6iGu9RXhS6HAB122cEz81",
+                true,
+                Helper.HexToBytes("aaf901dd48a9d6e6b75a213d7fe68f351061f87c5cab133bb6ec3bce6bb35acd"),
+                Helper.HexToBytes("7b95f71f"),
+                true,
+                true,
+                false,
+                null
             };
         }
         [Theory]
         [MemberData(nameof(GetBip38DecodeCases))]
-        public void TryDecodeBip38Test(string bip38, bool expValid, byte[] expData, byte[] expSalt, bool expComp, string expErr)
+        public void TryDecodeBip38Test(string bip38, bool expValid, byte[] expData, byte[] expSalt,
+                                       bool expComp, bool expEC, bool expLot, string expErr)
         {
             InputService serv = new();
-            bool actualValid = serv.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out string error);
+            bool actualValid = serv.TryDecodeBip38(bip38, out byte[] data, out byte[] salt,
+                out bool isComp, out bool isEC, out bool hasLot, out string error);
 
             Assert.Equal(expValid, actualValid);
             Assert.Equal(expData, data);
             Assert.Equal(expSalt, salt);
             Assert.Equal(expComp, isComp);
+            Assert.Equal(expEC, isEC);
+            Assert.Equal(expLot, hasLot);
             Assert.Equal(expErr, error);
         }
     }

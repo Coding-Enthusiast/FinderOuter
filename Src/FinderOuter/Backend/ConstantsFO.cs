@@ -45,5 +45,6 @@ namespace FinderOuter.Backend
         public const int Bip38Base58Len = 58;
         public const string Bip38Start = "6P";
         public static readonly byte[] Bip38Prefix = new byte[2] { 0x01, 0x42 };
+        public static readonly byte[] Bip38PrefixECMult = new byte[2] { 0x01, 0x43 };
     }
 }

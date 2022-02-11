@@ -315,10 +315,13 @@ namespace FinderOuter.Services
             return !s.IsNormalized(NormalizationForm.FormKD);
         }
 
-        public bool TryDecodeBip38(string bip38, out byte[] data, out byte[] salt, out bool isComp, out string error)
+        public bool TryDecodeBip38(string bip38, out byte[] data, out byte[] salt,
+                                   out bool isComp, out bool isEcMult, out bool hasLot, out string error)
         {
             isComp = false;
             salt = null;
+            isEcMult = false;
+            hasLot = false;
             if (!Base58.TryDecodeWithChecksum(bip38, out data))
             {
                 error = "Invalid Base-58 encoding.";
@@ -332,7 +335,13 @@ namespace FinderOuter.Services
                 return false;
             }
 
-            if (!((Span<byte>)data).Slice(0, 2).SequenceEqual(ConstantsFO.Bip38Prefix))
+            Span<byte> actualPrefix = ((Span<byte>)data).Slice(0, 2);
+            if (actualPrefix.SequenceEqual(ConstantsFO.Bip38PrefixECMult))
+            {
+                isEcMult = true;
+                hasLot = (data[2] & 0b0000_0100) != 0;
+            }
+            else if (!actualPrefix.SequenceEqual(ConstantsFO.Bip38Prefix))
             {
                 error = "Invalid prefix.";
                 data = null;
