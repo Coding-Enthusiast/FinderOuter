@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
@@ -14,7 +13,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -80,7 +78,8 @@ namespace FinderOuter.Services
 
             int[] items = new int[passLength];
             items[0] = firstItem;
-            uint[] passValues = new uint[passLength / 4 + (passLength % 4 != 0 ? 1 : 0)];
+            int passPad = passLength % 4;
+            uint[] passValues = new uint[passLength / 4 + (passPad != 0 ? 1 : 0)];
 
             uint[] InnerPads = Enumerable.Repeat(0x36363636U, 16).ToArray();
             uint[] OuterPads = Enumerable.Repeat(0x5c5c5c5cU, 16).ToArray();
@@ -112,18 +111,18 @@ namespace FinderOuter.Services
 
                     // HMAC key (sets pads) is the password and is fixed for both PBKDF2 calls so we can set the pads
                     // and compute the hashstate after first block compression
-                    int padIndex = 0; int itemIndex = 0;
-                    for (; itemIndex < items.Length / 4; padIndex++, itemIndex += 4)
+                    int passIndex = 0; int itemIndex = 0;
+                    for (; itemIndex < items.Length - passPad; passIndex++, itemIndex += 4)
                     {
                         Debug.Assert(itemsPt[itemIndex] < allValues.Length);
                         Debug.Assert(itemsPt[itemIndex + 1] < allValues.Length);
                         Debug.Assert(itemsPt[itemIndex + 2] < allValues.Length);
                         Debug.Assert(itemsPt[itemIndex + 3] < allValues.Length);
 
-                        passVal[padIndex] = (uint)((valPt[itemsPt[itemIndex]] << 24) |
-                                                   (valPt[itemsPt[itemIndex + 1]] << 16) |
-                                                   (valPt[itemsPt[itemIndex + 2]] << 8) |
-                                                    valPt[itemsPt[itemIndex + 3]]);
+                        passVal[passIndex] = (uint)((valPt[itemsPt[itemIndex]] << 24) |
+                                                    (valPt[itemsPt[itemIndex + 1]] << 16) |
+                                                    (valPt[itemsPt[itemIndex + 2]] << 8) |
+                                                     valPt[itemsPt[itemIndex + 3]]);
                     }
                     uint val = 0;
                     int shift = 24;
@@ -136,7 +135,11 @@ namespace FinderOuter.Services
                         itemIndex++;
                         shift -= 8;
                     }
-                    passVal[padIndex] = val;
+                    if (shift != 24)
+                    {
+                        Debug.Assert(passIndex < passValues.Length);
+                        passVal[passIndex] = val;
+                    }
 
                     // Compress first block (64 byte inner pad)
                     Sha256Fo.Init(pt);
@@ -220,11 +223,11 @@ namespace FinderOuter.Services
                     }
 
 
-                    // Scrypt
+                    // * Scrypt
                     dPt = dkPt;
                     for (int i = 0; i < 8; i++)
                     {
-                        ROMIX(dPt, vPt);
+                        ROMIX_16384(dPt, vPt);
                         dPt += 256;
                     }
 
@@ -334,7 +337,1061 @@ namespace FinderOuter.Services
             report.IncrementProgress();
         }
 
-        private static unsafe void ROMIX(uint* dPt, uint* vPt)
+
+        public unsafe void MainLoopECLot(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength,
+                                    int firstItem, ParallelLoopState loopState)
+        {
+            Debug.Assert(salt.Length == 4);
+            Debug.Assert(passLength <= Sha256Fo.BlockByteSize);
+
+            // The whole process:
+            // dk1 = Scrypt(cost-param=16384, blockSizeFactor=8, parallelization=8).Derive(pass, data[0:4], dkLen=32)
+            //     dk'=PBKDF2(HMACSHA256,iteration=1).Derive(pass,salt_4, dkLen=8192)
+            //     dk"=ROMIX(dk')
+            //     dk =PBKDF2(HMACSHA256,iteration=1).Derive(pass,dk",dkLen=32)
+            // passFactor = SHA256(SHA256(dk1 | data[0:8]))
+            // ****** The rest is similar with or without Lot/sequence
+            // passPoint = passFactor * G
+            // dk2 = Scrypt(cost-param=1024, blockSizeFactor=1, parallelization=1).Derive(passPoint, salt(4)|data[0:8], dkLen=64)
+            //     dk'=PBKDF2(HMACSHA256,iteration=1).Derive(passPoint_33,salt_12, dkLen=128)
+            //     dk"=ROMIX(dk')
+            //     dk =PBKDF2(HMACSHA256,iteration=1).Derive(passPoint_33,dk",dkLen=64)
+            // AES.key = dk2[32:64]
+            // decrypted1 = AES.decrypt(data[16:32])                  XOR   dk2[16:32]
+            // decrypted2 = AES.decrypt(data[8:16] | decrypted1[0:8]) XOR   dk2[0:16]
+            // seedb = decrypted2[0:16] | decrypted1[8:16]
+            // factorb = SHA256(SHA256(seedb_24))
+            // key = (passFactor * factorb) % n
+
+            using AesManaged aes = new()
+            {
+                KeySize = 256,
+                Mode = CipherMode.ECB,
+                IV = new byte[16],
+                Padding = PaddingMode.None
+            };
+
+            uint saltUint0 = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
+            uint saltUint1 = (uint)(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
+            uint saltUint2 = (uint)(data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7]);
+            var localComparer = comparer.Clone();
+
+            int[] items = new int[passLength];
+            items[0] = firstItem;
+
+            int passPad = passLength % 4;
+            uint[] passValues = new uint[passLength / 4 + (passPad != 0 ? 1 : 0)];
+
+            // TODO: should these 2 arrays be merged?
+            uint[] v = new uint[4194304];
+            uint[] derivedKey = new uint[2048];
+
+            // hashState(8)|workVector(64)|ipadSource(16)|opadSource(16)|ipadStore(8)|opadStore(8)|ipadStore2(8)|opadStore2(8)|final(16)
+            // Total = 8+64+16+16+8+8+8+8+16 = 152*4 = 608 bytes
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + (2 * 16) + (4 * Sha256Fo.HashStateSize) + 16];
+            uint* wPt = pt + Sha256Fo.HashStateSize;
+            uint* ipadSource = wPt + Sha256Fo.WorkingVectorSize;
+            uint* opadSource = ipadSource + 16;
+            uint* iPtStore = opadSource + 16;
+            uint* oPtStore = iPtStore + Sha256Fo.HashStateSize;
+            uint* iPtStore2 = oPtStore + Sha256Fo.HashStateSize;
+            uint* oPtStore2 = iPtStore2 + Sha256Fo.HashStateSize;
+            uint* final = oPtStore2 + Sha256Fo.HashStateSize;
+
+            for (int i = 0; i < 16; i++)
+            {
+                ipadSource[i] = 0x36363636U;
+                opadSource[i] = 0x5c5c5c5cU;
+            }
+
+            fixed (byte* valPt = &allValues[0])
+            fixed (int* itemsPt = &items[0])
+            fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passVal = &passValues[0])
+            {
+                do
+                {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+                    // * First PBKDF2 (blockcount=256, dkLen=8192, password=pass, salt=salt_4)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (256x)
+
+                    // HMAC key (sets pads) is the password and is fixed for both PBKDF2 calls so we can set the pads
+                    // and compute the hashstate after first block compression
+                    int passIndex = 0; int itemIndex = 0;
+                    for (; itemIndex < items.Length - passPad; passIndex++, itemIndex += 4)
+                    {
+                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 1] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 2] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 3] < allValues.Length);
+
+                        passVal[passIndex] = (uint)((valPt[itemsPt[itemIndex]] << 24) |
+                                                    (valPt[itemsPt[itemIndex + 1]] << 16) |
+                                                    (valPt[itemsPt[itemIndex + 2]] << 8) |
+                                                     valPt[itemsPt[itemIndex + 3]]);
+                    }
+                    uint val = 0;
+                    int shift = 24;
+                    while (itemIndex < items.Length)
+                    {
+                        Debug.Assert(shift > 0);
+                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
+
+                        val |= (uint)(valPt[itemsPt[itemIndex]] << shift);
+                        itemIndex++;
+                        shift -= 8;
+                    }
+                    if (shift != 24)
+                    {
+                        Debug.Assert(passIndex < passValues.Length);
+                        passVal[passIndex] = val;
+                    }
+
+                    // Compress first block (64 byte inner pad)
+                    Sha256Fo.Init(pt);
+                    *(Block64*)wPt = *(Block64*)ipadSource;
+                    for (int i = 0; i < passValues.Length; i++)
+                    {
+                        wPt[i] ^= passVal[i];
+                    }
+                    Sha256Fo.SetW(wPt);
+                    Sha256Fo.CompressBlockWithWSet(pt);
+                    // Store hashstate after compression of first block (inner-pad)
+                    *(Block32*)iPtStore = *(Block32*)pt;
+
+                    // Compress first block (64 byte outer pad)
+                    Sha256Fo.Init(pt);
+                    *(Block64*)wPt = *(Block64*)opadSource;
+                    for (int i = 0; i < passValues.Length; i++)
+                    {
+                        wPt[i] ^= passVal[i];
+                    }
+                    Sha256Fo.SetW(wPt);
+                    Sha256Fo.CompressBlockWithWSet(pt);
+                    // Store hashstate after compression of first block (inner-pad)
+                    *(Block32*)oPtStore = *(Block32*)pt;
+
+
+                    uint* dPt = dkPt;
+                    for (uint i = 1; i <= 256; i++)
+                    {
+                        // HMACSHA256(key=pass, msg=salt|i)
+                        // compute u1 = hmac.ComputeHash(data=salt|i, key=pass);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | salt | i ))
+                        // result = u1 | u1 | u1 ...
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore;
+
+                        // Compress second block (4 byte salt | 4 byte i)
+                        wPt[0] = saltUint1;
+                        wPt[1] = i;
+                        wPt[2] = 0x80000000;
+                        wPt[3] = 0;
+                        wPt[4] = 0;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 4 + 4) * 8; // = 576
+                        Sha256Fo.Compress72SecondBlock(pt);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        // Store hashstate in dk in reverse endian
+                        dPt[0] = (pt[0] >> 24) | (pt[0] << 24) | ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);
+                        dPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                        dPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                        dPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                        dPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                        dPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                        dPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                        dPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
+                        dPt += 8;
+                    }
+
+
+                    // * Scrypt 1
+                    dPt = dkPt;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        ROMIX_16384(dPt, vPt);
+                        dPt += 256;
+                    }
+
+
+                    // * Second PBKDF2 (blockcount=1, dkLen=32, password=pass, salt=dk_8192)
+                    // With iteration=1 there is no loop, with 1 block only 1 hash to fill the dk 32 bytes
+                    dPt = dkPt;
+                    // HMACSHA256(key=pass, msg=dk|i)
+                    // compute u1 = hmac.ComputeHash(data=dk|i, key=pass);
+                    //         u1 = SHA256(outer_pad | SHA256(inner_pad | dk | i ))
+                    // result = u1
+
+                    // Set hashstate after first block compression (inner pad)
+                    *(Block32*)pt = *(Block32*)iPtStore;
+
+                    // Compress next blocks (8192 byte salt | 4 byte i)
+                    for (int m = 0; m < 128; m++)
+                    {
+                        *(Block64*)wPt = *(Block64*)(dPt + (m * 16));
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                    }
+                    wPt[0] = 1;
+                    wPt[1] = 0x80000000;
+                    wPt[2] = 0;
+                    wPt[3] = 0;
+                    wPt[4] = 0;
+                    wPt[5] = 0;
+                    wPt[6] = 0;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = (64 + 8192 + 4) * 8; // = 8260*8 = 66080
+                    Sha256Fo.Compress8260FinalBlock_1(pt);
+
+                    // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                    *(Block32*)wPt = *(Block32*)pt;
+                    // Set hashstate after first block compression (outer pad)
+                    *(Block32*)pt = *(Block32*)oPtStore;
+                    wPt[8] = 0x80000000;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = (64 + 32) * 8; // 768
+                    Sha256Fo.Compress96SecondBlock(pt);
+
+                    // passFactor is double SHA256 of (pt | data[0:8])
+                    *(Block32*)wPt = *(Block32*)pt;
+                    wPt[8] = saltUint1;
+                    wPt[9] = saltUint2;
+                    wPt[10] = 0x80000000;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = (32 + 8) * 8; // 320
+                    Sha256Fo.Init(pt);
+                    Sha256Fo.CompressDouble40(pt);
+
+                    // pt is now passFactor
+                    // pt is now passFactor
+                    Scalar passFactor = new(pt, out int overflow);
+                    if (overflow != 0)
+                    {
+                        continue;
+                    }
+                    Span<byte> passPoint = localComparer.Calc.MultiplyByG(passFactor).ToPoint().ToByteArray(true);
+
+
+                    // * Third PBKDF2 (blockcount=4, dkLen=128, password=passPoint_33, salt=salt_12)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (4x)
+                    fixed (byte* temp = &passPoint[0])
+                    {
+                        // Like before HMAC key (sets pads) is fixed (33 byte passPoint) and is fixed for both PBKDF2 calls.
+                        // HashStates are stored in second storages (the first one is going to be reused in the main loop).
+                        uint u0 = (uint)((temp[0] << 24) | (temp[1] << 16) | (temp[2] << 8) | temp[3]);
+                        uint u1 = (uint)((temp[4] << 24) | (temp[5] << 16) | (temp[6] << 8) | temp[7]);
+                        uint u2 = (uint)((temp[8] << 24) | (temp[9] << 16) | (temp[10] << 8) | temp[11]);
+                        uint u3 = (uint)((temp[12] << 24) | (temp[13] << 16) | (temp[14] << 8) | temp[15]);
+                        uint u4 = (uint)((temp[16] << 24) | (temp[17] << 16) | (temp[18] << 8) | temp[19]);
+                        uint u5 = (uint)((temp[20] << 24) | (temp[21] << 16) | (temp[22] << 8) | temp[23]);
+                        uint u6 = (uint)((temp[24] << 24) | (temp[25] << 16) | (temp[26] << 8) | temp[27]);
+                        uint u7 = (uint)((temp[28] << 24) | (temp[29] << 16) | (temp[30] << 8) | temp[31]);
+                        uint u8 = (uint)temp[32] << 24;
+
+                        // Compress first block (64 byte inner pad)
+                        Sha256Fo.Init(pt);
+                        *(Block64*)wPt = *(Block64*)ipadSource;
+                        wPt[0] ^= u0;
+                        wPt[1] ^= u1;
+                        wPt[2] ^= u2;
+                        wPt[3] ^= u3;
+                        wPt[4] ^= u4;
+                        wPt[5] ^= u5;
+                        wPt[6] ^= u6;
+                        wPt[7] ^= u7;
+                        wPt[8] ^= u8;
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                        // Store hashstate after compression of first block (inner-pad)
+                        *(Block32*)iPtStore2 = *(Block32*)pt;
+
+                        // Compress first block (64 byte outer pad)
+                        Sha256Fo.Init(pt);
+                        *(Block64*)wPt = *(Block64*)opadSource;
+                        wPt[0] ^= u0;
+                        wPt[1] ^= u1;
+                        wPt[2] ^= u2;
+                        wPt[3] ^= u3;
+                        wPt[4] ^= u4;
+                        wPt[5] ^= u5;
+                        wPt[6] ^= u6;
+                        wPt[7] ^= u7;
+                        wPt[8] ^= u8;
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                        // Store hashstate after compression of first block (inner-pad)
+                        *(Block32*)oPtStore2 = *(Block32*)pt;
+                    }
+
+                    dPt = dkPt;
+                    for (uint i = 1; i <= 4; i++)
+                    {
+                        // HMACSHA256(key=passPoint_33, msg=salt_12|i)
+                        // compute u1 = hmac.ComputeHash(data=salt_12|i, key=passPoint_33);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | salt_12 | i ))
+                        // result = u1 | u1 | u1 | u1
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore2;
+
+                        // Compress second block (12 byte salt | 4 byte i)
+                        wPt[0] = saltUint0;
+                        wPt[1] = saltUint1;
+                        wPt[2] = saltUint2;
+                        wPt[3] = i;
+                        wPt[4] = 0x80000000;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 12 + 4) * 8; // = 640
+                        Sha256Fo.Compress80SecondBlock(pt);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore2;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        // Store hashstate in dk in reverse endian
+                        dPt[0] = (pt[0] >> 24) | (pt[0] << 24) | ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);
+                        dPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                        dPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                        dPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                        dPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                        dPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                        dPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                        dPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
+                        dPt += 8;
+                    }
+
+
+                    // * Scrypt 2
+                    dPt = dkPt;
+                    ROMIX_1024(dPt, vPt);
+
+
+                    // * Fourth PBKDF2 (blockcount=2, dkLen=64, password=pass, salt=dk_128)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (2x)
+                    dPt = dkPt;
+                    for (uint i = 1; i <= 2; i++)
+                    {
+                        // HMACSHA256(key=pass, msg=dk|i)
+                        // compute u1 = hmac.ComputeHash(data=dk|i, key=pass);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | dk | i ))
+                        // result = u1 | u1
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore2;
+
+                        // Compress next blocks (128 byte salt | 4 byte i)
+                        for (int m = 0; m < 2; m++)
+                        {
+                            *(Block64*)wPt = *(Block64*)(dPt + (m * 16));
+                            Sha256Fo.SetW(wPt);
+                            Sha256Fo.CompressBlockWithWSet(pt);
+                        }
+                        wPt[0] = i;
+                        wPt[1] = 0x80000000;
+                        wPt[2] = 0;
+                        wPt[3] = 0;
+                        wPt[4] = 0;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 128 + 4) * 8; // = 196*8 = 1568
+                        Sha256Fo.Compress196FinalBlock(pt, i);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore2;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        *(Block32*)final = *(Block32*)pt;
+                        final += 8;
+                    }
+
+                    final -= 16;
+
+                    aes.Key = new byte[32]
+                    {
+                        (byte)(final[8] >> 24), (byte)(final[8] >> 16), (byte)(final[8] >> 8), (byte)final[8],
+                        (byte)(final[9] >> 24), (byte)(final[9] >> 16), (byte)(final[9] >> 8), (byte)final[9],
+                        (byte)(final[10] >> 24), (byte)(final[10] >> 16), (byte)(final[10] >> 8), (byte)final[10],
+                        (byte)(final[11] >> 24), (byte)(final[11] >> 16), (byte)(final[11] >> 8), (byte)final[11],
+                        (byte)(final[12] >> 24), (byte)(final[12] >> 16), (byte)(final[12] >> 8), (byte)final[12],
+                        (byte)(final[13] >> 24), (byte)(final[13] >> 16), (byte)(final[13] >> 8), (byte)final[13],
+                        (byte)(final[14] >> 24), (byte)(final[14] >> 16), (byte)(final[14] >> 8), (byte)final[14],
+                        (byte)(final[15] >> 24), (byte)(final[15] >> 16), (byte)(final[15] >> 8), (byte)final[15],
+                    };
+
+                    // TODO: decryptedResult, encryptedPart1, decryptedPart1 and seedb should be allocated outside
+                    //       the loop if possible
+                    using ICryptoTransform decryptor = aes.CreateDecryptor();
+                    byte[] decryptedResult = new byte[16];
+                    decryptor.TransformBlock(data, 16, 16, decryptedResult, 0);
+
+                    for (int i = 0, j = 4; i < decryptedResult.Length; i += 4, j++)
+                    {
+                        decryptedResult[i] ^= (byte)(final[j] >> 24);
+                        decryptedResult[i + 1] ^= (byte)(final[j] >> 16);
+                        decryptedResult[i + 2] ^= (byte)(final[j] >> 8);
+                        decryptedResult[i + 3] ^= (byte)final[j];
+                    }
+
+                    byte[] encryptedPart1 = new byte[16];
+                    Buffer.BlockCopy(data, 8, encryptedPart1, 0, 8);
+                    Buffer.BlockCopy(decryptedResult, 0, encryptedPart1, 8, 8);
+
+                    byte[] decryptedPart1 = new byte[16];
+                    decryptor.TransformBlock(encryptedPart1, 0, 16, decryptedPart1, 0);
+
+                    for (int i = 0, j = 0; i < decryptedPart1.Length; i += 4, j++)
+                    {
+                        decryptedPart1[i] ^= (byte)(final[j] >> 24);
+                        decryptedPart1[i + 1] ^= (byte)(final[j] >> 16);
+                        decryptedPart1[i + 2] ^= (byte)(final[j] >> 8);
+                        decryptedPart1[i + 3] ^= (byte)final[j];
+                    }
+
+                    byte[] seedb = new byte[24];
+                    Array.Copy(decryptedPart1, 0, seedb, 0, 16);
+                    Array.Copy(decryptedResult, 8, seedb, 16, 8);
+
+                    Sha256Fo.Init(pt);
+                    wPt[0] = (uint)((seedb[0] << 24) | (seedb[1] << 16) | (seedb[2] << 8) | seedb[3]);
+                    wPt[1] = (uint)((seedb[4] << 24) | (seedb[5] << 16) | (seedb[6] << 8) | seedb[7]);
+                    wPt[2] = (uint)((seedb[8] << 24) | (seedb[9] << 16) | (seedb[10] << 8) | seedb[11]);
+                    wPt[3] = (uint)((seedb[12] << 24) | (seedb[13] << 16) | (seedb[14] << 8) | seedb[15]);
+                    wPt[4] = (uint)((seedb[16] << 24) | (seedb[17] << 16) | (seedb[18] << 8) | seedb[19]);
+                    wPt[5] = (uint)((seedb[20] << 24) | (seedb[21] << 16) | (seedb[22] << 8) | seedb[23]);
+                    wPt[6] = 0b10000000_00000000_00000000_00000000U;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = 24 * 8;
+                    Sha256Fo.CompressDouble24(pt);
+
+                    // pt is factorb
+                    Scalar key = new Scalar(pt, out _).Multiply(passFactor);
+
+                    if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
+                    {
+                        loopState.Stop();
+                        report.FoundAnyResult = true;
+
+                        char[] temp = new char[passLength];
+                        for (int i = 0; i < temp.Length; i++)
+                        {
+                            temp[i] = (char)valPt[itemsPt[i]];
+                        }
+
+                        report.AddMessageSafe($"Password is: {new string(temp)}");
+                        return;
+                    }
+
+                } while (ParallelMoveNext(itemsPt, items.Length, allValues.Length));
+            }
+
+            report.IncrementProgress();
+        }
+
+        public unsafe void MainLoopECNoLot(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength,
+                                    int firstItem, ParallelLoopState loopState)
+        {
+            Debug.Assert(salt.Length == 4);
+            Debug.Assert(passLength <= Sha256Fo.BlockByteSize);
+
+            // The whole process:
+            // dk1 = Scrypt(cost-param=16384, blockSizeFactor=8, parallelization=8).Derive(pass, data[0:8], dkLen=32)
+            //     dk'=PBKDF2(HMACSHA256,iteration=1).Derive(pass,salt_8, dkLen=8192)
+            //     dk"=ROMIX(dk')
+            //     dk =PBKDF2(HMACSHA256,iteration=1).Derive(pass,dk",dkLen=32)
+            // passFactor = dk1
+            // ****** The rest is similar with or without Lot/sequence
+            // passPoint = passFactor * G
+            // dk2 = Scrypt(cost-param=1024, blockSizeFactor=1, parallelization=1).Derive(passPoint, salt(4)|data[0:8], dkLen=64)
+            //     dk'=PBKDF2(HMACSHA256,iteration=1).Derive(passPoint_33,salt_12, dkLen=128)
+            //     dk"=ROMIX(dk')
+            //     dk =PBKDF2(HMACSHA256,iteration=1).Derive(passPoint_33,dk",dkLen=64)
+            // AES.key = dk2[32:64]
+            // decrypted1 = AES.decrypt(data[16:32])                  XOR   dk2[16:32]
+            // decrypted2 = AES.decrypt(data[8:16] | decrypted1[0:8]) XOR   dk2[0:16]
+            // seedb = decrypted2[0:16] | decrypted1[8:16]
+            // factorb = SHA256(SHA256(seedb_24))
+            // key = (passFactor * factorb) % n
+
+            using AesManaged aes = new()
+            {
+                KeySize = 256,
+                Mode = CipherMode.ECB,
+                IV = new byte[16],
+                Padding = PaddingMode.None
+            };
+
+            uint saltUint0 = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
+            uint saltUint1 = (uint)(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
+            uint saltUint2 = (uint)(data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7]);
+            var localComparer = comparer.Clone();
+
+            int[] items = new int[passLength];
+            items[0] = firstItem;
+            int passPad = passLength % 4;
+            uint[] passValues = new uint[passLength / 4 + (passPad != 0 ? 1 : 0)];
+
+            // TODO: should these 2 arrays be merged?
+            uint[] v = new uint[4194304];
+            uint[] derivedKey = new uint[2048];
+
+            // hashState(8)|workVector(64)|ipadSource(16)|opadSource(16)|ipadStore(8)|opadStore(8)|ipadStore2(8)|opadStore2(8)|final(16)
+            // Total = 8+64+16+16+8+8+8+8+16 = 152*4 = 608 bytes
+            uint* pt = stackalloc uint[Sha256Fo.UBufferSize + (2 * 16) + (4 * Sha256Fo.HashStateSize) + 16];
+            uint* wPt = pt + Sha256Fo.HashStateSize;
+            uint* ipadSource = wPt + Sha256Fo.WorkingVectorSize;
+            uint* opadSource = ipadSource + 16;
+            uint* iPtStore = opadSource + 16;
+            uint* oPtStore = iPtStore + Sha256Fo.HashStateSize;
+            uint* iPtStore2 = oPtStore + Sha256Fo.HashStateSize;
+            uint* oPtStore2 = iPtStore2 + Sha256Fo.HashStateSize;
+            uint* final = oPtStore2 + Sha256Fo.HashStateSize;
+
+            for (int i = 0; i < 16; i++)
+            {
+                ipadSource[i] = 0x36363636U;
+                opadSource[i] = 0x5c5c5c5cU;
+            }
+
+            fixed (byte* valPt = &allValues[0])
+            fixed (int* itemsPt = &items[0])
+            fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passVal = &passValues[0])
+            {
+                do
+                {
+                    if (loopState.IsStopped)
+                    {
+                        return;
+                    }
+                    // * First PBKDF2 (blockcount=256, dkLen=8192, password=pass, salt=salt_8)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (256x)
+
+                    // HMAC key (sets pads) is the password and is fixed for both PBKDF2 calls so we can set the pads
+                    // and compute the hashstate after first block compression
+                    int passIndex = 0; int itemIndex = 0;
+                    for (; itemIndex < items.Length - passPad; passIndex++, itemIndex += 4)
+                    {
+                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 1] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 2] < allValues.Length);
+                        Debug.Assert(itemsPt[itemIndex + 3] < allValues.Length);
+
+                        passVal[passIndex] = (uint)((valPt[itemsPt[itemIndex]] << 24) |
+                                                    (valPt[itemsPt[itemIndex + 1]] << 16) |
+                                                    (valPt[itemsPt[itemIndex + 2]] << 8) |
+                                                     valPt[itemsPt[itemIndex + 3]]);
+                    }
+                    uint val = 0;
+                    int shift = 24;
+                    while (itemIndex < items.Length)
+                    {
+                        Debug.Assert(shift > 0);
+                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
+
+                        val |= (uint)(valPt[itemsPt[itemIndex]] << shift);
+                        itemIndex++;
+                        shift -= 8;
+                    }
+                    if (shift != 24)
+                    {
+                        Debug.Assert(passIndex < passValues.Length);
+                        passVal[passIndex] = val;
+                    }
+
+                    // Compress first block (64 byte inner pad)
+                    Sha256Fo.Init(pt);
+                    *(Block64*)wPt = *(Block64*)ipadSource;
+                    for (int i = 0; i < passValues.Length; i++)
+                    {
+                        wPt[i] ^= passVal[i];
+                    }
+                    Sha256Fo.SetW(wPt);
+                    Sha256Fo.CompressBlockWithWSet(pt);
+                    // Store hashstate after compression of first block (inner-pad)
+                    *(Block32*)iPtStore = *(Block32*)pt;
+
+                    // Compress first block (64 byte outer pad)
+                    Sha256Fo.Init(pt);
+                    *(Block64*)wPt = *(Block64*)opadSource;
+                    for (int i = 0; i < passValues.Length; i++)
+                    {
+                        wPt[i] ^= passVal[i];
+                    }
+                    Sha256Fo.SetW(wPt);
+                    Sha256Fo.CompressBlockWithWSet(pt);
+                    // Store hashstate after compression of first block (inner-pad)
+                    *(Block32*)oPtStore = *(Block32*)pt;
+
+
+                    uint* dPt = dkPt;
+                    for (uint i = 1; i <= 256; i++)
+                    {
+                        // HMACSHA256(key=pass, msg=salt|i)
+                        // compute u1 = hmac.ComputeHash(data=salt|i, key=pass);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | salt | i ))
+                        // result = u1 | u1 | u1 ...
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore;
+
+                        // Compress second block (8 byte salt | 4 byte i)
+                        wPt[0] = saltUint1;
+                        wPt[1] = saltUint2;
+                        wPt[2] = i;
+                        wPt[3] = 0x80000000;
+                        wPt[4] = 0;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 8 + 4) * 8; // = 608
+                        Sha256Fo.Compress76SecondBlock(pt);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        // Store hashstate in dk in reverse endian
+                        dPt[0] = (pt[0] >> 24) | (pt[0] << 24) | ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);
+                        dPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                        dPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                        dPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                        dPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                        dPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                        dPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                        dPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
+                        dPt += 8;
+                    }
+
+
+                    // * Scrypt 1
+                    dPt = dkPt;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        ROMIX_16384(dPt, vPt);
+                        dPt += 256;
+                    }
+
+
+                    // * Second PBKDF2 (blockcount=1, dkLen=32, password=pass, salt=dk_8192)
+                    // With iteration=1 there is no loop, with 1 block only 1 hash to fill the dk 32 bytes
+                    dPt = dkPt;
+                    // HMACSHA256(key=pass, msg=dk|i)
+                    // compute u1 = hmac.ComputeHash(data=dk|i, key=pass);
+                    //         u1 = SHA256(outer_pad | SHA256(inner_pad | dk | i ))
+                    // result = u1
+
+                    // Set hashstate after first block compression (inner pad)
+                    *(Block32*)pt = *(Block32*)iPtStore;
+
+                    // Compress next blocks (8192 byte salt | 4 byte i)
+                    for (int m = 0; m < 128; m++)
+                    {
+                        *(Block64*)wPt = *(Block64*)(dPt + (m * 16));
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                    }
+                    wPt[0] = 1;
+                    wPt[1] = 0x80000000;
+                    wPt[2] = 0;
+                    wPt[3] = 0;
+                    wPt[4] = 0;
+                    wPt[5] = 0;
+                    wPt[6] = 0;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = (64 + 8192 + 4) * 8; // = 8260*8 = 66080
+                    Sha256Fo.Compress8260FinalBlock_1(pt);
+
+                    // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                    *(Block32*)wPt = *(Block32*)pt;
+                    // Set hashstate after first block compression (outer pad)
+                    *(Block32*)pt = *(Block32*)oPtStore;
+                    wPt[8] = 0x80000000;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = (64 + 32) * 8; // 768
+                    Sha256Fo.Compress96SecondBlock(pt);
+
+                    // pt is now passFactor
+                    Scalar passFactor = new(pt, out int overflow);
+                    if (overflow != 0)
+                    {
+                        continue;
+                    }
+                    Span<byte> passPoint = localComparer.Calc.MultiplyByG(passFactor).ToPoint().ToByteArray(true);
+
+
+                    // * Third PBKDF2 (blockcount=4, dkLen=128, password=passPoint_33, salt=salt_12)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (4x)
+                    fixed (byte* temp = &passPoint[0])
+                    {
+                        // Like before HMAC key (sets pads) is fixed (33 byte passPoint) and is fixed for both PBKDF2 calls.
+                        // HashStates are stored in second storages (the first one is going to be reused in the main loop).
+                        uint u0 = (uint)((temp[0] << 24) | (temp[1] << 16) | (temp[2] << 8) | temp[3]);
+                        uint u1 = (uint)((temp[4] << 24) | (temp[5] << 16) | (temp[6] << 8) | temp[7]);
+                        uint u2 = (uint)((temp[8] << 24) | (temp[9] << 16) | (temp[10] << 8) | temp[11]);
+                        uint u3 = (uint)((temp[12] << 24) | (temp[13] << 16) | (temp[14] << 8) | temp[15]);
+                        uint u4 = (uint)((temp[16] << 24) | (temp[17] << 16) | (temp[18] << 8) | temp[19]);
+                        uint u5 = (uint)((temp[20] << 24) | (temp[21] << 16) | (temp[22] << 8) | temp[23]);
+                        uint u6 = (uint)((temp[24] << 24) | (temp[25] << 16) | (temp[26] << 8) | temp[27]);
+                        uint u7 = (uint)((temp[28] << 24) | (temp[29] << 16) | (temp[30] << 8) | temp[31]);
+                        uint u8 = (uint)temp[32] << 24;
+
+                        // Compress first block (64 byte inner pad)
+                        Sha256Fo.Init(pt);
+                        *(Block64*)wPt = *(Block64*)ipadSource;
+                        wPt[0] ^= u0;
+                        wPt[1] ^= u1;
+                        wPt[2] ^= u2;
+                        wPt[3] ^= u3;
+                        wPt[4] ^= u4;
+                        wPt[5] ^= u5;
+                        wPt[6] ^= u6;
+                        wPt[7] ^= u7;
+                        wPt[8] ^= u8;
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                        // Store hashstate after compression of first block (inner-pad)
+                        *(Block32*)iPtStore2 = *(Block32*)pt;
+
+                        // Compress first block (64 byte outer pad)
+                        Sha256Fo.Init(pt);
+                        *(Block64*)wPt = *(Block64*)opadSource;
+                        wPt[0] ^= u0;
+                        wPt[1] ^= u1;
+                        wPt[2] ^= u2;
+                        wPt[3] ^= u3;
+                        wPt[4] ^= u4;
+                        wPt[5] ^= u5;
+                        wPt[6] ^= u6;
+                        wPt[7] ^= u7;
+                        wPt[8] ^= u8;
+                        Sha256Fo.SetW(wPt);
+                        Sha256Fo.CompressBlockWithWSet(pt);
+                        // Store hashstate after compression of first block (inner-pad)
+                        *(Block32*)oPtStore2 = *(Block32*)pt;
+                    }
+
+                    dPt = dkPt;
+                    for (uint i = 1; i <= 4; i++)
+                    {
+                        // HMACSHA256(key=passPoint_33, msg=salt_12|i)
+                        // compute u1 = hmac.ComputeHash(data=salt_12|i, key=passPoint_33);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | salt_12 | i ))
+                        // result = u1 | u1 | u1 | u1
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore2;
+
+                        // Compress second block (12 byte salt | 4 byte i)
+                        wPt[0] = saltUint0;
+                        wPt[1] = saltUint1;
+                        wPt[2] = saltUint2;
+                        wPt[3] = i;
+                        wPt[4] = 0x80000000;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 12 + 4) * 8; // = 640
+                        Sha256Fo.Compress80SecondBlock(pt);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore2;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        // Store hashstate in dk in reverse endian
+                        dPt[0] = (pt[0] >> 24) | (pt[0] << 24) | ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);
+                        dPt[1] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
+                        dPt[2] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
+                        dPt[3] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
+                        dPt[4] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
+                        dPt[5] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
+                        dPt[6] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
+                        dPt[7] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
+                        dPt += 8;
+                    }
+
+
+                    // * Scrypt 2
+                    dPt = dkPt;
+                    ROMIX_1024(dPt, vPt);
+
+
+                    // * Fourth PBKDF2 (blockcount=2, dkLen=64, password=pass, salt=dk_128)
+                    // With iteration=1 there is no loop, only multiple hashes to fill the dk 32 bytes at a time (2x)
+                    dPt = dkPt;
+                    for (uint i = 1; i <= 2; i++)
+                    {
+                        // HMACSHA256(key=pass, msg=dk|i)
+                        // compute u1 = hmac.ComputeHash(data=dk|i, key=pass);
+                        //         u1 = SHA256(outer_pad | SHA256(inner_pad | dk | i ))
+                        // result = u1 | u1
+
+                        // Set hashstate after first block compression (inner pad)
+                        *(Block32*)pt = *(Block32*)iPtStore2;
+
+                        // Compress next blocks (128 byte salt | 4 byte i)
+                        for (int m = 0; m < 2; m++)
+                        {
+                            *(Block64*)wPt = *(Block64*)(dPt + (m * 16));
+                            Sha256Fo.SetW(wPt);
+                            Sha256Fo.CompressBlockWithWSet(pt);
+                        }
+                        wPt[0] = i;
+                        wPt[1] = 0x80000000;
+                        wPt[2] = 0;
+                        wPt[3] = 0;
+                        wPt[4] = 0;
+                        wPt[5] = 0;
+                        wPt[6] = 0;
+                        wPt[7] = 0;
+                        wPt[8] = 0;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 128 + 4) * 8; // = 196*8 = 1568
+                        Sha256Fo.Compress196FinalBlock(pt, i);
+
+                        // Copy hashstate to wPt (to compute outer hash). **The order of following 2 lines is important**
+                        *(Block32*)wPt = *(Block32*)pt;
+                        // Set hashstate after first block compression (outer pad)
+                        *(Block32*)pt = *(Block32*)oPtStore2;
+                        wPt[8] = 0x80000000;
+                        wPt[9] = 0;
+                        wPt[10] = 0;
+                        wPt[11] = 0;
+                        wPt[12] = 0;
+                        wPt[13] = 0;
+                        wPt[14] = 0;
+                        wPt[15] = (64 + 32) * 8; // 768
+                        Sha256Fo.Compress96SecondBlock(pt);
+
+                        *(Block32*)final = *(Block32*)pt;
+                        final += 8;
+                    }
+
+                    final -= 16;
+
+                    aes.Key = new byte[32]
+                    {
+                        (byte)(final[8] >> 24), (byte)(final[8] >> 16), (byte)(final[8] >> 8), (byte)final[8],
+                        (byte)(final[9] >> 24), (byte)(final[9] >> 16), (byte)(final[9] >> 8), (byte)final[9],
+                        (byte)(final[10] >> 24), (byte)(final[10] >> 16), (byte)(final[10] >> 8), (byte)final[10],
+                        (byte)(final[11] >> 24), (byte)(final[11] >> 16), (byte)(final[11] >> 8), (byte)final[11],
+                        (byte)(final[12] >> 24), (byte)(final[12] >> 16), (byte)(final[12] >> 8), (byte)final[12],
+                        (byte)(final[13] >> 24), (byte)(final[13] >> 16), (byte)(final[13] >> 8), (byte)final[13],
+                        (byte)(final[14] >> 24), (byte)(final[14] >> 16), (byte)(final[14] >> 8), (byte)final[14],
+                        (byte)(final[15] >> 24), (byte)(final[15] >> 16), (byte)(final[15] >> 8), (byte)final[15],
+                    };
+
+                    // TODO: decryptedResult, encryptedPart1, decryptedPart1 and seedb should be allocated outside
+                    //       the loop if possible
+                    using ICryptoTransform decryptor = aes.CreateDecryptor();
+                    byte[] decryptedResult = new byte[16];
+                    decryptor.TransformBlock(data, 16, 16, decryptedResult, 0);
+
+                    for (int i = 0, j = 4; i < decryptedResult.Length; i += 4, j++)
+                    {
+                        decryptedResult[i] ^= (byte)(final[j] >> 24);
+                        decryptedResult[i + 1] ^= (byte)(final[j] >> 16);
+                        decryptedResult[i + 2] ^= (byte)(final[j] >> 8);
+                        decryptedResult[i + 3] ^= (byte)final[j];
+                    }
+
+                    byte[] encryptedPart1 = new byte[16];
+                    Buffer.BlockCopy(data, 8, encryptedPart1, 0, 8);
+                    Buffer.BlockCopy(decryptedResult, 0, encryptedPart1, 8, 8);
+
+                    byte[] decryptedPart1 = new byte[16];
+                    decryptor.TransformBlock(encryptedPart1, 0, 16, decryptedPart1, 0);
+
+                    for (int i = 0, j = 0; i < decryptedPart1.Length; i += 4, j++)
+                    {
+                        decryptedPart1[i] ^= (byte)(final[j] >> 24);
+                        decryptedPart1[i + 1] ^= (byte)(final[j] >> 16);
+                        decryptedPart1[i + 2] ^= (byte)(final[j] >> 8);
+                        decryptedPart1[i + 3] ^= (byte)final[j];
+                    }
+
+                    byte[] seedb = new byte[24];
+                    Array.Copy(decryptedPart1, 0, seedb, 0, 16);
+                    Array.Copy(decryptedResult, 8, seedb, 16, 8);
+
+                    Sha256Fo.Init(pt);
+                    wPt[0] = (uint)((seedb[0] << 24) | (seedb[1] << 16) | (seedb[2] << 8) | seedb[3]);
+                    wPt[1] = (uint)((seedb[4] << 24) | (seedb[5] << 16) | (seedb[6] << 8) | seedb[7]);
+                    wPt[2] = (uint)((seedb[8] << 24) | (seedb[9] << 16) | (seedb[10] << 8) | seedb[11]);
+                    wPt[3] = (uint)((seedb[12] << 24) | (seedb[13] << 16) | (seedb[14] << 8) | seedb[15]);
+                    wPt[4] = (uint)((seedb[16] << 24) | (seedb[17] << 16) | (seedb[18] << 8) | seedb[19]);
+                    wPt[5] = (uint)((seedb[20] << 24) | (seedb[21] << 16) | (seedb[22] << 8) | seedb[23]);
+                    wPt[6] = 0b10000000_00000000_00000000_00000000U;
+                    wPt[7] = 0;
+                    wPt[8] = 0;
+                    wPt[9] = 0;
+                    wPt[10] = 0;
+                    wPt[11] = 0;
+                    wPt[12] = 0;
+                    wPt[13] = 0;
+                    wPt[14] = 0;
+                    wPt[15] = 24 * 8;
+                    Sha256Fo.CompressDouble24(pt);
+
+                    // pt is factorb
+                    Scalar key = new Scalar(pt, out _).Multiply(passFactor);
+
+                    if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
+                    {
+                        loopState.Stop();
+                        report.FoundAnyResult = true;
+
+                        char[] temp = new char[passLength];
+                        for (int i = 0; i < temp.Length; i++)
+                        {
+                            temp[i] = (char)valPt[itemsPt[i]];
+                        }
+
+                        report.AddMessageSafe($"Password is: {new string(temp)}");
+                        return;
+                    }
+
+                } while (ParallelMoveNext(itemsPt, items.Length, allValues.Length));
+            }
+
+            report.IncrementProgress();
+        }
+
+        private static unsafe void ROMIX_16384(uint* dPt, uint* vPt)
         {
             Buffer.MemoryCopy(dPt, vPt, 1024, 1024);
 
@@ -344,7 +1401,7 @@ namespace FinderOuter.Services
             // Set V1 to final V(n-1)
             for (int i = 0; i < 16383 /*=(n-1)*/; i++)
             {
-                BlockMix(srcPt, dstPt);
+                BlockMix_16384(srcPt, dstPt);
                 srcPt += 256;
                 dstPt += 256;
             }
@@ -353,14 +1410,14 @@ namespace FinderOuter.Services
             uint[] xClone = new uint[256];
             fixed (uint* xPt = &x[0], xClPt = &xClone[0])
             {
-                BlockMix(srcPt, xPt);
+                BlockMix_16384(srcPt, xPt);
 
                 for (int i = 0; i < 16384; i++)
                 {
                     int j = (int)(xPt[x.Length - 16] & 16383);
                     XOR(xPt, vPt + (j * 256), x.Length);
 
-                    BlockMix(xPt, xClPt);
+                    BlockMix_16384(xPt, xClPt);
                     Buffer.BlockCopy(xClone, 0, x, 0, 1024);
                 }
 
@@ -372,7 +1429,7 @@ namespace FinderOuter.Services
             }
         }
 
-        private static unsafe void BlockMix(uint* srcPt, uint* dstPt)
+        private static unsafe void BlockMix_16384(uint* srcPt, uint* dstPt)
         {
             uint[] blockMixBuffer = new uint[16];
             fixed (uint* xPt = &blockMixBuffer[0])
@@ -384,6 +1441,76 @@ namespace FinderOuter.Services
                 int i1 = 0;
                 int i2 = 8 * 16;
                 for (int i = 0; i < 2 * 8; i++)
+                {
+                    XOR(xPt, block, 16);
+                    Salsa20_8(xPt);
+
+                    if ((i & 1) == 0)
+                    {
+                        *(Block64*)(dstPt + i1) = *(Block64*)xPt;
+                        i1 += 16;
+                    }
+                    else
+                    {
+                        *(Block64*)(dstPt + i2) = *(Block64*)xPt;
+                        i2 += 16;
+                    }
+
+                    block += 16;
+                }
+            }
+        }
+
+        private static unsafe void ROMIX_1024(uint* dPt, uint* vPt)
+        {
+            Buffer.MemoryCopy(dPt, vPt, 128, 128);
+
+            uint* srcPt = vPt;
+            uint* dstPt = vPt + 32;
+
+            // Set V1 to final V(n-1)
+            for (int i = 0; i < 1023 /*=(n-1)*/; i++)
+            {
+                BlockMix_1024(srcPt, dstPt);
+                srcPt += 32;
+                dstPt += 32;
+            }
+
+            uint[] x = new uint[32];
+            uint[] xClone = new uint[32];
+            fixed (uint* xPt = &x[0], xClPt = &xClone[0])
+            {
+                BlockMix_1024(srcPt, xPt);
+
+                for (int i = 0; i < 1024; i++)
+                {
+                    int j = (int)(xPt[x.Length - 16] & 1023);
+                    XOR(xPt, vPt + (j * 32), x.Length);
+
+                    BlockMix_1024(xPt, xClPt);
+                    Buffer.BlockCopy(xClone, 0, x, 0, 128);
+                }
+
+                // Swap endian
+                for (int i = 0; i < 128; i++)
+                {
+                    dPt[i] = (xPt[i] >> 24) | (xPt[i] << 24) | ((xPt[i] >> 8) & 0xff00) | ((xPt[i] << 8) & 0xff0000);
+                }
+            }
+        }
+
+        private static unsafe void BlockMix_1024(uint* srcPt, uint* dstPt)
+        {
+            uint[] blockMixBuffer = new uint[16];
+            fixed (uint* xPt = &blockMixBuffer[0])
+            {
+                *(Block64*)xPt = *(Block64*)(srcPt + 32 - 16);
+
+                uint* block = srcPt;
+
+                int i1 = 0;
+                int i2 = 1 * 16;
+                for (int i = 0; i < 2 * 1; i++)
                 {
                     XOR(xPt, block, 16);
                     Salsa20_8(xPt);
@@ -482,34 +1609,23 @@ namespace FinderOuter.Services
                     (firstItem, state) => MainLoop(data, salt, isComp, allValues, passLength, firstItem, state));
         }
 
-        private static bool TrySetAllPassValues(PasswordType type, out byte[] allValues)
+        private void StartParallelEC(byte[] data, byte[] salt, bool isComp, bool hasLot, byte[] allValues, int passLength)
         {
-            string temp = string.Empty;
-            if (type.HasFlag(PasswordType.UpperCase))
+            report.SetProgressStep(allValues.Length);
+            if (hasLot)
             {
-                temp += ConstantsFO.UpperCase;
+                report.AddMessageSafe("EC mult mode with LOT/Sequence");
+                Parallel.For(0, allValues.Length,
+                        (firstItem, state) => MainLoopECLot(data, salt, isComp, allValues, passLength, firstItem, state));
             }
-            if (type.HasFlag(PasswordType.LowerCase))
+            else
             {
-                temp += ConstantsFO.LowerCase;
+                report.AddMessageSafe("EC mult mode with no LOT/Sequence");
+                Parallel.For(0, allValues.Length,
+                        (firstItem, state) => MainLoopECNoLot(data, salt, isComp, allValues, passLength, firstItem, state));
             }
-            if (type.HasFlag(PasswordType.Numbers))
-            {
-                temp += ConstantsFO.Numbers;
-            }
-            if (type.HasFlag(PasswordType.Symbols))
-            {
-                temp += ConstantsFO.AllSymbols;
-            }
-            if (type.HasFlag(PasswordType.Space))
-            {
-                temp += " ";
-            }
-
-            allValues = Encoding.UTF8.GetBytes(temp);
-
-            return allValues != null && allValues.Length != 0;
         }
+
 
         public async void Find(string bip38, string extra, InputType extraType, int passLength, byte[] allValues)
         {
@@ -525,14 +1641,21 @@ namespace FinderOuter.Services
                 report.Fail(msg);
             if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                 report.Fail($"Invalid compare string or compare string type ({extraType}).");
-            else if (!inputService.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out string error))
+            else if (!inputService.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out bool isEc, out bool hasLot, out string error))
                 report.Fail(error);
             else
             {
                 report.SetTotal(allValues.Length, passLength);
                 report.Timer.Start();
 
-                await Task.Run(() => StartParallel(data, salt, isComp, allValues, passLength));
+                if (isEc)
+                {
+                    await Task.Run(() => StartParallelEC(data, salt, isComp, hasLot, allValues, passLength));
+                }
+                else
+                {
+                    await Task.Run(() => StartParallel(data, salt, isComp, allValues, passLength));
+                }
 
                 report.Finalize();
             }
