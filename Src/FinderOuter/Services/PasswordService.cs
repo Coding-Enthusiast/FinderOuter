@@ -61,7 +61,7 @@ namespace FinderOuter.Services
                 return false;
             }
 
-            allValues = Encoding.UTF8.GetBytes(possibleChars);
+            allValues = Encoding.UTF8.GetBytes(possibleChars.Normalize(NormalizationForm.FormC));
             if (allValues.Distinct().Count() == allValues.Length)
             {
                 error = null;
