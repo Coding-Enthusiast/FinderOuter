@@ -70,28 +70,32 @@ This option is used to recover the extension words (aka passphrase) used in mnem
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and Electrum mnemonics algorithms. The available
 passphrase recovery modes are:  
 a. Alphanumeric: This is when the passphrase consists of letter, numbers and symbols and is random. Example: `OT!pA?8i`  
-b. _soon_
+b. CustomChars: This mode allows user to define their own set of characters to be used in the passphrase.
+c. _soon_
 
+#### 7. Missing BIP-38 password
+This option can recover passwords used in encrypting bitcoin private keys using the 
+[BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) proposal. The available password recovery modes 
+are the same as mnemonic passphrase option.
 
-#### 7. Missing BIP-32 derivation path
+#### 8. Missing BIP-32 derivation path
 This option could be used to find derivation path of a child key (private key, public key or the address) by having the mnemonic
 or the extended master keys (xprv or xpub). It only checks a hard-coded list of popular derivation paths.
 
-#### 8. Missing characters in Armory recovery phrase
+#### 9. Missing characters in Armory recovery phrase
 This option is used to recover Armory paper backups (containing 2 or 4 lines of 36 characters in Base-16 with custom char-set)
 that are missing some of their characters. Since the last 4 characters of each line is the checksum this option can be very fast
 (1 trillion keys/sec) if the checksum is available or extremely slow (100 key/sec) if not.
 
-#### 9. Missing string encoding
+#### 10. Missing string encoding
 This option could be used to determine the encoding of an arbitrary text. It currently supports Base-16, Base-43, Base-58, 
 Base-58 with checksum and Base-64. All inputs will be converted to hexadecimal.
 
 
 ## Future plans
+Check out roadmap here: https://github.com/Coding-Enthusiast/FinderOuter/issues/47
 * Optimization is always at the top of the to-do list
 * File password recovery (user knows some parts of his password but not all and has the encrypted wallet file)
-* BIP-38 password recovery
-* Converting versioned WIFs to regular WIFs (BIP-178 and early vertion 3 Electrum wallets)
 * SIMD code
 * GPU support
 
