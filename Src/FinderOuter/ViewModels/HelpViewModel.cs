@@ -64,8 +64,8 @@ namespace FinderOuter.ViewModels
         [Description("missing BIP-32 derivation path")]
         PathMissing,
 
-        [Description("missing extension word (passphrase)")]
-        PassMissing,
+        [Description("missing BIP-39 extension word (passphrase)")]
+        Bip39PassMissing,
     }
 
     public class HelpViewModel : ViewModelBase
@@ -133,6 +133,12 @@ namespace FinderOuter.ViewModels
                    $"{(extra == 0 ? string.Empty : extra == 1 ? $"{temp} is optional but helpful." : $"{temp} is mandatory.")}";
         }
 
+        private string BuildPassStr(string option, string key)
+        {
+            return $"Choose {option} option, enter your {key} and choose a password recovery mode. " +
+                   $"Enter some information about your password and click Find.";
+        }
+
         private string BuildNotAvailable()
         {
             return "This option is not yet available.";
@@ -182,6 +188,10 @@ namespace FinderOuter.ViewModels
                         {
                             return BuildNotAvailable();
                         }
+                        else if (SelectedSecondary.Value == HelpSecondInputTypes.PasswordMissing)
+                        {
+                            return BuildPassStr("Missing BIP38 Pass", "BIP38 encrypted key");
+                        }
                         break;
                     case HelpInputTypes.Base16Prv:
                         if (SelectedSecondary.Value == HelpSecondInputTypes.CharMissing)
@@ -206,7 +216,7 @@ namespace FinderOuter.ViewModels
                     case HelpInputTypes.Bip39Seed:
                         if (SelectedSecondary.Value == HelpSecondInputTypes.WordMissing)
                         {
-                            return BuildStr("Missing mnemonic", "BIP39 seed phrase", "word", 2, false);
+                            return BuildStr("Missing Mnemonic", "BIP39 seed phrase", "word", 2, false);
                         }
                         else if (SelectedSecondary.Value == HelpSecondInputTypes.WordMissingUnknown)
                         {
@@ -214,11 +224,11 @@ namespace FinderOuter.ViewModels
                         }
                         else if (SelectedSecondary.Value == HelpSecondInputTypes.PathMissing)
                         {
-                            return BuildStr("Missing BIP32 path", "BIP39 seed phrase", "word", 2, true);
+                            return BuildStr("Missing BIP32 Path", "BIP39 seed phrase", "word", 2, true);
                         }
-                        else if (SelectedSecondary.Value == HelpSecondInputTypes.PassMissing)
+                        else if (SelectedSecondary.Value == HelpSecondInputTypes.Bip39PassMissing)
                         {
-                            return BuildNotAvailable();
+                            return BuildPassStr("Missing Mnemonic Pass", "Mnemonic, derivation path and child key"); ;
                         }
                         break;
                     case HelpInputTypes.ElecSeed:
@@ -234,7 +244,7 @@ namespace FinderOuter.ViewModels
                         {
                             return BuildStr("Missing BIP32 path", "Electrum seed phrase", "word", 2, true);
                         }
-                        else if (SelectedSecondary.Value == HelpSecondInputTypes.PassMissing)
+                        else if (SelectedSecondary.Value == HelpSecondInputTypes.Bip39PassMissing)
                         {
                             return BuildNotAvailable();
                         }
@@ -288,17 +298,21 @@ namespace FinderOuter.ViewModels
             }
             else if (value == HelpInputTypes.Wif || value == HelpInputTypes.Base58Prv ||
                      value == HelpInputTypes.P2pkhAddr || value == HelpInputTypes.P2shAddr ||
-                     value == HelpInputTypes.Bip38 ||
                      value == HelpInputTypes.Base16Prv ||
                      value == HelpInputTypes.MiniKey ||
                      value == HelpInputTypes.Armory)
             {
                 return ToDescItems(HelpSecondInputTypes.CharMissing, HelpSecondInputTypes.CharMissingUnknown);
             }
+            else if (value == HelpInputTypes.Bip38)
+            {
+                return ToDescItems(HelpSecondInputTypes.CharMissing, HelpSecondInputTypes.CharMissingUnknown,
+                                   HelpSecondInputTypes.PasswordMissing);
+            }
             else if (value == HelpInputTypes.Bip39Seed || value == HelpInputTypes.ElecSeed)
             {
                 return ToDescItems(HelpSecondInputTypes.WordMissing, HelpSecondInputTypes.WordMissingUnknown,
-                                   HelpSecondInputTypes.PathMissing, HelpSecondInputTypes.PassMissing);
+                                   HelpSecondInputTypes.PathMissing, HelpSecondInputTypes.Bip39PassMissing);
             }
             else if (value == HelpInputTypes.Xprv || value == HelpInputTypes.Xpub)
             {
