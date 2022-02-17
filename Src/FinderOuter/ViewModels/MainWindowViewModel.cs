@@ -23,12 +23,12 @@ namespace FinderOuter.ViewModels
                 new MissingBase58ViewModel(),
                 new MissingBase16ViewModel(),
                 new MissingMiniPrivateKeyViewModel(),
+                new MissingBip38PassViewModel(),
                 new MissingMnemonicViewModel(),
                 new MissingMnemonicPassViewModel(),
                 new MissingBip32PathViewModel(),
                 new MissingArmoryViewModel(),
                 new MissingEncodingViewModel(),
-                new MissingBip38PassViewModel(),
             };
 
             WinMan = new WindowManager();
