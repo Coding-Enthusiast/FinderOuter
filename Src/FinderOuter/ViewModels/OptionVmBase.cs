@@ -83,6 +83,9 @@ namespace FinderOuter.ViewModels
 
         public KB InputKb => KB.DamagedInput;
         public KB ExtraInputKb => KB.ExtraInput;
+        public KB Bip32PathKb => KB.Bip32Path;
+        public KB AlphanumericPassKb => KB.AlphanumericPass;
+        public KB CustomCharPassKb => KB.CustomCharPass;
         public IWindowManager WinMan { get; set; }
         public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
     }

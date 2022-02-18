@@ -67,6 +67,10 @@
              Watermark="Complete path of the given key/address above"
              Grid.Column="0"
              Grid.Row="3"/>
+    <Button Classes="Help"
+            CommandParameter="{Binding Bip32PathKb}"
+            Grid.Column="0"
+            Grid.Row="3"/>
 
   </Grid>
 </UserControl>

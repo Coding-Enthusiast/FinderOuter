@@ -48,14 +48,18 @@ namespace FinderOuter.Models
         //Mnemonic,
         //[Description("Extended private/public key")]
         //ExtendedKey,
-        //[Description("BIP-32 derivation path")]
-        //Bip32Path,
+        [Description("BIP-32 derivation path")]
+        Bip32Path,
         [Description("Damaged input")]
         DamagedInput,
         [Description("Extra input for comparison")]
         ExtraInput,
         [Description("Types of extra inputs for comparison")]
         ExtraInputTypes,
+        [Description("Password recovery mode (alphanumeric)")]
+        AlphanumericPass,
+        [Description("Password recovery mode (custom characters)")]
+        CustomCharPass,
     }
 
 

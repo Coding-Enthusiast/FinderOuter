@@ -97,6 +97,14 @@ namespace FinderOuter.ViewModels
                 $"Base-16: E9873D79C6D87DC0FB6A5778633389F4453213303DA61F20BD67FC233AA33262{Environment.NewLine}" +
                 $"Base-64: 6Yc9ecbYfcD7ald4YzOJ9EUyEzA9ph8gvWf8IzqjMmI=",
 
+                KB.Bip32Path =>
+                "Derivation path or address path defines where in the hierarchical tree is the address located so it can be " +
+                "computed from the seed. They consist of numbers that are separated with a slash (/) and start with the letter " +
+                "\"m\". Each number can have a modifier indicating whether the hardened value is used. It can be apostrophe (') " +
+                $"or the letter \"h\". For example m/44'/0'/0'/0/0{Environment.NewLine}" +
+                $"Keep in mind that each number is an index that starts from 0, meaning the first address is /0 and second " +
+                $"one is at /1 and third one is at /2 and so on.",
+
                 KB.DamagedInput =>
                 $"There are 2 types of damged key recovery{Environment.NewLine}" +
                 $"1) Missing parts at known positions:{Environment.NewLine}" +
@@ -134,6 +142,23 @@ namespace FinderOuter.ViewModels
                 $"* Address: an expensive EC point multiplication + SHA256 hash + RIPEMD160 hash{Environment.NewLine}" +
                 $"* Wrapped SegWit address: an expensive EC point multiplication + SHA256 hash + RIPEMD160 hash + SHA256 hash " +
                 $"+ RIPEMD160 hash",
+
+                KB.AlphanumericPass =>
+                "This password recovery mode is used when the user only knows the type of characters used in the password. " +
+                "The following are some examples with character types used in each case: " +
+                $"{Environment.NewLine}" +
+                $"vfdrG    upper case and lower case letters{Environment.NewLine}" +
+                $"J9pS9    upper case and lower case letters and numbers{Environment.NewLine}" +
+                $"64287    numbers{Environment.NewLine}" +
+                $"Q c_5    upper case and lower case letters and numbers and symbols and space{Environment.NewLine}",
+
+                KB.CustomCharPass =>
+                "This password recovery mode is used when the user wants to limit the number of possible characters used " +
+                "in the password to a smaller number compared to the default all possible chars. The following are some " +
+                "examples, the left side is the actual password and the right side is the set of characters defined by user " +
+                $"for search:{Environment.NewLine}" +
+                $"b+akg+    abcdefghijkl+-={Environment.NewLine}" +
+                $"CE2022    CEce012{Environment.NewLine}",
 
                 _ => string.Empty,
             };

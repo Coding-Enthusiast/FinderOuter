@@ -10,7 +10,7 @@
     <vm:KnowledgeBaseViewModel/>
   </Design.DataContext>
 
-  <Grid ColumnDefinitions="250,*">
+  <Grid ColumnDefinitions="300,*">
     <ListBox Items="{Binding KBList}"
               SelectedItem="{Binding SelectedKB}"
               Grid.Column="0">
@@ -24,7 +24,7 @@
     <StackPanel Orientation="Vertical" Spacing="3" Grid.Column="1">
       <TextBlock Text="{Binding Title}"
                  HorizontalAlignment="Center"
-                 FontSize="22"
+                 FontSize="24"
                  FontWeight="Bold"
                  FontFamily="Monotype Corsiva"/>
       <TextBlock Text="{Binding Description}"
