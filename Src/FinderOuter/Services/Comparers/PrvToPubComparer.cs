@@ -17,28 +17,18 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {
-        private readonly SecP256k1 curve = new();
         private readonly EllipticCurveCalculator calc = new();
-        protected readonly Calc calc2 = new();
         private EllipticCurvePoint point;
         private byte[] pubBa;
 
         public bool Init(string pubHex)
         {
-            try
+            if (Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out PublicKey pubKey))
             {
-                pubBa = Base16.Decode(pubHex);
-                if (PublicKey.TryRead(pubBa, out PublicKey pubKey))
-                {
-                    point = pubKey.ToPoint();
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                point = pubKey.ToPoint();
+                return true;
             }
-            catch (Exception)
+            else
             {
                 return false;
             }
@@ -53,28 +43,29 @@ namespace FinderOuter.Services.Comparers
             };
         }
 
-        public Calc Calc => calc2;
+        protected readonly Calc _calc2 = new();
+        public Calc Calc => _calc2;
         public unsafe bool Compare(uint* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
             }
-            
-            Span<byte> actual = calc2.GetPubkey(key, pubBa.Length == 33);
+
+            Span<byte> actual = _calc2.GetPubkey(key, pubBa.Length == 33);
             return actual.SequenceEqual(pubBa);
         }
 
         public unsafe bool Compare(ulong* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
             }
 
-            Span<byte> actual = calc2.GetPubkey(key, pubBa.Length == 33);
+            Span<byte> actual = _calc2.GetPubkey(key, pubBa.Length == 33);
             return actual.SequenceEqual(pubBa);
         }
 
@@ -87,14 +78,14 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key)
         {
-            BigInteger kVal = new BigInteger(key, true, true);
-            if (kVal >= curve.N || kVal == 0)
+            Scalar sc = new(key, out int overflow);
+            if (overflow != 0)
             {
                 return false;
             }
 
-            EllipticCurvePoint actual = calc.MultiplyByG(kVal);
-            return actual == point;
+            Span<byte> actual = _calc2.GetPubkey(sc, pubBa.Length == 33);
+            return actual.SequenceEqual(pubBa);
         }
 
         public bool Compare(BigInteger key) => calc.MultiplyByG(key) == point;

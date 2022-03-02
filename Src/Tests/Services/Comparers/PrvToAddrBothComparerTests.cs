@@ -31,7 +31,7 @@ namespace Tests.Services.Comparers
         [MemberData(nameof(GetHashCases))]
         public void InitTest(string addr, bool expected)
         {
-            var comp = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer comp = new();
             bool actual = comp.Init(addr);
             Assert.Equal(expected, actual);
         }
@@ -39,9 +39,9 @@ namespace Tests.Services.Comparers
         [Fact]
         public void CloneTest()
         {
-            var original = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer original = new();
             Assert.True(original.Init(KeyHelper.Pub1CompAddr)); // Make sure it is successfully initialized
-            var cloned = original.Clone();
+            ICompareService cloned = original.Clone();
             // Change original field value to make sure it is cloned not a reference copy
             Assert.True(original.Init(KeyHelper.Pub2CompAddr));
 
@@ -55,7 +55,7 @@ namespace Tests.Services.Comparers
         [Fact]
         public void Compare_CompressedTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer comp = new();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
@@ -71,7 +71,7 @@ namespace Tests.Services.Comparers
         [Fact]
         public void Compare_UncompressedTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer comp = new();
             Assert.True(comp.Init(KeyHelper.Pub1UnCompAddr));
             byte[] key = KeyHelper.Prv1.ToBytes();
             key[0]++;
@@ -87,7 +87,7 @@ namespace Tests.Services.Comparers
         [Fact]
         public void Compare_EdgeTest()
         {
-            var comp = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer comp = new();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             byte[] key = new byte[32];
             bool b = comp.Compare(key);
@@ -104,8 +104,8 @@ namespace Tests.Services.Comparers
 
         public static IEnumerable<object[]> GetCases()
         {
-            var comp = new PrvToAddrBothComparer();
-            var uncomp = new PrvToAddrBothComparer();
+            PrvToAddrBothComparer comp = new();
+            PrvToAddrBothComparer uncomp = new();
             Assert.True(comp.Init(KeyHelper.Pub1CompAddr));
             Assert.True(uncomp.Init(KeyHelper.Pub1UnCompAddr));
 
@@ -144,7 +144,7 @@ namespace Tests.Services.Comparers
         [MemberData(nameof(GetCases))]
         public unsafe void Compare_PointJ_Test(PrvToAddrBothComparer comp, byte[] key, bool expected)
         {
-            var sc = new Scalar(key, out int overflow);
+            Scalar sc = new(key, out int overflow);
             if (overflow == 0 && !sc.IsZero)
             {
                 PointJacobian point = Helper.Calc.MultiplyByG(sc);
