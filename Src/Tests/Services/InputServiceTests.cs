@@ -240,12 +240,6 @@ namespace Tests.Services
             };
             yield return new object[]
             {
-                "6Mc5gZg3pNQNMsnHDmZeRfhL1QnC24yBd1VERr3HSnKap5x2wcxYaJivvW",
-                false, null, null, false, false, false,
-                "Invalid prefix."
-            };
-            yield return new object[]
-            {
                 "6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX",
                 true,
                 Helper.HexToBytes("a50dba6772cb938331a7c4ec3b84deba1749e6be9706cf334fed7df565c0c9fb"),
