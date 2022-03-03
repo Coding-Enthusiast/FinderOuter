@@ -151,7 +151,7 @@ namespace FinderOuter.Backend.ECC
         {
             UInt256_10x26 x2 = x.Sqr();
             UInt256_10x26 x3 = x * x2;
-            var c = new UInt256_10x26(Calc.CurveB);
+            UInt256_10x26 c = new(Calc.CurveB);
             c += x3;
             if (!c.Sqrt(out UInt256_10x26 y))
             {
@@ -167,7 +167,7 @@ namespace FinderOuter.Backend.ECC
         {
             if (!TryCreateXQuad(x, out result))
                 return false;
-            var ry = result.y.NormalizeVariable();
+            UInt256_10x26 ry = result.y.NormalizeVariable();
             if (ry.IsOdd != odd)
             {
                 ry = ry.Negate(1);

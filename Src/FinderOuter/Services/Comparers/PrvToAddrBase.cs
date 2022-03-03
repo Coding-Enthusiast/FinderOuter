@@ -18,7 +18,7 @@ namespace FinderOuter.Services.Comparers
 
         public virtual bool Init(string address)
         {
-            var serv = new AddressService();
+            AddressService serv = new();
             return serv.CheckAndGetHash(address, out hash);
         }
 

@@ -70,9 +70,9 @@ namespace FinderOuter.Services
 
         private unsafe void Loop(int firstItem, in PointJacobian smallPub, ParallelLoopState loopState)
         {
-            var calc = new Calc();
-            var missingItems = new int[missCount - 1];
-            var localComp = comparer.Clone();
+            Calc calc = new();
+            int[] missingItems = new int[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             Span<byte> temp = stackalloc byte[32];
 
@@ -93,7 +93,7 @@ namespace FinderOuter.Services
                     }
 
                     int mis = 1;
-                    foreach (var item in missingItems)
+                    foreach (int item in missingItems)
                     {
                         misIndex = mi[mis++];
                         if (misIndex % 2 == 0)
@@ -108,7 +108,7 @@ namespace FinderOuter.Services
                         }
                     }
 
-                    var tempVal = new Scalar(temp, out _);
+                    Scalar tempVal = new(temp, out _);
                     PointJacobian tempPub = calc.MultiplyByG(in tempVal);
                     PointJacobian pub = tempPub.AddVariable(smallPub);
 
@@ -126,8 +126,8 @@ namespace FinderOuter.Services
         }
         private unsafe void Loop(byte[] preComputed)
         {
-            var calc = new Calc();
-            var smallVal = new Scalar(preComputed, out _);
+            Calc calc = new();
+            Scalar smallVal = new(preComputed, out _);
             PointJacobian smallPub = calc.MultiplyByG(smallVal);
 
             if (missCount == 1)
@@ -153,7 +153,7 @@ namespace FinderOuter.Services
                             tmp[index] |= (byte)i;
                         }
 
-                        var tempVal = new Scalar(temp, out _);
+                        Scalar tempVal = new(temp, out _);
                         PointJacobian tempPub = calc.MultiplyByG(tempVal);
                         PointJacobian pub = tempPub.AddVariable(smallPub);
                         if (comparer.Compare(pub))

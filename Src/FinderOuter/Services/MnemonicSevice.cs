@@ -291,13 +291,13 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
-                var sclrParent = new Scalar(hPt, out int overflow);
+                Scalar sclrParent = new(hPt, out int overflow);
                 if (overflow != 0)
                 {
                     return false;
                 }
 
-                foreach (var index in path.Indexes)
+                foreach (uint index in path.Indexes)
                 {
                     if ((index & 0x80000000) != 0) // IsHardened
                     {
@@ -428,12 +428,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop24(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -458,7 +458,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -481,7 +481,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 24; i++)
                         {
-                            var temp = localCopy[wrd[i]];
+                            byte[] temp = localCopy[wrd[i]];
                             Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -586,7 +586,7 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 24; i++)
                             {
-                                var temp = allWordsBytes[wrd[i]];
+                                byte[] temp = allWordsBytes[wrd[i]];
                                 Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
@@ -605,12 +605,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -635,7 +635,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -657,7 +657,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 21; i++)
                         {
-                            var temp = localCopy[wrd[i]];
+                            byte[] temp = localCopy[wrd[i]];
                             Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -714,7 +714,7 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 21; i++)
                             {
-                                var temp = allWordsBytes[wrd[i]];
+                                byte[] temp = allWordsBytes[wrd[i]];
                                 Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
@@ -733,12 +733,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop18(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -763,7 +763,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -784,7 +784,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 18; i++)
                         {
-                            var temp = localCopy[wrd[i]];
+                            byte[] temp = localCopy[wrd[i]];
                             Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -840,7 +840,7 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 18; i++)
                             {
-                                var temp = allWordsBytes[wrd[i]];
+                                byte[] temp = allWordsBytes[wrd[i]];
                                 Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
@@ -859,12 +859,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop15(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -890,7 +890,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -910,7 +910,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 15; i++)
                         {
-                            var temp = localCopy[wrd[i]];
+                            byte[] temp = localCopy[wrd[i]];
                             Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -965,7 +965,7 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 15; i++)
                             {
-                                var temp = allWordsBytes[wrd[i]];
+                                byte[] temp = allWordsBytes[wrd[i]];
                                 Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
@@ -984,12 +984,12 @@ namespace FinderOuter.Services
 
         private unsafe void Loop12(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -1016,7 +1016,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -1035,7 +1035,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 12; i++)
                         {
-                            var temp = localCopy[wrd[i]];
+                            byte[] temp = localCopy[wrd[i]];
                             Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -1092,7 +1092,7 @@ namespace FinderOuter.Services
                             int mnLen = 0;
                             for (int i = 0; i < 12; i++)
                             {
-                                var temp = allWordsBytes[wrd[i]];
+                                byte[] temp = allWordsBytes[wrd[i]];
                                 Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
@@ -1112,12 +1112,12 @@ namespace FinderOuter.Services
 
         private unsafe void LoopElectrum(int firstItem, int firstIndex, ulong mask, ulong expected, ParallelLoopState loopState)
         {
-            var missingItems = new uint[missCount - 1];
-            var localComp = comparer.Clone();
+            uint[] missingItems = new uint[missCount - 1];
+            ICompareService localComp = comparer.Clone();
 
             byte[] localMnBytes = new byte[mnBytes.Length];
 
-            var localCopy = new byte[allWordsBytes.Length][];
+            byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
             uint[] localWIndex = new uint[wordIndexes.Length];
@@ -1140,7 +1140,7 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (var item in missingItems)
+                    foreach (uint item in missingItems)
                     {
                         wrd[mi[j]] = item;
                         j++;
@@ -1149,7 +1149,7 @@ namespace FinderOuter.Services
                     int mnLen = 0;
                     for (int i = 0; i < 12; i++)
                     {
-                        var temp = localCopy[wrd[i]];
+                        byte[] temp = localCopy[wrd[i]];
                         Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
                         mnLen += temp.Length;
                     }
@@ -1238,7 +1238,7 @@ namespace FinderOuter.Services
                         int mnLen = 0;
                         for (int i = 0; i < 12; i++)
                         {
-                            var temp = allWordsBytes[wrd[i]];
+                            byte[] temp = allWordsBytes[wrd[i]];
                             Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
@@ -1318,7 +1318,7 @@ namespace FinderOuter.Services
                     return report.Fail("Invalid mnemonic length.");
                 }
 
-                var missCharStr = new string(new char[] { missingChar });
+                string missCharStr = new(new char[] { missingChar });
                 bool invalidWord = false;
                 for (int i = 0; i < words.Length; i++)
                 {
@@ -1434,7 +1434,7 @@ namespace FinderOuter.Services
                         uint startIndex = this.path.Indexes[^1];
                         uint[] indices = new uint[this.path.Indexes.Length - 1];
                         Array.Copy(this.path.Indexes, 0, indices, 0, indices.Length);
-                        var newPath = new BIP0032Path(indices);
+                        BIP0032Path newPath = new(indices);
 
                         PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
                         if (comparer.Compare(keys[0].ToBigInt()))

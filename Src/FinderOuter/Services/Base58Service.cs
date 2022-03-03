@@ -113,8 +113,8 @@ namespace FinderOuter.Services
         {
             Debug.Assert(shift <= 24 && shift >= 0);
 
-            var padded = new byte[4 * uLen];
-            var multPow = new ulong[maxPow * uLen * 58];
+            byte[] padded = new byte[4 * uLen];
+            ulong[] multPow = new ulong[maxPow * uLen * 58];
             for (int i = 0, pindex = 0; i < 58; i++)
             {
                 for (int j = 0; j < maxPow; j++)
@@ -282,8 +282,8 @@ namespace FinderOuter.Services
             string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
             string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
             string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
-            var start = Base58.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
-            var end = Base58.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
+            BigInteger start = Base58.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
+            BigInteger end = Base58.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
 
             // If the key (integer) value is so tiny that almost all of its higher bytes are zero, or too big that almost
             // all of its bytes are 0xff the smallWif string can end up being bigger in value than the bigWif string 
@@ -308,7 +308,7 @@ namespace FinderOuter.Services
             BigInteger diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
-            var curve = new SecP256k1();
+            SecP256k1 curve = new();
             if (start == 0 || end >= curve.N)
             {
                 report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
@@ -325,7 +325,7 @@ namespace FinderOuter.Services
                     string tempWif = tempKey.ToWif(compressed);
                     if (tempWif.Contains(baseWif))
                     {
-                        var pub = tempKey.ToPublicKey();
+                        PublicKey pub = tempKey.ToPublicKey();
                         string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
                             $"     Compressed P2PKH address={Address.GetP2pkh(pub, true)}{Environment.NewLine}" +
                             $"     Uncompressed P2PKH address={Address.GetP2pkh(pub, false)}{Environment.NewLine}" +
@@ -373,7 +373,7 @@ namespace FinderOuter.Services
             {
                 temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[firstItem];
             }
-            foreach (var index in missingItems)
+            foreach (uint index in missingItems)
             {
                 temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[(int)index];
             }
@@ -595,7 +595,7 @@ namespace FinderOuter.Services
                 {
                     Buffer.MemoryCopy(pre, tmp, 28, 28);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (uint keyItem in missingItems)
                     {
                         ulong carry = 0;
                         for (int k = 6, j = 0; k >= 0; k--, j++)
@@ -675,7 +675,7 @@ namespace FinderOuter.Services
                 {
                     Buffer.MemoryCopy(pre, tmp, 44, 44);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (uint keyItem in missingItems)
                     {
                         ulong carry = 0;
                         for (int k = 10, j = 0; k >= 0; k--, j++)
@@ -1072,8 +1072,8 @@ namespace FinderOuter.Services
                                 }
                             }
 
-                            var cancelToken = new CancellationTokenSource();
-                            var options = new ParallelOptions
+                            CancellationTokenSource cancelToken = new();
+                            ParallelOptions options = new()
                             {
                                 CancellationToken = cancelToken.Token,
                             };

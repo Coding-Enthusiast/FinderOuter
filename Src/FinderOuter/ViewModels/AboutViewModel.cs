@@ -65,7 +65,7 @@ namespace FinderOuter.ViewModels
         {
             string escapedArgs = cmd.Replace("\"", "\\\"");
 
-            using var process = Process.Start(
+            using Process process = Process.Start(
                 new ProcessStartInfo
                 {
                     FileName = "/bin/sh",

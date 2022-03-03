@@ -49,7 +49,7 @@ namespace Tests.Backend.Cryptography.Hashing
         [Fact]
         public void ComputeHash_DoubleTest()
         {
-            var data = Helper.HexToBytes("fb8049137747e712628240cf6d7056ea2870170cb7d9bc713d91e901b514c6ae7d7dda3cd03ea1b99cf85046a505f3590541123d3f8f2c22c4d7d6e65de65c4ebb9251f09619");
+            byte[] data = Helper.HexToBytes("fb8049137747e712628240cf6d7056ea2870170cb7d9bc713d91e901b514c6ae7d7dda3cd03ea1b99cf85046a505f3590541123d3f8f2c22c4d7d6e65de65c4ebb9251f09619");
             byte[] actualHash = Sha256Fo.ComputeHashTwice(data);
             byte[] expectedHash = Helper.HexToBytes("d2cee8d3cfaf1819c55cce1214d01cdef1d97446719ccfaad4d76d912a8126f9");
 
@@ -85,7 +85,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] M1 = seed;
             byte[] M2 = seed;
 
-            foreach (var item in jObjs["MonteCarlo"])
+            foreach (JToken item in jObjs["MonteCarlo"])
             {
                 byte[] expected = Helper.HexToBytes(item.ToString());
                 for (int i = 0; i < 1000; i++)
@@ -204,12 +204,12 @@ namespace Tests.Backend.Cryptography.Hashing
         }
         private static byte[] ComputeSingleSha(byte[] data)
         {
-            using var sysSha = System.Security.Cryptography.SHA256.Create();
+            using System.Security.Cryptography.SHA256 sysSha = System.Security.Cryptography.SHA256.Create();
             return sysSha.ComputeHash(data);
         }
         private static byte[] ComputeDoubleSha(byte[] data)
         {
-            using var sysSha = System.Security.Cryptography.SHA256.Create();
+            using System.Security.Cryptography.SHA256 sysSha = System.Security.Cryptography.SHA256.Create();
             return sysSha.ComputeHash(sysSha.ComputeHash(data));
         }
 

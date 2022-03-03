@@ -92,7 +92,7 @@ namespace FinderOuter.Services
         {
             if (calc.TryRecoverPublicKeys(toSign, sig, out EllipticCurvePoint[] pubkeys))
             {
-                foreach (var pt in pubkeys)
+                foreach (EllipticCurvePoint pt in pubkeys)
                 {
                     PublicKey pub = new(pt);
 

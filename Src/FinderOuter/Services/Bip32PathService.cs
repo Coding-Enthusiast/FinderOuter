@@ -84,7 +84,7 @@ namespace FinderOuter.Services
                 };
 
 
-            foreach (var path in allPaths)
+            foreach (BIP0032Path path in allPaths)
             {
                 PublicKey[] pubkeys = bip32.GetPublicKeys(path, count);
                 for (int i = 0; i < pubkeys.Length; i++)

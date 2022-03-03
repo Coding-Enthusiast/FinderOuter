@@ -19,7 +19,7 @@ namespace FinderOuter.ViewModels
         public MissingBase58ViewModel()
         {
             // Don't move this line, service must be instantiated here
-            var inServ = new InputService();
+            InputService inServ = new();
             b58Service = new Base58Service(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(

@@ -26,7 +26,7 @@ namespace Tests.Backend.Cryptography.Hashing
             // * SHA256 and SHA512:
             // Used .Net Framework 4.7.2 System.Security.Cryptography.SHA256Managed
 
-            foreach (var item in Helper.ReadResources<JArray>("HashTestData"))
+            foreach (JToken item in Helper.ReadResources<JArray>("HashTestData"))
             {
                 string msg = item["Message"].ToString();
                 string hash = item[name].ToString();
@@ -56,7 +56,7 @@ namespace Tests.Backend.Cryptography.Hashing
                 : sh_lo_va == "lo" ? "LongMessage"
                 : throw new ArgumentException();
 
-            foreach (var item in jObjs[jKey])
+            foreach (JToken item in jObjs[jKey])
             {
                 byte[] msg = Helper.HexToBytes(item["Message"].ToString());
                 byte[] hash = Helper.HexToBytes(item["Hash"].ToString());

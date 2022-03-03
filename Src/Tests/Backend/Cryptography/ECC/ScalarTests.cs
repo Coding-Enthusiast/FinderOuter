@@ -22,8 +22,8 @@ namespace Tests.Backend.Cryptography.ECC
                 Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
                 byte[] hash = Sha256Fo.GetBytes(pt);
 
-                var val1 = new Scalar(hash, out int of1);
-                var val2 = new Scalar(pt, out int of2);
+                Scalar val1 = new(hash, out int of1);
+                Scalar val2 = new(pt, out int of2);
 
                 Assert.Equal(val1, val2);
                 Assert.Equal(of1, of2);
@@ -43,8 +43,8 @@ namespace Tests.Backend.Cryptography.ECC
                 Sha512Fo.CompressData(dPt, data.Length, data.Length, hPt, wPt);
 
                 byte[] hash = Sha512Fo.GetFirst32Bytes(hPt);
-                var val1 = new Scalar(hash, out int of1);
-                var val2 = new Scalar(hPt, out int of2);
+                Scalar val1 = new(hash, out int of1);
+                Scalar val2 = new(hPt, out int of2);
 
                 Assert.True(val1 == val2);
                 Assert.Equal(of1, of2);

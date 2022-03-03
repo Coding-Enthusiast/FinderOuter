@@ -58,7 +58,7 @@ namespace FinderOuter.Services
 
         public bool Compare(string expectedAddr, InputType inType, PrivateKey prv, out string message)
         {
-            var pub = prv.ToPublicKey();
+            PublicKey pub = prv.ToPublicKey();
             if (inType == InputType.AddrNested)
             {
                 if (expectedAddr == Address.GetP2sh_P2wpkh(pub))

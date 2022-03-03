@@ -40,7 +40,7 @@ namespace FinderOuter.Backend.ECC
             /* Construct a group element with no known corresponding scalar (nothing up my sleeve). */
             byte[] ba = "The scalar for this x is unknown".ToCharArray().Select(b => (byte)b).ToArray();
             Debug.Assert(ba.Length == 32);
-            var x = new UInt256_10x26(ba, out bool b);
+            UInt256_10x26 x = new(ba, out bool b);
             Debug.Assert(b);
 
             b = Point.TryCreateXOVariable(x, false, out Point nums_ge);
@@ -133,10 +133,10 @@ namespace FinderOuter.Backend.ECC
         // This is not actually a test but a simple way of quickly checking and debugging stuff until we add actual tests
         public void Test()
         {
-            using var rng = new SharpRandom();
-            var data = new byte[32];
+            using SharpRandom rng = new();
+            byte[] data = new byte[32];
             rng.GetBytes(data);
-            var sec = new Scalar(data, out int overflow);
+            Scalar sec = new(data, out int overflow);
             Debug.Assert(overflow == 0);
             PointJacobian pj = MultiplyByG(sec);
             Point p = pj.ToPoint();

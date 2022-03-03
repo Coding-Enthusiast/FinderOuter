@@ -36,7 +36,7 @@ namespace Tests.Backend.Cryptography.Hashing
 
         private static byte[] ComputeHash160(byte[] data)
         {
-            using var sha = System.Security.Cryptography.SHA256.Create();
+            using System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create();
             return Ripemd160Fo.ComputeHash_Static(sha.ComputeHash(data));
         }
 

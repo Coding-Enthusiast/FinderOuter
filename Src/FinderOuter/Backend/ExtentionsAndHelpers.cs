@@ -28,7 +28,7 @@ namespace FinderOuter.Backend
 
             // Linq is avoided to increase speed.
             int len = 0;
-            foreach (var arr in arrays)
+            foreach (byte[] arr in arrays)
             {
                 if (arr == null)
                 {
@@ -40,7 +40,7 @@ namespace FinderOuter.Backend
             byte[] result = new byte[len];
 
             int offset = 0;
-            foreach (var arr in arrays)
+            foreach (byte[] arr in arrays)
             {
                 Buffer.BlockCopy(arr, 0, result, offset, arr.Length);
                 offset += arr.Length;
@@ -78,7 +78,7 @@ namespace FinderOuter.Backend
 
             int zeros1 = 0;
             int zeros2 = 0;
-            foreach (var item in first)
+            foreach (byte item in first)
             {
                 if (item == 0)
                 {
@@ -89,7 +89,7 @@ namespace FinderOuter.Backend
                     break;
                 }
             }
-            foreach (var item in second)
+            foreach (byte item in second)
             {
                 if (item == 0)
                 {
@@ -697,7 +697,7 @@ namespace FinderOuter.Backend
         {
             byte[] bytes = big.ToByteArrayExt(false, true);
 
-            StringBuilder result = new StringBuilder(bytes.Length * 8);
+            StringBuilder result = new(bytes.Length * 8);
             for (int i = bytes.Length - 1; i >= 0; i--)
             {
                 result.Append(Convert.ToString(bytes[i], 2).PadLeft(8, '0'));

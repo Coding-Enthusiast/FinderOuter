@@ -26,7 +26,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(uint* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
@@ -46,7 +46,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(ulong* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;

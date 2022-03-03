@@ -22,7 +22,7 @@ namespace FinderOuter.Models
 
         protected void AddRows(IEnumerable<object[]> rows)
         {
-            foreach (var row in rows)
+            foreach (object[] row in rows)
             {
                 AddRow(row);
             }

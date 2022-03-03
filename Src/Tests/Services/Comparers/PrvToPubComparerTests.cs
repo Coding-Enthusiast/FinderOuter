@@ -27,7 +27,7 @@ namespace Tests.Services.Comparers
         [MemberData(nameof(GetHashCases))]
         public void InitTest(string pubHex, bool expected)
         {
-            var comp = new PrvToPubComparer();
+            PrvToPubComparer comp = new();
             bool actual = comp.Init(pubHex);
             Assert.Equal(expected, actual);
         }
@@ -35,9 +35,9 @@ namespace Tests.Services.Comparers
         [Fact]
         public void CloneTest()
         {
-            var original = new PrvToPubComparer();
+            PrvToPubComparer original = new();
             Assert.True(original.Init(KeyHelper.Pub1CompHex)); // Make sure it is successfully initialized
-            var cloned = original.Clone();
+            ICompareService cloned = original.Clone();
             // Change original field value to make sure it is cloned not a reference copy
             Assert.True(original.Init(KeyHelper.Pub2CompHex));
 
@@ -51,8 +51,8 @@ namespace Tests.Services.Comparers
         [Fact]
         public void CompareTest()
         {
-            var comp1 = new PrvToPubComparer();
-            var comp2 = new PrvToPubComparer();
+            PrvToPubComparer comp1 = new();
+            PrvToPubComparer comp2 = new();
             Assert.True(comp1.Init(KeyHelper.Pub1CompHex));
             Assert.True(comp2.Init(KeyHelper.Pub1UnCompHex));
 
@@ -74,16 +74,16 @@ namespace Tests.Services.Comparers
         [Fact]
         public unsafe void Compare_Sha256HashStateTest()
         {
-            var comp = new PrvToPubComparer();
+            PrvToPubComparer comp = new();
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             byte[] data = new byte[1];
             fixed (byte* dPt = &data[0])
             {
                 Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
 
-                var key = new Scalar(pt, out int overflow);
+                Scalar key = new(pt, out int overflow);
                 Assert.Equal(0, overflow);
-                var calc = new Calc();
+                Calc calc = new();
                 string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
 
                 bool b = comp.Init(pubHex);
@@ -97,7 +97,7 @@ namespace Tests.Services.Comparers
         [Fact]
         public unsafe void Compare_Sha512HashStateTest()
         {
-            var comp = new PrvToPubComparer();
+            PrvToPubComparer comp = new();
             byte[] data = new byte[] { 1, 2, 3 };
             ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
@@ -106,9 +106,9 @@ namespace Tests.Services.Comparers
                 // Get hashstate ready first
                 Sha512Fo.CompressData(dPt, data.Length, data.Length, hPt, wPt);
 
-                var key = new Scalar(hPt, out int overflow);
+                Scalar key = new(hPt, out int overflow);
                 Assert.Equal(0, overflow);
-                var calc = new Calc();
+                Calc calc = new();
                 string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
                 bool b = comp.Init(pubHex);
                 Assert.True(b);
@@ -121,7 +121,7 @@ namespace Tests.Services.Comparers
 
         public static IEnumerable<object[]> GetCases()
         {
-            var comp = new PrvToPubComparer();
+            PrvToPubComparer comp = new();
             Assert.True(comp.Init(KeyHelper.Pub1CompHex));
 
             yield return new object[] { comp, KeyHelper.Prv1.ToBytes(), true };

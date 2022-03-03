@@ -809,7 +809,7 @@ namespace FinderOuter.Backend.ECC
 
         public UInt256_10x26 Multiply(uint a)
         {
-            var r = new UInt256_10x26(
+            UInt256_10x26 r = new(
                 b0 * a,
                 b1 * a,
                 b2 * a,
@@ -825,7 +825,7 @@ namespace FinderOuter.Backend.ECC
         }
         public UInt256_10x26 Multiply(in UInt256_10x26 b)
         {
-            var r = MulInner(b, 1, false);
+            UInt256_10x26 r = MulInner(b, 1, false);
             return r;
         }
         private UInt256_10x26 MulInner(in UInt256_10x26 b, int magnitude, bool normalized)
@@ -1226,7 +1226,7 @@ namespace FinderOuter.Backend.ECC
 
         public readonly UInt256_10x26 Add(in UInt256_10x26 a)
         {
-            var r = new UInt256_10x26(
+            UInt256_10x26 r = new(
                 b0 + a.b0,
                 b1 + a.b1,
                 b2 + a.b2,
@@ -1250,7 +1250,7 @@ namespace FinderOuter.Backend.ECC
 
         public bool Equals(UInt256_10x26 b)
         {
-            var na = Negate(1);
+            UInt256_10x26 na = Negate(1);
             na += b;
             return na.NormalizesToZero();
         }

@@ -32,10 +32,10 @@ namespace Tests.Backend.Cryptography.Hashing
         }
         public static TheoryData GetProgressiveCase()
         {
-            var result = new TheoryData<byte[], byte[]>();
+            TheoryData<byte[], byte[]> result = new();
             int len = 1;
             // Hash values were computed using .Net framework 4.7.2 System.Security.Cryptography.RIPEMD160Managed
-            foreach (var item in Helper.ReadResources<JArray>("Ripemd160ProgressiveTestData"))
+            foreach (JToken item in Helper.ReadResources<JArray>("Ripemd160ProgressiveTestData"))
             {
                 byte[] msgBytes = GetBytes(len++);
                 byte[] hashBytes = Helper.HexToBytes(item.ToString());

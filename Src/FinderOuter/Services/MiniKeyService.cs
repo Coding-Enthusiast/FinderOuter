@@ -131,7 +131,7 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 22, tmp, 44, 22);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (int keyItem in missingItems)
                     {
                         tmp[miPt[i]] = allPt[keyItem];
                         i++;
@@ -247,7 +247,7 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 26, tmp, 52, 26);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (int keyItem in missingItems)
                     {
                         tmp[miPt[i]] = allPt[keyItem];
                         i++;
@@ -285,7 +285,7 @@ namespace FinderOuter.Services
                     {
                         Buffer.MemoryCopy(pre, tmp, 26, 26);
                         int i = 0;
-                        foreach (var keyItem in missingItems)
+                        foreach (int keyItem in missingItems)
                         {
                             tmp[miPt[i]] = allPt[keyItem];
                             i++;
@@ -361,7 +361,7 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 30, tmp, 60, 30);
                     int i = 0;
-                    foreach (var keyItem in missingItems)
+                    foreach (int keyItem in missingItems)
                     {
                         tmp[miPt[i]] = allPt[keyItem];
                         i++;
@@ -400,7 +400,7 @@ namespace FinderOuter.Services
                     {
                         Buffer.MemoryCopy(pre, tmp, 30, 30);
                         int i = 0;
-                        foreach (var keyItem in missingItems)
+                        foreach (int keyItem in missingItems)
                         {
                             tmp[miPt[i]] = allPt[keyItem];
                             i++;

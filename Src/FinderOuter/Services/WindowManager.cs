@@ -20,7 +20,7 @@ namespace FinderOuter.Services
     {
         public void ShowDialog(VmWithSizeBase vm)
         {
-            Window win = new Window()
+            Window win = new()
             {
                 Content = vm,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,

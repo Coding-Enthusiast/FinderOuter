@@ -13,7 +13,7 @@ namespace Tests
     public static class KeyHelper
     {
         internal static string Prv1Wif = "L28Peud5cQcijrtMthAdUS8FynpM8PKZtnoUZb1VAio9WxKoebHt";
-        internal static PrivateKey Prv1 => new PrivateKey(Prv1Wif);
+        internal static PrivateKey Prv1 => new(Prv1Wif);
         internal static PublicKey Pub1
         {
             get
@@ -51,7 +51,7 @@ namespace Tests
 
 
 
-        internal static PrivateKey Prv2 => new PrivateKey("KxWSVSkSv3gGs2AmCF3qRCc6MqAikTL3n4wwMJjsfQikMU61ZQkL");
+        internal static PrivateKey Prv2 => new("KxWSVSkSv3gGs2AmCF3qRCc6MqAikTL3n4wwMJjsfQikMU61ZQkL");
         internal static PublicKey Pub2
         {
             get
@@ -76,7 +76,7 @@ namespace Tests
 
 
 
-        internal static PrivateKey Prv3 => new PrivateKey("KwToaM89oezgBF1TNjws2BC6Uo7nt57iWkFeqZQGibLBLgoYy2QT");
+        internal static PrivateKey Prv3 => new("KwToaM89oezgBF1TNjws2BC6Uo7nt57iWkFeqZQGibLBLgoYy2QT");
         internal static PublicKey Pub3
         {
             get

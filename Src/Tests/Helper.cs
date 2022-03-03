@@ -18,7 +18,7 @@ namespace Tests
         public static Calc Calc => calc2;
 
 
-        internal static JsonSerializerSettings jSetting = new JsonSerializerSettings
+        internal static JsonSerializerSettings jSetting = new()
         {
             Converters = { new ByteArrayHexConverter() },
             ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor
@@ -32,7 +32,7 @@ namespace Tests
             using Stream stream = asm.GetManifestResourceStream($"Tests.TestData.{resourceName}.{fileExtention}");
             if (stream != null)
             {
-                using StreamReader reader = new StreamReader(stream);
+                using StreamReader reader = new(stream);
                 return reader.ReadToEnd();
             }
             else

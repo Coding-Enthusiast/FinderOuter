@@ -28,7 +28,7 @@ namespace Tests.Models
         [InlineData((MockEnum)123, "123")]
         public void ConstructorTest(MockEnum val, string expected)
         {
-            var item = new DescriptiveItem<MockEnum>(val);
+            DescriptiveItem<MockEnum> item = new(val);
 
             Assert.Equal(expected, item.Description);
             Assert.Equal(val, item.Value);

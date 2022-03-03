@@ -18,7 +18,7 @@ namespace FinderOuter.ViewModels
         public MissingMiniPrivateKeyViewModel()
         {
             // Don't move this line, service must be instantiated here
-            var inServ = new InputService();
+            InputService inServ = new();
             miniService = new MiniKeyService(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(

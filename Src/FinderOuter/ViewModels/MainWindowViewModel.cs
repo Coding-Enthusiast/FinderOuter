@@ -91,7 +91,7 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        public HelpViewModel HelpVm => new HelpViewModel();
+        public HelpViewModel HelpVm => new();
 
         public IWindowManager WinMan { get; set; }
 

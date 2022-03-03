@@ -13,7 +13,7 @@ namespace Tests.Models
         [Fact]
         public void InitTest()
         {
-            var report = new Report
+            Report report = new()
             {
                 CurrentState = State.FinishedFail,
                 FoundAnyResult = true,
@@ -47,7 +47,7 @@ namespace Tests.Models
         [InlineData(false, State.FinishedFail, true, true)]
         public void Finalize_FailRunTest(bool found, State expState, bool timer, bool total)
         {
-            var report = new Report(new MockDispatcher())
+            Report report = new(new MockDispatcher())
             {
                 CurrentState = State.Ready,
                 FoundAnyResult = found,
@@ -92,7 +92,7 @@ namespace Tests.Models
         [Fact]
         public void SetTotalTest()
         {
-            var report = new Report(new MockDispatcher());
+            Report report = new(new MockDispatcher());
             report.SetTotal(10, 3);
             Assert.Equal(1000, report.Total);
             Assert.Equal("Total number of permutations to check: 1,000", report.Message);
@@ -104,7 +104,7 @@ namespace Tests.Models
         [InlineData(170, 50.588235294117645)]
         public void ProgressTest(int step, double expected)
         {
-            var report = new Report(new MockDispatcher())
+            Report report = new(new MockDispatcher())
             {
                 Progress = 50,
             };

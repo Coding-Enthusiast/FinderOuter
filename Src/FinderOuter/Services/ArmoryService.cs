@@ -180,22 +180,22 @@ namespace FinderOuter.Services
             }
 
             // hPt is chain-code now
-            var key = new ReadOnlySpan<byte>(kPt, 32);
-            var scalar = new Scalar(key, out int overflow);
+            ReadOnlySpan<byte> key = new(kPt, 32);
+            Scalar scalar = new(key, out int overflow);
             Debug.Assert(overflow == 0);
 
             Span<byte> pubBa = calc.GetPubkey(scalar, false);
             Debug.Assert(pubBa.Length == 65);
 
             Span<byte> chainXor = Sha256Fo.CompressDouble65(pubBa);
-            for (var i = 0; i < chainXor.Length; i++)
+            for (int i = 0; i < chainXor.Length; i++)
             {
                 chainXor[i] ^= chainCode[i];
             }
 
             // TODO: change this to UInt256
-            var A = new BigInteger(chainXor, true, true);
-            var B = new BigInteger(key, true, true);
+            BigInteger A = new(chainXor, true, true);
+            BigInteger B = new(key, true, true);
 
             BigInteger secexp = (A * B).Mod(N);
             return secexp;
@@ -532,7 +532,7 @@ namespace FinderOuter.Services
         {
             Debug.Assert(s.Length == 36);
 
-            var temp = new List<int>(36);
+            List<int> temp = new(36);
             for (int i = 0; i < 32; i++)
             {
                 int index = ConstantsFO.ArmoryChars.IndexOf(s[i]);

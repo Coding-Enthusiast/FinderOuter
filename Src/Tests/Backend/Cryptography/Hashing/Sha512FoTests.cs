@@ -74,7 +74,7 @@ namespace Tests.Backend.Cryptography.Hashing
             byte[] M1 = seed;
             byte[] M2 = seed;
 
-            foreach (var item in jObjs["MonteCarlo"])
+            foreach (JToken item in jObjs["MonteCarlo"])
             {
                 byte[] expected = Helper.HexToBytes(item.ToString());
                 for (int i = 0; i < 1000; i++)
@@ -157,7 +157,7 @@ namespace Tests.Backend.Cryptography.Hashing
         }
         private static byte[] ComputeSingleSha(byte[] data)
         {
-            using var sysSha = System.Security.Cryptography.SHA512.Create();
+            using System.Security.Cryptography.SHA512 sysSha = System.Security.Cryptography.SHA512.Create();
             return sysSha.ComputeHash(data);
         }
 

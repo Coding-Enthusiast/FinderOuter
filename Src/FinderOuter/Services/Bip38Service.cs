@@ -74,7 +74,7 @@ namespace FinderOuter.Services
             };
 
             uint saltUint = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
-            var localComparer = comparer.Clone();
+            ICompareService localComparer = comparer.Clone();
 
             int[] items = new int[passLength];
             items[0] = firstItem;
@@ -374,7 +374,7 @@ namespace FinderOuter.Services
             uint saltUint0 = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
             uint saltUint1 = (uint)(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
             uint saltUint2 = (uint)(data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7]);
-            var localComparer = comparer.Clone();
+            ICompareService localComparer = comparer.Clone();
 
             int[] items = new int[passLength];
             items[0] = firstItem;
@@ -908,7 +908,7 @@ namespace FinderOuter.Services
             uint saltUint0 = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
             uint saltUint1 = (uint)(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
             uint saltUint2 = (uint)(data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7]);
-            var localComparer = comparer.Clone();
+            ICompareService localComparer = comparer.Clone();
 
             int[] items = new int[passLength];
             items[0] = firstItem;

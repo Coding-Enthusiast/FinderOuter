@@ -37,7 +37,7 @@ namespace Tests.Services
 
                 string bigSeed = string.Join(" ", words);
                 int expectedMaxWordLen = 0;
-                var stream = new FastStream(37831);
+                FastStream stream = new(37831);
                 for (int i = 0; i < words.Length; i++)
                 {
                     byte[] wordBa = Encoding.UTF8.GetBytes(words[i]);

@@ -284,7 +284,7 @@ namespace FinderOuter.ViewModels
 
         private IEnumerable<DescriptiveItem<T>> ToDescItems<T>(params T[] values) where T : Enum
         {
-            foreach (var item in values)
+            foreach (T item in values)
             {
                 yield return new DescriptiveItem<T>(item);
             }

@@ -15,7 +15,7 @@ namespace FinderOuter.Services.Comparers
     {
         public override bool Init(string address)
         {
-            var serv = new AddressService();
+            AddressService serv = new();
             return serv.CheckAndGetHash_P2sh(address, out hash);
         }
 
@@ -29,7 +29,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(uint* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
@@ -43,7 +43,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(ulong* hPt)
         {
-            var key = new Scalar(hPt, out int overflow);
+            Scalar key = new(hPt, out int overflow);
             if (overflow != 0)
             {
                 return false;
