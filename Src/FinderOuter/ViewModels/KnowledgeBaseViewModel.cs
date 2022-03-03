@@ -15,7 +15,7 @@ namespace FinderOuter.ViewModels
         public KnowledgeBaseViewModel()
         {
             Width = 850;
-            Height = 700;
+            Height = 500;
 
             KBList = ListHelper.GetEnumDescItems<KB>().ToArray();
         }
