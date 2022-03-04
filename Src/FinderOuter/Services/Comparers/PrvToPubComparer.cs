@@ -8,7 +8,6 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend.ECC;
 using System;
-using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -17,7 +16,6 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {
-        private readonly EllipticCurveCalculator calc = new();
         private EllipticCurvePoint point;
         private byte[] pubBa;
 
@@ -88,7 +86,7 @@ namespace FinderOuter.Services.Comparers
             return actual.SequenceEqual(pubBa);
         }
 
-        public bool Compare(BigInteger key) => calc.MultiplyByG(key) == point;
+        public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
 
         public bool Compare(in EllipticCurvePoint point) => point == this.point;
     }

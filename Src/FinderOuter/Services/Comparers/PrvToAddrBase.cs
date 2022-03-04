@@ -5,14 +5,11 @@
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.ECC;
-using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
     public abstract class PrvToAddrBase : ICompareService
     {
-        protected readonly BigInteger order = new SecP256k1().N;
-        protected readonly EllipticCurveCalculator calc = new();
         protected readonly Calc calc2 = new();
         protected byte[] hash;
 
@@ -40,7 +37,7 @@ namespace FinderOuter.Services.Comparers
             return Compare(pt);
         }
 
-        public bool Compare(BigInteger key) => Compare(calc.MultiplyByG(key));
+        public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
 
         public abstract bool Compare(in EllipticCurvePoint point);
     }

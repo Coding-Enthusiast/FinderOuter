@@ -19,14 +19,16 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPrvComparer : ICompareService
     {
-        private byte[] expected;
+        private byte[] expectedBytes;
+        private Scalar expectedKey;
 
         public bool Init(string data)
         {
             try
             {
                 using PrivateKey temp = new(data);
-                expected = temp.ToBytes();
+                expectedBytes = temp.ToBytes();
+                expectedKey = new(expectedBytes, out _);
                 return true;
             }
             catch (Exception)
@@ -39,33 +41,18 @@ namespace FinderOuter.Services.Comparers
         {
             return new PrvToPrvComparer()
             {
-                expected = this.expected.CloneByteArray()
+                expectedBytes = this.expectedBytes.CloneByteArray()
             };
         }
 
         private readonly Calc calc2 = new();
         public Calc Calc => calc2;
-        public unsafe bool Compare(uint* hPt) => ((Span<byte>)expected).SequenceEqual(Sha256Fo.GetBytes(hPt));
-        public unsafe bool Compare(ulong* hPt) => ((Span<byte>)expected).SequenceEqual(Sha512Fo.GetFirst32Bytes(hPt));
+        public unsafe bool Compare(uint* hPt) => ((Span<byte>)expectedBytes).SequenceEqual(Sha256Fo.GetBytes(hPt));
+        public unsafe bool Compare(ulong* hPt) => ((Span<byte>)expectedBytes).SequenceEqual(Sha512Fo.GetFirst32Bytes(hPt));
 
-        public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expected).SequenceEqual(key);
+        public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expectedBytes).SequenceEqual(key);
 
-        public bool Compare(BigInteger key)
-        {
-            byte[] ba = key.ToByteArray(true, true);
-            if (ba.Length < 32)
-            {
-                return (Compare(ba.PadLeft(32)));
-            }
-            else if (ba.Length == 32)
-            {
-                return Compare(ba);
-            }
-            else
-            {
-                return false;
-            }
-        }
+        public bool Compare(Scalar key) => key == expectedKey;
 
         public bool Compare(in PointJacobian point) => throw new NotImplementedException();
         public bool Compare(in EllipticCurvePoint point) => throw new NotImplementedException();

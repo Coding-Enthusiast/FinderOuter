@@ -70,7 +70,7 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe BigInteger ComputeKey(uint* pt, byte* kPt)
+        private unsafe Scalar ComputeKey(uint* pt, byte* kPt)
         {
             uint* oPt = pt + Sha256Fo.UBufferSize;
 
@@ -193,11 +193,8 @@ namespace FinderOuter.Services
                 chainXor[i] ^= chainCode[i];
             }
 
-            // TODO: change this to UInt256
-            BigInteger A = new(chainXor, true, true);
-            BigInteger B = new(key, true, true);
-
-            BigInteger secexp = (A * B).Mod(N);
+            Scalar A = new(chainXor, out _);
+            Scalar secexp = scalar.Multiply(A);
             return secexp;
         }
 
@@ -272,7 +269,7 @@ namespace FinderOuter.Services
 
                             if ((pt[0] & mask2) == comp2)
                             {
-                                BigInteger secexp = ComputeKey(pt, kPt);
+                                Scalar secexp = ComputeKey(pt, kPt);
                                 if (comparer.Compare(secexp))
                                 {
                                     SetResult(kPt);
@@ -325,7 +322,7 @@ namespace FinderOuter.Services
                             kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
                         }
 
-                        BigInteger secexp = ComputeKey(pt, kPt);
+                        Scalar secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);
@@ -394,7 +391,7 @@ namespace FinderOuter.Services
 
                             // Second checksum is missing so we can't compute second part's hash to reject invalid
                             // keys, instead all keys must be checked using the ICompareService instance.
-                            BigInteger secexp = ComputeKey(pt, kPt);
+                            Scalar secexp = ComputeKey(pt, kPt);
                             if (comparer.Compare(secexp))
                             {
                                 SetResult(kPt);
@@ -463,7 +460,7 @@ namespace FinderOuter.Services
                         Sha256Fo.Init(pt);
                         Sha256Fo.CompressDouble16(pt);
 
-                        BigInteger secexp = ComputeKey(pt, kPt);
+                        Scalar secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);

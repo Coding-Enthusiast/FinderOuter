@@ -32,7 +32,7 @@ namespace FinderOuter.Services.Comparers
         bool Init(string data);
         ICompareService Clone();
         bool Compare(byte[] key);
-        bool Compare(BigInteger key);
+        bool Compare(Scalar key);
         bool Compare(in EllipticCurvePoint point);
     }
 }
