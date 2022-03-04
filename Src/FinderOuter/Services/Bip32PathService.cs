@@ -35,8 +35,8 @@ namespace FinderOuter.Services
             Electrum,
             [Description("Extended private key (base-58 encoded string starting with 'xprv')")]
             XPRV,
-            [Description("Extended public key (base-58 encoded string starting with 'xpub')")]
-            XPUB
+            //[Description("Extended public key (base-58 encoded string starting with 'xpub')")]
+            //XPUB
         }
 
         private static readonly BIP0032Path[] AllPaths = new BIP0032Path[]
@@ -52,44 +52,39 @@ namespace FinderOuter.Services
         };
 
 
-        public void Loop(BIP0032 bip32, uint count, bool isPubkey)
+        public void Loop(BIP0032 bip32, uint count)
         {
-            BIP0032Path[] allPaths = isPubkey ?
-                new BIP0032Path[]
-                {
-                    new BIP0032Path("m/0")
-                } :
-                new BIP0032Path[]
-                {
-                    new BIP0032Path("m/0"),
-                    new BIP0032Path("m/0'"),
-                    new BIP0032Path("m/0'/0/"),
-                    new BIP0032Path("m/0'/0'"),
-                    // BIP-44 xprv/xpub P2PKH
-                    new BIP0032Path("m/44'/0'/0'/0"),
-                    new BIP0032Path("m/44'/0'/0'"),
-                    // BIP-49 yprv/upub P2SH-P2WPKH
-                    new BIP0032Path("m/49'/0'/0'/0"),
-                    new BIP0032Path("m/49'/0'/0'"),
-                    // BIP-84 zprv/zpub P2WPKH
-                    new BIP0032Path("m/84'/0'/0'/0"),
-                    new BIP0032Path("m/84'/0'/0'/"),
-                    new BIP0032Path("m/84'/0'/2147483644'/0"),
-                    new BIP0032Path("m/84'/0'/2147483645'/0"),
-                    new BIP0032Path("m/84'/0'/2147483646'/0"),
-                    new BIP0032Path("m/84'/0'/2147483647'/0"),
-                    new BIP0032Path("m/49'/0'/2147483647'/0"),
-                    new BIP0032Path("m/44'/0'/2147483647'/0"),
-                    new BIP0032Path("m/141'/0'/0'/0"),
-                };
+            BIP0032Path[] allPaths = new BIP0032Path[]
+            {
+                new BIP0032Path("m/0"),
+                new BIP0032Path("m/0'"),
+                new BIP0032Path("m/0'/0/"),
+                new BIP0032Path("m/0'/0'"),
+                // BIP-44 xprv/xpub P2PKH
+                new BIP0032Path("m/44'/0'/0'/0"),
+                new BIP0032Path("m/44'/0'/0'"),
+                // BIP-49 yprv/upub P2SH-P2WPKH
+                new BIP0032Path("m/49'/0'/0'/0"),
+                new BIP0032Path("m/49'/0'/0'"),
+                // BIP-84 zprv/zpub P2WPKH
+                new BIP0032Path("m/84'/0'/0'/0"),
+                new BIP0032Path("m/84'/0'/0'/"),
+                new BIP0032Path("m/84'/0'/2147483644'/0"),
+                new BIP0032Path("m/84'/0'/2147483645'/0"),
+                new BIP0032Path("m/84'/0'/2147483646'/0"),
+                new BIP0032Path("m/84'/0'/2147483647'/0"),
+                new BIP0032Path("m/49'/0'/2147483647'/0"),
+                new BIP0032Path("m/44'/0'/2147483647'/0"),
+                new BIP0032Path("m/141'/0'/0'/0"),
+            };
 
 
             foreach (BIP0032Path path in allPaths)
             {
-                PublicKey[] pubkeys = bip32.GetPublicKeys(path, count);
-                for (int i = 0; i < pubkeys.Length; i++)
+                PrivateKey[] keys = bip32.GetPrivateKeys(path, count);
+                for (int i = 0; i < keys.Length; i++)
                 {
-                    if (comparer.Compare(pubkeys[i].ToPoint()))
+                    if (comparer.Compare(keys[i].ToBytes()))
                     {
                         report.AddMessageSafe($"The correct key path is: {path}/{i}");
                         report.FoundAnyResult = true;
@@ -139,7 +134,7 @@ namespace FinderOuter.Services
                     return;
                 }
             }
-            else if (inputType == SeedType.XPRV || inputType == SeedType.XPUB)
+            else if (inputType == SeedType.XPRV)
             {
                 try
                 {
@@ -159,7 +154,7 @@ namespace FinderOuter.Services
 
             Debug.Assert(bip32 is not null);
 
-            await Task.Run(() => Loop(bip32, count, inputType == SeedType.XPUB));
+            await Task.Run(() => Loop(bip32, count));
 
             report.Finalize();
         }
