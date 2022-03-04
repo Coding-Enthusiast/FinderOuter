@@ -1437,7 +1437,7 @@ namespace FinderOuter.Services
                         BIP0032Path newPath = new(indices);
 
                         PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
-                        if (comparer.Compare(keys[0].ToBigInt()))
+                        if (comparer.Compare(keys[0].ToBytes()))
                         {
                             report.Pass($"The given child key is derived from this mnemonic at {this.path} path.");
                         }
