@@ -6,7 +6,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace FinderOuter.Backend.Cryptography.Hashing
+namespace FinderOuter.Backend.Hashing
 {
     public static class Ripemd160Fo
     {

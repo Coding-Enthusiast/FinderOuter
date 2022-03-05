@@ -5,7 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
-using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
 

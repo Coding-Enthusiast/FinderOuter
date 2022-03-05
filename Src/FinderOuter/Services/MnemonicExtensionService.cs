@@ -5,7 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;

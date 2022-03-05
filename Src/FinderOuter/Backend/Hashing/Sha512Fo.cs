@@ -6,7 +6,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace FinderOuter.Backend.Cryptography.Hashing
+namespace FinderOuter.Backend.Hashing
 {
     /// <summary>
     /// Implementation of 512-bit Secure Hash Algorithm (SHA) based on RFC-6234

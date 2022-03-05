@@ -6,7 +6,7 @@
 using System;
 using System.Diagnostics;
 
-namespace FinderOuter.Backend.Cryptography.Hashing
+namespace FinderOuter.Backend.Hashing
 {
     /// <summary>
     /// Performs RIPEMD160 hash function on the result of SHA256 also known as HASH160

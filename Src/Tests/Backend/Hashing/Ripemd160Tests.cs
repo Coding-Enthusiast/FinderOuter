@@ -3,12 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.Hashing;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using Xunit;
 
-namespace Tests.Backend.Cryptography.Hashing
+namespace Tests.Backend.Hashing
 {
     public class Ripemd160Tests
     {

@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Tests.Backend.Cryptography.Hashing
+namespace Tests.Backend.Hashing
 {
     public class HashTestCaseHelper
     {

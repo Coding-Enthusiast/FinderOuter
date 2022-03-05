@@ -3,11 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend.Cryptography.Hashing;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
 using Xunit;
 
-namespace Tests.Backend.Cryptography.ECC
+namespace Tests.Backend.ECC
 {
     public class ScalarTests
     {
