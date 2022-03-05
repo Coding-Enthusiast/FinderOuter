@@ -4,13 +4,10 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
-using System.Numerics;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -41,12 +38,13 @@ namespace FinderOuter.Services.Comparers
         {
             return new PrvToPrvComparer()
             {
-                expectedBytes = this.expectedBytes.CloneByteArray()
+                expectedBytes = this.expectedBytes.CloneByteArray(),
+                expectedKey = this.expectedKey
             };
         }
 
-        private readonly Calc calc2 = new();
-        public Calc Calc => calc2;
+        private readonly Calc _calc = new();
+        public Calc Calc => _calc;
         public unsafe bool Compare(uint* hPt) => ((Span<byte>)expectedBytes).SequenceEqual(Sha256Fo.GetBytes(hPt));
         public unsafe bool Compare(ulong* hPt) => ((Span<byte>)expectedBytes).SequenceEqual(Sha512Fo.GetFirst32Bytes(hPt));
 
@@ -55,6 +53,5 @@ namespace FinderOuter.Services.Comparers
         public bool Compare(Scalar key) => key == expectedKey;
 
         public bool Compare(in PointJacobian point) => throw new NotImplementedException();
-        public bool Compare(in EllipticCurvePoint point) => throw new NotImplementedException();
     }
 }

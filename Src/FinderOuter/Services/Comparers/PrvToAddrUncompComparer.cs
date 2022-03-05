@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.Cryptography.Hashing;
 using FinderOuter.Backend.ECC;
 using System;
@@ -32,7 +31,7 @@ namespace FinderOuter.Services.Comparers
                 return false;
             }
 
-            Span<byte> toHash = calc2.GetPubkey(in key, false);
+            Span<byte> toHash = _calc.GetPubkey(in key, false);
 
             ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
@@ -46,7 +45,7 @@ namespace FinderOuter.Services.Comparers
                 return false;
             }
 
-            Span<byte> toHash = calc2.GetPubkey(in key, false);
+            Span<byte> toHash = _calc.GetPubkey(in key, false);
 
             ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
@@ -55,19 +54,6 @@ namespace FinderOuter.Services.Comparers
         public override bool Compare(in PointJacobian point)
         {
             Span<byte> toHash = point.ToPoint().ToByteArray(false);
-            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
-            return compHash.SequenceEqual(hash);
-        }
-
-        public override bool Compare(in EllipticCurvePoint point)
-        {
-            byte[] xBytes = point.X.ToByteArray(true, true);
-            byte[] yBytes = point.Y.ToByteArray(true, true);
-            byte[] toHash = new byte[65];
-            toHash[0] = 4;
-            Buffer.BlockCopy(xBytes, 0, toHash, 33 - xBytes.Length, xBytes.Length);
-            Buffer.BlockCopy(yBytes, 0, toHash, 65 - yBytes.Length, yBytes.Length);
-
             ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }

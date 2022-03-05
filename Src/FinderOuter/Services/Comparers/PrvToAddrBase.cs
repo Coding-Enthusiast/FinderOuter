@@ -3,14 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend.ECC;
 
 namespace FinderOuter.Services.Comparers
 {
     public abstract class PrvToAddrBase : ICompareService
     {
-        protected readonly Calc calc2 = new();
         protected byte[] hash;
 
         public virtual bool Init(string address)
@@ -20,7 +18,9 @@ namespace FinderOuter.Services.Comparers
         }
 
         public abstract ICompareService Clone();
-        public Calc Calc => calc2;
+
+        protected readonly Calc _calc = new();
+        public Calc Calc => _calc;
 
         public abstract unsafe bool Compare(uint* hPt);
         public abstract unsafe bool Compare(ulong* hPt);
@@ -33,12 +33,10 @@ namespace FinderOuter.Services.Comparers
             {
                 return false;
             }
-            PointJacobian pt = calc2.MultiplyByG(k);
+            PointJacobian pt = _calc.MultiplyByG(k);
             return Compare(pt);
         }
 
         public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
-
-        public abstract bool Compare(in EllipticCurvePoint point);
     }
 }

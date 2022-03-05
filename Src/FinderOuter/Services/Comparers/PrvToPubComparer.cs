@@ -16,33 +16,23 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {
-        private EllipticCurvePoint point;
         private byte[] pubBa;
 
         public bool Init(string pubHex)
         {
-            if (Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out PublicKey pubKey))
-            {
-                point = pubKey.ToPoint();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out _);
         }
 
         public ICompareService Clone()
         {
             return new PrvToPubComparer()
             {
-                point = this.point,
                 pubBa = this.pubBa
             };
         }
 
-        protected readonly Calc _calc2 = new();
-        public Calc Calc => _calc2;
+        protected readonly Calc _calc = new();
+        public Calc Calc => _calc;
         public unsafe bool Compare(uint* hPt)
         {
             Scalar key = new(hPt, out int overflow);
@@ -51,7 +41,7 @@ namespace FinderOuter.Services.Comparers
                 return false;
             }
 
-            Span<byte> actual = _calc2.GetPubkey(key, pubBa.Length == 33);
+            Span<byte> actual = _calc.GetPubkey(key, pubBa.Length == 33);
             return actual.SequenceEqual(pubBa);
         }
 
@@ -63,7 +53,7 @@ namespace FinderOuter.Services.Comparers
                 return false;
             }
 
-            Span<byte> actual = _calc2.GetPubkey(key, pubBa.Length == 33);
+            Span<byte> actual = _calc.GetPubkey(key, pubBa.Length == 33);
             return actual.SequenceEqual(pubBa);
         }
 
@@ -82,12 +72,10 @@ namespace FinderOuter.Services.Comparers
                 return false;
             }
 
-            Span<byte> actual = _calc2.GetPubkey(sc, pubBa.Length == 33);
+            Span<byte> actual = _calc.GetPubkey(sc, pubBa.Length == 33);
             return actual.SequenceEqual(pubBa);
         }
 
         public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
-
-        public bool Compare(in EllipticCurvePoint point) => point == this.point;
     }
 }

@@ -14,8 +14,8 @@ namespace Tests
 {
     public class Helper
     {
-        private static readonly Calc calc2 = new();
-        public static Calc Calc => calc2;
+        private static readonly Calc _calc = new();
+        public static Calc Calc => _calc;
 
 
         internal static JsonSerializerSettings jSetting = new()
