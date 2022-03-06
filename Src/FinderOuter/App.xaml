@@ -12,16 +12,43 @@
   </Application.Styles>
 
   <Application.Styles>
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="5"/>
+    </Style>
+
+    <!--Use Classes="Help" in any Button to change it into a round help button with "?" in it-->
+    <Style Selector="Button.Help">
+      <Setter Property="Command" Value="{Binding OpenKB}"/>
+      <Setter Property="CommandParameter" Value="Bitcoin"/>
+      <Setter Property="CornerRadius" Value="20"/>
+      <Setter Property="Margin" Value="6,6,5,5"/>
+      <Setter Property="Width" Value="25"/>
+      <Setter Property="Height" Value="25"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Content" Value="?"/>
+      <Setter Property="VerticalAlignment" Value="Bottom"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+    </Style>
+    <Style Selector="Button:pointerover.Help /template/ ContentPresenter">
+      <Setter Property="Background" Value="LightGreen"/>
+    </Style>
+
+
+    <Style Selector="CheckBox">
+      <Setter Property="CornerRadius" Value="3"/>
+    </Style>
+
+
     <Style Selector="ComboBox">
       <Setter Property="BorderThickness" Value="2"/>
       <Setter Property="BorderBrush" Value="#66000000"/>
+      <Setter Property="CornerRadius" Value="3"/>
       <Setter Property="Width" Value="120"/>
       <Setter Property="Height" Value="40"/>
       <Setter Property="Margin" Value="3"/>
       <Setter Property="MaxDropDownHeight" Value="300"/>
-    </Style>
-    <Style Selector="ComboBox /template/ Border">
-      <Setter Property="CornerRadius" Value="3"/>
     </Style>
 
     <!--Use Classes="DescriptiveItem" in any ComboBox to represent its items as DescriptiveItem-->
@@ -37,29 +64,13 @@
     </Style>
 
 
-    <Style Selector="Button /template/ ContentPresenter">
-      <Setter Property="CornerRadius" Value="5"/>
-    </Style>
-
-    <!--Use Classes="Help" in any Button to change it into a round help button with "?" in it-->
-    <Style Selector="Button.Help">
-      <Setter Property="Command" Value="{Binding OpenKB}"/>
-      <Setter Property="CommandParameter" Value="Bitcoin"/>
-      <Setter Property="Margin" Value="6,6,5,5"/>
-      <Setter Property="Width" Value="25"/>
-      <Setter Property="Height" Value="25"/>
-      <Setter Property="FontSize" Value="12"/>
-      <Setter Property="FontWeight" Value="Bold"/>
-      <Setter Property="Padding" Value="0"/>
-      <Setter Property="Content" Value="?"/>
-      <Setter Property="VerticalAlignment" Value="Bottom"/>
-      <Setter Property="HorizontalAlignment" Value="Right"/>
-    </Style>
-    <Style Selector="Button.Help /template/ ContentPresenter">
-      <Setter Property="CornerRadius" Value="20"/>
-    </Style>
-    <Style Selector="Button:pointerover.Help /template/ ContentPresenter">
-      <Setter Property="Background" Value="LightGreen"/>
+    <Style Selector="NumericUpDown">
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="Foreground" Value="#FF000000"/>
+      <Setter Property="Background" Value="#66FFFFFF"/>
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderBrush" Value="#66000000"/>
+      <Setter Property="Margin" Value="3"/>
     </Style>
 
 
@@ -70,6 +81,7 @@
 
 
     <Style Selector="TextBox">
+      <Setter Property="CornerRadius" Value="3"/>
       <Setter Property="Foreground" Value="#FF000000"/>
       <Setter Property="Background" Value="#66FFFFFF"/>
       <Setter Property="BorderThickness" Value="2"/>
@@ -82,20 +94,8 @@
       <Setter Property="UseFloatingWatermark" Value="True"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
-    <Style Selector="TextBox /template/ Border">
-      <Setter Property="CornerRadius" Value="3"/>
-    </Style>
     <Style Selector="TextBox /template/ TextBlock">
       <Setter Property="VerticalAlignment" Value="Top"/>
-    </Style>
-
-
-    <Style Selector="NumericUpDown">
-      <Setter Property="Foreground" Value="#FF000000"/>
-      <Setter Property="Background" Value="#66FFFFFF"/>
-      <Setter Property="BorderThickness" Value="2"/>
-      <Setter Property="BorderBrush" Value="#66000000"/>
-      <Setter Property="Margin" Value="3"/>
     </Style>
   </Application.Styles>
 
