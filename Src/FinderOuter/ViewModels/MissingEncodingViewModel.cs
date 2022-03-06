@@ -36,8 +36,9 @@ namespace FinderOuter.ViewModels
 
         public override string OptionName => "Missing encoding";
         public override string Description => $"This option can be used to guess the encoding of a given string." +
-            $"{Environment.NewLine}It works by eliminating encodings and letting user decode the input with any " +
-            $"encoder to see the raw bytes.";
+            $"{Environment.NewLine}Enter the string in the TextBox below and either click Find to check it with all " +
+            $"encoders or click one of the Decode buttons below to specifically decode using that encoder. The result " +
+            $"will always show the raw bytes in hexadecimal format.";
 
 
         public IEnumerable<EncodingState> EncodingList { get; }

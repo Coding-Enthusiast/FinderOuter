@@ -56,9 +56,8 @@ namespace FinderOuter.ViewModels
             $"missing some words. It supports both BIP39 and Electrum standards.{Environment.NewLine}" +
             $"Enter words that are known and replace the missing ones with the symbol defined by " +
             $"{nameof(MissingChar)} parameter.{Environment.NewLine}" +
-            $"The key index is the zero-based index of the entered key/address (first address is 0, second is 1,...)" +
-            $"{Environment.NewLine}" +
-            $"The path is the full BIP-32 defined path of the child key (eg. m/44'/0'/0'/0)";
+            $"Note that the path is the full BIP-32 defined key/address path not the parent master key path and each " +
+            $"number is a zero-based index (first address is 0, second is 1,...). Example: m/44'/0'/0'/0";
 
         public MnemonicSevice MnService { get; }
 

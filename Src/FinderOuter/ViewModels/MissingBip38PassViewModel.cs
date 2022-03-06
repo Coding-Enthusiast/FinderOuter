@@ -50,8 +50,9 @@ namespace FinderOuter.ViewModels
 
         public override string OptionName => "Missing BIP38 pass";
         public override string Description => $"This option can recover BIP-38 encryption password.{Environment.NewLine}" +
-            $"Note that since BIP-38 algorithm is designed to be very expensive, this option is very slow at recovering " +
-            $"passwords. Don't expect more than 3 or 4 checks per second per thread.";
+            $"Note that since BIP-38 algorithm is designed to be very expensive, hence this option is very slow at recovering " +
+            $"passwords. Don't expect more than 3 or 4 checks per second per thread (the more CPU/cores you have the faster " +
+            $"it will be).";
 
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();

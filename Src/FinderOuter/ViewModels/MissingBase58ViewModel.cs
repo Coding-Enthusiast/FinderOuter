@@ -51,9 +51,9 @@ namespace FinderOuter.ViewModels
             $"(eg. a damaged paper wallet) you can use this option to recover it.{Environment.NewLine}" +
             $"Enter the base-58 string below and replace its missing characters with the symbol " +
             $"defined by {nameof(MissingChar)} parameter and press Find.{Environment.NewLine}" +
-            $"Exception: if you have a compressed private key missing 3 characters, there is no need to use " +
-            $"{nameof(MissingChar)} parameter anymore, just enter the {ConstantsFO.PrivKeyCompWifLen - 3} characters you have" +
-            $" and press find.";
+            $"Exception: if you have a WIF private key missing up to 3 characters and you don't know the position of those " +
+            $"characters, there is no need to use {nameof(MissingChar)} parameter anymore, just enter the characters you have " +
+            $"and press find.";
 
 
         private readonly Base58Service b58Service;
