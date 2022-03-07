@@ -1,8 +1,15 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.13.0.0...master)
-* SIMD support
-* GPU support
-* Wallet file password recovery
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.14.0.0...master)
+[RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.14.0 (2022-03-07)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.13.0.0...v0.14.0.0)  
+* Added the EC mult encryption mode to BIP38 password recovery option
+* KnowledgeBase is slightly improved
+* Old ECC code is removed
+* General code improvements and cleanup
+* Some small optimization
+* Small UI improvements
 
 ### Release 0.13.0 (2022-02-02)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.12.1.0...v0.13.0.0)  
