@@ -16,8 +16,8 @@ namespace FinderOuter.Backend
         public const string Base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         public const string Base16Chars = "0123456789abcdef";
         public const string ArmoryChars = "asdfghjkwertuion";
-        public const string Symbols = "!@#$%^&*_-+=?";
-        public const string MissingToolTip = "Onlye these symbols are accepted as a missing character: !@#$%^&*_-+=?";
+        public const string MissingSymbols = "*?-_!@#$%^&+=";
+        public const string MissingToolTip = "Replace the missing item with the selected symbol.";
 
         public const char PrivKeyCompChar1 = 'K';
         public const char PrivKeyCompChar2 = 'L';
