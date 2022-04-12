@@ -20,13 +20,24 @@ namespace FinderOuter.ViewModels
         public OptionVmBase()
         {
             WinMan = new WindowManager();
+            MissingChars = ConstantsFO.MissingSymbols.ToCharArray();
+            SelectedMissingChar = MissingChars[0];
         }
 
 
         public abstract string OptionName { get; }
         public abstract string Description { get; }
+        public char[] MissingChars { get; }
 
-        private string _exName = "";
+        private char _selMisC;
+        public char SelectedMissingChar
+        {
+            get => _selMisC;
+            set => this.RaiseAndSetIfChanged(ref _selMisC, value);
+        }
+
+
+        private string _exName = string.Empty;
         public string ExampleButtonName
         {
             get => _exName;
@@ -40,7 +51,7 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _res, value);
         }
 
-        public string MissingToolTip => ConstantsFO.MissingToolTip;
+        public static string MissingToolTip => ConstantsFO.MissingToolTip;
 
         public bool HasExample { get; protected set; }
         protected int exampleIndex, totalExampleCount;
@@ -81,11 +92,11 @@ namespace FinderOuter.ViewModels
         public abstract void Find();
 
 
-        public KB InputKb => KB.DamagedInput;
-        public KB ExtraInputKb => KB.ExtraInput;
-        public KB Bip32PathKb => KB.Bip32Path;
-        public KB AlphanumericPassKb => KB.AlphanumericPass;
-        public KB CustomCharPassKb => KB.CustomCharPass;
+        public static KB InputKb => KB.DamagedInput;
+        public static KB ExtraInputKb => KB.ExtraInput;
+        public static KB Bip32PathKb => KB.Bip32Path;
+        public static KB AlphanumericPassKb => KB.AlphanumericPass;
+        public static KB CustomCharPassKb => KB.CustomCharPass;
         public IWindowManager WinMan { get; set; }
         public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
     }

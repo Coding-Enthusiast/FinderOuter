@@ -9,6 +9,7 @@ using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -47,6 +48,25 @@ namespace FinderOuter.ViewModels
             this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);
 
             SetExamples(GetExampleData());
+
+            IObservable<bool> isNextEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
+                                                                (i, max, b) => b && i < max);
+            IObservable<bool> isPrevEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
+                                                                (i, max, b) => b && i > 1);
+            IObservable<bool> canRemove = this.WhenAnyValue(x => x.SelectedItem, (s) => !string.IsNullOrEmpty(s));
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
+            NextCommand = ReactiveCommand.Create(Next, isNextEnabled);
+            PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
+            RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
+            AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
+            AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
+            AddStartCommand = ReactiveCommand.Create(AddStart, canAdd);
+            AddEndCommand = ReactiveCommand.Create(AddEnd, canAdd);
+            AddContainCommand = ReactiveCommand.Create(AddContain, canAdd);
         }
 
 
@@ -55,7 +75,7 @@ namespace FinderOuter.ViewModels
         public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are " +
             $"missing some words. It supports both BIP39 and Electrum standards.{Environment.NewLine}" +
             $"Enter words that are known and replace the missing ones with the symbol defined by " +
-            $"{nameof(MissingChar)} parameter.{Environment.NewLine}" +
+            $"{nameof(SelectedMissingChar)} parameter.{Environment.NewLine}" +
             $"Note that the path is the full BIP-32 defined key/address path not the parent master key path and each " +
             $"number is a zero-based index (first address is 0, second is 1,...). Example: m/44'/0'/0'/0";
 
@@ -114,12 +134,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _mnemonic, value);
         }
 
-        private char _mis = '*';
-        public char MissingChar
-        {
-            get => _mis;
-            set => this.RaiseAndSetIfChanged(ref _mis, value);
-        }
 
         private string _additional;
         public string AdditionalInfo
@@ -143,9 +157,208 @@ namespace FinderOuter.ViewModels
         }
 
 
+        private ObservableCollection<string> _items;
+        public ObservableCollection<string> CurrentItems
+        {
+            get => _items;
+            private set => this.RaiseAndSetIfChanged(ref _items, value);
+        }
+
+        private string _selItem;
+        public string SelectedItem
+        {
+            get => _selItem;
+            set => this.RaiseAndSetIfChanged(ref _selItem, value);
+        }
+
+        private ObservableCollection<string>[] allItems;
+
+        private string _step;
+        public string SelectedStep
+        {
+            get => _step;
+            set => this.RaiseAndSetIfChanged(ref _step, value);
+        }
+
+
+        private int _max;
+        public int Max
+        {
+            get => _max;
+            set => this.RaiseAndSetIfChanged(ref _max, value);
+        }
+
+        private int _index;
+        public int Index
+        {
+            get => _index;
+            private set
+            {
+                if (_index != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _index, value);
+                    if (Index == 0)
+                    {
+                        CurrentItems = null;
+                        SelectedStep = string.Empty;
+                    }
+                    else
+                    {
+                        CurrentItems = allItems[value - 1];
+                        SelectedStep = $"{value}/{Max}";
+                    }
+                }
+            }
+        }
+
+        private bool _isProcessed;
+        public bool IsProcessed
+        {
+            get => _isProcessed;
+            set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
+        }
+
+
+        private string[] allWords;
+
+        public IReactiveCommand StartCommand { get; }
+        private void Start()
+        {
+            IsProcessed = false;
+            Index = 0;
+            if (string.IsNullOrWhiteSpace(Mnemonic))
+            {
+                Result.AddMessage("Enter something first.");
+            }
+            else
+            {
+                allWords = BIP0039.GetAllWords(SelectedWordListType);
+                string[] words = Mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!new[] { 12, 15, 18, 21, 24 }.Contains(words.Length))
+                {
+                    Result.AddMessage("Invalid mnemonic length.");
+                    return;
+                }
+
+                string missCharStr = new(new char[] { SelectedMissingChar });
+                bool invalidWord = false;
+                for (int i = 0; i < words.Length; i++)
+                {
+                    if (words[i] != missCharStr && !allWords.Contains(words[i]))
+                    {
+                        invalidWord = true;
+                        Result.AddMessage($"Given mnemonic contains invalid word at index {i} ({words[i]}).");
+                    }
+                }
+                if (invalidWord)
+                {
+                    return;
+                }
+
+                int missCount = words.Count(s => s == missCharStr);
+                allItems = new ObservableCollection<string>[missCount];
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i] = new();
+                }
+
+                IsProcessed = true;
+                Max = allItems.Length;
+                Index = 1;
+            }
+        }
+
+        public IReactiveCommand NextCommand { get; }
+        public void Next()
+        {
+            Index++;
+        }
+
+        public IReactiveCommand PreviousCommand { get; }
+        public void Previous()
+        {
+            Index--;
+        }
+
+        private string _toAdd;
+        public string ToAdd
+        {
+            get => _toAdd;
+            set => this.RaiseAndSetIfChanged(ref _toAdd, value);
+        }
+
+
+        public IReactiveCommand RemoveSelectedCommand { get; }
+        private void RemoveSelected()
+        {
+            CurrentItems.Remove(SelectedItem);
+        }
+
+        private void Add(IEnumerable<string> items)
+        {
+            foreach (var item in items)
+            {
+                if (!CurrentItems.Contains(item))
+                {
+                    CurrentItems.Add(item);
+                }
+            }
+        }
+
+        public IReactiveCommand AddAllCommand { get; }
+        private void AddAll()
+        {
+            Add(allWords);
+        }
+
+        public IReactiveCommand ClearAllCommand { get; }
+        private void ClearAll()
+        {
+            CurrentItems.Clear();
+        }
+
+        public IReactiveCommand AddSimilarCommand { get; }
+        private void AddSimilar()
+        {
+            
+        }
+
+        public IReactiveCommand AddExactCommand { get; }
+        private void AddExact()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && allWords.Contains(ToAdd.ToLower()))
+            {
+                CurrentItems.Add(ToAdd.ToLower());
+            }
+            else
+            {
+                Result.AddMessage($"The entered word ({ToAdd}) is not found in selected word-list.");
+            }
+        }
+
+        public IReactiveCommand AddStartCommand { get; }
+        private void AddStart()
+        {
+            Add(allWords.Where(x => x.StartsWith(ToAdd)));
+        }
+
+        public IReactiveCommand AddEndCommand { get; }
+        private void AddEnd()
+        {
+            Add(allWords.Where(x => x.EndsWith(ToAdd)));
+        }
+
+        public IReactiveCommand AddContainCommand { get; }
+        private void AddContain()
+        {
+            Add(allWords.Where(x => x.Contains(ToAdd)));
+        }
+
+
+
         public override void Find()
         {
-            MnService.FindMissing(Mnemonic, MissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
+            MnService.FindMissing(Mnemonic, SelectedMissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
                                   KeyPath,
                                   SelectedMnemonicType, SelectedWordListType,
                                   SelectedElectrumMnType);
@@ -157,7 +370,7 @@ namespace FinderOuter.ViewModels
             object[] ex = GetNextExample();
 
             Mnemonic = (string)ex[0];
-            MissingChar = (char)ex[1];
+            SelectedMissingChar = MissingChars[(int)ex[1]];
 
             int temp1 = (int)ex[2];
             Debug.Assert(temp1 < WordListsList.Count());
@@ -168,7 +381,7 @@ namespace FinderOuter.ViewModels
             SelectedMnemonicType = MnemonicTypesList.ElementAt(temp2);
 
             int temp3 = (int)ex[4];
-            Debug.Assert(temp3 < MnemonicTypesList.Count());
+            Debug.Assert(temp3 < ElectrumMnemonicTypesList.Count());
             SelectedElectrumMnType = ElectrumMnemonicTypesList.ElementAt(temp3);
 
             PassPhrase = (string)ex[5];
@@ -184,11 +397,11 @@ namespace FinderOuter.ViewModels
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, char, int, int, int, string, string, string, int, string>()
+            return new ExampleData<string, int, int, int, int, string, string, string, int, string>()
             {
                 {
                     "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0, // WordList
                     0, // MnemonicType
                     0, // Electrum mnemonic type
@@ -210,7 +423,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "ozone drill grab fiber curtain * pudding thank cruise elder eight picnic",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0, // WordList
                     0, // MnemonicType
                     0, // Electrum mnemonic type
@@ -230,7 +443,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "avide sardine séjour docteur tétine soluble nautique raisin toucher notoire linéaire lièvre tenir demeurer talonner civil - fabuleux pizza diminuer gagner oisillon trafic imposer",
-                    '-',
+                    Array.IndexOf(MissingChars, '-'),
                     3, // WordList
                     0, // MnemonicType
                     0, // Electrum mnemonic type
@@ -251,7 +464,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "panda eyebrow bullet gorilla call smoke muffin * mesh discover soft ostrich alcohol speed nation flash devote level hobby quick inner * ghost inside",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0, // WordList
                     0, // MnemonicType
                     0, // Electrum mnemonic type
@@ -274,7 +487,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "wild father tree among universe such mobile favorite target dynamic * identify",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0, // WordList
                     1, // MnemonicType
                     2, // Electrum mnemonic type
@@ -290,7 +503,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "wild father tree among universe such * favorite target dynamic * identify",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0, // WordList
                     1, // MnemonicType
                     2, // Electrum mnemonic type

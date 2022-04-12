@@ -193,7 +193,7 @@ namespace FinderOuter.Services
         {
             if (!IsMissingCharValid(missingChar))
             {
-                error = $"Invalid missing character. Choose one from {ConstantsFO.Symbols}";
+                error = $"Invalid missing character. Choose one from {ConstantsFO.MissingSymbols}";
                 return false;
             }
             if (string.IsNullOrWhiteSpace(key))
@@ -264,7 +264,7 @@ namespace FinderOuter.Services
             return true;
         }
 
-        public bool IsMissingCharValid(char c) => ConstantsFO.Symbols.Contains(c);
+        public bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
 
         public bool IsPrivateKeyInRange(byte[] key)
         {
