@@ -6,12 +6,11 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -34,23 +33,19 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
 
-        private Dictionary<uint, byte[]> wordBytes = new(2048);
         private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
 
         internal static readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
         private uint[] wordIndexes;
         private int[] missingIndexes;
-        private string[] allWords;
         // TODO: this could be converted to SHA512 working vector and then leave the compression 
         //       to SetBip32() after setting HMAC key
         private byte[] pbkdf2Salt;
-        // TODO: change this to an int only storing the length (has to be instantiated per thread anyways)
-        private byte[] mnBytes;
         private BIP0032Path path;
         private ICompareService comparer;
 
-        private int missCount;
+        private int missCount, maxMnBufferLen;
         private string[] words;
 
 
@@ -431,7 +426,7 @@ namespace FinderOuter.Services
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -444,7 +439,7 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 pt[16] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 256;
@@ -482,7 +477,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 24; i++)
                         {
                             byte[] temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -510,11 +505,12 @@ namespace FinderOuter.Services
             else
             {
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
                 fixed (int* mi = &missingIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     pt[16] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 256;
@@ -587,7 +583,7 @@ namespace FinderOuter.Services
                             for (int i = 0; i < 24; i++)
                             {
                                 byte[] temp = allWordsBytes[wrd[i]];
-                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
 
@@ -608,7 +604,7 @@ namespace FinderOuter.Services
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -621,7 +617,7 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 pt[15] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 224;
@@ -658,7 +654,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 21; i++)
                         {
                             byte[] temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -686,10 +682,11 @@ namespace FinderOuter.Services
             else
             {
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     pt[15] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 224;
@@ -715,7 +712,7 @@ namespace FinderOuter.Services
                             for (int i = 0; i < 21; i++)
                             {
                                 byte[] temp = allWordsBytes[wrd[i]];
-                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
 
@@ -736,7 +733,7 @@ namespace FinderOuter.Services
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -749,7 +746,7 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 pt[14] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 192;
@@ -785,7 +782,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 18; i++)
                         {
                             byte[] temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -813,10 +810,11 @@ namespace FinderOuter.Services
             else
             {
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     pt[14] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 192;
@@ -841,7 +839,7 @@ namespace FinderOuter.Services
                             for (int i = 0; i < 18; i++)
                             {
                                 byte[] temp = allWordsBytes[wrd[i]];
-                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
 
@@ -862,7 +860,7 @@ namespace FinderOuter.Services
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -876,7 +874,7 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 pt[13] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 160;
@@ -911,7 +909,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 15; i++)
                         {
                             byte[] temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -939,10 +937,11 @@ namespace FinderOuter.Services
             else
             {
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     pt[13] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 160;
@@ -966,7 +965,7 @@ namespace FinderOuter.Services
                             for (int i = 0; i < 15; i++)
                             {
                                 byte[] temp = allWordsBytes[wrd[i]];
-                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
 
@@ -982,12 +981,13 @@ namespace FinderOuter.Services
         }
 
 
+
         private unsafe void Loop12(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -1001,7 +1001,7 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (uint* itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 pt[12] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 128;
@@ -1036,7 +1036,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 12; i++)
                         {
                             byte[] temp = localCopy[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -1066,11 +1066,11 @@ namespace FinderOuter.Services
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     pt[12] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 128;
@@ -1093,7 +1093,7 @@ namespace FinderOuter.Services
                             for (int i = 0; i < 12; i++)
                             {
                                 byte[] temp = allWordsBytes[wrd[i]];
-                                Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                                Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                                 mnLen += temp.Length;
                             }
 
@@ -1115,7 +1115,7 @@ namespace FinderOuter.Services
             uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
-            byte[] localMnBytes = new byte[mnBytes.Length];
+            byte[] mnBuffer = new byte[maxMnBufferLen];
 
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
@@ -1128,7 +1128,7 @@ namespace FinderOuter.Services
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
             fixed (uint* wrd = &localWIndex[0], itemsPt = &missingItems[0])
             fixed (int* mi = &missingIndexes[1])
-            fixed (byte* mnPt = &localMnBytes[0])
+            fixed (byte* mnPt = &mnBuffer[0])
             {
                 wrd[firstIndex] = (uint)firstItem;
 
@@ -1150,7 +1150,7 @@ namespace FinderOuter.Services
                     for (int i = 0; i < 12; i++)
                     {
                         byte[] temp = localCopy[wrd[i]];
-                        Buffer.BlockCopy(temp, 0, localMnBytes, mnLen, temp.Length);
+                        Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                         mnLen += temp.Length;
                     }
 
@@ -1225,11 +1225,12 @@ namespace FinderOuter.Services
             else
             {
                 int misIndex = missingIndexes[0];
+                byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 ulong* hPt = bigBuffer;
                 ulong* wPt = bigBuffer + Sha512Fo.HashStateSize;
                 fixed (uint* wrd = &wordIndexes[0])
-                fixed (byte* mnPt = &mnBytes[0])
+                fixed (byte* mnPt = &mnBuffer[0])
                 {
                     for (uint item = 0; item < 2048; item++)
                     {
@@ -1239,7 +1240,7 @@ namespace FinderOuter.Services
                         for (int i = 0; i < 12; i++)
                         {
                             byte[] temp = allWordsBytes[wrd[i]];
-                            Buffer.BlockCopy(temp, 0, mnBytes, mnLen, temp.Length);
+                            Buffer.BlockCopy(temp, 0, mnBuffer, mnLen, temp.Length);
                             mnLen += temp.Length;
                         }
 
@@ -1302,9 +1303,10 @@ namespace FinderOuter.Services
         /// <param name="maxWordLen"></param>
         /// <returns></returns>
         public static byte[] GetSeedByte(int seedLen, int maxWordLen) => new byte[(seedLen * maxWordLen) + (seedLen - 1)];
+        public static int GetSeedMaxByteSize(int seedLen, int maxWordLen) => (seedLen * maxWordLen) + (seedLen - 1);
 
 
-        public bool TrySplitMnemonic(string mnemonic, char missingChar)
+        public bool TrySplitMnemonic(string mnemonic, char missingChar, string[] allWords)
         {
             if (string.IsNullOrWhiteSpace(mnemonic))
             {
@@ -1396,9 +1398,9 @@ namespace FinderOuter.Services
                 report.Fail("Only English words are currently supported for Electrum mnemonics.");
             else if (!inputService.IsMissingCharValid(missChar))
                 report.Fail("Missing character is not accepted.");
-            else if (!TrySetWordList(wl, out allWords, out int maxWordLen))
+            else if (!TrySetWordList(wl, out string[] allWords, out int maxWordLen))
                 report.Fail($"Could not find {wl} word list among resources.");
-            else if (!TrySplitMnemonic(mnemonic, missChar))
+            else if (!TrySplitMnemonic(mnemonic, missChar, allWords))
                 return;
             else
             {
@@ -1455,12 +1457,10 @@ namespace FinderOuter.Services
                 }
 
 
-                mnBytes = GetSeedByte(words.Length, maxWordLen);
+                maxMnBufferLen = GetSeedMaxByteSize(words.Length, maxWordLen);
 
-                wordBytes = new Dictionary<uint, byte[]>(2048);
                 for (uint i = 0; i < allWords.Length; i++)
                 {
-                    wordBytes.Add(i, Encoding.UTF8.GetBytes(allWords[i]));
                     allWordsBytes[i] = Encoding.UTF8.GetBytes($"{allWords[i]} ");
                 }
 
