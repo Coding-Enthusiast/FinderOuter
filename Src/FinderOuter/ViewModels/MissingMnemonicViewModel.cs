@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using FinderOuter.Services;
@@ -284,7 +285,7 @@ namespace FinderOuter.ViewModels
         public string ToAdd
         {
             get => _toAdd;
-            set => this.RaiseAndSetIfChanged(ref _toAdd, value);
+            set => this.RaiseAndSetIfChanged(ref _toAdd, value.ToLowerInvariant().Trim());
         }
 
 
@@ -294,9 +295,9 @@ namespace FinderOuter.ViewModels
             CurrentItems.Remove(SelectedItem);
         }
 
-        private void Add(IEnumerable<string> items)
+        private void AddToList(IEnumerable<string> items)
         {
-            foreach (var item in items)
+            foreach (string item in items)
             {
                 if (!CurrentItems.Contains(item))
                 {
@@ -308,7 +309,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddAllCommand { get; }
         private void AddAll()
         {
-            Add(allWords);
+            AddToList(allWords);
         }
 
         public IReactiveCommand ClearAllCommand { get; }
@@ -320,15 +321,26 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddSimilarCommand { get; }
         private void AddSimilar()
         {
-            
+            if (string.IsNullOrWhiteSpace(ToAdd))
+            {
+                Result.AddMessage("Word to add can not be null or empty.");
+            }
+            else
+            {
+                int threshold = 2;
+                AddToList(allWords.Where(w => w.LevenshteinDistance(ToAdd) < threshold));
+            }
         }
 
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
-            if (!string.IsNullOrEmpty(ToAdd) && allWords.Contains(ToAdd.ToLower()))
+            if (!string.IsNullOrEmpty(ToAdd) && allWords.Contains(ToAdd))
             {
-                CurrentItems.Add(ToAdd.ToLower());
+                if (!CurrentItems.Contains(ToAdd))
+                {
+                    CurrentItems.Add(ToAdd);
+                }
             }
             else
             {
@@ -339,19 +351,28 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddStartCommand { get; }
         private void AddStart()
         {
-            Add(allWords.Where(x => x.StartsWith(ToAdd)));
+            if (!string.IsNullOrWhiteSpace(ToAdd))
+            {
+                AddToList(allWords.Where(x => x.StartsWith(ToAdd)));
+            }
         }
 
         public IReactiveCommand AddEndCommand { get; }
         private void AddEnd()
         {
-            Add(allWords.Where(x => x.EndsWith(ToAdd)));
+            if (!string.IsNullOrWhiteSpace(ToAdd))
+            {
+                AddToList(allWords.Where(x => x.EndsWith(ToAdd)));
+            }
         }
 
         public IReactiveCommand AddContainCommand { get; }
         private void AddContain()
         {
-            Add(allWords.Where(x => x.Contains(ToAdd)));
+            if (!string.IsNullOrWhiteSpace(ToAdd))
+            {
+                AddToList(allWords.Where(x => x.Contains(ToAdd)));
+            }
         }
 
 
