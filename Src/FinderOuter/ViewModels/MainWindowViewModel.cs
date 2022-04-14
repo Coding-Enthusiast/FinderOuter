@@ -34,17 +34,11 @@ namespace FinderOuter.ViewModels
             WinMan = new WindowManager();
         }
 
+        private static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
-        public static string WindowTitle
-        {
-            get
-            {
-                Version ver = Assembly.GetExecutingAssembly().GetName().Version;
-                return $"The FinderOuter - Version {((ver.Major == 0) ? "Beta" : ver.ToString(2))}";
-            }
-        }
+        public static string WindowTitle => $"The FinderOuter - Version {((Version.Major == 0) ? "Beta" : Version.ToString(2))}";
 
-        public static string VerString => Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
+        public static string VerString => Version.ToString(4);
 
         public static string DebugWarning => "Warning: Debug mode detected. Build and run in release mode for faster performance.";
 
@@ -54,6 +48,11 @@ namespace FinderOuter.ViewModels
 #else
                 false;
 #endif
+
+        public static string UnstableWarning => "Warning: You are running an unstable version. Make sure you understand the changes " +
+            "after the previous stable release.";
+
+        public static bool IsUnstable => Version.Revision != 0;
 
 
         public bool IsOptionSelected => SelectedOption is not null;

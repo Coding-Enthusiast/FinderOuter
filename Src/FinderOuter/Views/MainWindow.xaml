@@ -4,10 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
-        mc:Ignorable="d" d:DesignHeight="700" d:DesignWidth="1000"
+        mc:Ignorable="d" d:DesignHeight="750" d:DesignWidth="1000"
         x:Class="FinderOuter.Views.MainWindow"
-        Height="700"
-        MinHeight="700"
+        Height="750"
+        MinHeight="750"
         Width="1020"
         MinWidth="830"
         Icon="/Assets/Icon.ico"
@@ -27,7 +27,7 @@
   <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
     <!--Left side collumn (containing option list, warning, version, about button)-->
-    <Grid RowDefinitions="*,auto,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
+    <Grid RowDefinitions="*,auto,auto,auto" Grid.Column="0" Grid.Row="0">
       <ListBox Items="{Binding OptionList}"
                SelectedItem="{Binding SelectedOption}"
                SelectionMode="Toggle"
@@ -61,16 +61,22 @@
         </ListBox.DataTemplates>
       </ListBox>
 
-      <TextBlock Text="{Binding DebugWarning}"
-                 IsVisible="{Binding IsDebug}"
+      <TextBlock Text="{Binding UnstableWarning}"
+                 IsVisible="{Binding IsUnstable}"
                  TextWrapping="Wrap"
-                 FontSize="18"
                  FontWeight="Bold"
                  Foreground="Red"
                  Margin="3"
                  Grid.Row="1"/>
+      <TextBlock Text="{Binding DebugWarning}"
+                 IsVisible="{Binding IsDebug}"
+                 TextWrapping="Wrap"
+                 FontWeight="Bold"
+                 Foreground="Red"
+                 Margin="3"
+                 Grid.Row="2"/>
 
-      <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="4" Background="#e5e5e5">
+      <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
         <Button Command="{Binding OpenAbout}"
                 ToolTip.Tip="About and Donate"
                 BorderThickness="0"
@@ -92,7 +98,7 @@
     </Grid>
 
     <!--Right side collumn (containing find button and selected VM)-->
-    <Grid Margin="3,0,0,0" RowDefinitions="auto,auto,*,*" Grid.Column="1" Grid.Row="0">
+    <Grid Margin="3,0,0,0" RowDefinitions="auto,auto,*,180" Grid.Column="1" Grid.Row="0">
       <Grid ColumnDefinitions="*,auto" Grid.Row="0">
         <Button Content="Find!"
                 Command="{Binding SelectedOption.FindCommand}"
