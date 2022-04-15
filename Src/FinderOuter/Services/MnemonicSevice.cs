@@ -12,7 +12,6 @@ using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -36,17 +35,13 @@ namespace FinderOuter.Services
         private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
 
-        internal static readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
-        private uint[] wordIndexes;
-        private int[] missingIndexes;
         // TODO: this could be converted to SHA512 working vector and then leave the compression 
         //       to SetBip32() after setting HMAC key
         private byte[] pbkdf2Salt;
         private BIP0032Path path;
         private ICompareService comparer;
-
-        private int missCount, maxMnBufferLen;
-        private string[] words;
+        private int maxMnBufferLen;
+        private MnemonicSearchSpace searchSpace;
 
 
         public unsafe bool SetBip32(byte* mnPt, int mnLen, ulong* bigBuffer, ICompareService comparer)
@@ -401,6 +396,20 @@ namespace FinderOuter.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(Permutation* items, int len)
+        {
+            for (int i = len - 1; i >= 0; i--)
+            {
+                if (items[i].Increment())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe bool MoveNext(uint* items, int len)
         {
             for (int i = len - 1; i >= 0; --i)
@@ -423,7 +432,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop24(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -431,19 +439,26 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (uint* wrd = &localWIndex[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+
+            fixed (Permutation* itemsPt = &permutations[0]) fixed (uint* wrd = &localWIndex[0])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
                 pt[16] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 256;
-                wrd[firstIndex] = (uint)firstItem;
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -453,9 +468,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -488,7 +503,7 @@ namespace FinderOuter.Services
                             return;
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -496,28 +511,31 @@ namespace FinderOuter.Services
 
         private unsafe void Loop24()
         {
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => Loop24(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop24(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (uint* wrd = &wordIndexes[0])
-                fixed (int* mi = &missingIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
+                fixed (int* mi = &searchSpace.missingIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
                     pt[16] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 256;
 
-                    for (uint item = 0; item < 2048; item++)
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         // 0000_0000 0000_0000 0000_0111 1111_1111 -> 1111_1111 1110_0000 0000_0000 0000_0000
                         // 0000_0000 0000_0000 0000_0222 2222_2222 -> 0000_0000 0002_2222 2222_2200 0000_0000
@@ -593,7 +611,7 @@ namespace FinderOuter.Services
                                 return;
                             }
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
@@ -601,7 +619,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -609,19 +626,27 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+
+            fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
                 pt[15] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 224;
-                wrd[firstIndex] = (uint)firstItem;
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -631,9 +656,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -665,7 +690,7 @@ namespace FinderOuter.Services
                             return;
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -673,27 +698,30 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21()
         {
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => Loop21(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop21(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (uint* wrd = &wordIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
                     pt[15] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 224;
 
-                    for (uint item = 0; item < 2048; item++)
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
                         pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
@@ -722,7 +750,7 @@ namespace FinderOuter.Services
                                 break;
                             }
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
@@ -730,7 +758,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop18(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -738,19 +765,27 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+
+            fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
                 pt[14] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 192;
-                wrd[firstIndex] = (uint)firstItem;
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -760,9 +795,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -793,7 +828,7 @@ namespace FinderOuter.Services
                             return;
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -801,27 +836,30 @@ namespace FinderOuter.Services
 
         private unsafe void Loop18()
         {
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => Loop18(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop18(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (uint* wrd = &wordIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
                     pt[14] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 192;
 
-                    for (uint item = 0; item < 2048; item++)
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
                         pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
@@ -849,7 +887,7 @@ namespace FinderOuter.Services
                                 break;
                             }
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
@@ -857,7 +895,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop15(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -865,20 +902,27 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
 
+            fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
                 pt[13] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 160;
-                wrd[firstIndex] = (uint)firstItem;
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -888,9 +932,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -920,7 +964,7 @@ namespace FinderOuter.Services
                             return;
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -928,27 +972,30 @@ namespace FinderOuter.Services
 
         private unsafe void Loop15()
         {
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => Loop15(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop15(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (uint* wrd = &wordIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
                     pt[13] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 160;
 
-                    for (uint item = 0; item < 2048; item++)
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
                         pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
@@ -975,7 +1022,7 @@ namespace FinderOuter.Services
                                 break;
                             }
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
@@ -984,7 +1031,6 @@ namespace FinderOuter.Services
 
         private unsafe void Loop12(int firstItem, int firstIndex, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -992,21 +1038,28 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
 
+            fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
                 pt[12] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 128;
 
-                wrd[firstIndex] = (uint)firstItem;
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -1016,9 +1069,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -1047,7 +1100,7 @@ namespace FinderOuter.Services
                             return;
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -1055,29 +1108,32 @@ namespace FinderOuter.Services
 
         private unsafe void Loop12()
         {
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => Loop12(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop12(firstItem, firstIndex, state));
             }
             else
             {
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (uint* wrd = &wordIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
                     pt[12] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 128;
 
-                    for (uint item = 0; item < 2048; item++)
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         pt[8] = wrd[0] << 21 | wrd[1] << 10 | wrd[2] >> 1;
                         pt[9] = wrd[2] << 31 | wrd[3] << 20 | wrd[4] << 9 | wrd[5] >> 2;
@@ -1103,7 +1159,7 @@ namespace FinderOuter.Services
                                 break;
                             }
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
@@ -1112,7 +1168,6 @@ namespace FinderOuter.Services
 
         private unsafe void LoopElectrum(int firstItem, int firstIndex, ulong mask, ulong expected, ParallelLoopState loopState)
         {
-            uint[] missingItems = new uint[missCount - 1];
             ICompareService localComp = comparer.Clone();
 
             byte[] mnBuffer = new byte[maxMnBufferLen];
@@ -1120,17 +1175,26 @@ namespace FinderOuter.Services
             byte[][] localCopy = new byte[allWordsBytes.Length][];
             Array.Copy(allWordsBytes, localCopy, allWordsBytes.Length);
 
-            uint[] localWIndex = new uint[wordIndexes.Length];
-            Array.Copy(wordIndexes, localWIndex, wordIndexes.Length);
+            uint[] localWIndex = new uint[searchSpace.wordIndexes.Length];
+            Array.Copy(searchSpace.wordIndexes, localWIndex, searchSpace.wordIndexes.Length);
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             ulong* hPt = bigBuffer;
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
-            fixed (uint* wrd = &localWIndex[0], itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[1])
+            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+
+            fixed (Permutation* itemsPt = &permutations[0])
+            fixed (uint* wrd = &localWIndex[0])
+            fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
             {
-                wrd[firstIndex] = (uint)firstItem;
+                for (int i = 0; i < permutations.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                }
+
+                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
 
                 do
                 {
@@ -1140,9 +1204,9 @@ namespace FinderOuter.Services
                     }
 
                     int j = 0;
-                    foreach (uint item in missingItems)
+                    foreach (Permutation item in permutations)
                     {
-                        wrd[mi[j]] = item;
+                        wrd[mi[j]] = item.GetValue();
                         j++;
                     }
 
@@ -1182,7 +1246,7 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         break;
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, permutations.Length));
             }
 
             report.IncrementProgress();
@@ -1216,25 +1280,28 @@ namespace FinderOuter.Services
                 return;
             }
 
-            if (missCount > 1)
+            if (searchSpace.missCount > 1)
             {
-                report.SetProgressStep(2048);
-                int firstIndex = missingIndexes[0];
-                Parallel.For(0, 2048, (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
+                report.SetProgressStep(searchSpace.permutationCounts[0]);
+                int firstIndex = searchSpace.missingIndexes[0];
+                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
             }
             else
             {
-                int misIndex = missingIndexes[0];
+                int misIndex = searchSpace.missingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 ulong* hPt = bigBuffer;
                 ulong* wPt = bigBuffer + Sha512Fo.HashStateSize;
-                fixed (uint* wrd = &wordIndexes[0])
+                fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
+                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
                 {
-                    for (uint item = 0; item < 2048; item++)
+                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+
+                    do
                     {
-                        wrd[misIndex] = item;
+                        wrd[misIndex] = item.GetValue();
 
                         int mnLen = 0;
                         for (int i = 0; i < 12; i++)
@@ -1271,13 +1338,12 @@ namespace FinderOuter.Services
                             SetResultParallel(mnPt, mnLen);
                             break;
                         }
-                    }
+                    } while (item.Increment());
                 }
             }
         }
 
 
-        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(2048, missCount);
 
         public static bool TrySetWordList(BIP0039.WordLists wl, out string[] allWords, out int maxWordLen)
         {
@@ -1306,54 +1372,6 @@ namespace FinderOuter.Services
         public static int GetSeedMaxByteSize(int seedLen, int maxWordLen) => (seedLen * maxWordLen) + (seedLen - 1);
 
 
-        public bool TrySplitMnemonic(string mnemonic, char missingChar, string[] allWords)
-        {
-            if (string.IsNullOrWhiteSpace(mnemonic))
-            {
-                return report.Fail("Mnemonic can not be null or empty.");
-            }
-            else
-            {
-                words = mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (!allowedWordLengths.Contains(words.Length))
-                {
-                    return report.Fail("Invalid mnemonic length.");
-                }
-
-                string missCharStr = new(new char[] { missingChar });
-                bool invalidWord = false;
-                for (int i = 0; i < words.Length; i++)
-                {
-                    if (words[i] != missCharStr && !allWords.Contains(words[i]))
-                    {
-                        invalidWord = true;
-                        report.Fail($"Given mnemonic contains invalid word at index {i} ({words[i]}).");
-                    }
-                }
-                if (invalidWord)
-                {
-                    words = null;
-                    return false;
-                }
-                missCount = words.Count(s => s == missCharStr);
-                wordIndexes = new uint[words.Length];
-                missingIndexes = new int[missCount];
-                for (int i = 0, j = 0; i < words.Length; i++)
-                {
-                    if (words[i] != missCharStr)
-                    {
-                        wordIndexes[i] = (uint)Array.IndexOf(allWords, words[i]);
-                    }
-                    else
-                    {
-                        missingIndexes[j] = i;
-                        j++;
-                    }
-                }
-
-                return true;
-            }
-        }
 
         public void SetPbkdf2Salt(string pass)
         {
@@ -1387,35 +1405,27 @@ namespace FinderOuter.Services
         }
 
 
-        public async void FindMissing(string mnemonic, char missChar, string pass, string extra, InputType extraType,
-                                      string path, MnemonicTypes mnType, BIP0039.WordLists wl,
-                                      ElectrumMnemonic.MnemonicType elecMnType)
+        public async void FindMissing(MnemonicSearchSpace searchSpace, string pass, string path, string extra, InputType extraType)
         {
             report.Init();
 
             // TODO: implement Electrum seed recovery with other word lists (they need normalization)
-            if (mnType == MnemonicTypes.Electrum && wl != BIP0039.WordLists.English)
+            if (searchSpace.mnType == MnemonicTypes.Electrum && searchSpace.wl != BIP0039.WordLists.English)
                 report.Fail("Only English words are currently supported for Electrum mnemonics.");
-            else if (!inputService.IsMissingCharValid(missChar))
-                report.Fail("Missing character is not accepted.");
-            else if (!TrySetWordList(wl, out string[] allWords, out int maxWordLen))
-                report.Fail($"Could not find {wl} word list among resources.");
-            else if (!TrySplitMnemonic(mnemonic, missChar, allWords))
-                return;
             else
             {
-                if (missCount == 0)
+                if (searchSpace.missCount == 0)
                 {
                     try
                     {
-                        BIP0032 temp = mnType switch
+                        BIP0032 temp = searchSpace.mnType switch
                         {
-                            MnemonicTypes.BIP39 => new BIP0039(mnemonic, wl, pass),
-                            MnemonicTypes.Electrum => new ElectrumMnemonic(mnemonic, wl, pass),
+                            MnemonicTypes.BIP39 => new BIP0039(searchSpace.mnemonic, searchSpace.wl, pass),
+                            MnemonicTypes.Electrum => new ElectrumMnemonic(searchSpace.mnemonic, searchSpace.wl, pass),
                             _ => throw new ArgumentException("Undefined mnemonic type.")
                         };
 
-                        report.Pass($"Given input is a valid {mnType} mnemonic.");
+                        report.Pass($"Given input is a valid {searchSpace.mnType} mnemonic.");
 
                         try
                         {
@@ -1457,11 +1467,11 @@ namespace FinderOuter.Services
                 }
 
 
-                maxMnBufferLen = GetSeedMaxByteSize(words.Length, maxWordLen);
+                maxMnBufferLen = GetSeedMaxByteSize(searchSpace.wordCount, searchSpace.maxWordLen);
 
-                for (uint i = 0; i < allWords.Length; i++)
+                for (uint i = 0; i < searchSpace.allWords.Length; i++)
                 {
-                    allWordsBytes[i] = Encoding.UTF8.GetBytes($"{allWords[i]} ");
+                    allWordsBytes[i] = Encoding.UTF8.GetBytes($"{searchSpace.allWords[i]} ");
                 }
 
                 try
@@ -1480,17 +1490,19 @@ namespace FinderOuter.Services
                     return;
                 }
 
-                report.AddMessageSafe($"There are {words.Length} words in the given mnemonic with {missCount} missing.");
-                report.SetTotal(2048, missCount);
+                report.AddMessageSafe($"There are {searchSpace.wordCount} words in the given mnemonic with {searchSpace.missCount} missing.");
+                report.SetTotal(searchSpace.GetTotal());
+
+                this.searchSpace = searchSpace;
 
                 report.Timer.Start();
 
-                if (mnType == MnemonicTypes.BIP39)
+                if (searchSpace.mnType == MnemonicTypes.BIP39)
                 {
                     SetPbkdf2Salt(pass);
                     await Task.Run(() =>
                     {
-                        switch (words.Length)
+                        switch (searchSpace.wordCount)
                         {
                             case 12:
                                 Loop12();
@@ -1510,9 +1522,9 @@ namespace FinderOuter.Services
                         }
                     });
                 }
-                else if (mnType == MnemonicTypes.Electrum)
+                else if (searchSpace.mnType == MnemonicTypes.Electrum)
                 {
-                    if (elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
+                    if (searchSpace.elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
                     {
                         report.Fail("Undefined mnemonic type.");
                         report.Timer.Reset();
@@ -1520,7 +1532,7 @@ namespace FinderOuter.Services
                     }
 
                     SetPbkdf2SaltElectrum(pass);
-                    await Task.Run(() => LoopElectrum(elecMnType));
+                    await Task.Run(() => LoopElectrum(searchSpace.elecMnType));
                 }
                 else
                 {

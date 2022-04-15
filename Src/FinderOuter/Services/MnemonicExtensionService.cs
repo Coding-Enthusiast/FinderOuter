@@ -470,7 +470,7 @@ namespace FinderOuter.Services
             else
             {
                 string[] words = mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (!MnemonicSevice.allowedWordLengths.Contains(words.Length))
+                if (!MnemonicSearchSpace.allowedWordLengths.Contains(words.Length))
                 {
                     return report.Fail("Invalid mnemonic length.");
                 }

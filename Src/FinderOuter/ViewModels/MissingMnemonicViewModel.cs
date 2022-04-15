@@ -220,52 +220,29 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private string[] allWords;
+        readonly MnemonicSearchSpace searchSpace = new();
+
 
         public IReactiveCommand StartCommand { get; }
         private void Start()
         {
-            IsProcessed = false;
             Index = 0;
-            if (string.IsNullOrWhiteSpace(Mnemonic))
-            {
-                Result.AddMessage("Enter something first.");
-            }
-            else
-            {
-                allWords = BIP0039.GetAllWords(SelectedWordListType);
-                string[] words = Mnemonic.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (!new[] { 12, 15, 18, 21, 24 }.Contains(words.Length))
-                {
-                    Result.AddMessage("Invalid mnemonic length.");
-                    return;
-                }
+            Max = 0;
+            IsProcessed = searchSpace.Process(Mnemonic, SelectedMissingChar, SelectedMnemonicType, SelectedWordListType, SelectedElectrumMnType, out string error);
 
-                string missCharStr = new(new char[] { SelectedMissingChar });
-                bool invalidWord = false;
-                for (int i = 0; i < words.Length; i++)
-                {
-                    if (words[i] != missCharStr && !allWords.Contains(words[i]))
-                    {
-                        invalidWord = true;
-                        Result.AddMessage($"Given mnemonic contains invalid word at index {i} ({words[i]}).");
-                    }
-                }
-                if (invalidWord)
-                {
-                    return;
-                }
-
-                int missCount = words.Count(s => s == missCharStr);
-                allItems = new ObservableCollection<string>[missCount];
+            if (IsProcessed)
+            {
+                allItems = new ObservableCollection<string>[searchSpace.missCount];
                 for (int i = 0; i < allItems.Length; i++)
                 {
                     allItems[i] = new();
                 }
-
-                IsProcessed = true;
                 Max = allItems.Length;
                 Index = 1;
+            }
+            else
+            {
+                Result.AddMessage(error);
             }
         }
 
@@ -309,7 +286,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddAllCommand { get; }
         private void AddAll()
         {
-            AddToList(allWords);
+            AddToList(searchSpace.allWords);
         }
 
         public IReactiveCommand ClearAllCommand { get; }
@@ -328,14 +305,14 @@ namespace FinderOuter.ViewModels
             else
             {
                 int threshold = 2;
-                AddToList(allWords.Where(w => w.LevenshteinDistance(ToAdd) < threshold));
+                AddToList(searchSpace.allWords.Where(w => w.LevenshteinDistance(ToAdd) < threshold));
             }
         }
 
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
-            if (!string.IsNullOrEmpty(ToAdd) && allWords.Contains(ToAdd))
+            if (!string.IsNullOrEmpty(ToAdd) && searchSpace.allWords.Contains(ToAdd))
             {
                 if (!CurrentItems.Contains(ToAdd))
                 {
@@ -353,7 +330,7 @@ namespace FinderOuter.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
-                AddToList(allWords.Where(x => x.StartsWith(ToAdd)));
+                AddToList(searchSpace.allWords.Where(x => x.StartsWith(ToAdd)));
             }
         }
 
@@ -362,7 +339,7 @@ namespace FinderOuter.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
-                AddToList(allWords.Where(x => x.EndsWith(ToAdd)));
+                AddToList(searchSpace.allWords.Where(x => x.EndsWith(ToAdd)));
             }
         }
 
@@ -371,7 +348,7 @@ namespace FinderOuter.ViewModels
         {
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
-                AddToList(allWords.Where(x => x.Contains(ToAdd)));
+                AddToList(searchSpace.allWords.Where(x => x.Contains(ToAdd)));
             }
         }
 
@@ -379,10 +356,29 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            MnService.FindMissing(Mnemonic, SelectedMissingChar, PassPhrase, AdditionalInfo, SelectedInputType.Value,
-                                  KeyPath,
-                                  SelectedMnemonicType, SelectedWordListType,
-                                  SelectedElectrumMnType);
+            if (!searchSpace.IsProcessed)
+            {
+                Start();
+                foreach (ObservableCollection<string> item in allItems)
+                {
+                    foreach (string word in searchSpace.allWords)
+                    {
+                        item.Add(word);
+                    }
+                }
+            }
+
+            if (IsProcessed)
+            {
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                {
+                    MnService.FindMissing(searchSpace, PassPhrase, KeyPath, AdditionalInfo, SelectedInputType.Value);
+                }
+                else
+                {
+                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                }
+            }
         }
 
 
