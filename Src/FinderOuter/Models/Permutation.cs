@@ -3,15 +3,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using System.Diagnostics;
-
 namespace FinderOuter.Models
 {
     public unsafe struct Permutation
     {
-        public Permutation(int maximum, uint* values)
+        public Permutation(int size, uint* values)
         {
-            max = maximum;
+            max = size;
             pt = values;
             index = 0;
         }
@@ -24,11 +22,6 @@ namespace FinderOuter.Models
 
         public uint GetValue() => pt[index];
 
-        public uint GetNextValue()
-        {
-            Debug.Assert(index + 1 < max);
-            return pt[index++];
-        }
 
         public bool Increment()
         {
