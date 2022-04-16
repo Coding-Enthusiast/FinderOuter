@@ -1362,13 +1362,12 @@ namespace FinderOuter.Services
         }
 
         /// <summary>
-        /// Returns a buffer to hold byte array representation of the mnemonic with maximum possible length.
+        /// Returns maximum possible length of the byte array representation of the mnemonic.
         /// Number of words * maximum word byte length + number of spaces in between
         /// </summary>
         /// <param name="seedLen"></param>
         /// <param name="maxWordLen"></param>
         /// <returns></returns>
-        public static byte[] GetSeedByte(int seedLen, int maxWordLen) => new byte[(seedLen * maxWordLen) + (seedLen - 1)];
         public static int GetSeedMaxByteSize(int seedLen, int maxWordLen) => (seedLen * maxWordLen) + (seedLen - 1);
 
 

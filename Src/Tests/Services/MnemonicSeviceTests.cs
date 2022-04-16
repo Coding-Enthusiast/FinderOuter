@@ -61,16 +61,16 @@ namespace Tests.Services
         }
 
         [Fact]
-        public void GetSeedByteTest()
+        public void GetSeedMaxByteSizeTest()
         {
-            byte[] actual = MnemonicSevice.GetSeedByte(12, 3);
-            Assert.Equal(47, actual.Length);
+            int actual = MnemonicSevice.GetSeedMaxByteSize(12, 3);
+            Assert.Equal(47, actual);
 
-            actual = MnemonicSevice.GetSeedByte(12, 8);
-            Assert.Equal(107, actual.Length);
+            actual = MnemonicSevice.GetSeedMaxByteSize(12, 8);
+            Assert.Equal(107, actual);
 
-            actual = MnemonicSevice.GetSeedByte(24, 33);
-            Assert.Equal(815, actual.Length);
+            actual = MnemonicSevice.GetSeedMaxByteSize(24, 33);
+            Assert.Equal(815, actual);
         }
     }
 }
