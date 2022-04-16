@@ -449,16 +449,18 @@ namespace FinderOuter.Services
             fixed (Permutation* itemsPt = &permutations[0]) fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
                 pt[16] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 256;
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
@@ -637,16 +639,18 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
                 pt[15] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 224;
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
@@ -776,16 +780,18 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
                 pt[14] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 192;
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
@@ -913,16 +919,18 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
                 pt[13] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 160;
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
@@ -1049,17 +1057,19 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
                 pt[12] = 0b10000000_00000000_00000000_00000000U;
                 pt[23] = 128;
 
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
@@ -1187,14 +1197,16 @@ namespace FinderOuter.Services
             fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[searchSpace.permutationCounts[0]])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
             {
+                uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], valPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
                 }
 
-                wrd[firstIndex] = searchSpace.allPermutationValues[firstItem];
+                wrd[firstIndex] = valPt[firstItem];
 
                 do
                 {
