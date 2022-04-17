@@ -7,7 +7,9 @@ using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace FinderOuter.ViewModels
@@ -22,6 +24,18 @@ namespace FinderOuter.ViewModels
             WinMan = new WindowManager();
             MissingChars = ConstantsFO.MissingSymbols.ToCharArray();
             SelectedMissingChar = MissingChars[0];
+
+            IObservable<bool> isNextEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
+                                                                (i, max, b) => b && i < max);
+            IObservable<bool> isPrevEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
+                                                                (i, max, b) => b && i > 1);
+            IObservable<bool> canRemove = this.WhenAnyValue(x => x.SelectedItem, (s) => !string.IsNullOrEmpty(s));
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            NextCommand = ReactiveCommand.Create(Next, isNextEnabled);
+            PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
+            RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
+            ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
         }
 
 
@@ -52,6 +66,101 @@ namespace FinderOuter.ViewModels
         }
 
         public static string MissingToolTip => ConstantsFO.MissingToolTip;
+
+        private ObservableCollection<string> _items;
+        public ObservableCollection<string> CurrentItems
+        {
+            get => _items;
+            protected set => this.RaiseAndSetIfChanged(ref _items, value);
+        }
+
+        private string _selItem;
+        public string SelectedItem
+        {
+            get => _selItem;
+            set => this.RaiseAndSetIfChanged(ref _selItem, value);
+        }
+
+        protected ObservableCollection<string>[] allItems;
+
+        private string _step;
+        public string SelectedStep
+        {
+            get => _step;
+            set => this.RaiseAndSetIfChanged(ref _step, value);
+        }
+
+
+        private int _max;
+        public int Max
+        {
+            get => _max;
+            set => this.RaiseAndSetIfChanged(ref _max, value);
+        }
+
+        private int _index;
+        public int Index
+        {
+            get => _index;
+            protected set
+            {
+                if (_index != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _index, value);
+                    if (Index == 0)
+                    {
+                        CurrentItems = null;
+                        SelectedStep = string.Empty;
+                    }
+                    else
+                    {
+                        CurrentItems = allItems[value - 1];
+                        SelectedStep = $"{value}/{Max}";
+                    }
+                }
+            }
+        }
+
+        private bool _isProcessed;
+        public bool IsProcessed
+        {
+            get => _isProcessed;
+            set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
+        }
+
+        public IReactiveCommand StartCommand { get; protected set; }
+
+        public IReactiveCommand NextCommand { get; }
+        public void Next()
+        {
+            Index++;
+        }
+
+        public IReactiveCommand PreviousCommand { get; }
+        public void Previous()
+        {
+            Index--;
+        }
+
+        private string _toAdd;
+        public string ToAdd
+        {
+            get => _toAdd;
+            set => this.RaiseAndSetIfChanged(ref _toAdd, value.ToLowerInvariant().Trim());
+        }
+
+        public IReactiveCommand RemoveSelectedCommand { get; }
+        private void RemoveSelected()
+        {
+            CurrentItems.Remove(SelectedItem);
+        }
+
+        public IReactiveCommand ClearAllCommand { get; }
+        private void ClearAll()
+        {
+            CurrentItems.Clear();
+        }
+
 
         public bool HasExample { get; protected set; }
         protected int exampleIndex, totalExampleCount;

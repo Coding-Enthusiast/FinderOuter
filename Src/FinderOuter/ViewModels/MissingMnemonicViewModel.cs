@@ -50,19 +50,10 @@ namespace FinderOuter.ViewModels
 
             SetExamples(GetExampleData());
 
-            IObservable<bool> isNextEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
-                                                                (i, max, b) => b && i < max);
-            IObservable<bool> isPrevEnabled = this.WhenAnyValue(x => x.Index, x => x.Max, x => x.IsProcessed,
-                                                                (i, max, b) => b && i > 1);
-            IObservable<bool> canRemove = this.WhenAnyValue(x => x.SelectedItem, (s) => !string.IsNullOrEmpty(s));
             IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
 
             StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
-            NextCommand = ReactiveCommand.Create(Next, isNextEnabled);
-            PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
-            RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
             AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
-            ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
             AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
             AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
             AddStartCommand = ReactiveCommand.Create(AddStart, canAdd);
@@ -79,6 +70,9 @@ namespace FinderOuter.ViewModels
             $"{nameof(SelectedMissingChar)} parameter.{Environment.NewLine}" +
             $"Note that the path is the full BIP-32 defined key/address path not the parent master key path and each " +
             $"number is a zero-based index (first address is 0, second is 1,...). Example: m/44'/0'/0'/0";
+
+
+        private readonly MnemonicSearchSpace searchSpace = new();
 
         public MnemonicSevice MnService { get; }
 
@@ -158,72 +152,6 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private ObservableCollection<string> _items;
-        public ObservableCollection<string> CurrentItems
-        {
-            get => _items;
-            private set => this.RaiseAndSetIfChanged(ref _items, value);
-        }
-
-        private string _selItem;
-        public string SelectedItem
-        {
-            get => _selItem;
-            set => this.RaiseAndSetIfChanged(ref _selItem, value);
-        }
-
-        private ObservableCollection<string>[] allItems;
-
-        private string _step;
-        public string SelectedStep
-        {
-            get => _step;
-            set => this.RaiseAndSetIfChanged(ref _step, value);
-        }
-
-
-        private int _max;
-        public int Max
-        {
-            get => _max;
-            set => this.RaiseAndSetIfChanged(ref _max, value);
-        }
-
-        private int _index;
-        public int Index
-        {
-            get => _index;
-            private set
-            {
-                if (_index != value)
-                {
-                    this.RaiseAndSetIfChanged(ref _index, value);
-                    if (Index == 0)
-                    {
-                        CurrentItems = null;
-                        SelectedStep = string.Empty;
-                    }
-                    else
-                    {
-                        CurrentItems = allItems[value - 1];
-                        SelectedStep = $"{value}/{Max}";
-                    }
-                }
-            }
-        }
-
-        private bool _isProcessed;
-        public bool IsProcessed
-        {
-            get => _isProcessed;
-            set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
-        }
-
-
-        readonly MnemonicSearchSpace searchSpace = new();
-
-
-        public IReactiveCommand StartCommand { get; }
         private void Start()
         {
             Index = 0;
@@ -246,32 +174,6 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        public IReactiveCommand NextCommand { get; }
-        public void Next()
-        {
-            Index++;
-        }
-
-        public IReactiveCommand PreviousCommand { get; }
-        public void Previous()
-        {
-            Index--;
-        }
-
-        private string _toAdd;
-        public string ToAdd
-        {
-            get => _toAdd;
-            set => this.RaiseAndSetIfChanged(ref _toAdd, value.ToLowerInvariant().Trim());
-        }
-
-
-        public IReactiveCommand RemoveSelectedCommand { get; }
-        private void RemoveSelected()
-        {
-            CurrentItems.Remove(SelectedItem);
-        }
-
         private void AddToList(IEnumerable<string> items)
         {
             foreach (string item in items)
@@ -287,12 +189,6 @@ namespace FinderOuter.ViewModels
         private void AddAll()
         {
             AddToList(searchSpace.allWords);
-        }
-
-        public IReactiveCommand ClearAllCommand { get; }
-        private void ClearAll()
-        {
-            CurrentItems.Clear();
         }
 
         public IReactiveCommand AddSimilarCommand { get; }
