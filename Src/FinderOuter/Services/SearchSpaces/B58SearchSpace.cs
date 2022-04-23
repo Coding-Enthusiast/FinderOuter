@@ -20,6 +20,7 @@ namespace FinderOuter.Services.SearchSpaces
 
         private readonly InputService inputService;
 
+        public readonly char[] AllChars = ConstantsFO.Base58Chars.ToCharArray();
         public string key;
         public int missCount;
         bool isComp;
@@ -76,6 +77,7 @@ namespace FinderOuter.Services.SearchSpaces
                 if (inputService.CanBePrivateKey(key, out error))
                 {
                     missingIndexes = new int[missCount];
+                    multMissingIndexes = new int[missCount];
                     isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
 
                     const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
@@ -140,6 +142,7 @@ namespace FinderOuter.Services.SearchSpaces
             {
                 const int uLen = 7;
                 missingIndexes = new int[missCount];
+                multMissingIndexes = new int[missCount];
                 preComputed = new ulong[uLen];
                 multPow58 = GetShiftedMultPow58(address.Length, uLen, 24);
 
@@ -206,8 +209,8 @@ namespace FinderOuter.Services.SearchSpaces
             else
             {
                 missingIndexes = new int[missCount];
+                multMissingIndexes = new int[missCount];
                 const int uLen = 11;
-                missingIndexes = new int[missCount];
                 preComputed = new ulong[uLen];
                 multPow58 = GetShiftedMultPow58(bip38.Length, uLen, 8);
 
