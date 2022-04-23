@@ -3,14 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="250"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FinderOuter.Views.MissingBase58View">
   <Design.DataContext>
     <vm:MissingBase58ViewModel/>
   </Design.DataContext>
 
-  <Grid ColumnDefinitions="*,auto" RowDefinitions="*,auto">
-    <TextBox Text="{Binding Input}" Watermark="Base-58 encoded string"
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
+    <TextBox Text="{Binding Input}"
+             Watermark="Base-58 encoded string"
              Grid.Column="0"
              Grid.Row="0"/>
     <Button Classes="Help"
@@ -19,20 +20,14 @@
             Grid.Row="0"/>
 
     <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1" Grid.Row="0">
-      <TextBlock Text="Missing char:"
-                 HorizontalAlignment="Center"/>
-      <TextBox Text="{Binding MissingChar}"
-               TextAlignment="Center"
-               VerticalContentAlignment="Center"
-               ToolTip.Tip="{Binding MissingToolTip}"
-               Height="40"
-               Width="40"/>
-
-      <TextBlock Text="Input type:"
-                 HorizontalAlignment="Center"
-                 Margin="0,10,0,0"/>
+      <ComboBox Items="{Binding MissingChars}"
+                SelectedItem="{Binding SelectedMissingChar}"
+                ToolTip.Tip="{Binding MissingToolTip}"
+                Margin="1"/>
       <ComboBox Items="{Binding InputTypeList}"
-                SelectedItem="{Binding SelectedInputType}"/>
+                SelectedItem="{Binding SelectedInputType}"
+                ToolTip.Tip="Input type"
+                Margin="1"/>
     </StackPanel>
 
     <TextBox Text="{Binding ExtraInput}"
@@ -41,15 +36,76 @@
              Grid.Row="1"/>
     <ComboBox Items="{Binding ExtraInputTypeList}"
               SelectedItem="{Binding SelectedExtraInputType}"
+              Classes="DescriptiveItem"
               Grid.Column="1"
-              Grid.Row="1">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Value}"
-                     ToolTip.Tip="{Binding Description}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+              Grid.Row="1"/>
+
+    <Expander Header="Advanced (limit search space)" IsExpanded="True" Grid.Column="0" Grid.Row="3">
+      <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*">
+        <Button Content="Start"
+                Command="{Binding StartCommand}"
+                Width="70"
+                Grid.Column="0"
+                Grid.Row="0"/>
+        <Grid ColumnDefinitions="auto,*,auto" Margin="5,0,5,0" Grid.Column="1" Grid.Row="0">
+          <Button Content="&#60;"
+                  Command="{Binding PreviousCommand}"
+                  ToolTip.Tip="Previous missing char"
+                  Width="50"
+                  Grid.Column="0"/>
+          <TextBlock Text="{Binding SelectedStep}"
+                     TextAlignment="Center"
+                     Width="120"
+                     Grid.Column="1"/>
+          <Button Content="&#62;"
+                  Command="{Binding NextCommand}"
+                  ToolTip.Tip="Next missing char"
+                  Width="50"
+                  Grid.Column="2"/>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Spacing="5" Grid.Column="2" Grid.Row="0">
+          <TextBlock Text="Total: "/>
+          <TextBlock Text="{Binding CurrentItems.Count}"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*,*" Grid.Column="0" Grid.Row="1">
+          <TextBox Text="{Binding ToAdd}" Grid.ColumnSpan="2" Grid.Row="0" MinHeight="30"/>
+          <Button Content="Similar letters" Command="{Binding AddSimilarCommand}"
+                  Margin="2" Width="100"
+                  Grid.Column="0" Grid.Row="1"/>
+          <Button Content="Exact letter" Command="{Binding AddExactCommand}"
+                  Margin="2" Width="100"
+                  Grid.Column="1" Grid.Row="1"/>
+        </Grid>
+
+        <ListBox Items="{Binding CurrentItems}"
+                 SelectedItem="{Binding SelectedItem}"
+                 Height="130"
+                 Margin="3"
+                 Grid.Column="1" Grid.Row="1"/>
+
+        <Grid ColumnDefinitions="auto,auto" RowDefinitions="auto,auto,auto,auto" Grid.Column="2" Grid.Row="1">
+          <Button Content="Add all letters" Command="{Binding AddAllCommand}"
+                  Margin="0,0,2,0"
+                  Grid.Column="0" Grid.Row="0"/>
+          <Button Content="Add all lower case" Command="{Binding AddLowerCommand}"
+                  Margin="2,0,0,0"
+                  Grid.Column="1" Grid.Row="0"/>
+          <Button Content="Add all upper case" Command="{Binding AddUpperCommand}"
+                  Margin="0,0,2,0"
+                  Grid.Column="0" Grid.Row="1"/>
+          <Button Content="Add all numbers" Command="{Binding AddNumberCommand}"
+                  Margin="2,0,0,0"
+                  Grid.Column="1" Grid.Row="1"/>
+          <Button Content="Remove selected" Command="{Binding RemoveSelectedCommand}"
+                  Margin="0,10,2,0"
+                  Grid.Column="0" Grid.Row="2"/>
+          <Button Content="Clear list" Command="{Binding ClearAllCommand}"
+                  Margin="2,10,0,0"
+                  Grid.Column="1" Grid.Row="2"/>
+        </Grid>
+      </Grid>
+    </Expander>
 
   </Grid>
 </UserControl>

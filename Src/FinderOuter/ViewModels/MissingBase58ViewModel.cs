@@ -3,12 +3,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -21,9 +22,10 @@ namespace FinderOuter.ViewModels
             // Don't move this line, service must be instantiated here
             InputService inServ = new();
             b58Service = new Base58Service(Result);
+            searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input, x => x.MissingChar,
+                x => x.Input, x => x.SelectedMissingChar,
                 x => x.Result.CurrentState, (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
                             inServ.IsMissingCharValid(c) &&
@@ -41,6 +43,16 @@ namespace FinderOuter.ViewModels
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());
+
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            AddLowerCommand = ReactiveCommand.Create(AddLower, canAdd);
+            AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
+            AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
+            AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
+            AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
         }
 
 
@@ -50,13 +62,14 @@ namespace FinderOuter.ViewModels
             $"(full list can be found under Input type dropdown) that is missing some characters at known locations " +
             $"(eg. a damaged paper wallet) you can use this option to recover it.{Environment.NewLine}" +
             $"Enter the base-58 string below and replace its missing characters with the symbol " +
-            $"defined by {nameof(MissingChar)} parameter and press Find.{Environment.NewLine}" +
+            $"defined by MissingChar symbol and press Find.{Environment.NewLine}" +
             $"Exception: if you have a WIF private key missing up to 3 characters and you don't know the position of those " +
-            $"characters, there is no need to use {nameof(MissingChar)} parameter anymore, just enter the characters you have " +
+            $"characters, there is no need to use MissingChar symbol anymore, just enter the characters you have " +
             $"and press find.";
 
 
         private readonly Base58Service b58Service;
+        private readonly B58SearchSpace searchSpace;
 
         public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
@@ -89,17 +102,121 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _input2, value);
         }
 
-        private char _mis = '*';
-        public char MissingChar
+
+        private void Start()
         {
-            get => _mis;
-            set => this.RaiseAndSetIfChanged(ref _mis, value);
+            Index = 0;
+            Max = 0;
+            IsProcessed = searchSpace.Process(Input, SelectedMissingChar, SelectedInputType, out string error);
+
+            if (IsProcessed)
+            {
+                allItems = new ObservableCollection<string>[searchSpace.missCount];
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i] = new();
+                }
+                Max = allItems.Length;
+                Index = 1;
+            }
+            else
+            {
+                Result.AddMessage(error);
+            }
+        }
+
+        private void AddToList(IEnumerable<char> items)
+        {
+            foreach (char item in items)
+            {
+                if (!CurrentItems.Contains(item.ToString()))
+                {
+                    CurrentItems.Add(item.ToString());
+                }
+            }
+        }
+
+        public IReactiveCommand AddAllCommand { get; }
+        private void AddAll()
+        {
+            AddToList(searchSpace.AllChars);
+        }
+
+        public IReactiveCommand AddLowerCommand { get; }
+        private void AddLower()
+        {
+            AddToList(searchSpace.AllChars.Where(c => char.IsLower(c)));
+        }
+
+        public IReactiveCommand AddUpperCommand { get; }
+        private void AddUpper()
+        {
+            AddToList(searchSpace.AllChars.Where(c => char.IsUpper(c)));
+        }
+
+        public IReactiveCommand AddNumberCommand { get; }
+        private void AddNumber()
+        {
+            AddToList(searchSpace.AllChars.Where(c => char.IsDigit(c)));
+        }
+
+        public IReactiveCommand AddSimilarCommand { get; }
+        private void AddSimilar()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            {
+
+            }
+            else
+            {
+                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+            }
+        }
+
+        public IReactiveCommand AddExactCommand { get; }
+        private void AddExact()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            {
+                if (!CurrentItems.Contains(ToAdd))
+                {
+                    CurrentItems.Add(ToAdd);
+                }
+            }
+            else
+            {
+                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+            }
         }
 
 
         public override void Find()
         {
-            b58Service.Find(Input, MissingChar, SelectedInputType, ExtraInput, SelectedExtraInputType.Value);
+            b58Service.Find(Input, SelectedMissingChar, SelectedInputType, ExtraInput, SelectedExtraInputType.Value);
+
+            //if (!searchSpace.IsProcessed)
+            //{
+            //    Start();
+            //    foreach (ObservableCollection<string> item in allItems)
+            //    {
+            //        foreach (char c in searchSpace.AllChars)
+            //        {
+            //            item.Add(c.ToString());
+            //        }
+            //    }
+            //}
+
+            //if (IsProcessed)
+            //{
+            //    if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+            //    {
+            //        b58Service.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
+            //    }
+            //    else
+            //    {
+            //        Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+            //    }
+            //}
         }
 
         public void Example()
@@ -107,7 +224,7 @@ namespace FinderOuter.ViewModels
             object[] ex = GetNextExample();
 
             Input = (string)ex[0];
-            MissingChar = (char)ex[1];
+            SelectedMissingChar = MissingChars[(int)ex[1]];
 
             int temp1 = (int)ex[2];
             Debug.Assert(temp1 < InputTypeList.Count());
@@ -124,11 +241,11 @@ namespace FinderOuter.ViewModels
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, char, int, string, int, string>()
+            return new ExampleData<string, int, int, string, int, string>()
             {
                 {
                     "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNydYXYB9KF",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     null,
                     0,
@@ -138,7 +255,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "L53fCHmQh??p1B4JipfBtfeHZH7cAib?G9oK19?fiFzxHgAkz6JK",
-                    '?',
+                    Array.IndexOf(MissingChars, '?'),
                     0,
                     null,
                     0,
@@ -149,7 +266,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "5JBK1WUuytf9HURTCwCVmKghDUgqEs3NRa1dsKja4FgRBQ*****",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     null,
                     0,
@@ -164,7 +281,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "KxpWVF8Cr71MZi2vfgDjxdUCW5CovBsTZShoj7gtuMny********",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     "1DjPqd6oBjii7PQh7JY1yAmPpHEHPWcaF3",
                     0,
@@ -179,7 +296,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "KxpWVF8Cr71MZi2vfgDjxdUCW5CovBsTZShoj7gtu***********",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     "1DjPqd6oBjii7PQh7JY1yAmPpHEHPWcaF3",
                     0,
@@ -191,7 +308,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "5Kb8kLf9zgWQn*gidDA76*zPL6TsZZY36h**MssSzNy*YXYB9KF",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     null,
                     0,
@@ -204,7 +321,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "L53fCHmQhbNp1B4JipfBtfe**H7cA*bzG9o*19XfiF*xHgAkz6JK",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     null,
                     0,
@@ -215,7 +332,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     0,
                     null,
                     0,
@@ -226,7 +343,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "142viJrTYHA4TzryiEiuQkYk4Ay5Tfp***",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     1,
                     null,
                     0,
@@ -236,7 +353,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "39vipRmsscHCg**T7FHfq*UmCoNZ*oCygq",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     1,
                     null,
                     0,
@@ -246,7 +363,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s*DGhwP4*5o44cvXdoY7sRzhtp**o",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     2,
                     null,
                     0,
@@ -256,7 +373,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5**DGhwP4*5o44cvXdoY7sRzhtp**o",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     2,
                     null,
                     0,
