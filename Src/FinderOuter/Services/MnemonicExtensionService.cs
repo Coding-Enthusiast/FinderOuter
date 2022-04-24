@@ -5,10 +5,11 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
+using FinderOuter.Services.SearchSpaces;
 using System;
 using System.Diagnostics;
 using System.Linq;

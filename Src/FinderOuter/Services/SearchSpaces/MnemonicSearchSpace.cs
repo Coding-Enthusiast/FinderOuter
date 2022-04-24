@@ -4,13 +4,13 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Services;
+using FinderOuter.Models;
 using System;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace FinderOuter.Models
+namespace FinderOuter.Services.SearchSpaces
 {
     public class MnemonicSearchSpace
     {

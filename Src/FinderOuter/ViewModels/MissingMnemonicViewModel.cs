@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;

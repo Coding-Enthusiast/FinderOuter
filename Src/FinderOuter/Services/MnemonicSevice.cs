@@ -10,6 +10,7 @@ using FinderOuter.Backend.ECC;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
+using FinderOuter.Services.SearchSpaces;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
