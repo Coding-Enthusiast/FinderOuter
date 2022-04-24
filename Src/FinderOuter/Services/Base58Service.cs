@@ -19,6 +19,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using FinderOuter.Services.SearchSpaces;
 
 namespace FinderOuter.Services
 {
@@ -40,6 +41,7 @@ namespace FinderOuter.Services
         private int missingIndexeMultiplier = 1;
         private int missCount;
         private string keyToCheck;
+        private B58SearchSpace searchSpace;
 
 
         public enum InputType
@@ -382,6 +384,40 @@ namespace FinderOuter.Services
             report.FoundAnyResult = true;
         }
 
+        private unsafe void SetResultParallel(Permutation* itemPt, int firstItem, int misStart)
+        {
+            // Chances of finding more than 1 correct result is very small in base-58 and even if it happened 
+            // this method would be called in very long intervals, meaning UI updates here are not an issue.
+            report.AddMessageSafe($"Found a possible result (will continue checking the rest):");
+
+            char[] temp = searchSpace.key.ToCharArray();
+            if (misStart != 0)
+            {
+                temp[searchSpace.missingIndexes[0]] = searchSpace.AllChars[firstItem];
+            }
+            for (int i = misStart; i < searchSpace.missCount; i++)
+            {
+                temp[searchSpace.missingIndexes[i]] = searchSpace.AllChars[itemPt[i - misStart].GetValue()];
+            }
+
+            report.AddMessageSafe(new string(temp));
+            report.FoundAnyResult = true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(Permutation* items, int len)
+        {
+            for (int i = len - 1; i >= 0; i--)
+            {
+                if (items[i].Increment())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe bool MoveNext(uint* itemPt, int len)
         {
@@ -583,36 +619,57 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe void Loop21(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void Loop21(ulong[] precomputed, int firstItem, int misStart)
         {
-            uint[] temp = new uint[precomputed.Length];
+            Debug.Assert(searchSpace.missCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+
+            ulong[] temp = new ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[misStart])
+            fixed (ulong* pow = &searchSpace.multPow58[0], tmp = &temp[0], pre = &precomputed[0])
+            fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                if (misStart > 0)
+                {
+                    tempPt += searchSpace.permutationCounts[0];
+                }
+                for (int i = 0; i < items.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                }
+
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 28, 28);
+                    Buffer.MemoryCopy(pre, tmp, 56, 56); // 7x 8-bytes
                     int i = 0;
-                    foreach (uint keyItem in missingItems)
+                    foreach (Permutation item in items)
                     {
-                        ulong carry = 0;
-                        for (int k = 6, j = 0; k >= 0; k--, j++)
-                        {
-                            ulong result = (pow[(mi[i] * 7) + j] * (ulong)keyItem) + tmp[k] + carry;
-                            tmp[k] = (uint)result;
-                            carry = (uint)(result >> 32);
-                        }
-                        i++;
+                        // TODO: change 7 into a field from searchspace(?)
+                        int chunk = ((int)item.GetValue() * searchSpace.key.Length * 7) + mi[i++];
+
+                        tmp[0] += pow[0 + chunk];
+                        tmp[1] += pow[1 + chunk];
+                        tmp[2] += pow[2 + chunk];
+                        tmp[3] += pow[3 + chunk];
+                        tmp[4] += pow[4 + chunk];
+                        tmp[5] += pow[5 + chunk];
+                        tmp[6] += pow[6 + chunk];
                     }
 
-                    pt[8] = (tmp[0] << 24) | (tmp[1] >> 8);
-                    pt[9] = (tmp[1] << 24) | (tmp[2] >> 8);
-                    pt[10] = (tmp[2] << 24) | (tmp[3] >> 8);
-                    pt[11] = (tmp[3] << 24) | (tmp[4] >> 8);
-                    pt[12] = (tmp[4] << 24) | (tmp[5] >> 8);
-                    pt[13] = (tmp[5] << 24) | 0b00000000_10000000_00000000_00000000U;
+                    // Normalize
+                    tmp[1] += tmp[0] >> 32;
+                    pt[13] = ((uint)tmp[1] & 0xff000000) | 0b00000000_10000000_00000000_00000000U; tmp[2] += tmp[1] >> 32;
+                    pt[12] = (uint)tmp[2]; tmp[3] += tmp[2] >> 32;
+                    pt[11] = (uint)tmp[3]; tmp[4] += tmp[3] >> 32;
+                    pt[10] = (uint)tmp[4]; tmp[5] += tmp[4] >> 32;
+                    pt[9] = (uint)tmp[5]; tmp[6] += tmp[5] >> 32;
+                    pt[8] = (uint)tmp[6];
+                    Debug.Assert(tmp[6] >> 32 == 0);
+
                     pt[14] = 0;
                     pt[15] = 0;
                     pt[16] = 0;
@@ -622,43 +679,46 @@ namespace FinderOuter.Services
                     Sha256Fo.Init(pt);
                     Sha256Fo.CompressDouble21(pt);
 
-                    if (pt[0] == tmp[6])
+                    uint expectedCS = (uint)tmp[0] >> 24 | (uint)tmp[1] << 8;
+                    if (pt[0] == expectedCS)
                     {
-                        SetResultParallel(missingItems, firstItem);
+                        SetResultParallel(itemsPt, firstItem, misStart);
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
-        private unsafe uint[] ParallelPre21(int firstItem)
+        private unsafe ulong[] ParallelPre21(int firstItem)
         {
-            uint[] localPre = new uint[precomputed.Length];
-            fixed (uint* lpre = &localPre[0], pre = &precomputed[0], pow = &powers58[0])
+            ulong[] localPre = new ulong[searchSpace.preComputed.Length];
+            fixed (ulong* lpre = &localPre[0], pre = &searchSpace.preComputed[0], pow = &searchSpace.multPow58[0])
             {
-                Buffer.MemoryCopy(pre, lpre, 28, 28);
-                int index = missingIndexes[0];
-                ulong carry = 0;
-                for (int k = 6, j = 0; k >= 0; k--, j++)
-                {
-                    ulong result = (pow[(index * 7) + j] * (ulong)firstItem) + lpre[k] + carry;
-                    lpre[k] = (uint)result;
-                    carry = (uint)(result >> 32);
-                }
+                Buffer.MemoryCopy(pre, lpre, 56, 56);
+                int chunk = (firstItem * searchSpace.key.Length * 7) + searchSpace.multMissingIndexes[0];
+
+                lpre[0] += pow[0 + chunk];
+                lpre[1] += pow[1 + chunk];
+                lpre[2] += pow[2 + chunk];
+                lpre[3] += pow[3 + chunk];
+                lpre[4] += pow[4 + chunk];
+                lpre[5] += pow[5 + chunk];
+                lpre[6] += pow[6 + chunk];
             }
 
             return localPre;
         }
         private unsafe void Loop21()
         {
-            if (missCount >= 5)
+            if (searchSpace.missCount >= 5)
             {
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1, new uint[missCount - 1]));
+                int max = searchSpace.permutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1));
             }
             else
             {
-                Loop21(precomputed, -1, 0, new uint[missCount]);
+                Loop21(searchSpace.preComputed, 0, 0);
             }
         }
 
@@ -1333,32 +1393,18 @@ namespace FinderOuter.Services
             }
         }
 
-        private async Task FindAddress(string address, char missingChar)
+        private async Task FindAddress()
         {
-            missCount = address.Count(c => c == missingChar);
-            if (missCount == 0)
+            if (searchSpace.missCount == 0)
             {
                 report.AddMessageSafe("The given input has no missing characters, verifying it as a complete address.");
-                report.AddMessageSafe(inputService.CheckBase58Address(address));
-            }
-            else if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
-            {
-                report.AddMessageSafe($"Base-58 address should start with {ConstantsFO.B58AddressChar1} or " +
-                                      $"{ConstantsFO.B58AddressChar2}.");
-            }
-            else if (address.Length < ConstantsFO.B58AddressMinLen || address.Length > ConstantsFO.B58AddressMaxLen)
-            {
-                report.AddMessageSafe($"Address length must be between {ConstantsFO.B58AddressMinLen} and " +
-                                      $"{ConstantsFO.B58AddressMaxLen} (but it is {address.Length}).");
+                report.AddMessageSafe(inputService.CheckBase58Address(searchSpace.key));
             }
             else
             {
-                missingIndexes = new int[missCount];
-                Initialize(address.ToCharArray(), missingChar, InputType.Address);
-
-                report.AddMessageSafe($"Base-58 address missing {missCount} characters was detected.");
-                report.SetTotal(58, missCount);
-                report.AddMessageSafe("Going throgh each case. Please wait...");
+                report.AddMessageSafe($"Base-58 address missing {searchSpace.missCount} characters was detected.");
+                report.SetTotal(searchSpace.GetTotal());
+                report.AddMessageSafe("Checking each case. Please wait...");
 
                 report.Timer.Start();
 
@@ -1420,9 +1466,6 @@ namespace FinderOuter.Services
                         // comparer can be null for some of the Loop*() methods
                         await FindPrivateKey(key, missingChar);
                         break;
-                    case InputType.Address:
-                        await FindAddress(key, missingChar);
-                        break;
                     case InputType.Bip38:
                         await FindBip38(key, missingChar);
                         break;
@@ -1433,6 +1476,35 @@ namespace FinderOuter.Services
 
                 report.Finalize();
             }
+        }
+
+        public async void Find(B58SearchSpace ss, string extra, Models.InputType extraType)
+        {
+            report.Init();
+
+            searchSpace = ss;
+            switch (searchSpace.inputType)
+            {
+                case InputType.PrivateKey:
+                    if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                    {
+                        if (!string.IsNullOrEmpty(extra))
+                            report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
+                        comparer = null;
+                    }
+                    // TODO: set compared to a default always-return-true one
+                    break;
+                case InputType.Address:
+                    await FindAddress();
+                    break;
+                case InputType.Bip38:
+                    break;
+                default:
+                    report.Fail("Given input type is not defined.");
+                    return;
+            }
+
+            report.Finalize();
         }
     }
 }

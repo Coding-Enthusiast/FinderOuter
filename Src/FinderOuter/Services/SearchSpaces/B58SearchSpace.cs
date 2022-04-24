@@ -169,20 +169,6 @@ namespace FinderOuter.Services.SearchSpaces
                     }
                 }
 
-                //uint[] pt = new uint[30];
-
-                //preComputed[1] += preComputed[0] >> 32;
-                //pt[13] = ((uint)preComputed[1] & 0xff000000) | 0b00000000_10000000_00000000_00000000U;
-                //preComputed[2] += preComputed[1] >> 32;
-                //pt[12] = (uint)preComputed[2]; preComputed[3] += preComputed[2] >> 32;
-                //pt[11] = (uint)preComputed[3]; preComputed[4] += preComputed[3] >> 32;
-                //pt[10] = (uint)preComputed[4]; preComputed[5] += preComputed[4] >> 32;
-                //pt[9] = (uint)preComputed[5]; preComputed[6] += preComputed[5] >> 32;
-                //pt[8] = (uint)preComputed[6]; 
-                //Debug.Assert(preComputed[6] >> 32 == 0);
-
-                //uint expectedCS = (uint)preComputed[0] >> 24 | (uint)preComputed[1] << 8;
-
                 error = null;
                 return true;
             }
