@@ -723,83 +723,116 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe void Loop58(uint[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void Loop58(ulong[] precomputed, int firstItem, int misStart)
         {
-            uint[] temp = new uint[precomputed.Length];
+            Debug.Assert(searchSpace.missCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+
+            ulong[] temp = new ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (uint* pow = &powers58[0], pre = &precomputed[0], tmp = &temp[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[misStart])
+            fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0], tmp = &temp[0])
+            fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                if (misStart > 0)
+                {
+                    tempPt += searchSpace.permutationCounts[0];
+                }
+                for (int i = 0; i < items.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                }
+
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 44, 44);
+                    Buffer.MemoryCopy(pre, tmp, 88, 88); // 11x 8-bytes
                     int i = 0;
-                    foreach (uint keyItem in missingItems)
+                    foreach (Permutation item in items)
                     {
-                        ulong carry = 0;
-                        for (int k = 10, j = 0; k >= 0; k--, j++)
-                        {
-                            ulong result = (pow[(mi[i] * 11) + j] * (ulong)keyItem) + tmp[k] + carry;
-                            tmp[k] = (uint)result;
-                            carry = (uint)(result >> 32);
-                        }
-                        i++;
+                        // TODO: change 11 into a field from searchspace(?)
+                        int chunk = ((int)item.GetValue() * searchSpace.key.Length * 11) + mi[i++];
+
+                        tmp[0] += pow[0 + chunk];
+                        tmp[1] += pow[1 + chunk];
+                        tmp[2] += pow[2 + chunk];
+                        tmp[3] += pow[3 + chunk];
+                        tmp[4] += pow[4 + chunk];
+                        tmp[5] += pow[5 + chunk];
+                        tmp[6] += pow[6 + chunk];
+                        tmp[7] += pow[7 + chunk];
+                        tmp[8] += pow[8 + chunk];
+                        tmp[9] += pow[9 + chunk];
+                        tmp[10] += pow[10 + chunk];
                     }
 
-                    pt[8] = (tmp[0] << 8) | (tmp[1] >> 24);
-                    pt[9] = (tmp[1] << 8) | (tmp[2] >> 24);
-                    pt[10] = (tmp[2] << 8) | (tmp[3] >> 24);
-                    pt[11] = (tmp[3] << 8) | (tmp[4] >> 24);
-                    pt[12] = (tmp[4] << 8) | (tmp[5] >> 24);
-                    pt[13] = (tmp[5] << 8) | (tmp[6] >> 24);
-                    pt[14] = (tmp[6] << 8) | (tmp[7] >> 24);
-                    pt[15] = (tmp[7] << 8) | (tmp[8] >> 24);
-                    pt[16] = (tmp[8] << 8) | (tmp[9] >> 24);
-                    pt[17] = (tmp[9] << 8) | 0b00000000_00000000_00000000_10000000U;
+                    // Normalize:
+                    tmp[1] += tmp[0] >> 32;
+                    pt[17] = ((uint)tmp[1] & 0xffffff00) | 0b00000000_00000000_00000000_10000000U; tmp[2] += tmp[1] >> 32;
+                    pt[16] = (uint)tmp[2]; tmp[3] += tmp[2] >> 32;
+                    pt[15] = (uint)tmp[3]; tmp[4] += tmp[3] >> 32;
+                    pt[14] = (uint)tmp[4]; tmp[5] += tmp[4] >> 32;
+                    pt[13] = (uint)tmp[5]; tmp[6] += tmp[5] >> 32;
+                    pt[12] = (uint)tmp[6]; tmp[7] += tmp[6] >> 32;
+                    pt[11] = (uint)tmp[7]; tmp[8] += tmp[7] >> 32;
+                    pt[10] = (uint)tmp[8]; tmp[9] += tmp[8] >> 32;
+                    pt[9] = (uint)tmp[9]; tmp[10] += tmp[9] >> 32;
+                    pt[8] = (uint)tmp[10];
+                    Debug.Assert(tmp[10] >> 32 == 0);
+
+                    // TODO: are the following 2 numbers correct?!
                     // from 10 to 14 = 0
                     pt[23] = 312; // 39 *8 = 168
 
                     Sha256Fo.Init(pt);
                     Sha256Fo.CompressDouble39(pt);
 
-                    if (pt[0] == tmp[10])
+                    uint expectedCS = (uint)tmp[0] >> 8 | (uint)tmp[1] << 24;
+                    if (pt[0] == expectedCS)
                     {
-                        SetResultParallel(missingItems, firstItem);
+                        SetResultParallel(itemsPt, firstItem, misStart);
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
-        private unsafe uint[] ParallelPre58(int firstItem)
+        private unsafe ulong[] ParallelPre58(int firstItem)
         {
-            uint[] localPre = new uint[precomputed.Length];
-            fixed (uint* lpre = &localPre[0], pre = &precomputed[0], pow = &powers58[0])
+            ulong[] localPre = new ulong[searchSpace.preComputed.Length];
+            fixed (ulong* lpre = &localPre[0], pre = &searchSpace.preComputed[0], pow = &searchSpace.multPow58[0])
             {
-                Buffer.MemoryCopy(pre, lpre, 44, 44);
-                int index = missingIndexes[0];
-                ulong carry = 0;
-                for (int k = 10, j = 0; k >= 0; k--, j++)
-                {
-                    ulong result = (pow[(index * 11) + j] * (ulong)firstItem) + lpre[k] + carry;
-                    lpre[k] = (uint)result;
-                    carry = (uint)(result >> 32);
-                }
+                Buffer.MemoryCopy(pre, lpre, 88, 88);
+                int chunk = (firstItem * searchSpace.key.Length * 11) + searchSpace.multMissingIndexes[0];
+
+                lpre[0] += pow[0 + chunk];
+                lpre[1] += pow[1 + chunk];
+                lpre[2] += pow[2 + chunk];
+                lpre[3] += pow[3 + chunk];
+                lpre[4] += pow[4 + chunk];
+                lpre[5] += pow[5 + chunk];
+                lpre[6] += pow[6 + chunk];
+                lpre[7] += pow[7 + chunk];
+                lpre[8] += pow[8 + chunk];
+                lpre[9] += pow[9 + chunk];
+                lpre[10] += pow[10 + chunk];
             }
 
             return localPre;
         }
         private unsafe void Loop58()
         {
-            if (missCount >= 5)
+            if (searchSpace.missCount >= 2)
             {
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1, new uint[missCount - 1]));
+                int max = searchSpace.permutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1));
             }
             else
             {
-                Loop58(precomputed, -1, 0, new uint[missCount]);
+                Loop58(searchSpace.preComputed, 0, 0);
             }
         }
 
@@ -1412,28 +1445,17 @@ namespace FinderOuter.Services
             }
         }
 
-        private async Task FindBip38(string bip38, char missingChar)
+        private async Task FindBip38()
         {
-            missCount = bip38.Count(c => c == missingChar);
-            if (missCount == 0)
+            if (searchSpace.missCount == 0)
             {
                 report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
-                _ = inputService.CheckBase58Bip38(bip38, out string msg);
+                _ = inputService.CheckBase58Bip38(searchSpace.key, out string msg);
                 report.AddMessageSafe(msg);
-            }
-            else if (!bip38.StartsWith(ConstantsFO.Bip38Start))
-            {
-                report.AddMessageSafe($"Base-58 encoded BIP-38 should start with {ConstantsFO.Bip38Start}.");
-            }
-            else if (bip38.Length != ConstantsFO.Bip38Base58Len)
-            {
-                report.AddMessageSafe($"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.");
             }
             else
             {
-                missingIndexes = new int[missCount];
-                Initialize(bip38.ToCharArray(), missingChar, InputType.Bip38);
-                report.SetTotal(58, missCount);
+                report.SetTotal(searchSpace.GetTotal());
                 report.AddMessageSafe("Going throgh each case. Please wait...");
 
                 report.Timer.Start();
@@ -1441,6 +1463,7 @@ namespace FinderOuter.Services
                 await Task.Run(() => Loop58());
             }
         }
+
 
         public async void Find(string key, char missingChar, InputType t, string extra, Models.InputType extraType)
         {
@@ -1465,9 +1488,6 @@ namespace FinderOuter.Services
                         }
                         // comparer can be null for some of the Loop*() methods
                         await FindPrivateKey(key, missingChar);
-                        break;
-                    case InputType.Bip38:
-                        await FindBip38(key, missingChar);
                         break;
                     default:
                         report.Fail("Given input type is not defined.");
@@ -1498,6 +1518,7 @@ namespace FinderOuter.Services
                     await FindAddress();
                     break;
                 case InputType.Bip38:
+                    await FindBip38();
                     break;
                 default:
                     report.Fail("Given input type is not defined.");
