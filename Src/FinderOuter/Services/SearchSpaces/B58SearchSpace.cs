@@ -23,7 +23,7 @@ namespace FinderOuter.Services.SearchSpaces
         public readonly char[] AllChars = ConstantsFO.Base58Chars.ToCharArray();
         public string key;
         public int missCount;
-        bool isComp;
+        public bool isComp;
         public ulong[] multPow58, preComputed;
         public int[] missingIndexes, multMissingIndexes;
         public int[] permutationCounts;

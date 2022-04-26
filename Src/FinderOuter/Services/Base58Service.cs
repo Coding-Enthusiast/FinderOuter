@@ -35,12 +35,6 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
         private ICompareService comparer;
-        private uint[] powers58, precomputed;
-        private ulong[] multPow58, preC;
-        private int[] missingIndexes;
-        private int missingIndexeMultiplier = 1;
-        private int missCount;
-        private string keyToCheck;
         private B58SearchSpace searchSpace;
 
 
@@ -49,60 +43,6 @@ namespace FinderOuter.Services
             PrivateKey,
             Address,
             Bip38
-        }
-
-        private void Initialize(ReadOnlySpan<char> key, char missingChar, InputType keyType)
-        {
-            // Compute 58^n for n from 0 to inputLength as uint[]
-
-            byte[] padded;
-            int uLen = keyType switch
-            {
-                InputType.PrivateKey => 10, // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
-                InputType.Address => 7, // Maximum result (58^35) is 26 bytes = 26/4 = 7 uint
-                InputType.Bip38 => 11, // Maximum result (58^58) is 43 bytes = 43/4 = 11 uint
-                _ => throw new ArgumentException("Input type is not defined yet."),
-            };
-            powers58 = new uint[key.Length * uLen];
-            padded = new byte[4 * uLen];
-            precomputed = new uint[uLen];
-
-            for (int i = 0, j = 0; i < key.Length; i++)
-            {
-                BigInteger val = BigInteger.Pow(58, i);
-                byte[] temp = val.ToByteArrayExt(false, true);
-
-                Array.Clear(padded, 0, padded.Length);
-                Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
-
-                for (int k = 0; k < padded.Length; j++, k += 4)
-                {
-                    powers58[j] = (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
-                }
-            }
-
-            // calculate what we already have and store missing indexes
-            int mis = 0;
-            for (int i = key.Length - 1, j = 0; i >= 0; i--)
-            {
-                if (key[i] != missingChar)
-                {
-                    ulong carry = 0;
-                    ulong val = (ulong)ConstantsFO.Base58Chars.IndexOf(key[i]);
-                    for (int k = uLen - 1; k >= 0; k--, j++)
-                    {
-                        ulong result = checked((powers58[j] * val) + precomputed[k] + carry);
-                        precomputed[k] = (uint)result;
-                        carry = (uint)(result >> 32);
-                    }
-                }
-                else
-                {
-                    missingIndexes[mis] = key.Length - i - 1;
-                    mis++;
-                    j += uLen;
-                }
-            }
         }
 
 
@@ -138,83 +78,19 @@ namespace FinderOuter.Services
             return multPow;
         }
 
-        public static void InitializeCompressWif(ReadOnlySpan<char> key, char missingChar, int[] missingIndexes,
-                                                 out int missingIndexMultiplier, out ulong[] multPow58, out ulong[] preC)
-        {
-            const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
-            missingIndexMultiplier = uLen;
-
-            multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, uLen, 16);
-            preC = new ulong[uLen];
-
-            // calculate what we already have and store missing indexes
-            int mis = 0;
-            for (int i = key.Length - 1, j = 0; i >= 0; i--)
-            {
-                if (key[i] != missingChar)
-                {
-                    int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
-                    int chunk = (index * 520) + (uLen * (key.Length - 1 - i));
-                    ulong carry = 0;
-                    for (int k = uLen - 1; k >= 0; k--, j++)
-                    {
-                        preC[k] += multPow58[k + chunk] + carry;
-                    }
-                }
-                else
-                {
-                    missingIndexes[mis] = (key.Length - i - 1) * missingIndexMultiplier;
-                    mis++;
-                    j += uLen;
-                }
-            }
-        }
-
-        public static void InitializeUncompressWif(ReadOnlySpan<char> key, char missingChar, int[] missingIndexes,
-                                                 out int missingIndexMultiplier, out ulong[] multPow58, out ulong[] preC)
-        {
-            const int uLen = 10;
-            missingIndexMultiplier = uLen;
-
-            multPow58 = GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, uLen, 24);
-            preC = new ulong[uLen];
-
-            // calculate what we already have and store missing indexes
-            int mis = 0;
-            for (int i = key.Length - 1, j = 0; i >= 0; i--)
-            {
-                if (key[i] != missingChar)
-                {
-                    int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
-                    int chunk = (index * key.Length * 10) + (uLen * (key.Length - 1 - i));
-                    ulong carry = 0;
-                    for (int k = uLen - 1; k >= 0; k--, j++)
-                    {
-                        preC[k] += multPow58[k + chunk] + carry;
-                    }
-                }
-                else
-                {
-                    missingIndexes[mis] = (key.Length - i - 1) * missingIndexMultiplier;
-                    mis++;
-                    j += uLen;
-                }
-            }
-        }
-
 
         private bool IsMissingFromEnd()
         {
-            if (missingIndexes[0] != 0)
+            if (searchSpace.missingIndexes[0] != searchSpace.key.Length - 1)
             {
                 return false;
             }
 
-            if (missingIndexes.Length != 1)
+            if (searchSpace.missingIndexes.Length != 1)
             {
-                for (int i = 1; i < missingIndexes.Length; i++)
+                for (int i = 1; i < searchSpace.missingIndexes.Length; i++)
                 {
-                    if (missingIndexes[i] - missingIndexes[i - 1] != missingIndexeMultiplier)
+                    if (searchSpace.missingIndexes[i - 1] - searchSpace.missingIndexes[i] != 1)
                     {
                         return false;
                     }
@@ -281,9 +157,9 @@ namespace FinderOuter.Services
             // 11  -> 5,817,656,406 ;     22,725,222  <-- FinderOuter limits the search to 11
             // 12  ->               ;  1,318,062,780
 
-            string baseWif = keyToCheck.Substring(0, keyToCheck.Length - missCount);
-            string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], missCount).ToArray())}";
-            string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], missCount).ToArray())}";
+            string baseWif = searchSpace.key.Substring(0, searchSpace.key.Length - searchSpace.missCount);
+            string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], searchSpace.missCount).ToArray())}";
+            string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], searchSpace.missCount).ToArray())}";
             BigInteger start = Base58.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
             BigInteger end = Base58.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
 
@@ -362,28 +238,6 @@ namespace FinderOuter.Services
                              WifLoopMissingEnd(sc, i, i == loopCount - 1 ? loopLastMax : WifEndDiv, comparer.Clone(), state));
         }
 
-
-        private void SetResultParallel(uint[] missingItems, int firstItem)
-        {
-            // Chances of finding more than 1 correct result is very small in base-58 and even if it happened 
-            // this method would be called in very long intervals, meaning UI updates here are not an issue.
-            report.AddMessageSafe($"Found a possible result (will continue checking the rest):");
-
-            char[] temp = keyToCheck.ToCharArray();
-            int i = 0;
-            if (firstItem != -1)
-            {
-                temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[firstItem];
-            }
-            foreach (uint index in missingItems)
-            {
-                temp[temp.Length - (missingIndexes[i++] / missingIndexeMultiplier) - 1] = ConstantsFO.Base58Chars[(int)index];
-            }
-
-            report.AddMessageSafe(new string(temp));
-            report.FoundAnyResult = true;
-        }
-
         private unsafe void SetResultParallel(Permutation* itemPt, int firstItem, int misStart)
         {
             // Chances of finding more than 1 correct result is very small in base-58 and even if it happened 
@@ -438,21 +292,36 @@ namespace FinderOuter.Services
             return false;
         }
 
-        private unsafe void LoopComp(ulong[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void LoopComp(ulong[] precomputed, int firstItem, int misStart)
         {
+            Debug.Assert(searchSpace.missCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+
             ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (ulong* pow = &multPow58[0], pre = &precomputed[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[misStart])
+            fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0])
+            fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                if (misStart > 0)
+                {
+                    tempPt += searchSpace.permutationCounts[0];
+                }
+                for (int i = 0; i < items.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                }
+
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 80, 80);
+                    Buffer.MemoryCopy(pre, tmp, 80, 80); // 10x 8-bytes
                     int i = 0;
-                    foreach (int keyItem in missingItems)
+                    foreach (Permutation keyItem in items)
                     {
-                        int chunk = (keyItem * 520) + mi[i++];
+                        int chunk = ((int)keyItem.GetValue() * 520) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -490,21 +359,21 @@ namespace FinderOuter.Services
 
                         if (pt[0] == expectedCS)
                         {
-                            SetResultParallel(missingItems, firstItem);
+                            SetResultParallel(itemsPt, firstItem, misStart);
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
         private unsafe ulong[] ParallelPre(int firstItem, int len)
         {
-            ulong[] localPre = new ulong[preC.Length];
-            fixed (ulong* lpre = &localPre[0], pre = &preC[0], pow = &multPow58[0])
+            ulong[] localPre = new ulong[searchSpace.preComputed.Length];
+            fixed (ulong* lpre = &localPre[0], pre = &searchSpace.preComputed[0], pow = &searchSpace.multPow58[0])
             {
                 Buffer.MemoryCopy(pre, lpre, 80, 80);
-                int chunk = (firstItem * len * 10) + missingIndexes[0];
+                int chunk = (firstItem * len * 10) + searchSpace.multMissingIndexes[0];
 
                 lpre[0] += pow[0 + chunk];
                 lpre[1] += pow[1 + chunk];
@@ -522,38 +391,54 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopComp()
         {
-            if (IsMissingFromEnd() && missCount <= 11)
+            if (IsMissingFromEnd() && searchSpace.missCount <= 11)
             {
                 WifLoopMissingEnd(true);
             }
-            else if (missCount >= 5)
+            else if (searchSpace.missCount >= 5)
             {
                 // 4 missing chars is 11,316,496 cases and it takes <2 seconds to run.
                 // That makes 5 the optimal number for using parallelization
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1, new uint[missCount - 1]));
+                int max = searchSpace.permutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1));
             }
             else
             {
-                LoopComp(preC, -1, 0, new uint[missCount]);
+                LoopComp(searchSpace.preComputed, 0, 0);
             }
         }
 
-        private unsafe void LoopUncomp(ulong[] precomputed, int firstItem, int misStart, uint[] missingItems)
+        private unsafe void LoopUncomp(ulong[] precomputed, int firstItem, int misStart)
         {
+            Debug.Assert(searchSpace.missCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+
             ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (ulong* pow = &multPow58[0], pre = &precomputed[0])
-            fixed (uint* itemsPt = &missingItems[0])
-            fixed (int* mi = &missingIndexes[misStart])
+            fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0])
+            fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
+            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                if (misStart > 0)
+                {
+                    tempPt += searchSpace.permutationCounts[0];
+                }
+                for (int i = 0; i < items.Length; i++)
+                {
+                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.permutationCounts[i];
+                }
+
                 do
                 {
-                    Buffer.MemoryCopy(pre, tmp, 80, 80);
+                    Buffer.MemoryCopy(pre, tmp, 80, 80); // 10x 8-bytes
                     int i = 0;
-                    foreach (int keyItem in missingItems)
+                    foreach (Permutation keyItem in items)
                     {
-                        int chunk = (keyItem * 510) + mi[i++];
+                        int chunk = ((int)keyItem.GetValue() * 510) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -592,29 +477,29 @@ namespace FinderOuter.Services
 
                         if (pt[0] == expectedCS)
                         {
-                            SetResultParallel(missingItems, firstItem);
+                            SetResultParallel(itemsPt, firstItem, misStart);
                         }
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
         private unsafe void LoopUncomp()
         {
-            if (IsMissingFromEnd() && missCount <= 11)
+            if (IsMissingFromEnd() && searchSpace.missCount <= 11)
             {
                 WifLoopMissingEnd(false);
             }
-            else if (missCount >= 5)
+            else if (searchSpace.missCount >= 5)
             {
                 // Same as LoopComp()
                 report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1, new uint[missCount - 1]));
+                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1));
             }
             else
             {
-                LoopUncomp(preC, -1, 0, new uint[missCount]);
+                LoopUncomp(searchSpace.preComputed, 0, 0);
             }
         }
 
@@ -1332,33 +1217,26 @@ namespace FinderOuter.Services
         }
 
 
-        private async Task FindPrivateKey(string key, char missingChar)
+        private async Task FindPrivateKey()
         {
-            if (key.Contains(missingChar)) // Length must be correct then
+            if (searchSpace.missCount != 0) // Length must be correct then
             {
-                missCount = key.Count(c => c == missingChar);
-                if (inputService.CanBePrivateKey(key, out string error))
+                if (inputService.CanBePrivateKey(searchSpace.key, out string error))
                 {
-                    missingIndexes = new int[missCount];
-                    bool isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
-                    report.AddMessageSafe($"{(isComp ? "Compressed" : "Uncompressed")} private key missing {missCount} " +
-                                          $"characters was detected.");
-                    report.SetTotal(58, missCount);
+                    report.AddMessageSafe($"{(searchSpace.isComp ? "Compressed" : "Uncompressed")} private key " +
+                                          $"missing {searchSpace.missCount} characters was detected.");
+                    report.SetTotal(searchSpace.GetTotal());
                     report.Timer.Start();
 
                     await Task.Run(() =>
                     {
-                        if (isComp)
+                        if (searchSpace.isComp)
                         {
-                            InitializeCompressWif(key.AsSpan(), missingChar, missingIndexes, out missingIndexeMultiplier,
-                                out multPow58, out preC);
                             report.AddMessageSafe("Running compressed loop. Please wait.");
                             LoopComp();
                         }
                         else
                         {
-                            InitializeUncompressWif(key.AsSpan(), missingChar, missingIndexes, out missingIndexeMultiplier,
-                                out multPow58, out preC);
                             report.AddMessageSafe("Running uncompressed loop. Please wait.");
                             LoopUncomp();
                         }
@@ -1372,57 +1250,59 @@ namespace FinderOuter.Services
             }
             else // Doesn't have any missing chars so length must be <= max key len
             {
-                if (key[0] == ConstantsFO.PrivKeyCompChar1 || key[0] == ConstantsFO.PrivKeyCompChar2)
-                {
-                    if (key.Length == ConstantsFO.PrivKeyCompWifLen)
-                    {
-                        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
-                        report.AddMessageSafe(inputService.CheckPrivateKey(key));
-                        report.FoundAnyResult = true;
-                    }
-                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 1)
-                    {
-                        await FindUnknownLocation1(key, true);
-                    }
-                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 2)
-                    {
-                        await FindUnknownLocation2(key, true);
-                    }
-                    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
-                    {
-                        await FindUnknownLocation3(key);
-                    }
-                    else
-                    {
-                        report.AddMessageSafe("Only 3 missing characters at unkown locations is supported for now.");
-                    }
-                }
-                else if (key[0] == ConstantsFO.PrivKeyUncompChar)
-                {
-                    if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
-                    {
-                        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
-                        report.AddMessageSafe(inputService.CheckPrivateKey(key));
-                        report.FoundAnyResult = true;
-                    }
-                    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 1)
-                    {
-                        await FindUnknownLocation1(key, false);
-                    }
-                    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 2)
-                    {
-                        await FindUnknownLocation2(key, false);
-                    }
-                    else
-                    {
-                        report.AddMessageSafe("Recovering uncompressed private keys with missing characters at unknown locations " +
-                                              "is not supported yet.");
-                    }
-                }
-                else
-                {
-                    report.AddMessageSafe("The given key has an invalid first character.");
-                }
+                report.AddMessageSafe("Recovering keys with missing characters at unknown position is disabled now.");
+                report.AddMessageSafe("Use FinderOuter V0.14.0");
+                //if (key[0] == ConstantsFO.PrivKeyCompChar1 || key[0] == ConstantsFO.PrivKeyCompChar2)
+                //{
+                //    if (key.Length == ConstantsFO.PrivKeyCompWifLen)
+                //    {
+                //        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
+                //        report.AddMessageSafe(inputService.CheckPrivateKey(key));
+                //        report.FoundAnyResult = true;
+                //    }
+                //    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 1)
+                //    {
+                //        await FindUnknownLocation1(key, true);
+                //    }
+                //    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 2)
+                //    {
+                //        await FindUnknownLocation2(key, true);
+                //    }
+                //    else if (key.Length == ConstantsFO.PrivKeyCompWifLen - 3)
+                //    {
+                //        await FindUnknownLocation3(key);
+                //    }
+                //    else
+                //    {
+                //        report.AddMessageSafe("Only 3 missing characters at unkown locations is supported for now.");
+                //    }
+                //}
+                //else if (key[0] == ConstantsFO.PrivKeyUncompChar)
+                //{
+                //    if (key.Length == ConstantsFO.PrivKeyUncompWifLen)
+                //    {
+                //        report.AddMessageSafe("No character is missing, checking validity of the key itself.");
+                //        report.AddMessageSafe(inputService.CheckPrivateKey(key));
+                //        report.FoundAnyResult = true;
+                //    }
+                //    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 1)
+                //    {
+                //        await FindUnknownLocation1(key, false);
+                //    }
+                //    else if (key.Length == ConstantsFO.PrivKeyUncompWifLen - 2)
+                //    {
+                //        await FindUnknownLocation2(key, false);
+                //    }
+                //    else
+                //    {
+                //        report.AddMessageSafe("Recovering uncompressed private keys with missing characters at unknown locations " +
+                //                              "is not supported yet.");
+                //    }
+                //}
+                //else
+                //{
+                //    report.AddMessageSafe("The given key has an invalid first character.");
+                //}
             }
         }
 
@@ -1465,39 +1345,6 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(string key, char missingChar, InputType t, string extra, Models.InputType extraType)
-        {
-            report.Init();
-
-            if (!inputService.IsMissingCharValid(missingChar))
-                report.Fail("Invalid missing character.");
-            else if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
-                report.Fail("Input contains invalid base-58 character(s).");
-            else
-            {
-                keyToCheck = key;
-
-                switch (t)
-                {
-                    case InputType.PrivateKey:
-                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                        {
-                            if (!string.IsNullOrEmpty(extra))
-                                report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
-                            comparer = null;
-                        }
-                        // comparer can be null for some of the Loop*() methods
-                        await FindPrivateKey(key, missingChar);
-                        break;
-                    default:
-                        report.Fail("Given input type is not defined.");
-                        return;
-                }
-
-                report.Finalize();
-            }
-        }
-
         public async void Find(B58SearchSpace ss, string extra, Models.InputType extraType)
         {
             report.Init();
@@ -1513,6 +1360,7 @@ namespace FinderOuter.Services
                         comparer = null;
                     }
                     // TODO: set compared to a default always-return-true one
+                    await FindPrivateKey();
                     break;
                 case InputType.Address:
                     await FindAddress();

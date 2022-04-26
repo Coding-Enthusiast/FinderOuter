@@ -192,31 +192,29 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            b58Service.Find(Input, SelectedMissingChar, SelectedInputType, ExtraInput, SelectedExtraInputType.Value);
+            if (!searchSpace.IsProcessed)
+            {
+                Start();
+                foreach (ObservableCollection<string> item in allItems)
+                {
+                    foreach (char c in searchSpace.AllChars)
+                    {
+                        item.Add(c.ToString());
+                    }
+                }
+            }
 
-            //if (!searchSpace.IsProcessed)
-            //{
-            //    Start();
-            //    foreach (ObservableCollection<string> item in allItems)
-            //    {
-            //        foreach (char c in searchSpace.AllChars)
-            //        {
-            //            item.Add(c.ToString());
-            //        }
-            //    }
-            //}
-
-            //if (IsProcessed)
-            //{
-            //    if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
-            //    {
-            //        b58Service.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
-            //    }
-            //    else
-            //    {
-            //        Result.AddMessage("Something went wrong when instantiating SearchSpace.");
-            //    }
-            //}
+            if (IsProcessed)
+            {
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                {
+                    b58Service.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
+                }
+                else
+                {
+                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                }
+            }
         }
 
         public void Example()
