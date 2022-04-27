@@ -63,6 +63,23 @@ namespace FinderOuter.Models
     }
 
 
+    public enum MessageBoxType
+    {
+        Ok,
+        OkCancel,
+        YesNo,
+    }
+
+
+    public enum MessageBoxResult
+    {
+        Ok,
+        Cancel,
+        Yes,
+        No
+    }
+
+
     public enum MnemonicTypes
     {
         BIP39,
