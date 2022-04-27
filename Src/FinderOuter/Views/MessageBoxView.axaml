@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             mc:Ignorable="d"
+             MaxWidth="400"
+             x:Class="FinderOuter.Views.MessageBoxView">
+
+  <Design.DataContext>
+    <vm:MessageBoxViewModel/>
+  </Design.DataContext>
+
+  <Grid RowDefinitions="*,auto">
+    <Grid ColumnDefinitions="auto,*" Grid.Row="0">
+      <Image Source="/Assets/Attention.png"
+             Width="40"
+             Margin="5"
+             Grid.Column="0"/>
+      <TextBlock Text="{Binding Message}"
+                 TextWrapping="Wrap"
+                 Margin="10"
+                 Grid.Column="1"/>
+    </Grid>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10" Margin="5" Grid.Row="1">
+      <Button Content="{Binding CommandName1}"
+              Command="{Binding Command1}"
+              Height="30" Width="65"/>
+      <Button Content="{Binding CommandName2}"
+              Command="{Binding Command2}"
+              IsVisible="{Binding IsDualCommand}"
+              Height="30" Width="65"/>
+    </StackPanel>
+  </Grid>
+</UserControl>
