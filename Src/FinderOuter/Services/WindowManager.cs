@@ -6,13 +6,17 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using FinderOuter.Models;
 using FinderOuter.ViewModels;
+using System.Threading.Tasks;
 
 namespace FinderOuter.Services
 {
     public interface IWindowManager
     {
         void ShowDialog(VmWithSizeBase vm);
+
+        Task<MessageBoxResult> ShowMessageBox(MessageBoxType mbType, string message);
     }
 
 
@@ -31,8 +35,27 @@ namespace FinderOuter.Services
             };
 
             var lf = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
-
             win.ShowDialog(lf.MainWindow);
+        }
+
+
+        public async Task<MessageBoxResult> ShowMessageBox(MessageBoxType mbType, string message)
+        {
+            MessageBoxViewModel vm = new(mbType, message);
+            Window win = new()
+            {
+                Content = vm,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                Title = "Warning!",
+            };
+            vm.CLoseEvent += (s, e) => win.Close();
+
+            var lf = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
+            await win.ShowDialog(lf.MainWindow);
+
+            return vm.Result;
         }
     }
 }
