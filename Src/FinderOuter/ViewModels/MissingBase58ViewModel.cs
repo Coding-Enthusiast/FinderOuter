@@ -70,6 +70,7 @@ namespace FinderOuter.ViewModels
 
         private readonly Base58Service b58Service;
         private readonly B58SearchSpace searchSpace;
+        private bool isChanged;
 
         public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
@@ -78,14 +79,28 @@ namespace FinderOuter.ViewModels
         public Base58Service.InputType SelectedInputType
         {
             get => _selInpT;
-            set => this.RaiseAndSetIfChanged(ref _selInpT, value);
+            set
+            {
+                if (value != _selInpT)
+                {
+                    this.RaiseAndSetIfChanged(ref _selInpT, value);
+                    isChanged = true;
+                }
+            }
         }
 
         private string _input;
         public string Input
         {
             get => _input;
-            set => this.RaiseAndSetIfChanged(ref _input, value);
+            set
+            {
+                if (value != _input)
+                {
+                    this.RaiseAndSetIfChanged(ref _input, value);
+                    isChanged = true;
+                }
+            }
         }
 
         private DescriptiveItem<InputType> _selInpT2;
@@ -105,6 +120,7 @@ namespace FinderOuter.ViewModels
 
         private void Start()
         {
+            isChanged = false;
             Index = 0;
             Max = 0;
             IsProcessed = searchSpace.Process(Input, SelectedMissingChar, SelectedInputType, out string error);
@@ -190,9 +206,22 @@ namespace FinderOuter.ViewModels
         }
 
 
-        public override void Find()
+        public override async void Find()
         {
-            if (!searchSpace.IsProcessed)
+            if (isChanged)
+            {
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, "Changed message.");
+                if (res == MessageBoxResult.Yes)
+                {
+                    IsProcessed = false;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            if (!IsProcessed)
             {
                 Start();
                 foreach (ObservableCollection<string> item in allItems)

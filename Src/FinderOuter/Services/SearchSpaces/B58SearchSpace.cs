@@ -30,8 +30,6 @@ namespace FinderOuter.Services.SearchSpaces
         public uint[] allPermutationValues;
         internal Base58Service.InputType inputType;
 
-        public bool IsProcessed { get; private set; }
-
 
         /// <summary>
         /// Returns powers of 58 multiplied by <paramref name="maxPow"/> then shifts them left so that it doesn't need it later
@@ -230,8 +228,6 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool Process(string input, char missChar, Base58Service.InputType t, out string error)
         {
-            IsProcessed = false;
-
             key = input;
             inputType = t;
 
@@ -265,7 +261,7 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool SetValues(string[][] result)
         {
-            if (result.Length != missCount)
+            if (result.Length != missCount || result.Any(x => x.Length < 2))
             {
                 return false;
             }
