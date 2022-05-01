@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using FinderOuter.Services.SearchSpaces;
@@ -141,6 +142,15 @@ namespace FinderOuter.ViewModels
             }
         }
 
+        private void ResetSearchSpace()
+        {
+            Index = 0;
+            Max = 0;
+            allItems = Array.Empty<ObservableCollection<string>>();
+            IsProcessed = false;
+        }
+
+
         private void AddToList(IEnumerable<char> items)
         {
             foreach (char item in items)
@@ -208,15 +218,16 @@ namespace FinderOuter.ViewModels
 
         public override async void Find()
         {
-            if (isChanged)
+            if (isChanged && IsProcessed)
             {
-                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, "Changed message.");
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, ConstantsFO.ChangedMessage);
                 if (res == MessageBoxResult.Yes)
                 {
                     IsProcessed = false;
                 }
                 else
                 {
+                    ResetSearchSpace();
                     return;
                 }
             }

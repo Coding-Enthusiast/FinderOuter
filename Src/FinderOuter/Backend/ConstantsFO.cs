@@ -3,6 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using System;
+
 namespace FinderOuter.Backend
 {
     public struct ConstantsFO
@@ -46,5 +48,9 @@ namespace FinderOuter.Backend
         public const string Bip38Start = "6P";
         public static readonly byte[] Bip38Prefix = new byte[2] { 0x01, 0x42 };
         public static readonly byte[] Bip38PrefixECMult = new byte[2] { 0x01, 0x43 };
+
+        public static readonly string ChangedMessage = "Input is changed and the search-space needs to re-evaluated." +
+            $"{Environment.NewLine}" +
+            $"Click Yes to reset search-space to use default values or click No to manually set search-space.";
     }
 }
