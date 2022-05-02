@@ -73,6 +73,31 @@ namespace FinderOuter.ViewModels
         private readonly B58SearchSpace searchSpace;
         private bool isChanged;
 
+        // 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+        private readonly static char[][] aaa = new char[][]
+        {
+            new char[] { '0', 'o' },
+            new char[] { '1', 'L', 'l' },
+            new char[] { '5', 'S', 's' },
+            new char[] { '7', 'J', 'T', 'j', 't' },
+            new char[] { '8', 'B' },
+            new char[] { '9', 'g', 'q' },
+            new char[] { '9', 'g', 'q' },
+            new char[] { 'C', 'G', 'c' },
+            new char[] { 'D', 'P', 'p', 'b' },
+            new char[] { 'E', 'F', 'f' },
+            new char[] { 'I', 'i', 'J', 'j' },
+            new char[] { 'K', 'k' },
+            new char[] { 'M', 'm' },
+            new char[] { 'N', 'n' },
+            new char[] { 'P', 'p', 'q' },
+            new char[] { 'U', 'u', 'V', 'v', 'Y', 'y' },
+            new char[] { 'W', 'w' },
+            new char[] { 'X', 'x' },
+            new char[] { 'Z', 'z' },
+        };
+
+
         public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
@@ -189,13 +214,33 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddSimilarCommand { get; }
         private void AddSimilar()
         {
-            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1)
             {
-
+                if (!ConstantsFO.LowerCase.Contains(ToAdd.ToLower()) && !ConstantsFO.Numbers.Contains(ToAdd))
+                {
+                    Result.AddMessage("Invalid character (only letters and numbers are accepted).");
+                }
+                else
+                {
+                    char c = ToAdd[0];
+                    for (int i = 0; i < aaa.Length; i++)
+                    {
+                        if (aaa[i].Contains(c))
+                        {
+                            foreach (char item in aaa[i])
+                            {
+                                if (ConstantsFO.Base58Chars.Contains(item) && !CurrentItems.Contains(item.ToString()))
+                                {
+                                    CurrentItems.Add(item.ToString());
+                                }
+                            }
+                        }
+                    }
+                }
             }
             else
             {
-                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+                Result.AddMessage($"The entered character ({ToAdd}) can not be a Base-58 character.");
             }
         }
 
@@ -249,6 +294,7 @@ namespace FinderOuter.ViewModels
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
                     b58Service.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
+                    ResetSearchSpace();
                 }
                 else
                 {
