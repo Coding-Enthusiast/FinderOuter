@@ -293,6 +293,10 @@ namespace FinderOuter.Services.SearchSpaces
                 int t2 = missingIndexes[maxIndex];
                 missingIndexes[maxIndex] = missingIndexes[0];
                 missingIndexes[0] = t2;
+
+                t2 = multMissingIndexes[maxIndex];
+                multMissingIndexes[maxIndex] = multMissingIndexes[0];
+                multMissingIndexes[0] = t2;
             }
 
             allPermutationValues = new uint[totalLen];
