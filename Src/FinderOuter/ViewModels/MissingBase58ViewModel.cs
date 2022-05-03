@@ -291,7 +291,7 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
                 {
                     b58Service.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
                     ResetSearchSpace();
