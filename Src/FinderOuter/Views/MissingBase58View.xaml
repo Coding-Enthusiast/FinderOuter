@@ -40,7 +40,7 @@
               Grid.Column="1"
               Grid.Row="1"/>
 
-    <Expander Header="Advanced (limit search space)" IsExpanded="True" Grid.Column="0" Grid.Row="3">
+    <Expander Header="Advanced (limit search space)" Grid.Column="0" Grid.Row="3">
       <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*">
         <Button Content="Start"
                 Command="{Binding StartCommand}"
