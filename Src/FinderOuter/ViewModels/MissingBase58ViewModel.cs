@@ -20,6 +20,8 @@ namespace FinderOuter.ViewModels
     {
         public MissingBase58ViewModel()
         {
+            isCaseSensitive = true;
+
             // Don't move this line, service must be instantiated here
             InputService inServ = new();
             b58Service = new Base58Service(Result);

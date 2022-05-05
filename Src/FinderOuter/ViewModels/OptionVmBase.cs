@@ -142,11 +142,13 @@ namespace FinderOuter.ViewModels
             Index--;
         }
 
+        protected bool isCaseSensitive = false;
+
         private string _toAdd;
         public string ToAdd
         {
             get => _toAdd;
-            set => this.RaiseAndSetIfChanged(ref _toAdd, value.ToLowerInvariant().Trim());
+            set => this.RaiseAndSetIfChanged(ref _toAdd, isCaseSensitive ? value : value.ToLowerInvariant().Trim());
         }
 
         public IReactiveCommand RemoveSelectedCommand { get; }
