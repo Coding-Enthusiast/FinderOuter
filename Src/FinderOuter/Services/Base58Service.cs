@@ -8,10 +8,11 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
+using FinderOuter.Services.SearchSpaces;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -19,7 +20,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using FinderOuter.Services.SearchSpaces;
 
 namespace FinderOuter.Services
 {
@@ -43,39 +43,6 @@ namespace FinderOuter.Services
             PrivateKey,
             Address,
             Bip38
-        }
-
-
-        /// <summary>
-        /// Returns powers of 58 multiplied by <paramref name="maxPow"/> then shifts them left so that it doesn't need it later
-        /// when converting to SHA256 working vector
-        /// <para/>[0*58^0, 0*58^1, ..., 0*58^<paramref name="maxPow"/>, 1*58^0, 1*58^1, ...]
-        /// </summary>
-        public static ulong[] GetShiftedMultPow58(int maxPow, int uLen, int shift)
-        {
-            Debug.Assert(shift <= 24 && shift >= 0);
-
-            byte[] padded = new byte[4 * uLen];
-            ulong[] multPow = new ulong[maxPow * uLen * 58];
-            for (int i = 0, pindex = 0; i < 58; i++)
-            {
-                for (int j = 0; j < maxPow; j++)
-                {
-                    BigInteger val = BigInteger.Pow(58, j) * i;
-                    byte[] temp = val.ToByteArrayExt(false, true);
-
-                    Array.Clear(padded, 0, padded.Length);
-                    Buffer.BlockCopy(temp, 0, padded, 0, temp.Length);
-
-                    for (int k = 0; k < padded.Length; pindex++, k += 4)
-                    {
-                        multPow[pindex] =
-                            (uint)(padded[k] << 0 | padded[k + 1] << 8 | padded[k + 2] << 16 | padded[k + 3] << 24);
-                        multPow[pindex] <<= shift;
-                    }
-                }
-            }
-            return multPow;
         }
 
 

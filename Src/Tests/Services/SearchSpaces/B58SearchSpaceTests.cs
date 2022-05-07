@@ -3,14 +3,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using System.Collections.Generic;
 using System.Numerics;
 using Xunit;
 
-namespace Tests.Services
+namespace Tests.Services.SearchSpaces
 {
-    public class Base58SeviceTests
+    public class B58SearchSpaceTests
     {
         public static IEnumerable<object[]> GetShiftedMultCases()
         {
@@ -26,7 +26,7 @@ namespace Tests.Services
         [MemberData(nameof(GetShiftedMultCases))]
         public void GetShiftedMultPow58Test(int maxPow, int uLen, int shift)
         {
-            ulong[] shiftedPowers = Base58Service.GetShiftedMultPow58(maxPow, uLen, shift);
+            ulong[] shiftedPowers = B58SearchSpace.GetShiftedMultPow58(maxPow, uLen, shift);
 
             ulong mask = (1U << shift) - 1;
             int index = 0;
