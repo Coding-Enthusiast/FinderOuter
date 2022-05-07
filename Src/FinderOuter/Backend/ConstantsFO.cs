@@ -52,5 +52,29 @@ namespace FinderOuter.Backend
         public static readonly string ChangedMessage = "Input is changed and the search-space needs to re-evaluated." +
             $"{Environment.NewLine}" +
             $"Click Yes to reset search-space to use default values or click No to manually set search-space.";
+
+        // 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+        public static readonly char[][] SimilarBase58Chars = new char[][]
+        {
+            new char[] { '0', 'o' },
+            new char[] { '1', 'L', 'l' },
+            new char[] { '5', 'S', 's' },
+            new char[] { '7', 'J', 'T', 'j', 't' },
+            new char[] { '8', 'B' },
+            new char[] { '9', 'g', 'q' },
+            new char[] { '9', 'g', 'q' },
+            new char[] { 'C', 'G', 'c' },
+            new char[] { 'D', 'P', 'p', 'b' },
+            new char[] { 'E', 'F', 'f' },
+            new char[] { 'I', 'i', 'J', 'j' },
+            new char[] { 'K', 'k' },
+            new char[] { 'M', 'm' },
+            new char[] { 'N', 'n' },
+            new char[] { 'P', 'p', 'q' },
+            new char[] { 'U', 'u', 'V', 'v', 'Y', 'y' },
+            new char[] { 'W', 'w' },
+            new char[] { 'X', 'x' },
+            new char[] { 'Z', 'z' },
+        };
     }
 }

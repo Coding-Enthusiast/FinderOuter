@@ -75,30 +75,6 @@ namespace FinderOuter.ViewModels
         private readonly B58SearchSpace searchSpace;
         private bool isChanged;
 
-        // 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
-        private readonly static char[][] aaa = new char[][]
-        {
-            new char[] { '0', 'o' },
-            new char[] { '1', 'L', 'l' },
-            new char[] { '5', 'S', 's' },
-            new char[] { '7', 'J', 'T', 'j', 't' },
-            new char[] { '8', 'B' },
-            new char[] { '9', 'g', 'q' },
-            new char[] { '9', 'g', 'q' },
-            new char[] { 'C', 'G', 'c' },
-            new char[] { 'D', 'P', 'p', 'b' },
-            new char[] { 'E', 'F', 'f' },
-            new char[] { 'I', 'i', 'J', 'j' },
-            new char[] { 'K', 'k' },
-            new char[] { 'M', 'm' },
-            new char[] { 'N', 'n' },
-            new char[] { 'P', 'p', 'q' },
-            new char[] { 'U', 'u', 'V', 'v', 'Y', 'y' },
-            new char[] { 'W', 'w' },
-            new char[] { 'X', 'x' },
-            new char[] { 'Z', 'z' },
-        };
-
 
         public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
@@ -225,11 +201,11 @@ namespace FinderOuter.ViewModels
                 else
                 {
                     char c = ToAdd[0];
-                    for (int i = 0; i < aaa.Length; i++)
+                    for (int i = 0; i < ConstantsFO.SimilarBase58Chars.Length; i++)
                     {
-                        if (aaa[i].Contains(c))
+                        if (ConstantsFO.SimilarBase58Chars[i].Contains(c))
                         {
-                            foreach (char item in aaa[i])
+                            foreach (char item in ConstantsFO.SimilarBase58Chars[i])
                             {
                                 if (ConstantsFO.Base58Chars.Contains(item) && !CurrentItems.Contains(item.ToString()))
                                 {
