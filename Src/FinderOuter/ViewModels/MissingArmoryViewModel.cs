@@ -22,12 +22,10 @@ namespace FinderOuter.ViewModels
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
-                x => x.MissingChar,
                 x => x.AdditionalInput,
                 x => x.Result.CurrentState,
-                (b58, c, extra, state) =>
+                (b58, extra, state) =>
                             !string.IsNullOrEmpty(b58) &&
-                            inServ.IsMissingCharValid(c) &&
                             !string.IsNullOrEmpty(extra) &&
                             state != State.Working);
 
@@ -77,17 +75,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
         }
 
-        private char _mis = '*';
-        public char MissingChar
-        {
-            get => _mis;
-            set => this.RaiseAndSetIfChanged(ref _mis, value);
-        }
 
 
         public override void Find()
         {
-            service.FindMissing(Input, MissingChar, AdditionalInput, SelectedExtraInputType.Value);
+            service.FindMissing(Input, SelectedMissingChar, AdditionalInput, SelectedExtraInputType.Value);
         }
 
         public void Example()
@@ -95,7 +87,7 @@ namespace FinderOuter.ViewModels
             object[] ex = GetNextExample();
 
             Input = (string)ex[0];
-            MissingChar = (char)ex[1];
+            SelectedMissingChar = MissingChars[(int)ex[1]];
             AdditionalInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < ExtraInputTypeList.Count());
@@ -105,12 +97,12 @@ namespace FinderOuter.ViewModels
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, char, string, int, string>()
+            return new ExampleData<string, int, string, int, string>()
             {
                 {
                     $"adro sksk u*td nini hhgw afjj ujfn jwik inre{Environment.NewLine}" +
                     $"eorj otnk sfko de*t eafo hsou trnu gsih rhso",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "15kF4z37Do6NC9RmA41Pn3MWKwUAPpRetj",
                     1,
                     $"random.{Environment.NewLine}" +
@@ -120,7 +112,7 @@ namespace FinderOuter.ViewModels
                 {
                     $"adrosksku_td nini    hhgw afjj ujfn jwik inre{Environment.NewLine}" +
                     $"eorj otnk sfko de_t eafo hsou trnu gsih rhso",
-                    '_',
+                    Array.IndexOf(MissingChars, '_'),
                     "5JvTxPsi5PgqeaaVf4hBrzRJTXwBUx6AFrMHAibKvVKC2RYMJQW",
                     5,
                     $"random.{Environment.NewLine}" +
@@ -132,7 +124,7 @@ namespace FinderOuter.ViewModels
                 {
                     $"adro **** uo*d nini hhgw afjj ujfn jwik inre{Environment.NewLine}" +
                     $"eorj ot*k s**o dert ea*o hsou trnu gsih rhso",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "15kF4z37Do6NC9RmA41Pn3MWKwUAPpRetj",
                     1,
                     $"random.{Environment.NewLine}" +
@@ -143,7 +135,7 @@ namespace FinderOuter.ViewModels
                 {
                     $"adro sksk uotd nini hhgw afjj ujfn jwik ****{Environment.NewLine}" +
                     $"eorj otnk sfko dert eafo hsou trnu gsih ****",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "15kF4z37Do6NC9RmA41Pn3MWKwUAPpRetj",
                     1,
                     $"random.{Environment.NewLine}" +
@@ -157,7 +149,7 @@ namespace FinderOuter.ViewModels
                     $"fa*k frar ofof r*rt nkja eued rhsj thgf went{Environment.NewLine}" +
                     $"tsjj ohtr jtre idof ghhd jidk aidk stho jwfo{Environment.NewLine}" +
                     $"hiof thot fjot kigh odik aaow eegn dawj utnh",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "1ASHye7iYLPpysUoUpUHmivxrRh64iBMS4",
                     1,
                     $"random.{Environment.NewLine}" +

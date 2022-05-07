@@ -29,15 +29,13 @@
             Grid.Column="0"
             Grid.Row="1"/>
 
-    <TextBox Text="{Binding MissingChar}"
-             TextAlignment="Center"
-             VerticalContentAlignment="Center"
-             VerticalAlignment="Top"
-             ToolTip.Tip="{Binding MissingToolTip}"
-             Height="40"
-             Width="40"
-             Grid.Column="1"
-             Grid.Row="0"/>
+    <ComboBox Items="{Binding MissingChars}"
+              SelectedItem="{Binding SelectedMissingChar}"
+              ToolTip.Tip="{Binding MissingToolTip}"
+              Margin="1"
+              VerticalAlignment="Top"
+              Grid.Column="1"
+              Grid.Row="0"/>
     <ComboBox Items="{Binding ExtraInputTypeList}"
               SelectedItem="{Binding SelectedExtraInputType}"
               Grid.Column="1"

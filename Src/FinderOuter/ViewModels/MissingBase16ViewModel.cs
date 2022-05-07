@@ -22,10 +22,9 @@ namespace FinderOuter.ViewModels
             InputService inServ = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input, x => x.MissingChar,
-                x => x.Result.CurrentState, (b58, c, state) =>
+                x => x.Input,
+                x => x.Result.CurrentState, (b58, state) =>
                             !string.IsNullOrEmpty(b58) &&
-                            inServ.IsMissingCharValid(c) &&
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
@@ -48,7 +47,7 @@ namespace FinderOuter.ViewModels
             $"Since unlike WIF (Base-58) this format has no checksum, all combinations with any character is correct. " +
             $"This is why the code has to check each combination against the additional data which can be an address or a " +
             $"public key.{Environment.NewLine}" +
-            $"Enter the base-16 string and replace its missing characters with the symbol defined by {nameof(MissingChar)} " +
+            $"Enter the base-16 string and replace its missing characters with the symbol defined by missing character " +
             $"parameter and press Find.";
 
 
@@ -77,17 +76,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
         }
 
-        private char _mis = '*';
-        public char MissingChar
-        {
-            get => _mis;
-            set => this.RaiseAndSetIfChanged(ref _mis, value);
-        }
 
 
         public override void Find()
         {
-            b16Service.Find(Input, MissingChar, AdditionalInput, SelectedExtraInputType.Value);
+            b16Service.Find(Input, SelectedMissingChar, AdditionalInput, SelectedExtraInputType.Value);
         }
 
 
@@ -96,7 +89,7 @@ namespace FinderOuter.ViewModels
             object[] ex = GetNextExample();
 
             Input = (string)ex[0];
-            MissingChar = (char)ex[1];
+            SelectedMissingChar = MissingChars[(int)ex[1]];
             AdditionalInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < ExtraInputTypeList.Count());
@@ -106,11 +99,11 @@ namespace FinderOuter.ViewModels
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, char, string, int, string>()
+            return new ExampleData<string, int, string, int, string>()
             {
                 {
                     "0c28fca386c7a227600b2fe50b7cae11ec86d3b*1fbe471be89827e19d72aa1d",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK",
                     0,
                     $"bitcoin wiki.{Environment.NewLine}" +
@@ -119,7 +112,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "0c28fca386c7a227600?2fe50b7cae11ec?6d3b?1fbe?71be8?827e19d72aa1d",
-                    '?',
+                    Array.IndexOf(MissingChars, '?'),
                     "1LoVGDgRs9hTfTNJNuXKSpywcbdvwRXpmK",
                     2,
                     $"bitcoin wiki.{Environment.NewLine}" +
@@ -130,7 +123,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "8e812436a0e3323166e1f0e8ba79e19e217b2c4a53c9*0d4cca0cfb1078979df",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "04a5bb3b28466f578e6e93fbfd5f75cee1ae86033aa4bbea690e3312c087181eb366f9a1d1d6a437a9bf9fc65ec853b9fd60fa322be3997c47144eb20da658b3d1",
                     4,
                     $"https://developers.tron.network/docs/account. {Environment.NewLine}" +

@@ -19,16 +19,13 @@
             Grid.Column="0"
             Grid.Row="0"/>
 
-    <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1" Grid.Row="0">
-      <TextBlock Text="Missing char:"
-                 HorizontalAlignment="Center"/>
-      <TextBox Text="{Binding MissingChar}"
-               TextAlignment="Center"
-               VerticalContentAlignment="Center"
-               ToolTip.Tip="{Binding MissingToolTip}"
-               Height="40"
-               Width="40"/>
-    </StackPanel>
+    <ComboBox Items="{Binding MissingChars}"
+              SelectedItem="{Binding SelectedMissingChar}"
+              ToolTip.Tip="{Binding MissingToolTip}"
+              Margin="1"
+              VerticalAlignment="Top"
+              Grid.Column="1"
+              Grid.Row="0"/>
 
     <TextBox Text="{Binding ExtraInput}"
              Watermark="Extra input to check against (address, or public key)"

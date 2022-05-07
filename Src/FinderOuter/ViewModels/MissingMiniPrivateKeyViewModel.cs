@@ -24,11 +24,9 @@ namespace FinderOuter.ViewModels
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
                 x => x.ExtraInput,
-                x => x.MissingChar,
-                x => x.Result.CurrentState, (miniKey, addr, c, state) =>
+                x => x.Result.CurrentState, (miniKey, addr, state) =>
                             !string.IsNullOrEmpty(miniKey) &&
                             !string.IsNullOrEmpty(addr) &&
-                            inServ.IsMissingCharValid(c) &&
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
@@ -51,7 +49,7 @@ namespace FinderOuter.ViewModels
             $"This option can recover missing characters in a mini private key." +
             $"{Environment.NewLine}" +
             $"Enter the mini key (22 or 26 or 30 characters long starting with S) in first box while replacing its missing " +
-            $"characters with the specified {nameof(MissingChar)} and enter the " +
+            $"characters with the specified missing character and enter the " +
             $"corresponding address in second box and click Find button.";
 
 
@@ -80,16 +78,10 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _input2, value);
         }
 
-        private char _mis = '*';
-        public char MissingChar
-        {
-            get => _mis;
-            set => this.RaiseAndSetIfChanged(ref _mis, value);
-        }
 
         public override void Find()
         {
-            miniService.Find(Input, ExtraInput, SelectedExtraInputType.Value, MissingChar);
+            miniService.Find(Input, ExtraInput, SelectedExtraInputType.Value, SelectedMissingChar);
         }
 
         public void Example()
@@ -97,7 +89,7 @@ namespace FinderOuter.ViewModels
             object[] ex = GetNextExample();
 
             Input = (string)ex[0];
-            MissingChar = (char)ex[1];
+            SelectedMissingChar = MissingChars[(int)ex[1]];
             ExtraInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < ExtraInputTypeList.Count());
@@ -107,11 +99,11 @@ namespace FinderOuter.ViewModels
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, char, string, int, string>()
+            return new ExampleData<string, int, string, int, string>()
             {
                 {
                     "SzavMBLoXU6kDr*tUV*ffv",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "19GuvDvMMUZ8vq84wT79fvnvhMd5MnfTkR",
                     0,
                     $"bitcoin wiki.{Environment.NewLine}" +
@@ -120,7 +112,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "SzavMBLoXU6kDrqtUVmf--",
-                    '-',
+                    Array.IndexOf(MissingChars, '-'),
                     "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
                     4,
                     $"bitcoin wiki.{Environment.NewLine}" +
@@ -130,7 +122,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "S6c56bnXQiB*k9mqS*E7ykVQ7Nzr*y",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "1CciesT23BNionJeXrbxmjc7ywfiyM4oLW",
                     1,
                     $"bitcoin wiki.{Environment.NewLine}" +
@@ -140,7 +132,7 @@ namespace FinderOuter.ViewModels
                 },
                 {
                     "SzavMBLo*U6*D**tU*mffv",
-                    '*',
+                    Array.IndexOf(MissingChars, '*'),
                     "02588D202AFCC1EE4AB5254C7847EC25B9A135BBDA0F2BC69EE1A714749FD77DC9",
                     4,
                     $"bitcoin wiki.{Environment.NewLine}" +
