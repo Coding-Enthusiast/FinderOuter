@@ -3,11 +3,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -20,6 +23,7 @@ namespace FinderOuter.ViewModels
             // Don't move this line, service must be instantiated here
             b16Service = new Base16Sevice(Result);
             InputService inServ = new();
+            searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
@@ -38,6 +42,14 @@ namespace FinderOuter.ViewModels
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());
+
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
+            AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
+            AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
         }
 
 
@@ -52,6 +64,8 @@ namespace FinderOuter.ViewModels
 
 
         private readonly Base16Sevice b16Service;
+        private readonly B16SearchSpace searchSpace;
+        private bool isChanged;
 
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
@@ -77,10 +91,120 @@ namespace FinderOuter.ViewModels
         }
 
 
-
-        public override void Find()
+        private void Start()
         {
-            b16Service.Find(Input, SelectedMissingChar, AdditionalInput, SelectedExtraInputType.Value);
+            isChanged = false;
+            Index = 0;
+            Max = 0;
+            IsProcessed = searchSpace.Process(Input, SelectedMissingChar, out string error);
+
+            if (IsProcessed)
+            {
+                allItems = new ObservableCollection<string>[searchSpace.MissCount];
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i] = new();
+                }
+                Max = allItems.Length;
+                Index = 1;
+            }
+            else
+            {
+                Result.AddMessage(error);
+            }
+        }
+
+        private void ResetSearchSpace()
+        {
+            Index = 0;
+            Max = 0;
+            allItems = Array.Empty<ObservableCollection<string>>();
+            IsProcessed = false;
+        }
+
+
+        private void AddToList(IEnumerable<char> items)
+        {
+            foreach (char item in items)
+            {
+                if (!CurrentItems.Contains(item.ToString()))
+                {
+                    CurrentItems.Add(item.ToString());
+                }
+            }
+        }
+
+        public IReactiveCommand AddAllCommand { get; }
+        private void AddAll()
+        {
+            AddToList(searchSpace.AllChars);
+        }
+
+        public IReactiveCommand AddNumberCommand { get; }
+        private void AddNumber()
+        {
+            AddToList(searchSpace.AllChars.Where(c => char.IsDigit(c)));
+        }
+
+
+        public IReactiveCommand AddExactCommand { get; }
+        private void AddExact()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            {
+                if (!CurrentItems.Contains(ToAdd))
+                {
+                    CurrentItems.Add(ToAdd);
+                }
+            }
+            else
+            {
+                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+            }
+        }
+
+
+
+        public override async void Find()
+        {
+            if (isChanged && IsProcessed)
+            {
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, ConstantsFO.ChangedMessage);
+                if (res == MessageBoxResult.Yes)
+                {
+                    IsProcessed = false;
+                }
+                else
+                {
+                    ResetSearchSpace();
+                    return;
+                }
+            }
+
+            if (!IsProcessed)
+            {
+                Start();
+                foreach (ObservableCollection<string> item in allItems)
+                {
+                    foreach (char c in searchSpace.AllChars)
+                    {
+                        item.Add(c.ToString());
+                    }
+                }
+            }
+
+            if (IsProcessed)
+            {
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
+                {
+                    b16Service.Find(searchSpace, AdditionalInput, SelectedExtraInputType.Value);
+                    ResetSearchSpace();
+                }
+                else
+                {
+                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                }
+            }
         }
 
 
