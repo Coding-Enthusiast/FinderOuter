@@ -49,7 +49,6 @@ namespace FinderOuter.ViewModels
             AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
             AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
-            AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
         }
 
 
