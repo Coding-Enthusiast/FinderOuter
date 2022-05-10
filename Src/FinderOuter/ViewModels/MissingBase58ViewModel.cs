@@ -194,6 +194,7 @@ namespace FinderOuter.ViewModels
         {
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1)
             {
+                // Characters outside of Base58 charset are accepted here
                 if (!ConstantsFO.LowerCase.Contains(ToAdd.ToLower()) && !ConstantsFO.Numbers.Contains(ToAdd))
                 {
                     Result.AddMessage("Invalid character (only letters and numbers are accepted).");

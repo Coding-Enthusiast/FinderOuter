@@ -83,7 +83,7 @@ namespace FinderOuter.Services
         {
             Calc calc = new();
             Debug.Assert(searchSpace.MissCount - 1 > 0);
-            Permutation[] permutations = new Permutation[searchSpace.MissCount -1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
             ICompareService localComp = comparer.Clone();
 
             Span<byte> temp = stackalloc byte[32];
@@ -223,10 +223,6 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(string key, char missingChar, string AdditionalInput, InputType extraType)
-        {
-
-        }
         public async void Find(B16SearchSpace ss, string AdditionalInput, InputType extraType)
         {
             report.Init();

@@ -447,7 +447,8 @@ namespace FinderOuter.Services
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
 
-            fixed (Permutation* itemsPt = &permutations[0]) fixed (uint* wrd = &localWIndex[0])
+            fixed (Permutation* itemsPt = &permutations[0])
+            fixed (uint* wrd = &localWIndex[0])
             fixed (int* mi = &searchSpace.missingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
             fixed (uint* valPt = &searchSpace.allPermutationValues[0])
