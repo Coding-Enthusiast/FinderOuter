@@ -7,33 +7,20 @@ using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using System;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Services.SearchSpaces
 {
-    public class MnemonicSearchSpace
+    public class MnemonicSearchSpace : SearchSpaceBase
     {
-        public MnemonicSearchSpace()
-        {
-            inputService = new InputService();
-        }
-
-
-        private readonly InputService inputService;
-
         internal static readonly int[] allowedWordLengths = { 12, 15, 18, 21, 24 };
 
-        public int wordCount, missCount, maxWordLen;
+        public int wordCount, maxWordLen;
         public uint[] wordIndexes;
-        public int[] missingIndexes;
-        public int[] permutationCounts;
-        public uint[] allPermutationValues;
         public string[] allWords;
         public BIP0039.WordLists wl;
         public MnemonicTypes mnType;
         public ElectrumMnemonic.MnemonicType elecMnType;
-        public string mnemonic;
 
         public bool IsProcessed { get; private set; }
 
@@ -89,9 +76,9 @@ namespace FinderOuter.Services.SearchSpaces
                     return false;
                 }
 
-                missCount = words.Count(s => s == missCharStr);
+                MissCount = words.Count(s => s == missCharStr);
                 wordIndexes = new uint[words.Length];
-                missingIndexes = new int[missCount];
+                MissingIndexes = new int[MissCount];
                 for (int i = 0, j = 0; i < words.Length; i++)
                 {
                     if (words[i] != missCharStr)
@@ -100,7 +87,7 @@ namespace FinderOuter.Services.SearchSpaces
                     }
                     else
                     {
-                        missingIndexes[j] = i;
+                        MissingIndexes[j] = i;
                         j++;
                     }
                 }
@@ -115,14 +102,14 @@ namespace FinderOuter.Services.SearchSpaces
         {
             IsProcessed = false;
 
-            this.mnemonic = mnemonic;
+            Input = mnemonic;
             this.wl = wl;
             this.mnType = mnType;
             this.elecMnType = elecMnType;
 
             if (mnType == MnemonicTypes.Electrum && wl != BIP0039.WordLists.English)
                 error = "Only English words are currently supported for Electrum mnemonics.";
-            else if (!inputService.IsMissingCharValid(missChar))
+            else if (!InputService.IsMissingCharValid(missChar))
                 error = "Missing character is not accepted.";
             else if (!TrySetWordList(wl))
                 error = $"Could not find {wl} word list among resources.";
@@ -141,7 +128,7 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool SetValues(string[][] result)
         {
-            if (result.Length != missCount)
+            if (result.Length != MissCount || result.Any(x => x.Length < 2))
             {
                 return false;
             }
@@ -170,19 +157,19 @@ namespace FinderOuter.Services.SearchSpaces
                 result[maxIndex] = result[0];
                 result[0] = t1;
 
-                int t2 = missingIndexes[maxIndex];
-                missingIndexes[maxIndex] = missingIndexes[0];
-                missingIndexes[0] = t2;
+                int t2 = MissingIndexes[maxIndex];
+                MissingIndexes[maxIndex] = MissingIndexes[0];
+                MissingIndexes[0] = t2;
             }
 
-            allPermutationValues = new uint[totalLen];
-            permutationCounts = new int[missCount];
+            AllPermutationValues = new uint[totalLen];
+            PermutationCounts = new int[MissCount];
 
             int index1 = 0;
             int index2 = 0;
             foreach (string[] item in result)
             {
-                permutationCounts[index2++] = item.Length;
+                PermutationCounts[index2++] = item.Length;
                 foreach (string s in item)
                 {
                     int i = Array.IndexOf(allWords, s);
@@ -190,22 +177,11 @@ namespace FinderOuter.Services.SearchSpaces
                     {
                         return false;
                     }
-                    allPermutationValues[index1++] = (uint)i;
+                    AllPermutationValues[index1++] = (uint)i;
                 }
             }
 
             return true;
-        }
-
-
-        public BigInteger GetTotal()
-        {
-            BigInteger res = BigInteger.One;
-            foreach (int item in permutationCounts)
-            {
-                res *= item;
-            }
-            return res;
         }
     }
 }

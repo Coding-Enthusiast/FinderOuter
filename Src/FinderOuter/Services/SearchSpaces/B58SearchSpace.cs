@@ -11,23 +11,12 @@ using System.Numerics;
 
 namespace FinderOuter.Services.SearchSpaces
 {
-    public class B58SearchSpace
+    public class B58SearchSpace : SearchSpaceBase
     {
-        public B58SearchSpace()
-        {
-            inputService = new InputService();
-        }
-
-        private readonly InputService inputService;
-
         public readonly char[] AllChars = ConstantsFO.Base58Chars.ToCharArray();
-        public string key;
-        public int missCount;
         public bool isComp;
         public ulong[] multPow58, preComputed;
-        public int[] missingIndexes, multMissingIndexes;
-        public int[] permutationCounts;
-        public uint[] allPermutationValues;
+        public int[] multMissingIndexes;
         internal Base58Service.InputType inputType;
 
 
@@ -64,18 +53,18 @@ namespace FinderOuter.Services.SearchSpaces
 
         private bool ProcessPrivateKey(string key, char missChar, out string error)
         {
-            missCount = key.Count(c => c == missChar);
-            if (missCount == 0)
+            MissCount = key.Count(c => c == missChar);
+            if (MissCount == 0)
             {
                 error = null;
                 return true;
             }
             else
             {
-                if (inputService.CanBePrivateKey(key, out error))
+                if (InputService.CanBePrivateKey(key, out error))
                 {
-                    missingIndexes = new int[missCount];
-                    multMissingIndexes = new int[missCount];
+                    MissingIndexes = new int[MissCount];
+                    multMissingIndexes = new int[MissCount];
                     isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
 
                     const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
@@ -101,7 +90,7 @@ namespace FinderOuter.Services.SearchSpaces
                         }
                         else
                         {
-                            missingIndexes[mis] = i;
+                            MissingIndexes[mis] = i;
                             multMissingIndexes[mis] = t;
                             mis++;
                             j += uLen;
@@ -119,8 +108,8 @@ namespace FinderOuter.Services.SearchSpaces
 
         private bool ProcessAddress(string address, char missChar, out string error)
         {
-            missCount = address.Count(c => c == missChar);
-            if (missCount == 0)
+            MissCount = address.Count(c => c == missChar);
+            if (MissCount == 0)
             {
                 error = null;
                 return true;
@@ -139,19 +128,19 @@ namespace FinderOuter.Services.SearchSpaces
             else
             {
                 const int uLen = 7;
-                missingIndexes = new int[missCount];
-                multMissingIndexes = new int[missCount];
+                MissingIndexes = new int[MissCount];
+                multMissingIndexes = new int[MissCount];
                 preComputed = new ulong[uLen];
                 multPow58 = GetShiftedMultPow58(address.Length, uLen, 24);
 
                 // calculate what we already have and store missing indexes
                 int mis = 0;
-                for (int i = key.Length - 1, j = 0; i >= 0; i--)
+                for (int i = Input.Length - 1, j = 0; i >= 0; i--)
                 {
-                    int t = (key.Length - 1 - i) * uLen;
-                    if (key[i] != missChar)
+                    int t = (Input.Length - 1 - i) * uLen;
+                    if (Input[i] != missChar)
                     {
-                        int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
+                        int index = ConstantsFO.Base58Chars.IndexOf(Input[i]);
                         int chunk = (index * address.Length * uLen) + t;
                         for (int k = uLen - 1; k >= 0; k--, j++)
                         {
@@ -160,7 +149,7 @@ namespace FinderOuter.Services.SearchSpaces
                     }
                     else
                     {
-                        missingIndexes[mis] = i;
+                        MissingIndexes[mis] = i;
                         multMissingIndexes[mis] = t;
                         mis++;
                         j += uLen;
@@ -174,8 +163,8 @@ namespace FinderOuter.Services.SearchSpaces
 
         private bool ProcessBip38(string bip38, char missChar, out string error)
         {
-            missCount = bip38.Count(c => c == missChar);
-            if (missCount == 0)
+            MissCount = bip38.Count(c => c == missChar);
+            if (MissCount == 0)
             {
                 error = null;
                 return true;
@@ -192,20 +181,20 @@ namespace FinderOuter.Services.SearchSpaces
             }
             else
             {
-                missingIndexes = new int[missCount];
-                multMissingIndexes = new int[missCount];
+                MissingIndexes = new int[MissCount];
+                multMissingIndexes = new int[MissCount];
                 const int uLen = 11;
                 preComputed = new ulong[uLen];
                 multPow58 = GetShiftedMultPow58(bip38.Length, uLen, 8);
 
                 // calculate what we already have and store missing indexes
                 int mis = 0;
-                for (int i = key.Length - 1, j = 0; i >= 0; i--)
+                for (int i = Input.Length - 1, j = 0; i >= 0; i--)
                 {
-                    int t = (key.Length - 1 - i) * uLen;
-                    if (key[i] != missChar)
+                    int t = (Input.Length - 1 - i) * uLen;
+                    if (Input[i] != missChar)
                     {
-                        int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
+                        int index = ConstantsFO.Base58Chars.IndexOf(Input[i]);
                         int chunk = (index * bip38.Length * uLen) + t;
                         for (int k = uLen - 1; k >= 0; k--, j++)
                         {
@@ -214,7 +203,7 @@ namespace FinderOuter.Services.SearchSpaces
                     }
                     else
                     {
-                        missingIndexes[mis] = i;
+                        MissingIndexes[mis] = i;
                         multMissingIndexes[mis] = t;
                         mis++;
                         j += uLen;
@@ -228,15 +217,15 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool Process(string input, char missChar, Base58Service.InputType t, out string error)
         {
-            key = input;
+            Input = input;
             inputType = t;
 
-            if (!inputService.IsMissingCharValid(missChar))
+            if (!InputService.IsMissingCharValid(missChar))
             {
                 error = "Missing character is not accepted.";
                 return false;
             }
-            else if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missChar))
+            else if (string.IsNullOrWhiteSpace(Input) || !Input.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missChar))
             {
                 error = "Input contains invalid base-58 character(s).";
                 return false;
@@ -246,11 +235,11 @@ namespace FinderOuter.Services.SearchSpaces
                 switch (t)
                 {
                     case Base58Service.InputType.PrivateKey:
-                        return ProcessPrivateKey(key, missChar, out error);
+                        return ProcessPrivateKey(Input, missChar, out error);
                     case Base58Service.InputType.Address:
-                        return ProcessAddress(key, missChar, out error);
+                        return ProcessAddress(Input, missChar, out error);
                     case Base58Service.InputType.Bip38:
-                        return ProcessBip38(key, missChar, out error);
+                        return ProcessBip38(Input, missChar, out error);
                     default:
                         error = "Given input type is not defined.";
                         return false;
@@ -261,7 +250,7 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool SetValues(string[][] result)
         {
-            if (result.Length != missCount || result.Any(x => x.Length < 2))
+            if (result.Length != MissCount || result.Any(x => x.Length < 2))
             {
                 return false;
             }
@@ -290,24 +279,24 @@ namespace FinderOuter.Services.SearchSpaces
                 result[maxIndex] = result[0];
                 result[0] = t1;
 
-                int t2 = missingIndexes[maxIndex];
-                missingIndexes[maxIndex] = missingIndexes[0];
-                missingIndexes[0] = t2;
+                int t2 = MissingIndexes[maxIndex];
+                MissingIndexes[maxIndex] = MissingIndexes[0];
+                MissingIndexes[0] = t2;
 
                 t2 = multMissingIndexes[maxIndex];
                 multMissingIndexes[maxIndex] = multMissingIndexes[0];
                 multMissingIndexes[0] = t2;
             }
 
-            allPermutationValues = new uint[totalLen];
-            permutationCounts = new int[missCount];
+            AllPermutationValues = new uint[totalLen];
+            PermutationCounts = new int[MissCount];
 
             int index1 = 0;
             int index2 = 0;
             char[] allChars = ConstantsFO.Base58Chars.ToCharArray();
             foreach (string[] item in result)
             {
-                permutationCounts[index2++] = item.Length;
+                PermutationCounts[index2++] = item.Length;
                 foreach (string s in item)
                 {
                     if (s.Length > 1)
@@ -319,22 +308,11 @@ namespace FinderOuter.Services.SearchSpaces
                     {
                         return false;
                     }
-                    allPermutationValues[index1++] = (uint)i;
+                    AllPermutationValues[index1++] = (uint)i;
                 }
             }
 
             return true;
-        }
-
-
-        public BigInteger GetTotal()
-        {
-            BigInteger res = BigInteger.One;
-            foreach (int item in permutationCounts)
-            {
-                res *= item;
-            }
-            return res;
         }
     }
 }

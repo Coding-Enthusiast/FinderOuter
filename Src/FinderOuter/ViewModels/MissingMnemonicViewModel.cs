@@ -161,7 +161,7 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                allItems = new ObservableCollection<string>[searchSpace.missCount];
+                allItems = new ObservableCollection<string>[searchSpace.MissCount];
                 for (int i = 0; i < allItems.Length; i++)
                 {
                     allItems[i] = new();

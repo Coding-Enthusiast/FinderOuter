@@ -48,16 +48,16 @@ namespace FinderOuter.Services
 
         private bool IsMissingFromEnd()
         {
-            if (searchSpace.missingIndexes[0] != searchSpace.key.Length - 1)
+            if (searchSpace.MissingIndexes[0] != searchSpace.Input.Length - 1)
             {
                 return false;
             }
 
-            if (searchSpace.missingIndexes.Length != 1)
+            if (searchSpace.MissingIndexes.Length != 1)
             {
-                for (int i = 1; i < searchSpace.missingIndexes.Length; i++)
+                for (int i = 1; i < searchSpace.MissingIndexes.Length; i++)
                 {
-                    if (searchSpace.missingIndexes[i - 1] - searchSpace.missingIndexes[i] != 1)
+                    if (searchSpace.MissingIndexes[i - 1] - searchSpace.MissingIndexes[i] != 1)
                     {
                         return false;
                     }
@@ -124,9 +124,9 @@ namespace FinderOuter.Services
             // 11  -> 5,817,656,406 ;     22,725,222  <-- FinderOuter limits the search to 11
             // 12  ->               ;  1,318,062,780
 
-            string baseWif = searchSpace.key.Substring(0, searchSpace.key.Length - searchSpace.missCount);
-            string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], searchSpace.missCount).ToArray())}";
-            string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], searchSpace.missCount).ToArray())}";
+            string baseWif = searchSpace.Input.Substring(0, searchSpace.Input.Length - searchSpace.MissCount);
+            string smallWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[0], searchSpace.MissCount).ToArray())}";
+            string bigWif = $"{baseWif}{new string(Enumerable.Repeat(ConstantsFO.Base58Chars[^1], searchSpace.MissCount).ToArray())}";
             BigInteger start = Base58.Decode(smallWif).SubArray(1, 32).ToBigInt(true, true);
             BigInteger end = Base58.Decode(bigWif).SubArray(1, 32).ToBigInt(true, true);
 
@@ -211,14 +211,14 @@ namespace FinderOuter.Services
             // this method would be called in very long intervals, meaning UI updates here are not an issue.
             report.AddMessageSafe($"Found a possible result (will continue checking the rest):");
 
-            char[] temp = searchSpace.key.ToCharArray();
+            char[] temp = searchSpace.Input.ToCharArray();
             if (misStart != 0)
             {
-                temp[searchSpace.missingIndexes[0]] = searchSpace.AllChars[firstItem];
+                temp[searchSpace.MissingIndexes[0]] = searchSpace.AllChars[firstItem];
             }
-            for (int i = misStart; i < searchSpace.missCount; i++)
+            for (int i = misStart; i < searchSpace.MissCount; i++)
             {
-                temp[searchSpace.missingIndexes[i]] = searchSpace.AllChars[itemPt[i - misStart].GetValue()];
+                temp[searchSpace.MissingIndexes[i]] = searchSpace.AllChars[itemPt[i - misStart].GetValue()];
             }
 
             report.AddMessageSafe(new string(temp));
@@ -261,25 +261,25 @@ namespace FinderOuter.Services
 
         private unsafe void LoopComp(ulong[] precomputed, int firstItem, int misStart)
         {
-            Debug.Assert(searchSpace.missCount - misStart >= 1);
-            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+            Debug.Assert(searchSpace.MissCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - misStart];
 
             ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0])
             fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             fixed (Permutation* itemsPt = &items[0])
             {
                 uint* tempPt = valPt;
                 if (misStart > 0)
                 {
-                    tempPt += searchSpace.permutationCounts[0];
+                    tempPt += searchSpace.PermutationCounts[0];
                 }
                 for (int i = 0; i < items.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
-                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
                 }
 
                 do
@@ -358,15 +358,15 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopComp()
         {
-            if (IsMissingFromEnd() && searchSpace.missCount <= 11)
+            if (IsMissingFromEnd() && searchSpace.MissCount <= 11)
             {
                 WifLoopMissingEnd(true);
             }
-            else if (searchSpace.missCount >= 5)
+            else if (searchSpace.MissCount >= 5)
             {
                 // 4 missing chars is 11,316,496 cases and it takes <2 seconds to run.
                 // That makes 5 the optimal number for using parallelization
-                int max = searchSpace.permutationCounts[0];
+                int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
                 Parallel.For(0, max, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1));
             }
@@ -378,25 +378,25 @@ namespace FinderOuter.Services
 
         private unsafe void LoopUncomp(ulong[] precomputed, int firstItem, int misStart)
         {
-            Debug.Assert(searchSpace.missCount - misStart >= 1);
-            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+            Debug.Assert(searchSpace.MissCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - misStart];
 
             ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0])
             fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             fixed (Permutation* itemsPt = &items[0])
             {
                 uint* tempPt = valPt;
                 if (misStart > 0)
                 {
-                    tempPt += searchSpace.permutationCounts[0];
+                    tempPt += searchSpace.PermutationCounts[0];
                 }
                 for (int i = 0; i < items.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
-                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
                 }
 
                 do
@@ -454,11 +454,11 @@ namespace FinderOuter.Services
         }
         private unsafe void LoopUncomp()
         {
-            if (IsMissingFromEnd() && searchSpace.missCount <= 11)
+            if (IsMissingFromEnd() && searchSpace.MissCount <= 11)
             {
                 WifLoopMissingEnd(false);
             }
-            else if (searchSpace.missCount >= 5)
+            else if (searchSpace.MissCount >= 5)
             {
                 // Same as LoopComp()
                 report.SetProgressStep(58);
@@ -473,25 +473,25 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21(ulong[] precomputed, int firstItem, int misStart)
         {
-            Debug.Assert(searchSpace.missCount - misStart >= 1);
-            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+            Debug.Assert(searchSpace.MissCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - misStart];
 
             ulong[] temp = new ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (ulong* pow = &searchSpace.multPow58[0], tmp = &temp[0], pre = &precomputed[0])
             fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             fixed (Permutation* itemsPt = &items[0])
             {
                 uint* tempPt = valPt;
                 if (misStart > 0)
                 {
-                    tempPt += searchSpace.permutationCounts[0];
+                    tempPt += searchSpace.PermutationCounts[0];
                 }
                 for (int i = 0; i < items.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
-                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
                 }
 
                 do
@@ -501,7 +501,7 @@ namespace FinderOuter.Services
                     foreach (Permutation item in items)
                     {
                         // TODO: change 7 into a field from searchspace(?)
-                        int chunk = ((int)item.GetValue() * searchSpace.key.Length * 7) + mi[i++];
+                        int chunk = ((int)item.GetValue() * searchSpace.Input.Length * 7) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -547,7 +547,7 @@ namespace FinderOuter.Services
             fixed (ulong* lpre = &localPre[0], pre = &searchSpace.preComputed[0], pow = &searchSpace.multPow58[0])
             {
                 Buffer.MemoryCopy(pre, lpre, 56, 56);
-                int chunk = (firstItem * searchSpace.key.Length * 7) + searchSpace.multMissingIndexes[0];
+                int chunk = (firstItem * searchSpace.Input.Length * 7) + searchSpace.multMissingIndexes[0];
 
                 lpre[0] += pow[0 + chunk];
                 lpre[1] += pow[1 + chunk];
@@ -562,9 +562,9 @@ namespace FinderOuter.Services
         }
         private unsafe void Loop21()
         {
-            if (searchSpace.missCount >= 5)
+            if (searchSpace.MissCount >= 5)
             {
-                int max = searchSpace.permutationCounts[0];
+                int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
                 Parallel.For(0, max, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1));
             }
@@ -577,25 +577,25 @@ namespace FinderOuter.Services
 
         private unsafe void Loop58(ulong[] precomputed, int firstItem, int misStart)
         {
-            Debug.Assert(searchSpace.missCount - misStart >= 1);
-            Permutation[] items = new Permutation[searchSpace.missCount - misStart];
+            Debug.Assert(searchSpace.MissCount - misStart >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - misStart];
 
             ulong[] temp = new ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (ulong* pow = &searchSpace.multPow58[0], pre = &precomputed[0], tmp = &temp[0])
             fixed (int* mi = &searchSpace.multMissingIndexes[misStart])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             fixed (Permutation* itemsPt = &items[0])
             {
                 uint* tempPt = valPt;
                 if (misStart > 0)
                 {
-                    tempPt += searchSpace.permutationCounts[0];
+                    tempPt += searchSpace.PermutationCounts[0];
                 }
                 for (int i = 0; i < items.Length; i++)
                 {
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + misStart], tempPt);
-                    tempPt += searchSpace.permutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + misStart], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
                 }
 
                 do
@@ -605,7 +605,7 @@ namespace FinderOuter.Services
                     foreach (Permutation item in items)
                     {
                         // TODO: change 11 into a field from searchspace(?)
-                        int chunk = ((int)item.GetValue() * searchSpace.key.Length * 11) + mi[i++];
+                        int chunk = ((int)item.GetValue() * searchSpace.Input.Length * 11) + mi[i++];
 
                         tmp[0] += pow[0 + chunk];
                         tmp[1] += pow[1 + chunk];
@@ -657,7 +657,7 @@ namespace FinderOuter.Services
             fixed (ulong* lpre = &localPre[0], pre = &searchSpace.preComputed[0], pow = &searchSpace.multPow58[0])
             {
                 Buffer.MemoryCopy(pre, lpre, 88, 88);
-                int chunk = (firstItem * searchSpace.key.Length * 11) + searchSpace.multMissingIndexes[0];
+                int chunk = (firstItem * searchSpace.Input.Length * 11) + searchSpace.multMissingIndexes[0];
 
                 lpre[0] += pow[0 + chunk];
                 lpre[1] += pow[1 + chunk];
@@ -676,9 +676,9 @@ namespace FinderOuter.Services
         }
         private unsafe void Loop58()
         {
-            if (searchSpace.missCount >= 2)
+            if (searchSpace.MissCount >= 2)
             {
-                int max = searchSpace.permutationCounts[0];
+                int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
                 Parallel.For(0, max, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1));
             }
@@ -1186,12 +1186,12 @@ namespace FinderOuter.Services
 
         private async Task FindPrivateKey()
         {
-            if (searchSpace.missCount != 0) // Length must be correct then
+            if (searchSpace.MissCount != 0) // Length must be correct then
             {
-                if (inputService.CanBePrivateKey(searchSpace.key, out string error))
+                if (inputService.CanBePrivateKey(searchSpace.Input, out string error))
                 {
                     report.AddMessageSafe($"{(searchSpace.isComp ? "Compressed" : "Uncompressed")} private key " +
-                                          $"missing {searchSpace.missCount} characters was detected.");
+                                          $"missing {searchSpace.MissCount} characters was detected.");
                     report.SetTotal(searchSpace.GetTotal());
                     report.Timer.Start();
 
@@ -1275,14 +1275,14 @@ namespace FinderOuter.Services
 
         private async Task FindAddress()
         {
-            if (searchSpace.missCount == 0)
+            if (searchSpace.MissCount == 0)
             {
                 report.AddMessageSafe("The given input has no missing characters, verifying it as a complete address.");
-                report.AddMessageSafe(inputService.CheckBase58Address(searchSpace.key));
+                report.AddMessageSafe(inputService.CheckBase58Address(searchSpace.Input));
             }
             else
             {
-                report.AddMessageSafe($"Base-58 address missing {searchSpace.missCount} characters was detected.");
+                report.AddMessageSafe($"Base-58 address missing {searchSpace.MissCount} characters was detected.");
                 report.SetTotal(searchSpace.GetTotal());
                 report.AddMessageSafe("Checking each case. Please wait...");
 
@@ -1294,10 +1294,10 @@ namespace FinderOuter.Services
 
         private async Task FindBip38()
         {
-            if (searchSpace.missCount == 0)
+            if (searchSpace.MissCount == 0)
             {
                 report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
-                _ = inputService.CheckBase58Bip38(searchSpace.key, out string msg);
+                _ = inputService.CheckBase58Bip38(searchSpace.Input, out string msg);
                 report.AddMessageSafe(msg);
             }
             else

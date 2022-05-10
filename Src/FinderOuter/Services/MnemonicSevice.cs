@@ -445,19 +445,19 @@ namespace FinderOuter.Services
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 pt[16] = 0b10000000_00000000_00000000_00000000U;
@@ -515,24 +515,24 @@ namespace FinderOuter.Services
 
         private unsafe void Loop24()
         {
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop24(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop24(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
-                fixed (int* mi = &searchSpace.missingIndexes[0])
+                fixed (int* mi = &searchSpace.MissingIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     pt[16] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 256;
@@ -635,19 +635,19 @@ namespace FinderOuter.Services
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 pt[15] = 0b10000000_00000000_00000000_00000000U;
@@ -704,23 +704,23 @@ namespace FinderOuter.Services
 
         private unsafe void Loop21()
         {
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop21(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop21(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     pt[15] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 224;
@@ -776,19 +776,19 @@ namespace FinderOuter.Services
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 pt[14] = 0b10000000_00000000_00000000_00000000U;
@@ -844,23 +844,23 @@ namespace FinderOuter.Services
 
         private unsafe void Loop18()
         {
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop18(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop18(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     pt[14] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 192;
@@ -915,19 +915,19 @@ namespace FinderOuter.Services
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 pt[13] = 0b10000000_00000000_00000000_00000000U;
@@ -982,26 +982,26 @@ namespace FinderOuter.Services
 
         private unsafe void Loop15()
         {
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop15(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop15(firstItem, firstIndex, state));
             }
             else
             {
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
                     pt[13] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 160;
 
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     do
                     {
@@ -1053,19 +1053,19 @@ namespace FinderOuter.Services
 
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 pt[12] = 0b10000000_00000000_00000000_00000000U;
@@ -1120,25 +1120,25 @@ namespace FinderOuter.Services
 
         private unsafe void Loop12()
         {
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => Loop12(firstItem, firstIndex, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop12(firstItem, firstIndex, state));
             }
             else
             {
                 // We can't call the same parallel method due to usage of LoopState so we at least optimize this by
                 // avoiding the inner loop over the IEnumerable
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     pt[12] = 0b10000000_00000000_00000000_00000000U;
                     pt[23] = 128;
@@ -1193,19 +1193,19 @@ namespace FinderOuter.Services
             ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
             ulong* hPt = bigBuffer;
             ulong* wPt = hPt + Sha512Fo.HashStateSize;
-            Permutation[] permutations = new Permutation[searchSpace.missCount - 1];
+            Permutation[] permutations = new Permutation[searchSpace.MissCount - 1];
 
             fixed (Permutation* itemsPt = &permutations[0])
             fixed (uint* wrd = &localWIndex[0])
-            fixed (int* mi = &searchSpace.missingIndexes[1])
+            fixed (int* mi = &searchSpace.MissingIndexes[1])
             fixed (byte* mnPt = &mnBuffer[0])
-            fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
             {
                 uint* tempPt = valPt;
                 for (int i = 0; i < permutations.Length; i++)
                 {
-                    tempPt += searchSpace.permutationCounts[i];
-                    itemsPt[i] = new(searchSpace.permutationCounts[i + 1], tempPt);
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
                 }
 
                 wrd[firstIndex] = valPt[firstItem];
@@ -1294,24 +1294,24 @@ namespace FinderOuter.Services
                 return;
             }
 
-            if (searchSpace.missCount > 1)
+            if (searchSpace.MissCount > 1)
             {
-                report.SetProgressStep(searchSpace.permutationCounts[0]);
-                int firstIndex = searchSpace.missingIndexes[0];
-                Parallel.For(0, searchSpace.permutationCounts[0], (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
+                report.SetProgressStep(searchSpace.PermutationCounts[0]);
+                int firstIndex = searchSpace.MissingIndexes[0];
+                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
             }
             else
             {
-                int misIndex = searchSpace.missingIndexes[0];
+                int misIndex = searchSpace.MissingIndexes[0];
                 byte[] mnBuffer = new byte[maxMnBufferLen];
                 ulong* bigBuffer = stackalloc ulong[Sha512Fo.UBufferSize + 80 + 80 + 80 + 8 + 8 + 8];
                 ulong* hPt = bigBuffer;
                 ulong* wPt = bigBuffer + Sha512Fo.HashStateSize;
                 fixed (uint* wrd = &searchSpace.wordIndexes[0])
                 fixed (byte* mnPt = &mnBuffer[0])
-                fixed (uint* valPt = &searchSpace.allPermutationValues[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
                 {
-                    Permutation item = new(searchSpace.permutationCounts[0], valPt);
+                    Permutation item = new(searchSpace.PermutationCounts[0], valPt);
 
                     do
                     {
@@ -1424,17 +1424,19 @@ namespace FinderOuter.Services
 
             // TODO: implement Electrum seed recovery with other word lists (they need normalization)
             if (searchSpace.mnType == MnemonicTypes.Electrum && searchSpace.wl != BIP0039.WordLists.English)
+            {
                 report.Fail("Only English words are currently supported for Electrum mnemonics.");
+            }
             else
             {
-                if (searchSpace.missCount == 0)
+                if (searchSpace.MissCount == 0)
                 {
                     try
                     {
                         BIP0032 temp = searchSpace.mnType switch
                         {
-                            MnemonicTypes.BIP39 => new BIP0039(searchSpace.mnemonic, searchSpace.wl, pass),
-                            MnemonicTypes.Electrum => new ElectrumMnemonic(searchSpace.mnemonic, searchSpace.wl, pass),
+                            MnemonicTypes.BIP39 => new BIP0039(searchSpace.Input, searchSpace.wl, pass),
+                            MnemonicTypes.Electrum => new ElectrumMnemonic(searchSpace.Input, searchSpace.wl, pass),
                             _ => throw new ArgumentException("Undefined mnemonic type.")
                         };
 
@@ -1503,7 +1505,7 @@ namespace FinderOuter.Services
                     return;
                 }
 
-                report.AddMessageSafe($"There are {searchSpace.wordCount} words in the given mnemonic with {searchSpace.missCount} missing.");
+                report.AddMessageSafe($"There are {searchSpace.wordCount} words in the given mnemonic with {searchSpace.MissCount} missing.");
                 report.SetTotal(searchSpace.GetTotal());
 
                 this.searchSpace = searchSpace;
