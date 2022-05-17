@@ -3,11 +3,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -20,6 +23,7 @@ namespace FinderOuter.ViewModels
             // Don't move this line, service must be instantiated here
             InputService inServ = new();
             miniService = new MiniKeyService(Result);
+            searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
@@ -41,6 +45,16 @@ namespace FinderOuter.ViewModels
             SelectedExtraInputType = ExtraInputTypeList.First();
 
             SetExamples(GetExampleData());
+
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            AddLowerCommand = ReactiveCommand.Create(AddLower, canAdd);
+            AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
+            AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
+            AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
+            AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
         }
 
         public override string OptionName => "Missing mini private key";
@@ -54,6 +68,8 @@ namespace FinderOuter.ViewModels
 
 
         private readonly MiniKeyService miniService;
+        private readonly MiniKeySearchSpace searchSpace;
+        private bool isChanged;
 
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
@@ -79,9 +95,164 @@ namespace FinderOuter.ViewModels
         }
 
 
-        public override void Find()
+        private void Start()
         {
-            miniService.Find(Input, ExtraInput, SelectedExtraInputType.Value, SelectedMissingChar);
+            isChanged = false;
+            Index = 0;
+            Max = 0;
+            IsProcessed = searchSpace.Process(Input, SelectedMissingChar, out string error);
+
+            if (IsProcessed)
+            {
+                allItems = new ObservableCollection<string>[searchSpace.MissCount];
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i] = new();
+                }
+                Max = allItems.Length;
+                Index = 1;
+            }
+            else
+            {
+                Result.AddMessage(error);
+            }
+        }
+
+        private void ResetSearchSpace()
+        {
+            Index = 0;
+            Max = 0;
+            allItems = Array.Empty<ObservableCollection<string>>();
+            IsProcessed = false;
+        }
+
+
+        private void AddToList(IEnumerable<char> items)
+        {
+            foreach (char item in items)
+            {
+                if (!CurrentItems.Contains(item.ToString()))
+                {
+                    CurrentItems.Add(item.ToString());
+                }
+            }
+        }
+
+        public IReactiveCommand AddAllCommand { get; }
+        private void AddAll()
+        {
+            AddToList(MiniKeySearchSpace.AllChars);
+        }
+
+        public IReactiveCommand AddLowerCommand { get; }
+        private void AddLower()
+        {
+            AddToList(MiniKeySearchSpace.AllChars.Where(c => char.IsLower(c)));
+        }
+
+        public IReactiveCommand AddUpperCommand { get; }
+        private void AddUpper()
+        {
+            AddToList(MiniKeySearchSpace.AllChars.Where(c => char.IsUpper(c)));
+        }
+
+        public IReactiveCommand AddNumberCommand { get; }
+        private void AddNumber()
+        {
+            AddToList(MiniKeySearchSpace.AllChars.Where(c => char.IsDigit(c)));
+        }
+
+        public IReactiveCommand AddSimilarCommand { get; }
+        private void AddSimilar()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1)
+            {
+                // Characters outside of Base58 charset are accepted here
+                if (!ConstantsFO.LowerCase.Contains(ToAdd.ToLower()) && !ConstantsFO.Numbers.Contains(ToAdd))
+                {
+                    Result.AddMessage("Invalid character (only letters and numbers are accepted).");
+                }
+                else
+                {
+                    char c = ToAdd[0];
+                    for (int i = 0; i < ConstantsFO.SimilarBase58Chars.Length; i++)
+                    {
+                        if (ConstantsFO.SimilarBase58Chars[i].Contains(c))
+                        {
+                            foreach (char item in ConstantsFO.SimilarBase58Chars[i])
+                            {
+                                if (ConstantsFO.Base58Chars.Contains(item) && !CurrentItems.Contains(item.ToString()))
+                                {
+                                    CurrentItems.Add(item.ToString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Result.AddMessage($"The entered character ({ToAdd}) can not be a Base-58 character.");
+            }
+        }
+
+        public IReactiveCommand AddExactCommand { get; }
+        private void AddExact()
+        {
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && MiniKeySearchSpace.AllChars.Contains(ToAdd[0]))
+            {
+                if (!CurrentItems.Contains(ToAdd))
+                {
+                    CurrentItems.Add(ToAdd);
+                }
+            }
+            else
+            {
+                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+            }
+        }
+
+
+        public override async void Find()
+        {
+            if (isChanged && IsProcessed)
+            {
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, ConstantsFO.ChangedMessage);
+                if (res == MessageBoxResult.Yes)
+                {
+                    IsProcessed = false;
+                }
+                else
+                {
+                    ResetSearchSpace();
+                    return;
+                }
+            }
+
+            if (!IsProcessed)
+            {
+                Start();
+                foreach (ObservableCollection<string> item in allItems)
+                {
+                    foreach (char c in MiniKeySearchSpace.AllChars)
+                    {
+                        item.Add(c.ToString());
+                    }
+                }
+            }
+
+            if (IsProcessed)
+            {
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                {
+                    miniService.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
+                    ResetSearchSpace();
+                }
+                else
+                {
+                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                }
+            }
         }
 
         public void Example()

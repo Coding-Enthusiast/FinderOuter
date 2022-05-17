@@ -7,9 +7,9 @@ using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
+using FinderOuter.Services.SearchSpaces;
 using System;
-using System.Linq;
-using System.Numerics;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,20 +27,29 @@ namespace FinderOuter.Services
 
         private readonly IReport report;
         private readonly InputService inputService;
-        private byte[] precomputed;
-        private int[] missingIndexes;
-        private int missCount;
-        private string keyToCheck;
         private ICompareService comparer;
+        private MiniKeySearchSpace searchSpace;
 
-
-        private static BigInteger GetTotalCount(int missCount) => BigInteger.Pow(58, missCount);
 
         private unsafe void SetResultParallel(byte* keyBytes, int len)
         {
             // This method is called once and after it is called the execution stops so GUI update is not a problem.
             report.AddMessageSafe($"Found the correct key: {Encoding.UTF8.GetString(keyBytes, len)}");
             report.FoundAnyResult = true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(Permutation* items, int len)
+        {
+            for (int i = len - 1; i >= 0; i--)
+            {
+                if (items[i].Increment())
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -106,21 +115,30 @@ namespace FinderOuter.Services
             // Second to compute hash of the mini-key (without ?) to use as the private key
             // The mini-key here is 22 bytes. All hashes are single SHA256.
             // All characters are decoded using UTF-8
-            byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-            int[] missingItems = new int[missCount - 1];
-            int firstIndex = missingIndexes[0];
+            int firstIndex = searchSpace.MissingIndexes[0];
+            Debug.Assert(searchSpace.MissCount - 1 >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - 1];
 
             // tmp has 2 equal parts, first part is the byte[] value that keeps changing and
             // second part is the precomputed value that is supposed to be copied each round.
             byte* tmp = stackalloc byte[44];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-            fixed (int* miPt = &missingIndexes[1], itemsPt = &missingItems[0])
+            fixed (byte* pre = &searchSpace.preComputed[0])
+            fixed (int* miPt = &searchSpace.MissingIndexes[1])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                for (int i = 0; i < items.Length; i++)
+                {
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
+                }
+
                 Buffer.MemoryCopy(pre, tmp, 44, 22);
                 Buffer.MemoryCopy(pre, tmp + 22, 44, 22);
-                tmp[firstIndex] = allPt[firstItem];
-                tmp[firstIndex + 22] = allPt[firstItem];
+                tmp[firstIndex] = (byte)valPt[firstItem];
+                tmp[firstIndex + 22] = (byte)valPt[firstItem];
 
                 do
                 {
@@ -131,9 +149,9 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 22, tmp, 44, 22);
                     int i = 0;
-                    foreach (int keyItem in missingItems)
+                    foreach (Permutation keyItem in items)
                     {
-                        tmp[miPt[i]] = allPt[keyItem];
+                        tmp[miPt[i]] = (byte)keyItem.GetValue();
                         i++;
                     }
 
@@ -144,37 +162,47 @@ namespace FinderOuter.Services
                         return;
                     }
 
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
         private unsafe void Loop23()
         {
-            if (missCount >= 4)
+            if (searchSpace.MissCount >= 4)
             {
                 // 4 missing chars is 11,316,496 cases and due to EC mult it takes longer to run
                 // which makes it the optimal number for using parallelization
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem, state) => Loop23(firstItem, comparer.Clone(), state));
+                int max = searchSpace.PermutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem, state) => Loop23(firstItem, comparer.Clone(), state));
             }
             else
             {
-                byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-                int[] missingItems = new int[missCount];
+                Debug.Assert(searchSpace.MissCount != 0);
+                Permutation[] items = new Permutation[searchSpace.MissCount];
 
                 byte* tmp = stackalloc byte[22];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-                fixed (int* miPt = &missingIndexes[0], itemsPt = &missingItems[0])
+                fixed (byte* pre = &searchSpace.preComputed[0])
+                fixed (int* miPt = &searchSpace.MissingIndexes[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+                fixed (Permutation* itemsPt = &items[0])
                 {
+                    uint* tempPt = valPt;
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        itemsPt[i] = new(searchSpace.PermutationCounts[i], tempPt);
+                        tempPt += searchSpace.PermutationCounts[i];
+                    }
+
                     do
                     {
                         Buffer.MemoryCopy(pre, tmp, 22, 22);
                         int i = 0;
-                        foreach (int keyItem in missingItems)
+                        foreach (Permutation keyItem in items)
                         {
-                            tmp[miPt[i]] = allPt[keyItem];
+                            tmp[miPt[i]] = (byte)keyItem.GetValue();
                             i++;
                         }
 
@@ -183,7 +211,7 @@ namespace FinderOuter.Services
                             SetResultParallel(tmp, 22);
                             return;
                         }
-                    } while (MoveNext(itemsPt, missingItems.Length));
+                    } while (MoveNext(itemsPt, items.Length));
                 }
             }
         }
@@ -224,19 +252,28 @@ namespace FinderOuter.Services
         private unsafe void Loop27(int firstItem, ICompareService comparer, ParallelLoopState loopState)
         {
             // Same as above but key is 26 chars (26 bytes)
-            byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-            int[] missingItems = new int[missCount - 1];
-            int firstIndex = missingIndexes[0];
+            int firstIndex = searchSpace.MissingIndexes[0];
+            Debug.Assert(searchSpace.MissCount - 1 >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - 1];
 
             byte* tmp = stackalloc byte[52];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-            fixed (int* miPt = &missingIndexes[1], itemsPt = &missingItems[0])
+            fixed (byte* pre = &searchSpace.preComputed[0])
+            fixed (int* miPt = &searchSpace.MissingIndexes[1])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                for (int i = 0; i < items.Length; i++)
+                {
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
+                }
+
                 Buffer.MemoryCopy(pre, tmp, 52, 26);
                 Buffer.MemoryCopy(pre, tmp + 26, 52, 26);
-                tmp[firstIndex] = allPt[firstItem];
-                tmp[firstIndex + 26] = allPt[firstItem];
+                tmp[firstIndex] = (byte)valPt[firstItem];
+                tmp[firstIndex + 26] = (byte)valPt[firstItem];
 
                 do
                 {
@@ -247,9 +284,9 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 26, tmp, 52, 26);
                     int i = 0;
-                    foreach (int keyItem in missingItems)
+                    foreach (Permutation keyItem in items)
                     {
-                        tmp[miPt[i]] = allPt[keyItem];
+                        tmp[miPt[i]] = (byte)keyItem.GetValue();
                         i++;
                     }
 
@@ -259,35 +296,45 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         return;
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
         private unsafe void Loop27()
         {
-            if (missCount >= 4)
+            if (searchSpace.MissCount >= 4)
             {
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem, state) => Loop27(firstItem, comparer.Clone(), state));
+                int max = searchSpace.PermutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem, state) => Loop27(firstItem, comparer.Clone(), state));
             }
             else
             {
-                byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-                int[] missingItems = new int[missCount];
+                Debug.Assert(searchSpace.MissCount != 0);
+                Permutation[] items = new Permutation[searchSpace.MissCount];
 
                 byte* tmp = stackalloc byte[26];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-                fixed (int* miPt = &missingIndexes[0], itemsPt = &missingItems[0])
+                fixed (byte* pre = &searchSpace.preComputed[0])
+                fixed (int* miPt = &searchSpace.MissingIndexes[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+                fixed (Permutation* itemsPt = &items[0])
                 {
+                    uint* tempPt = valPt;
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        itemsPt[i] = new(searchSpace.PermutationCounts[i], tempPt);
+                        tempPt += searchSpace.PermutationCounts[i];
+                    }
+
                     do
                     {
                         Buffer.MemoryCopy(pre, tmp, 26, 26);
                         int i = 0;
-                        foreach (int keyItem in missingItems)
+                        foreach (Permutation keyItem in items)
                         {
-                            tmp[miPt[i]] = allPt[keyItem];
+                            tmp[miPt[i]] = (byte)keyItem.GetValue();
                             i++;
                         }
 
@@ -296,7 +343,7 @@ namespace FinderOuter.Services
                             SetResultParallel(tmp, 26);
                             return;
                         }
-                    } while (MoveNext(itemsPt, missingItems.Length));
+                    } while (MoveNext(itemsPt, items.Length));
                 }
             }
         }
@@ -338,19 +385,28 @@ namespace FinderOuter.Services
         private unsafe void Loop31(int firstItem, ICompareService comparer, ParallelLoopState loopState)
         {
             // Same as above but key is 30 chars (30 bytes)
-            byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-            int[] missingItems = new int[missCount - 1];
-            int firstIndex = missingIndexes[0];
+            int firstIndex = searchSpace.MissingIndexes[0];
+            Debug.Assert(searchSpace.MissCount - 1 >= 1);
+            Permutation[] items = new Permutation[searchSpace.MissCount - 1];
 
             byte* tmp = stackalloc byte[60];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-            fixed (int* miPt = &missingIndexes[1], itemsPt = &missingItems[0])
+            fixed (byte* pre = &searchSpace.preComputed[0])
+            fixed (int* miPt = &searchSpace.MissingIndexes[1])
+            fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+            fixed (Permutation* itemsPt = &items[0])
             {
+                uint* tempPt = valPt;
+                for (int i = 0; i < items.Length; i++)
+                {
+                    tempPt += searchSpace.PermutationCounts[i];
+                    itemsPt[i] = new(searchSpace.PermutationCounts[i + 1], tempPt);
+                }
+
                 Buffer.MemoryCopy(pre, tmp, 60, 30);
                 Buffer.MemoryCopy(pre, tmp + 30, 60, 30);
-                tmp[firstIndex] = allPt[firstItem];
-                tmp[firstIndex + 30] = allPt[firstItem];
+                tmp[firstIndex] = (byte)valPt[firstItem];
+                tmp[firstIndex + 30] = (byte)valPt[firstItem];
 
                 do
                 {
@@ -361,9 +417,9 @@ namespace FinderOuter.Services
 
                     Buffer.MemoryCopy(tmp + 30, tmp, 60, 30);
                     int i = 0;
-                    foreach (int keyItem in missingItems)
+                    foreach (Permutation keyItem in items)
                     {
-                        tmp[miPt[i]] = allPt[keyItem];
+                        tmp[miPt[i]] = (byte)keyItem.GetValue();
                         i++;
                     }
 
@@ -373,36 +429,45 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         return;
                     }
-                } while (MoveNext(itemsPt, missingItems.Length));
+                } while (MoveNext(itemsPt, items.Length));
             }
 
             report.IncrementProgress();
         }
         private unsafe void Loop31()
         {
-            if (missCount >= 4)
+            if (searchSpace.MissCount >= 4)
             {
-                report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem, state) => Loop31(firstItem, comparer.Clone(), state));
+                int max = searchSpace.PermutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem, state) => Loop31(firstItem, comparer.Clone(), state));
             }
             else
             {
-                byte[] allBytes = Encoding.UTF8.GetBytes(ConstantsFO.Base58Chars);
-                int[] missingItems = new int[missCount];
-                int firstIndex = missingIndexes[0];
+                Debug.Assert(searchSpace.MissCount != 0);
+                Permutation[] items = new Permutation[searchSpace.MissCount];
 
                 byte* tmp = stackalloc byte[30];
                 uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-                fixed (byte* pre = &precomputed[0], allPt = &allBytes[0])
-                fixed (int* miPt = &missingIndexes[0], itemsPt = &missingItems[0])
+                fixed (byte* pre = &searchSpace.preComputed[0])
+                fixed (int* miPt = &searchSpace.MissingIndexes[0])
+                fixed (uint* valPt = &searchSpace.AllPermutationValues[0])
+                fixed (Permutation* itemsPt = &items[0])
                 {
+                    uint* tempPt = valPt;
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        itemsPt[i] = new(searchSpace.PermutationCounts[i], tempPt);
+                        tempPt += searchSpace.PermutationCounts[i];
+                    }
+
                     do
                     {
                         Buffer.MemoryCopy(pre, tmp, 30, 30);
                         int i = 0;
-                        foreach (int keyItem in missingItems)
+                        foreach (Permutation keyItem in items)
                         {
-                            tmp[miPt[i]] = allPt[keyItem];
+                            tmp[miPt[i]] = (byte)keyItem.GetValue();
                             i++;
                         }
 
@@ -411,80 +476,51 @@ namespace FinderOuter.Services
                             SetResultParallel(tmp, 30);
                             return;
                         }
-                    } while (MoveNext(itemsPt, missingItems.Length));
+                    } while (MoveNext(itemsPt, items.Length));
                 }
             }
         }
 
 
-        private void PreCompute(char missingChar)
-        {
-            int mis = 0;
-            for (int i = 0; i < keyToCheck.Length; i++)
-            {
-                if (keyToCheck[i] == missingChar)
-                {
-                    missingIndexes[mis++] = i;
-                }
-                else
-                {
-                    precomputed[i] = (byte)keyToCheck[i];
-                }
-            }
-        }
-
-        public async void Find(string key, string extra, InputType extraType, char missingChar)
+        public async void Find(MiniKeySearchSpace ss, string extra, InputType extraType)
         {
             report.Init();
 
-            if (!inputService.IsMissingCharValid(missingChar))
-                report.Fail("Invalid missing character.");
-            else if (string.IsNullOrWhiteSpace(key) || !key.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missingChar))
-                report.Fail("Input contains invalid base-58 character(s).");
-            else if (!key.StartsWith(ConstantsFO.MiniKeyStart))
-                report.Fail($"Minikey must start with {ConstantsFO.MiniKeyStart}.");
-            else if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                report.Fail("Invalid extra input or input type.");
+            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                report.Fail("Invalid compare input or type.");
             else
             {
-                missCount = key.Count(c => c == missingChar);
-                if (missCount == 0)
+                if (ss.MissCount == 0)
                 {
                     report.AddMessageSafe("The given input has no missing characters, verifying it as a complete minikey.");
-                    report.AddMessageSafe(inputService.CheckMiniKey(key));
+                    report.AddMessageSafe(inputService.CheckMiniKey(ss.Input));
                     report.FoundAnyResult = true;
                     report.Finalize();
                     return;
                 }
 
-                keyToCheck = key;
-                missingIndexes = new int[missCount];
-
-                report.AddMessageSafe($"A {key.Length} char long mini-key with {missCount} missing characters was detected.");
-                report.SetTotal(58, missCount);
+                report.AddMessageSafe($"The given mini key is {ss.Input.Length} characters long and is missing " +
+                                      $"{ss.MissCount} of them.");
+                report.SetTotal(ss.GetTotal());
                 report.Timer.Start();
 
-                if (key.Length == ConstantsFO.MiniKeyLen1)
+                searchSpace = ss;
+                if (ss.Input.Length == ConstantsFO.MiniKeyLen1)
                 {
-                    precomputed = new byte[ConstantsFO.MiniKeyLen1];
-                    PreCompute(missingChar);
                     await Task.Run(Loop23);
                 }
-                else if (key.Length == ConstantsFO.MiniKeyLen2)
+                else if (ss.Input.Length == ConstantsFO.MiniKeyLen2)
                 {
-                    precomputed = new byte[ConstantsFO.MiniKeyLen2];
-                    PreCompute(missingChar);
                     await Task.Run(Loop27);
                 }
-                else if (key.Length == ConstantsFO.MiniKeyLen3)
+                else if (ss.Input.Length == ConstantsFO.MiniKeyLen3)
                 {
-                    precomputed = new byte[ConstantsFO.MiniKeyLen3];
-                    PreCompute(missingChar);
                     await Task.Run(Loop31);
                 }
                 else
                 {
-                    report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen3}.");
+                    report.Fail($"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen2} or " +
+                                $"{ConstantsFO.MiniKeyLen3}.");
                 }
 
                 report.Finalize();
