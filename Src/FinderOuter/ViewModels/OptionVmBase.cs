@@ -128,6 +128,8 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
         }
 
+        protected bool isChanged;
+
         public IReactiveCommand StartCommand { get; protected set; }
 
         public IReactiveCommand NextCommand { get; }

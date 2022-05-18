@@ -64,7 +64,6 @@ namespace FinderOuter.ViewModels
 
         private readonly Base16Sevice b16Service;
         private readonly B16SearchSpace searchSpace;
-        private bool isChanged;
 
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 

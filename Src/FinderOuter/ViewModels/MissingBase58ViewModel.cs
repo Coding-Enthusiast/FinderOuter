@@ -73,7 +73,6 @@ namespace FinderOuter.ViewModels
 
         private readonly Base58Service b58Service;
         private readonly B58SearchSpace searchSpace;
-        private bool isChanged;
 
 
         public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }

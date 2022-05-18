@@ -69,7 +69,6 @@ namespace FinderOuter.ViewModels
 
         private readonly MiniKeyService miniService;
         private readonly MiniKeySearchSpace searchSpace;
-        private bool isChanged;
 
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
