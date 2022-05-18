@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using FinderOuter.Services.SearchSpaces;
@@ -155,6 +156,7 @@ namespace FinderOuter.ViewModels
 
         private void Start()
         {
+            isChanged = false;
             Index = 0;
             Max = 0;
             IsProcessed = searchSpace.Process(Mnemonic, SelectedMissingChar, SelectedMnemonicType, SelectedWordListType, SelectedElectrumMnType, out string error);
@@ -251,9 +253,23 @@ namespace FinderOuter.ViewModels
 
 
 
-        public override void Find()
+        public override async void Find()
         {
-            if (!searchSpace.IsProcessed)
+            if (isChanged && IsProcessed)
+            {
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, ConstantsFO.ChangedMessage);
+                if (res == MessageBoxResult.Yes)
+                {
+                    IsProcessed = false;
+                }
+                else
+                {
+                    ResetSearchSpace();
+                    return;
+                }
+            }
+
+            if (!IsProcessed)
             {
                 Start();
                 foreach (ObservableCollection<string> item in allItems)
@@ -270,6 +286,7 @@ namespace FinderOuter.ViewModels
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
                     MnService.FindMissing(searchSpace, PassPhrase, KeyPath, AdditionalInfo, SelectedInputType.Value);
+                    ResetSearchSpace();
                 }
                 else
                 {
