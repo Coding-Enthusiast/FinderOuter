@@ -128,7 +128,6 @@ namespace FinderOuter.Services.SearchSpaces
 
             int index1 = 0;
             int index2 = 0;
-            char[] allChars = ConstantsFO.Base58Chars.ToCharArray();
             foreach (string[] item in result)
             {
                 PermutationCounts[index2++] = item.Length;
@@ -138,12 +137,12 @@ namespace FinderOuter.Services.SearchSpaces
                     {
                         return false;
                     }
-                    int i = Array.IndexOf(allChars, s[0]);
+                    int i = Array.IndexOf(AllChars, s[0]);
                     if (i < 0)
                     {
                         return false;
                     }
-                    AllPermutationValues[index1++] = (uint)i;
+                    AllPermutationValues[index1++] = AllBytes[i];
                 }
             }
 
