@@ -130,6 +130,14 @@ namespace FinderOuter.ViewModels
 
         protected bool isChanged;
 
+        protected void ResetSearchSpace()
+        {
+            Index = 0;
+            Max = 0;
+            allItems = Array.Empty<ObservableCollection<string>>();
+            IsProcessed = false;
+        }
+
         public IReactiveCommand StartCommand { get; protected set; }
 
         public IReactiveCommand NextCommand { get; }

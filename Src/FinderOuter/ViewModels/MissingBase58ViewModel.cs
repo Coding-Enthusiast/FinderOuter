@@ -144,14 +144,6 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private void ResetSearchSpace()
-        {
-            Index = 0;
-            Max = 0;
-            allItems = Array.Empty<ObservableCollection<string>>();
-            IsProcessed = false;
-        }
-
 
         private void AddToList(IEnumerable<char> items)
         {
