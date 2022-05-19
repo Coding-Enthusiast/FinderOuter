@@ -78,7 +78,14 @@ namespace FinderOuter.ViewModels
         public string Input
         {
             get => _input;
-            set => this.RaiseAndSetIfChanged(ref _input, value);
+            set
+            {
+                if (value != _input)
+                {
+                    this.RaiseAndSetIfChanged(ref _input, value);
+                    isChanged = true;
+                }
+            }
         }
 
         private DescriptiveItem<InputType> _selInpT2;

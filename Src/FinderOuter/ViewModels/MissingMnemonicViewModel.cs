@@ -128,7 +128,14 @@ namespace FinderOuter.ViewModels
         public string Mnemonic
         {
             get => _mnemonic;
-            set => this.RaiseAndSetIfChanged(ref _mnemonic, value);
+            set
+            {
+                if (value != _mnemonic)
+                {
+                    this.RaiseAndSetIfChanged(ref _mnemonic, value);
+                    isChanged = true;
+                }
+            }
         }
 
 
