@@ -26,9 +26,9 @@ Contribution is always welcome. Please report any bugs you find or any improveme
 2. Read the instructions
 3. Fill in the required information
 4. Select appropriate available options according to the entered data
-5. Some parts have tooltips for extra explanation
+5. There are some useful advanced options to speed up the recovery
 6. Click Find button
-7. See the progress and the reports
+7. Reports are printed here as the program works on recovering your keys
 8. Progressbar showing the progress percentage shows up for options that use multi-threading 
 (take more than a couple of seconds to complete)
 9. All recovery options come with examples, click this button repeatedly to cycle through them

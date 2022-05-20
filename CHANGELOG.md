@@ -1,6 +1,11 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.14.0.0...master)
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.15.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.15.0 (2022-04-??)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.14.0.0...v0.15.0.0)  
+* Added search space option for Base58, Base16, mini-privatekey and mnemonic recovery options
+* Some code improvements and tests
 
 ### Release 0.14.0 (2022-03-07)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.13.0.0...v0.14.0.0)  
