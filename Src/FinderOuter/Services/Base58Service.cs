@@ -214,11 +214,11 @@ namespace FinderOuter.Services
             char[] temp = searchSpace.Input.ToCharArray();
             if (misStart != 0)
             {
-                temp[searchSpace.MissingIndexes[0]] = searchSpace.AllChars[firstItem];
+                temp[searchSpace.MissingIndexes[0]] = B58SearchSpace.AllChars[firstItem];
             }
             for (int i = misStart; i < searchSpace.MissCount; i++)
             {
-                temp[searchSpace.MissingIndexes[i]] = searchSpace.AllChars[itemPt[i - misStart].GetValue()];
+                temp[searchSpace.MissingIndexes[i]] = B58SearchSpace.AllChars[itemPt[i - misStart].GetValue()];
             }
 
             report.AddMessageSafe(new string(temp));

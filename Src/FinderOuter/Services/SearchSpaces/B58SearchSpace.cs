@@ -13,7 +13,7 @@ namespace FinderOuter.Services.SearchSpaces
 {
     public class B58SearchSpace : SearchSpaceBase
     {
-        public readonly char[] AllChars = ConstantsFO.Base58Chars.ToCharArray();
+        public static readonly char[] AllChars = ConstantsFO.Base58Chars.ToCharArray();
         public bool isComp;
         public ulong[] multPow58, preComputed;
         public int[] multMissingIndexes;

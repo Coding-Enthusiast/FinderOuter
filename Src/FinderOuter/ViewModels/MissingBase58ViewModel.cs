@@ -159,25 +159,25 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddAllCommand { get; }
         private void AddAll()
         {
-            AddToList(searchSpace.AllChars);
+            AddToList(B58SearchSpace.AllChars);
         }
 
         public IReactiveCommand AddLowerCommand { get; }
         private void AddLower()
         {
-            AddToList(searchSpace.AllChars.Where(c => char.IsLower(c)));
+            AddToList(B58SearchSpace.AllChars.Where(c => char.IsLower(c)));
         }
 
         public IReactiveCommand AddUpperCommand { get; }
         private void AddUpper()
         {
-            AddToList(searchSpace.AllChars.Where(c => char.IsUpper(c)));
+            AddToList(B58SearchSpace.AllChars.Where(c => char.IsUpper(c)));
         }
 
         public IReactiveCommand AddNumberCommand { get; }
         private void AddNumber()
         {
-            AddToList(searchSpace.AllChars.Where(c => char.IsDigit(c)));
+            AddToList(B58SearchSpace.AllChars.Where(c => char.IsDigit(c)));
         }
 
         public IReactiveCommand AddSimilarCommand { get; }
@@ -217,7 +217,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
-            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B58SearchSpace.AllChars.Contains(ToAdd[0]))
             {
                 if (!CurrentItems.Contains(ToAdd))
                 {
@@ -252,7 +252,7 @@ namespace FinderOuter.ViewModels
                 Start();
                 foreach (ObservableCollection<string> item in allItems)
                 {
-                    foreach (char c in searchSpace.AllChars)
+                    foreach (char c in B58SearchSpace.AllChars)
                     {
                         item.Add(c.ToString());
                     }
