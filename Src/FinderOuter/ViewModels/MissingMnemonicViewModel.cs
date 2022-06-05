@@ -176,7 +176,7 @@ namespace FinderOuter.ViewModels
                     allItems[i] = new();
                 }
                 Max = allItems.Length;
-                Index = 1;
+                Index = Max == 0 ? 0 : 1;
             }
             else
             {
