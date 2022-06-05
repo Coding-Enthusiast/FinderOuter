@@ -56,8 +56,17 @@ namespace FinderOuter.Services.SearchSpaces
             MissCount = key.Count(c => c == missChar);
             if (MissCount == 0)
             {
-                error = null;
-                return true;
+                if (key[0] != ConstantsFO.PrivKeyCompChar1 && key[0] != ConstantsFO.PrivKeyCompChar2 &&
+                    key[0] != ConstantsFO.PrivKeyUncompChar)
+                {
+                    error = "The given key has an invalid first character.";
+                    return false;
+                }
+                else
+                {
+                    error = null;
+                    return true;
+                }
             }
             else
             {
@@ -245,6 +254,41 @@ namespace FinderOuter.Services.SearchSpaces
                         return false;
                 }
             }
+        }
+
+
+        public bool ProcessNoMissing(out string message)
+        {
+            if (MissCount != 0)
+            {
+                message = "This method should not be called with missing characters.";
+                return false;
+            }
+
+            if (Input[0] == ConstantsFO.PrivKeyCompChar1 || Input[0] == ConstantsFO.PrivKeyCompChar2)
+            {
+                if (Input.Length == ConstantsFO.PrivKeyCompWifLen)
+                {
+                    message = InputService.CheckPrivateKey(Input);
+                    return true;
+                }
+            }
+            else if (Input[0] == ConstantsFO.PrivKeyUncompChar)
+            {
+                if (Input.Length == ConstantsFO.PrivKeyUncompWifLen)
+                {
+                    message = InputService.CheckPrivateKey(Input);
+                    return true;
+                }
+            }
+            else
+            {
+                message = "Invalid starting character for a private key.";
+                return false;
+            }
+
+            message = "Invalid private key WIF length.";
+            return false;
         }
 
 
