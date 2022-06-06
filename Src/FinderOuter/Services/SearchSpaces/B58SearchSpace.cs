@@ -17,7 +17,7 @@ namespace FinderOuter.Services.SearchSpaces
         public bool isComp;
         public ulong[] multPow58, preComputed;
         public int[] multMissingIndexes;
-        internal Base58Service.InputType inputType;
+        public Base58Service.InputType inputType;
 
 
         /// <summary>
@@ -120,8 +120,16 @@ namespace FinderOuter.Services.SearchSpaces
             MissCount = address.Count(c => c == missChar);
             if (MissCount == 0)
             {
-                error = null;
-                return true;
+                if (address[0] != ConstantsFO.B58AddressChar1 && address[0] != ConstantsFO.B58AddressChar2)
+                {
+                    error = "The given address has an invalid first character.";
+                    return false;
+                }
+                else
+                {
+                    error = null;
+                    return true;
+                }
             }
             else if (!address.StartsWith(ConstantsFO.B58AddressChar1) && !address.StartsWith(ConstantsFO.B58AddressChar2))
             {
