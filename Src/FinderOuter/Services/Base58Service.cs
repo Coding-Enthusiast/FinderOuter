@@ -1316,28 +1316,36 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            searchSpace = ss;
-            switch (searchSpace.inputType)
+            if (ss.MissCount == 0)
             {
-                case InputType.PrivateKey:
-                    if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                    {
-                        if (!string.IsNullOrEmpty(extra))
-                            report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
-                        comparer = null;
-                    }
-                    // TODO: set compared to a default always-return-true one
-                    await FindPrivateKey();
-                    break;
-                case InputType.Address:
-                    await FindAddress();
-                    break;
-                case InputType.Bip38:
-                    await FindBip38();
-                    break;
-                default:
-                    report.Fail("Given input type is not defined.");
-                    return;
+                report.FoundAnyResult = ss.ProcessNoMissing(out string msg);
+                report.AddMessage(msg);
+            }
+            else
+            {
+                searchSpace = ss;
+                switch (searchSpace.inputType)
+                {
+                    case InputType.PrivateKey:
+                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                        {
+                            if (!string.IsNullOrEmpty(extra))
+                                report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
+                            comparer = null;
+                        }
+                        // TODO: set compared to a default always-return-true one
+                        await FindPrivateKey();
+                        break;
+                    case InputType.Address:
+                        await FindAddress();
+                        break;
+                    case InputType.Bip38:
+                        await FindBip38();
+                        break;
+                    default:
+                        report.Fail("Given input type is not defined.");
+                        return;
+                }
             }
 
             report.Finalize();
