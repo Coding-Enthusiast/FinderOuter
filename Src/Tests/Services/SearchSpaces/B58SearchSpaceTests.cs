@@ -3,6 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
+using FinderOuter.Services;
 using FinderOuter.Services.SearchSpaces;
 using System.Collections.Generic;
 using System.Numerics;
@@ -56,6 +58,137 @@ namespace Tests.Services.SearchSpaces
             }
 
             Assert.Equal(index, shiftedPowers.Length);
+        }
+
+
+        public static IEnumerable<object[]> GetProcessCases()
+        {
+            ulong[] compWIfMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, 10, 16);
+            ulong[] uncompWifMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, 10, 24);
+            ulong[] addrMultPow = B58SearchSpace.GetShiftedMultPow58(0, 7, 24);
+            ulong[] bipMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.Bip38Base58Len, 11, 8);
+
+            // Invalid inputs
+            yield return new object[]
+            {
+                string.Empty, 'z', Base58Service.InputType.Address, false, "Missing character is not accepted.", 0,
+                false, null, null, null
+            };
+            yield return new object[]
+            {
+                string.Empty, '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                false, null, null, null
+            };
+            yield return new object[]
+            {
+                null, '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                false, null, null, null
+            };
+            yield return new object[]
+            {
+                " ", '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                false, null, null, null
+            };
+            yield return new object[]
+            {
+                "0", '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                false, null, null, null
+            };
+            yield return new object[]
+            {
+                "a", '*', (Base58Service.InputType)1000, false, "Given input type is not defined.", 0, false, null, null, null
+            };
+
+            // Process private keys:
+            yield return new object[]
+            {
+                "7HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
+                '*', Base58Service.InputType.PrivateKey, false, "The given key has an invalid first character.",
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
+                '*', Base58Service.InputType.PrivateKey, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbT",
+                '*', Base58Service.InputType.PrivateKey, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK",
+                '*', Base58Service.InputType.PrivateKey, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
+                '*', Base58Service.InputType.PrivateKey, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "kwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
+                '*', Base58Service.InputType.PrivateKey, false, "The given key has an invalid first character.",
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL*yTJ",
+                '?', Base58Service.InputType.PrivateKey, false, "Input contains invalid base-58 character(s).",
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL-yTJ",
+                '-', Base58Service.InputType.PrivateKey, true, null,
+                1, false, new int[] { 47 }, new int[] { 30 }, uncompWifMultPow
+            };
+            yield return new object[]
+            {
+                "K*dMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1*xJw*vP9861*",
+                '*', Base58Service.InputType.PrivateKey, true, null,
+                4, true, new int[] { 51, 44, 40, 1 }, new int[] { 0, 70, 110, 500 }, compWIfMultPow
+            };
+
+            // Process addresses:
+            yield return new object[]
+            {
+                "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+                '*', Base58Service.InputType.Address, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "2BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+                '*', Base58Service.InputType.Address, false, "The given address has an invalid first character.",
+                0, false, null, null, null
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetProcessCases))]
+        public void ProcessTest(string input, char missChar, Base58Service.InputType t, bool expB, string expErr, int expMisCount,
+                                bool isComp, int[] misIndex, int[] multMisIndex, ulong[] multPow58)
+        {
+            B58SearchSpace ss = new();
+            bool actualB = ss.Process(input, missChar, t, out string actualErr);
+
+            Assert.Equal(expB, actualB);
+            Assert.Equal(expErr, actualErr);
+            Assert.Equal(expMisCount, ss.MissCount);
+            Assert.Equal(t, ss.inputType);
+            if (expB)
+            {
+                Assert.Equal(input, ss.Input);
+                Assert.Equal(isComp, ss.isComp);
+                Assert.Equal(misIndex, ss.MissingIndexes);
+                Assert.Equal(multMisIndex, ss.multMissingIndexes);
+                Assert.Equal(multPow58, ss.multPow58);
+            }
         }
     }
 }
