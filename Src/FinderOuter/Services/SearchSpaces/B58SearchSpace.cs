@@ -193,7 +193,7 @@ namespace FinderOuter.Services.SearchSpaces
             }
             else if (bip38.Length != ConstantsFO.Bip38Base58Len)
             {
-                error = $"Base-58 encoded BIP-38 length must be between {ConstantsFO.Bip38Base58Len}.";
+                error = $"Base-58 encoded BIP-38 length must have {ConstantsFO.Bip38Base58Len} characters.";
                 return false;
             }
             else

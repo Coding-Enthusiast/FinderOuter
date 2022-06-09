@@ -65,7 +65,7 @@ namespace Tests.Services.SearchSpaces
         {
             ulong[] compWIfMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, 10, 16);
             ulong[] uncompWifMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, 10, 24);
-            ulong[] addrMultPow = B58SearchSpace.GetShiftedMultPow58(0, 7, 24);
+            ulong[] addrMultPow = B58SearchSpace.GetShiftedMultPow58(34, 7, 24);
             ulong[] bipMultPow = B58SearchSpace.GetShiftedMultPow58(ConstantsFO.Bip38Base58Len, 11, 8);
 
             // Invalid inputs
@@ -167,6 +167,68 @@ namespace Tests.Services.SearchSpaces
                 "2BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
                 '*', Base58Service.InputType.Address, false, "The given address has an invalid first character.",
                 0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN-",
+                '-', Base58Service.InputType.Address, true, null,
+                1, false, new int[] { 33 }, new int[] { 0 }, addrMultPow
+            };
+            yield return new object[]
+            {
+                "1-vBMSE-stWetqTFn5A-4m4GFg7xJ-NVN-",
+                '-', Base58Service.InputType.Address, true, null,
+                5, false, new int[5] { 33, 29, 19, 7, 1  }, new int[5] { 0, 28, 98, 182, 224 }, addrMultPow
+            };
+            yield return new object[]
+            {
+                "3J98t1WpEZ73C*mQviecrnyiWrnqRh*NLy",
+                '*', Base58Service.InputType.Address, true, null,
+                2, false, new int[2] { 30, 13 }, new int[2] { 21, 140 }, addrMultPow
+            };
+
+            // Process BIP38:
+            yield return new object[]
+            {
+                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
+                '*', Base58Service.InputType.Bip38, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHn",
+                '*', Base58Service.InputType.Bip38, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
+                '*', Base58Service.InputType.Bip38, true, null,
+                0, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
+                '*', Base58Service.InputType.Bip38, false, "Base-58 encoded BIP-38 should start with 6P.",
+                1, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs**",
+                '*', Base58Service.InputType.Bip38, false, "Base-58 encoded BIP-38 length must have 58 characters.",
+                2, false, null, null, null
+            };
+            yield return new object[]
+            {
+                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
+                '*', Base58Service.InputType.Bip38, true, null,
+                1, false, new int[1] { 57 }, new int[1] { 0 }, bipMultPow
+            };
+            yield return new object[]
+            {
+                "6P*WdmoT1ZursVcr5N*D14p5bHrKVGPG**eEoEeRb8FVaq*SHnZTLEbY*U",
+                '*', Base58Service.InputType.Bip38, true, null,
+                6, false, new int[6] { 56, 46, 33, 32, 18, 2 }, new int[6] { 11, 121, 264, 275, 429, 605 }, bipMultPow
             };
         }
         [Theory]
