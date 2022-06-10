@@ -1275,40 +1275,23 @@ namespace FinderOuter.Services
 
         private async Task FindAddress()
         {
-            if (searchSpace.MissCount == 0)
-            {
-                report.AddMessageSafe("The given input has no missing characters, verifying it as a complete address.");
-                report.AddMessageSafe(inputService.CheckBase58Address(searchSpace.Input));
-            }
-            else
-            {
-                report.AddMessageSafe($"Base-58 address missing {searchSpace.MissCount} characters was detected.");
-                report.SetTotal(searchSpace.GetTotal());
-                report.AddMessageSafe("Checking each case. Please wait...");
+            Debug.Assert(searchSpace.MissCount != 0);
+            report.AddMessageSafe($"Base-58 address missing {searchSpace.MissCount} characters was detected.");
+            report.SetTotal(searchSpace.GetTotal());
+            report.AddMessageSafe("Checking each case. Please wait...");
 
-                report.Timer.Start();
-
-                await Task.Run(() => Loop21());
-            }
+            report.Timer.Start();
+            await Task.Run(() => Loop21());
         }
 
         private async Task FindBip38()
         {
-            if (searchSpace.MissCount == 0)
-            {
-                report.AddMessageSafe("The given BIP38 key has no missing characters, verifying it as a complete key.");
-                _ = inputService.CheckBase58Bip38(searchSpace.Input, out string msg);
-                report.AddMessageSafe(msg);
-            }
-            else
-            {
-                report.SetTotal(searchSpace.GetTotal());
-                report.AddMessageSafe("Going throgh each case. Please wait...");
+            Debug.Assert(searchSpace.MissCount != 0);
+            report.SetTotal(searchSpace.GetTotal());
+            report.AddMessageSafe("Going throgh each case. Please wait...");
 
-                report.Timer.Start();
-
-                await Task.Run(() => Loop58());
-            }
+            report.Timer.Start();
+            await Task.Run(() => Loop58());
         }
 
 
