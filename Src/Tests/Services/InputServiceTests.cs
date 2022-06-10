@@ -47,16 +47,17 @@ namespace Tests.Services
 
 
         [Theory]
-        [InlineData(ValidP2pkhAddr, "The given address is a valid base-58 encoded address used for P2PKH scripts.")]
-        [InlineData(ValidP2shAddr, "The given address is a valid base-58 encoded address used for P2SH scripts.")]
-        [InlineData("1BvBMSEYstWetqTFn5Au4m4$Fg7xJaNVN2", "The given address contains invalid base-58 characters.")]
-        [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3", "The given address has an invalid checksum.")]
-        [InlineData("12eESoee9vDq6tQtZ6RQfdf3SsHWBQYpd", "The given address byte length is invalid.")]
-        [InlineData("34q4KRuJeVGJ79f8jRkexoEnFKP1fRjqp", "The given address starts with an invalid byte.")]
-        public void CheckBase58AddressTest(string addr, string expectedMsg)
+        [InlineData(ValidP2pkhAddr, true, "The given address is a valid base-58 encoded address used for P2PKH scripts.")]
+        [InlineData(ValidP2shAddr, true, "The given address is a valid base-58 encoded address used for P2SH scripts.")]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4$Fg7xJaNVN2", false, "The given address contains invalid base-58 characters.")]
+        [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3", false, "The given address has an invalid checksum.")]
+        [InlineData("12eESoee9vDq6tQtZ6RQfdf3SsHWBQYpd", false, "The given address byte length is invalid.")]
+        [InlineData("34q4KRuJeVGJ79f8jRkexoEnFKP1fRjqp", false, "The given address starts with an invalid byte.")]
+        public void IsValidBase58AddressTest(string addr, bool expB, string expectedMsg)
         {
             InputService serv = new();
-            string actualMsg = serv.CheckBase58Address(addr);
+            bool actB = serv.IsValidBase58Address(addr, out string actualMsg);
+            Assert.Equal(expB, actB);
             Assert.Equal(expectedMsg, actualMsg);
         }
 

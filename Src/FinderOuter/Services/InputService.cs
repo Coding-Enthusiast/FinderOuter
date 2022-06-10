@@ -80,30 +80,35 @@ namespace FinderOuter.Services
             return true;
         }
 
-        public string CheckBase58Address(string address)
+        public bool IsValidBase58Address(string address, out string message)
         {
             if (!Base58.IsValid(address))
             {
-                return "The given address contains invalid base-58 characters.";
+                message = "The given address contains invalid base-58 characters.";
+                return false;
             }
             if (!Base58.IsValidWithChecksum(address))
             {
-                return "The given address has an invalid checksum.";
+                message = "The given address has an invalid checksum.";
+                return false;
             }
 
             byte[] addrBa = Base58.DecodeWithChecksum(address);
 
             if (addrBa[0] != ConstantsFO.P2pkhAddrFirstByte && addrBa[0] != ConstantsFO.P2shAddrFirstByte)
             {
-                return "The given address starts with an invalid byte.";
+                message = "The given address starts with an invalid byte.";
+                return false;
             }
             if (addrBa.Length != 21)
             {
-                return "The given address byte length is invalid.";
+                message = "The given address byte length is invalid.";
+                return false;
             }
 
-            return $"The given address is a valid base-58 encoded address used for " +
-                   $"{(addrBa[0] == ConstantsFO.P2pkhAddrFirstByte ? "P2PKH" : "P2SH")} scripts.";
+            message = $"The given address is a valid base-58 encoded address used for " +
+                      $"{(addrBa[0] == ConstantsFO.P2pkhAddrFirstByte ? "P2PKH" : "P2SH")} scripts.";
+            return true;
         }
 
 
