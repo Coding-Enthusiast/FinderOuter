@@ -273,29 +273,25 @@ namespace FinderOuter.Services.SearchSpaces
                 return false;
             }
 
-            if (Input[0] == ConstantsFO.PrivKeyCompChar1 || Input[0] == ConstantsFO.PrivKeyCompChar2)
+            if (inputType == Base58Service.InputType.PrivateKey)
             {
-                if (Input.Length == ConstantsFO.PrivKeyCompWifLen)
-                {
-                    message = InputService.CheckPrivateKey(Input);
-                    return true;
-                }
+                return InputService.IsValidWif(Input, out message);
             }
-            else if (Input[0] == ConstantsFO.PrivKeyUncompChar)
+            else if (inputType == Base58Service.InputType.Address)
             {
-                if (Input.Length == ConstantsFO.PrivKeyUncompWifLen)
-                {
-                    message = InputService.CheckPrivateKey(Input);
-                    return true;
-                }
+
+            }
+            else if (inputType == Base58Service.InputType.Bip38)
+            {
+
             }
             else
             {
-                message = "Invalid starting character for a private key.";
+                message = "Undefined input type.";
                 return false;
             }
 
-            message = "Invalid private key WIF length.";
+            message = "not implemented";
             return false;
         }
 

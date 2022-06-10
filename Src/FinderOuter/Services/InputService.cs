@@ -143,49 +143,59 @@ namespace FinderOuter.Services
             }
         }
 
-        public string CheckPrivateKey(string key)
+        public bool IsValidWif(string key, out string message)
         {
             if (!Base58.IsValid(key))
             {
-                return "The given key contains invalid base-58 characters.";
+                message = "The given key contains invalid base-58 characters.";
+                return false;
             }
             if (!Base58.IsValidWithChecksum(key))
             {
-                return "The given key has an invalid checksum.";
+                message = "The given key has an invalid checksum.";
+                return false;
             }
 
             byte[] keyBa = Base58.DecodeWithChecksum(key);
             if (keyBa[0] != ConstantsFO.PrivKeyFirstByte)
             {
-                return $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";
+                message = $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";
+                return false;
             }
 
             if (keyBa.Length == 33)
             {
                 if (!IsPrivateKeyInRange(keyBa.SubArray(1)))
                 {
-                    return "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                    message = "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                    return false;
                 }
 
-                return "The given key is a valid uncompressed private key.";
+                message = "The given key is a valid uncompressed private key.";
+                return true;
             }
             else if (keyBa.Length == 34)
             {
                 if (keyBa[^1] != ConstantsFO.PrivKeyCompLastByte)
                 {
-                    return $"Invalid compressed key last byte (actual={keyBa[^1]}, expected={ConstantsFO.PrivKeyCompLastByte}).";
+                    message = $"Invalid compressed key last byte (actual={keyBa[^1]}, expected={ConstantsFO.PrivKeyCompLastByte}).";
+                    return false;
                 }
 
                 if (!IsPrivateKeyInRange(keyBa.SubArray(1, 32)))
                 {
-                    return "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                    message = "Invalid key integer value (outside of the range defined by secp256k1 curve).";
+                    return false;
                 }
 
-                return "The given key is a valid compressed private key.";
+                message = "The given key is a valid compressed private key.";
+                return true;
             }
             else
             {
-                return $"The given key length is invalid. actual = {keyBa.Length}, expected = 33 (uncompressed) or 34 (compressed)).";
+                message = $"The given key length is invalid. actual = {keyBa.Length}, expected = 33 (uncompressed) " +
+                          $"or 34 (compressed)).";
+                return false;
             }
         }
 
