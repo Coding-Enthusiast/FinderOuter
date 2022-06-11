@@ -51,7 +51,7 @@ namespace FinderOuter.Services
             }
         }
 
-        public bool CheckBase58Bip38(string bip38, out string message)
+        public bool IsValidBase58Bip38(string bip38, out string message)
         {
             if (!Base58.IsValid(bip38))
             {

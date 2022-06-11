@@ -37,10 +37,10 @@ namespace Tests.Services
         [InlineData("2DnRqfF9cUPrMxRSAbprPfviNN37TLoH7Zmgq5uS4CcTQymH9nfcFXvXX", false, "The given BIP-38 string has an invalid byte length.")]
         [InlineData("AfEEGJ8HqcGUofEyL7Cr6R73LJbus3tuKFMHEiBmT6X1H8npuj94cMrcai", false, "The given BIP-38 string has invalid starting bytes.")]
         [InlineData("6RMoGm8dMt4BH2WLE6jLYNeF6B4SZ4WHmg6PRggwCQYqJPPwU32uVBH8Be", false, "The given BIP-38 string has invalid starting bytes.")]
-        public void CheckBase58Bip38Test(string bip38, bool expected, string expectedMsg)
+        public void IsValidBase58Bip38Test(string bip38, bool expected, string expectedMsg)
         {
             InputService serv = new();
-            bool actual = serv.CheckBase58Bip38(bip38, out string actualMsg);
+            bool actual = serv.IsValidBase58Bip38(bip38, out string actualMsg);
             Assert.Equal(expected, actual);
             Assert.Equal(expectedMsg, actualMsg);
         }

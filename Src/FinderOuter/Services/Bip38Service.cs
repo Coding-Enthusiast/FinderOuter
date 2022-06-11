@@ -1637,7 +1637,7 @@ namespace FinderOuter.Services
             // Passwords bigger than 64 bytes need to be hashed first inside HMACSHA256 so we needa different MainLoop code
             if (passLength > Sha256Fo.BlockByteSize)
                 report.Fail("Passwords bigger than 64 bytes are not supported yet.");
-            if (!inputService.CheckBase58Bip38(bip38, out string msg))
+            if (!inputService.IsValidBase58Bip38(bip38, out string msg))
                 report.Fail(msg);
             if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                 report.Fail($"Invalid compare string or compare string type ({extraType}).");
