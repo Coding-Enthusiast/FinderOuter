@@ -279,20 +279,17 @@ namespace FinderOuter.Services.SearchSpaces
             }
             else if (inputType == Base58Service.InputType.Address)
             {
-
+                return InputService.IsValidBase58Address(Input, out message);
             }
             else if (inputType == Base58Service.InputType.Bip38)
             {
-
+                return InputService.IsValidBase58Bip38(Input, out message);
             }
             else
             {
                 message = "Undefined input type.";
                 return false;
             }
-
-            message = "not implemented";
-            return false;
         }
 
 
