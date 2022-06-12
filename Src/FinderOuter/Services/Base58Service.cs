@@ -38,14 +38,6 @@ namespace FinderOuter.Services
         private B58SearchSpace searchSpace;
 
 
-        public enum InputType
-        {
-            PrivateKey,
-            Address,
-            Bip38
-        }
-
-
         private bool IsMissingFromEnd()
         {
             if (searchSpace.MissingIndexes[0] != searchSpace.Input.Length - 1)
@@ -1295,7 +1287,7 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(B58SearchSpace ss, string extra, Models.InputType extraType)
+        public async void Find(B58SearchSpace ss, string extra, InputType extraType)
         {
             report.Init();
 
@@ -1309,7 +1301,7 @@ namespace FinderOuter.Services
                 searchSpace = ss;
                 switch (searchSpace.inputType)
                 {
-                    case InputType.PrivateKey:
+                    case Base58Type.PrivateKey:
                         if (!inputService.TryGetCompareService(extraType, extra, out comparer))
                         {
                             if (!string.IsNullOrEmpty(extra))
@@ -1319,10 +1311,10 @@ namespace FinderOuter.Services
                         // TODO: set compared to a default always-return-true one
                         await FindPrivateKey();
                         break;
-                    case InputType.Address:
+                    case Base58Type.Address:
                         await FindAddress();
                         break;
-                    case InputType.Bip38:
+                    case Base58Type.Bip38:
                         await FindBip38();
                         break;
                     default:

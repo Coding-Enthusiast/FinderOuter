@@ -4,7 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Backend;
-using FinderOuter.Services;
+using FinderOuter.Models;
 using FinderOuter.Services.SearchSpaces;
 using System.Collections.Generic;
 using System.Numerics;
@@ -71,87 +71,87 @@ namespace Tests.Services.SearchSpaces
             // Invalid inputs
             yield return new object[]
             {
-                string.Empty, 'z', Base58Service.InputType.Address, false, "Missing character is not accepted.", 0,
+                string.Empty, 'z', Base58Type.Address, false, "Missing character is not accepted.", 0,
                 false, null, null, null
             };
             yield return new object[]
             {
-                string.Empty, '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                string.Empty, '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
                 false, null, null, null
             };
             yield return new object[]
             {
-                null, '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                null, '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
                 false, null, null, null
             };
             yield return new object[]
             {
-                " ", '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                " ", '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
                 false, null, null, null
             };
             yield return new object[]
             {
-                "0", '*', Base58Service.InputType.Address, false, "Input contains invalid base-58 character(s).", 0,
+                "0", '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
                 false, null, null, null
             };
             yield return new object[]
             {
-                "a", '*', (Base58Service.InputType)1000, false, "Given input type is not defined.", 0, false, null, null, null
+                "a", '*', (Base58Type)1000, false, "Given input type is not defined.", 0, false, null, null, null
             };
 
             // Process private keys:
             yield return new object[]
             {
                 "7HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
-                '*', Base58Service.InputType.PrivateKey, false, "The given key has an invalid first character.",
+                '*', Base58Type.PrivateKey, false, "The given key has an invalid first character.",
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
-                '*', Base58Service.InputType.PrivateKey, true, null,
+                '*', Base58Type.PrivateKey, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbT",
-                '*', Base58Service.InputType.PrivateKey, true, null,
+                '*', Base58Type.PrivateKey, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK",
-                '*', Base58Service.InputType.PrivateKey, true, null,
+                '*', Base58Type.PrivateKey, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
-                '*', Base58Service.InputType.PrivateKey, true, null,
+                '*', Base58Type.PrivateKey, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "kwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
-                '*', Base58Service.InputType.PrivateKey, false, "The given key has an invalid first character.",
+                '*', Base58Type.PrivateKey, false, "The given key has an invalid first character.",
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL*yTJ",
-                '?', Base58Service.InputType.PrivateKey, false, "Input contains invalid base-58 character(s).",
+                '?', Base58Type.PrivateKey, false, "Input contains invalid base-58 character(s).",
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL-yTJ",
-                '-', Base58Service.InputType.PrivateKey, true, null,
+                '-', Base58Type.PrivateKey, true, null,
                 1, false, new int[] { 47 }, new int[] { 30 }, uncompWifMultPow
             };
             yield return new object[]
             {
                 "K*dMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1*xJw*vP9861*",
-                '*', Base58Service.InputType.PrivateKey, true, null,
+                '*', Base58Type.PrivateKey, true, null,
                 4, true, new int[] { 51, 44, 40, 1 }, new int[] { 0, 70, 110, 500 }, compWIfMultPow
             };
 
@@ -159,31 +159,31 @@ namespace Tests.Services.SearchSpaces
             yield return new object[]
             {
                 "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
-                '*', Base58Service.InputType.Address, true, null,
+                '*', Base58Type.Address, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "2BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
-                '*', Base58Service.InputType.Address, false, "The given address has an invalid first character.",
+                '*', Base58Type.Address, false, "The given address has an invalid first character.",
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN-",
-                '-', Base58Service.InputType.Address, true, null,
+                '-', Base58Type.Address, true, null,
                 1, false, new int[] { 33 }, new int[] { 0 }, addrMultPow
             };
             yield return new object[]
             {
                 "1-vBMSE-stWetqTFn5A-4m4GFg7xJ-NVN-",
-                '-', Base58Service.InputType.Address, true, null,
+                '-', Base58Type.Address, true, null,
                 5, false, new int[5] { 33, 29, 19, 7, 1  }, new int[5] { 0, 28, 98, 182, 224 }, addrMultPow
             };
             yield return new object[]
             {
                 "3J98t1WpEZ73C*mQviecrnyiWrnqRh*NLy",
-                '*', Base58Service.InputType.Address, true, null,
+                '*', Base58Type.Address, true, null,
                 2, false, new int[2] { 30, 13 }, new int[2] { 21, 140 }, addrMultPow
             };
 
@@ -191,49 +191,49 @@ namespace Tests.Services.SearchSpaces
             yield return new object[]
             {
                 "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
-                '*', Base58Service.InputType.Bip38, true, null,
+                '*', Base58Type.Bip38, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHn",
-                '*', Base58Service.InputType.Bip38, true, null,
+                '*', Base58Type.Bip38, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
-                '*', Base58Service.InputType.Bip38, true, null,
+                '*', Base58Type.Bip38, true, null,
                 0, false, null, null, null
             };
             yield return new object[]
             {
                 "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
-                '*', Base58Service.InputType.Bip38, false, "Base-58 encoded BIP-38 should start with 6P.",
+                '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 should start with 6P.",
                 1, false, null, null, null
             };
             yield return new object[]
             {
                 "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs**",
-                '*', Base58Service.InputType.Bip38, false, "Base-58 encoded BIP-38 length must have 58 characters.",
+                '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 length must have 58 characters.",
                 2, false, null, null, null
             };
             yield return new object[]
             {
                 "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
-                '*', Base58Service.InputType.Bip38, true, null,
+                '*', Base58Type.Bip38, true, null,
                 1, false, new int[1] { 57 }, new int[1] { 0 }, bipMultPow
             };
             yield return new object[]
             {
                 "6P*WdmoT1ZursVcr5N*D14p5bHrKVGPG**eEoEeRb8FVaq*SHnZTLEbY*U",
-                '*', Base58Service.InputType.Bip38, true, null,
+                '*', Base58Type.Bip38, true, null,
                 6, false, new int[6] { 56, 46, 33, 32, 18, 2 }, new int[6] { 11, 121, 264, 275, 429, 605 }, bipMultPow
             };
         }
         [Theory]
         [MemberData(nameof(GetProcessCases))]
-        public void ProcessTest(string input, char missChar, Base58Service.InputType t, bool expB, string expErr, int expMisCount,
+        public void ProcessTest(string input, char missChar, Base58Type t, bool expB, string expErr, int expMisCount,
                                 bool isComp, int[] misIndex, int[] multMisIndex, ulong[] multPow58)
         {
             B58SearchSpace ss = new();

@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Backend;
+using FinderOuter.Models;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace FinderOuter.Services.SearchSpaces
         public bool isComp;
         public ulong[] multPow58, preComputed;
         public int[] multMissingIndexes;
-        public Base58Service.InputType inputType;
+        public Base58Type inputType;
 
 
         /// <summary>
@@ -232,7 +233,7 @@ namespace FinderOuter.Services.SearchSpaces
             }
         }
 
-        public bool Process(string input, char missChar, Base58Service.InputType t, out string error)
+        public bool Process(string input, char missChar, Base58Type t, out string error)
         {
             Input = input;
             inputType = t;
@@ -251,11 +252,11 @@ namespace FinderOuter.Services.SearchSpaces
             {
                 switch (t)
                 {
-                    case Base58Service.InputType.PrivateKey:
+                    case Base58Type.PrivateKey:
                         return ProcessPrivateKey(Input, missChar, out error);
-                    case Base58Service.InputType.Address:
+                    case Base58Type.Address:
                         return ProcessAddress(Input, missChar, out error);
-                    case Base58Service.InputType.Bip38:
+                    case Base58Type.Bip38:
                         return ProcessBip38(Input, missChar, out error);
                     default:
                         error = "Given input type is not defined.";
@@ -273,15 +274,15 @@ namespace FinderOuter.Services.SearchSpaces
                 return false;
             }
 
-            if (inputType == Base58Service.InputType.PrivateKey)
+            if (inputType == Base58Type.PrivateKey)
             {
                 return InputService.IsValidWif(Input, out message);
             }
-            else if (inputType == Base58Service.InputType.Address)
+            else if (inputType == Base58Type.Address)
             {
                 return InputService.IsValidBase58Address(Input, out message);
             }
-            else if (inputType == Base58Service.InputType.Bip38)
+            else if (inputType == Base58Type.Bip38)
             {
                 return InputService.IsValidBase58Bip38(Input, out message);
             }

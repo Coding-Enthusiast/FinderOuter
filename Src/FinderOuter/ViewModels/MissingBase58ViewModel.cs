@@ -35,7 +35,7 @@ namespace FinderOuter.ViewModels
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
-            InputTypeList = ListHelper.GetAllEnumValues<Base58Service.InputType>();
+            InputTypeList = ListHelper.GetAllEnumValues<Base58Type>();
             ExtraInputTypeList = ListHelper.GetEnumDescItems(InputType.PrivateKey).ToArray();
             SelectedExtraInputType = ExtraInputTypeList.First();
 
@@ -75,11 +75,11 @@ namespace FinderOuter.ViewModels
         private readonly B58SearchSpace searchSpace;
 
 
-        public IEnumerable<Base58Service.InputType> InputTypeList { get; private set; }
+        public IEnumerable<Base58Type> InputTypeList { get; private set; }
         public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
 
-        private Base58Service.InputType _selInpT;
-        public Base58Service.InputType SelectedInputType
+        private Base58Type _selInpT;
+        public Base58Type SelectedInputType
         {
             get => _selInpT;
             set

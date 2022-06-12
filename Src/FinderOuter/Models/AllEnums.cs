@@ -8,6 +8,14 @@ using System.ComponentModel;
 
 namespace FinderOuter.Models
 {
+    public enum Base58Type
+    {
+        PrivateKey,
+        Address,
+        Bip38
+    }
+
+
     public enum EncodingName
     {
         Base16,
