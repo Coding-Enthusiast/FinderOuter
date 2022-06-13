@@ -63,6 +63,21 @@ namespace Tests.Services
 
 
         [Theory]
+        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a529473", true, "Given key is valid.")]
+        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a52947", false, "Base-16 private keys must be 64 characters long.")]
+        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a5294734", false, "Base-16 private keys must be 64 characters long.")]
+        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a52947X", false, "Invalid Base-16 string.")]
+        [InlineData("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", false, "Out of range private key.")]
+        public void IsValidBase16KeyTest(string key, bool expB, string expectedMsg)
+        {
+            InputService serv = new();
+            bool actB = serv.IsValidBase16Key(key, out string actualMsg);
+            Assert.Equal(expB, actB);
+            Assert.Equal(expectedMsg, actualMsg);
+        }
+
+
+        [Theory]
         [InlineData(ValidCompKey)]
         [InlineData(ValidUnCompKey1)]
         [InlineData(ValidUnCompKey2)]

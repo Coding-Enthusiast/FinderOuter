@@ -112,6 +112,30 @@ namespace FinderOuter.Services
         }
 
 
+        public bool IsValidBase16Key(string key, out string message)
+        {
+            if (key.Length != 64)
+            {
+                message = "Base-16 private keys must be 64 characters long.";
+                return false;
+            }
+
+            if (!Base16.TryDecode(key, out byte[] ba))
+            {
+                message = "Invalid Base-16 string.";
+                return false;
+            }
+            else if (!IsPrivateKeyInRange(ba))
+            {
+                message = "Out of range private key.";
+                return false;
+            }
+
+            message = "Given key is valid.";
+            return true;
+        }
+
+
         public bool CanBePrivateKey(string key, out string error)
         {
             if (key.Length == ConstantsFO.PrivKeyCompWifLen)
