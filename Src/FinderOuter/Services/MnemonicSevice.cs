@@ -1385,7 +1385,6 @@ namespace FinderOuter.Services
         public static int GetSeedMaxByteSize(int seedLen, int maxWordLen) => (seedLen * maxWordLen) + (seedLen - 1);
 
 
-
         public void SetPbkdf2Salt(string pass)
         {
             byte[] salt = Encoding.UTF8.GetBytes($"mnemonic{pass?.Normalize(NormalizationForm.FormKD)}");
@@ -1418,146 +1417,140 @@ namespace FinderOuter.Services
         }
 
 
-        public async void FindMissing(MnemonicSearchSpace searchSpace, string pass, string path, string extra, InputType extraType)
+        public async void FindMissing(MnemonicSearchSpace ss, string pass, string path, string comp, InputType compType)
         {
             report.Init();
 
             // TODO: implement Electrum seed recovery with other word lists (they need normalization)
-            if (searchSpace.mnType == MnemonicTypes.Electrum && searchSpace.wl != BIP0039.WordLists.English)
+            if (ss.mnType == MnemonicTypes.Electrum && ss.wl != BIP0039.WordLists.English)
             {
                 report.Fail("Only English words are currently supported for Electrum mnemonics.");
+                return;
             }
-            else
+
+            try
             {
-                if (searchSpace.MissCount == 0)
-                {
-                    try
-                    {
-                        BIP0032 temp = searchSpace.mnType switch
-                        {
-                            MnemonicTypes.BIP39 => new BIP0039(searchSpace.Input, searchSpace.wl, pass),
-                            MnemonicTypes.Electrum => new ElectrumMnemonic(searchSpace.Input, searchSpace.wl, pass),
-                            _ => throw new ArgumentException("Undefined mnemonic type.")
-                        };
+                this.path = new BIP0032Path(path);
+            }
+            catch (Exception ex)
+            {
+                report.Fail($"Invalid path ({ex.Message}).");
+                this.path = null;
+            }
 
-                        report.Pass($"Given input is a valid {searchSpace.mnType} mnemonic.");
+            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            {
+                report.Fail($"Invalid extra input or input type {compType}.");
+                comparer = null;
+            }
 
-                        try
-                        {
-                            this.path = new BIP0032Path(path);
-                        }
-                        catch (Exception ex)
-                        {
-                            report.Fail($"Invalid path ({ex.Message}).");
-                            return;
-                        }
-
-                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                        {
-                            report.Fail($"Invalid extra input or input type {extraType}.");
-                            return;
-                        }
-
-                        uint startIndex = this.path.Indexes[^1];
-                        uint[] indices = new uint[this.path.Indexes.Length - 1];
-                        Array.Copy(this.path.Indexes, 0, indices, 0, indices.Length);
-                        BIP0032Path newPath = new(indices);
-
-                        PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
-                        if (comparer.Compare(keys[0].ToBytes()))
-                        {
-                            report.Pass($"The given child key is derived from this mnemonic at {this.path} path.");
-                        }
-                        else
-                        {
-                            report.Fail($"The given child key is not derived from this mnemonic or not at {this.path} path.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}");
-                    }
-
-                    return;
-                }
-
-
-                maxMnBufferLen = GetSeedMaxByteSize(searchSpace.wordCount, searchSpace.maxWordLen);
-
-                for (uint i = 0; i < searchSpace.allWords.Length; i++)
-                {
-                    allWordsBytes[i] = Encoding.UTF8.GetBytes($"{searchSpace.allWords[i]} ");
-                }
-
+            if (ss.MissCount == 0)
+            {
                 try
                 {
-                    this.path = new BIP0032Path(path);
-                }
-                catch (Exception ex)
-                {
-                    report.Fail($"Invalid path ({ex.Message}).");
-                    return;
-                }
-
-                if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                {
-                    report.Fail($"Invalid extra input or input type {extraType}.");
-                    return;
-                }
-
-                report.AddMessageSafe($"There are {searchSpace.wordCount} words in the given mnemonic with {searchSpace.MissCount} missing.");
-                report.SetTotal(searchSpace.GetTotal());
-
-                this.searchSpace = searchSpace;
-
-                report.Timer.Start();
-
-                if (searchSpace.mnType == MnemonicTypes.BIP39)
-                {
-                    SetPbkdf2Salt(pass);
-                    await Task.Run(() =>
+                    BIP0032 temp = ss.mnType switch
                     {
-                        switch (searchSpace.wordCount)
-                        {
-                            case 12:
-                                Loop12();
-                                break;
-                            case 15:
-                                Loop15();
-                                break;
-                            case 18:
-                                Loop18();
-                                break;
-                            case 21:
-                                Loop21();
-                                break;
-                            case 24:
-                                Loop24();
-                                break;
-                        }
-                    });
-                }
-                else if (searchSpace.mnType == MnemonicTypes.Electrum)
-                {
-                    if (searchSpace.elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
+                        MnemonicTypes.BIP39 => new BIP0039(ss.Input, ss.wl, pass),
+                        MnemonicTypes.Electrum => new ElectrumMnemonic(ss.Input, ss.wl, pass),
+                        _ => throw new ArgumentException("Undefined mnemonic type.")
+                    };
+
+                    report.Pass($"Given input is a valid {ss.mnType} mnemonic.");
+
+                    if (path is null || comparer is null)
                     {
-                        report.Fail("Undefined mnemonic type.");
-                        report.Timer.Reset();
+                        report.AddMessageSafe("Path or compare input is not set correctly to check the derived key.");
                         return;
                     }
 
-                    SetPbkdf2SaltElectrum(pass);
-                    await Task.Run(() => LoopElectrum(searchSpace.elecMnType));
+                    uint startIndex = this.path.Indexes[^1];
+                    uint[] indices = new uint[this.path.Indexes.Length - 1];
+                    Array.Copy(this.path.Indexes, 0, indices, 0, indices.Length);
+                    BIP0032Path newPath = new(indices);
+
+                    PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
+                    if (comparer.Compare(keys[0].ToBytes()))
+                    {
+                        report.Pass($"The given child key is derived from this mnemonic at {this.path} path.");
+                    }
+                    else
+                    {
+                        report.Fail($"The given child key is not derived from this mnemonic or not at {this.path} path.");
+                    }
                 }
-                else
+                catch (Exception ex)
+                {
+                    report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}");
+                }
+
+                return;
+            }
+
+            if (path is null || comparer is null)
+            {
+                report.AddMessageSafe("Path or compare input is not set correctly to check the derived key.");
+                return;
+            }
+
+            maxMnBufferLen = GetSeedMaxByteSize(ss.wordCount, ss.maxWordLen);
+
+            for (uint i = 0; i < ss.allWords.Length; i++)
+            {
+                allWordsBytes[i] = Encoding.UTF8.GetBytes($"{ss.allWords[i]} ");
+            }
+
+            report.AddMessageSafe($"There are {ss.wordCount} words in the given mnemonic with {ss.MissCount} missing.");
+            report.SetTotal(ss.GetTotal());
+
+            searchSpace = ss;
+
+            report.Timer.Start();
+
+            if (ss.mnType == MnemonicTypes.BIP39)
+            {
+                SetPbkdf2Salt(pass);
+                await Task.Run(() =>
+                {
+                    switch (ss.wordCount)
+                    {
+                        case 12:
+                            Loop12();
+                            break;
+                        case 15:
+                            Loop15();
+                            break;
+                        case 18:
+                            Loop18();
+                            break;
+                        case 21:
+                            Loop21();
+                            break;
+                        case 24:
+                            Loop24();
+                            break;
+                    }
+                });
+            }
+            else if (ss.mnType == MnemonicTypes.Electrum)
+            {
+                if (ss.elecMnType == ElectrumMnemonic.MnemonicType.Undefined)
                 {
                     report.Fail("Undefined mnemonic type.");
                     report.Timer.Reset();
                     return;
                 }
 
-                report.Finalize();
+                SetPbkdf2SaltElectrum(pass);
+                await Task.Run(() => LoopElectrum(ss.elecMnType));
             }
+            else
+            {
+                report.Fail("Undefined mnemonic type.");
+                report.Timer.Reset();
+                return;
+            }
+
+            report.Finalize();
         }
     }
 }
