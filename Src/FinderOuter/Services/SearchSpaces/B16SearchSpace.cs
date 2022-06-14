@@ -83,6 +83,16 @@ namespace FinderOuter.Services.SearchSpaces
             }
         }
 
+        public bool ProcessNoMissing(out string message)
+        {
+            if (MissCount != 0)
+            {
+                message = "This method should not be called with missing characters.";
+                return false;
+            }
+
+            return InputService.IsValidBase16Key(Input, out message);
+        }
 
         public bool SetValues(string[][] result)
         {
@@ -125,7 +135,7 @@ namespace FinderOuter.Services.SearchSpaces
 
             int index1 = 0;
             int index2 = 0;
-            
+
             foreach (string[] item in result)
             {
                 PermutationCounts[index2++] = item.Length;

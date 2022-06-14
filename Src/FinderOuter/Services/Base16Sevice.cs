@@ -233,26 +233,30 @@ namespace FinderOuter.Services
             {
                 if (ss.MissCount == 0)
                 {
-                    try
+                    if (ss.ProcessNoMissing(out string message))
                     {
-                        using PrivateKey prv = new(Base16.Decode(ss.Input));
-                        bool check = new AddressService().Compare(AdditionalInput, extraType, prv, out string msg);
-                        if (check)
+                        try
                         {
-                            report.Pass(msg);
+                            using PrivateKey prv = new(Base16.Decode(ss.Input));
+                            bool check = new AddressService().Compare(AdditionalInput, extraType, prv, out string msg);
+                            if (check)
+                            {
+                                report.Pass(msg);
+                            }
+                            else
+                            {
+                                report.Fail(msg);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            report.Fail(msg);
+                            report.Fail($"Key is out of range {ex.Message}");
                         }
-                        return;
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        report.Fail($"Key is out of range {ex.Message}");
+                        report.Pass(message);
                     }
-
-                    report.Pass("The given key is valid.");
                     return;
                 }
 
