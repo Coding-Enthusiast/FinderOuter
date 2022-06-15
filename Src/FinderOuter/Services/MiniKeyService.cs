@@ -482,11 +482,11 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(MiniKeySearchSpace ss, string extra, InputType extraType)
+        public async void Find(MiniKeySearchSpace ss, string comp, CompareInputType compType)
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+            if (!inputService.TryGetCompareService(compType, comp, out comparer))
                 report.Fail("Invalid compare input or type.");
             else
             {

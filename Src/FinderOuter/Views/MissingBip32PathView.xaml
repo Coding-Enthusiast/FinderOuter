@@ -48,8 +48,8 @@
                      Minimum="1"
                      Grid.Column="1"/>
     </Grid>
-    <ComboBox Items="{Binding ExtraInputTypeList}"
-              SelectedItem="{Binding SelectedExtraInputType}"
+    <ComboBox Items="{Binding CompareInputTypeList}"
+              SelectedItem="{Binding SelectedCompareInputType}"
               Grid.Column="1"
               Grid.Row="2">
       <ComboBox.ItemTemplate>

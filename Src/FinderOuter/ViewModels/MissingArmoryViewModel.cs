@@ -30,8 +30,8 @@ namespace FinderOuter.ViewModels
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
-            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
-            SelectedExtraInputType = ExtraInputTypeList.First();
+            CompareInputTypeList = ListHelper.GetEnumDescItems<CompareInputType>().ToArray();
+            SelectedCompareInputType = CompareInputTypeList.First();
 
             HasExample = true;
             IObservable<bool> isExampleEnable = this.WhenAnyValue(
@@ -52,7 +52,7 @@ namespace FinderOuter.ViewModels
 
         private readonly ArmoryService service;
 
-        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
         private string _input;
         public string Input
@@ -68,18 +68,18 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _input2, value);
         }
 
-        private DescriptiveItem<InputType> _selInpT2;
-        public DescriptiveItem<InputType> SelectedExtraInputType
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
         {
-            get => _selInpT2;
-            set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
 
 
         public override void Find()
         {
-            service.FindMissing(Input, SelectedMissingChar, AdditionalInput, SelectedExtraInputType.Value);
+            service.FindMissing(Input, SelectedMissingChar, AdditionalInput, SelectedCompareInputType.Value);
         }
 
         public void Example()
@@ -90,8 +90,8 @@ namespace FinderOuter.ViewModels
             SelectedMissingChar = MissingChars[(int)ex[1]];
             AdditionalInput = (string)ex[2];
             int temp = (int)ex[3];
-            Debug.Assert(temp < ExtraInputTypeList.Count());
-            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp);
+            Debug.Assert(temp < CompareInputTypeList.Count());
+            SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);
             Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[4]}";
         }
 

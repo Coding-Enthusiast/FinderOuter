@@ -43,8 +43,8 @@ namespace FinderOuter.ViewModels
                 (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
-            ExtraInputTypeList = ListHelper.GetEnumDescItems(InputType.PrivateKey).ToArray();
-            SelectedExtraInputType = ExtraInputTypeList.First();
+            CompareInputTypeList = ListHelper.GetEnumDescItems(CompareInputType.PrivateKey).ToArray();
+            SelectedCompareInputType = CompareInputTypeList.First();
 
             SetExamples(GetExampleData());
 
@@ -72,7 +72,7 @@ namespace FinderOuter.ViewModels
         private readonly MiniKeyService miniService;
         private readonly MiniKeySearchSpace searchSpace;
 
-        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
         private string _input;
         public string Input
@@ -88,11 +88,11 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private DescriptiveItem<InputType> _selInpT2;
-        public DescriptiveItem<InputType> SelectedExtraInputType
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
         {
-            get => _selInpT2;
-            set => this.RaiseAndSetIfChanged(ref _selInpT2, value);
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private string _input2;
@@ -245,7 +245,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
-                    miniService.Find(searchSpace, ExtraInput, SelectedExtraInputType.Value);
+                    miniService.Find(searchSpace, ExtraInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -263,8 +263,8 @@ namespace FinderOuter.ViewModels
             SelectedMissingChar = MissingChars[(int)ex[1]];
             ExtraInput = (string)ex[2];
             int temp = (int)ex[3];
-            Debug.Assert(temp < ExtraInputTypeList.Count());
-            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp);
+            Debug.Assert(temp < CompareInputTypeList.Count());
+            SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);
             Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[4]}";
         }
 

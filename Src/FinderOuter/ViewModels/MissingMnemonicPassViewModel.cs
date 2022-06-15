@@ -21,8 +21,8 @@ namespace FinderOuter.ViewModels
         {
             WordListsList = ListHelper.GetAllEnumValues<BIP0039.WordLists>().ToArray();
             MnemonicTypesList = ListHelper.GetAllEnumValues<MnemonicTypes>().ToArray();
-            InputTypeList = ListHelper.GetEnumDescItems<InputType>().ToArray();
-            SelectedInputType = InputTypeList.First();
+            CompareInputTypeList = ListHelper.GetEnumDescItems<CompareInputType>().ToArray();
+            SelectedCompareInputType = CompareInputTypeList.First();
             MnService = new MnemonicExtensionService(Result);
             PassRecoveryModeList = ListHelper.GetEnumDescItems<PassRecoveryMode>().ToArray();
             SelectedPassRecoveryMode = PassRecoveryModeList.First();
@@ -66,7 +66,7 @@ namespace FinderOuter.ViewModels
         public IPasswordService PassService { get; set; } = new PasswordService();
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
-        public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
         private MnemonicTypes _selMnT;
@@ -83,11 +83,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selWordLst, value);
         }
 
-        private DescriptiveItem<InputType> _inT;
-        public DescriptiveItem<InputType> SelectedInputType
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
         {
-            get => _inT;
-            set => this.RaiseAndSetIfChanged(ref _inT, value);
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private DescriptiveItem<PassRecoveryMode> _recMode;
@@ -229,7 +229,7 @@ namespace FinderOuter.ViewModels
             if (success)
             {
                 MnService.Find(Mnemonic, SelectedMnemonicType, SelectedWordListType,
-                               AdditionalInfo, SelectedInputType.Value, KeyPath, PassLength, allValues);
+                               AdditionalInfo, SelectedCompareInputType.Value, KeyPath, PassLength, allValues);
             }
             else
             {
@@ -254,8 +254,8 @@ namespace FinderOuter.ViewModels
             SelectedWordListType = WordListsList.ElementAt(temp2);
 
             int temp3 = (int)ex[3];
-            Debug.Assert(temp3 < InputTypeList.Count());
-            SelectedInputType = InputTypeList.ElementAt(temp3);
+            Debug.Assert(temp3 < CompareInputTypeList.Count());
+            SelectedCompareInputType = CompareInputTypeList.ElementAt(temp3);
 
             AdditionalInfo = (string)ex[4];
             KeyPath = (string)ex[5];

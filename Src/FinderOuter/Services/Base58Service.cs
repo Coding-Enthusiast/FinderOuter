@@ -1287,7 +1287,7 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(B58SearchSpace ss, string extra, InputType extraType)
+        public async void Find(B58SearchSpace ss, string comp, CompareInputType compType)
         {
             report.Init();
 
@@ -1302,10 +1302,10 @@ namespace FinderOuter.Services
                 switch (searchSpace.inputType)
                 {
                     case Base58Type.PrivateKey:
-                        if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+                        if (!inputService.TryGetCompareService(compType, comp, out comparer))
                         {
-                            if (!string.IsNullOrEmpty(extra))
-                                report.AddMessage($"Could not instantiate ICompareService (invalid {extraType}).");
+                            if (!string.IsNullOrEmpty(comp))
+                                report.AddMessage($"Could not instantiate ICompareService (invalid {compType}).");
                             comparer = null;
                         }
                         // TODO: set compared to a default always-return-true one

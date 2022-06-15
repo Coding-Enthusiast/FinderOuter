@@ -99,13 +99,13 @@ namespace FinderOuter.Services
 
 
         public async void FindPath(string input, SeedType inputType, BIP0039.WordLists wl, string pass,
-                                   string extra, InputType extraType, uint count)
+                                   string comp, CompareInputType compType, uint count)
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
+            if (!inputService.TryGetCompareService(compType, comp, out comparer))
             {
-                report.Fail($"Invalid extra input or extra input type: {extraType}");
+                report.Fail($"Invalid extra input or extra input type: {compType}");
                 return;
             }
 

@@ -223,12 +223,12 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(B16SearchSpace ss, string AdditionalInput, InputType extraType)
+        public async void Find(B16SearchSpace ss, string comp, CompareInputType compType)
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(extraType, AdditionalInput, out comparer))
-                report.Fail($"Could not instantiate ICompareService (invalid {extraType}).");
+            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+                report.Fail($"Could not instantiate ICompareService (invalid {compType}).");
             else
             {
                 if (ss.MissCount == 0)
@@ -238,7 +238,7 @@ namespace FinderOuter.Services
                         try
                         {
                             using PrivateKey prv = new(Base16.Decode(ss.Input));
-                            bool check = new AddressService().Compare(AdditionalInput, extraType, prv, out string msg);
+                            bool check = new AddressService().Compare(comp, compType, prv, out string msg);
                             if (check)
                             {
                                 report.Pass(msg);

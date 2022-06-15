@@ -31,7 +31,7 @@
             CommandParameter="{Binding ExtraInputKb}"
             Grid.Column="0"
             Grid.Row="1"/>
-    <ComboBox Items="{Binding InputTypeList}" SelectedItem="{Binding SelectedInputType}"
+    <ComboBox Items="{Binding CompareInputTypeList}" SelectedItem="{Binding SelectedCompareInputType}"
               Grid.Column="1"
               Grid.Row="1">
       <ComboBox.ItemTemplate>

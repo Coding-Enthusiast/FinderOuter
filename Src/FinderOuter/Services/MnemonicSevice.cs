@@ -1417,7 +1417,7 @@ namespace FinderOuter.Services
         }
 
 
-        public async void FindMissing(MnemonicSearchSpace ss, string pass, string path, string comp, InputType compType)
+        public async void FindMissing(MnemonicSearchSpace ss, string pass, string path, string comp, CompareInputType compType)
         {
             report.Init();
 

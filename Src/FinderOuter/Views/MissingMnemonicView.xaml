@@ -28,8 +28,8 @@
               CommandParameter="{Binding ExtraInputKb}"
               Grid.Column="0"
               Grid.Row="2"/>
-      <ComboBox Items="{Binding InputTypeList}"
-                SelectedItem="{Binding SelectedInputType}"
+      <ComboBox Items="{Binding CompareInputTypeList}"
+                SelectedItem="{Binding SelectedCompareInputType}"
                 Classes="DescriptiveItem"
                 Grid.Column="1"/>
     </Grid>

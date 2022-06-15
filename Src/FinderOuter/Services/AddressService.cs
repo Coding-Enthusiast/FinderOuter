@@ -56,10 +56,10 @@ namespace FinderOuter.Services
         }
 
 
-        public bool Compare(string expectedAddr, InputType inType, PrivateKey prv, out string message)
+        public bool Compare(string expectedAddr, CompareInputType compType, PrivateKey prv, out string message)
         {
             PublicKey pub = prv.ToPublicKey();
-            if (inType == InputType.AddrNested)
+            if (compType == CompareInputType.AddrNested)
             {
                 if (expectedAddr == Address.GetP2sh_P2wpkh(pub))
                 {
@@ -100,7 +100,7 @@ namespace FinderOuter.Services
                     string comp = Address.GetP2pkh(pub);
                     string uncomp = Address.GetP2pkh(pub, false);
 
-                    if (inType == InputType.AddrComp)
+                    if (compType == CompareInputType.AddrComp)
                     {
                         if (expectedAddr == comp)
                         {
@@ -118,7 +118,7 @@ namespace FinderOuter.Services
                             return false;
                         }
                     }
-                    else if (inType == InputType.AddrUnComp)
+                    else if (compType == CompareInputType.AddrUnComp)
                     {
                         if (expectedAddr == uncomp)
                         {
@@ -136,7 +136,7 @@ namespace FinderOuter.Services
                             return false;
                         }
                     }
-                    else if (inType == InputType.AddrBoth && (expectedAddr == comp || expectedAddr == comp))
+                    else if (compType == CompareInputType.AddrBoth && (expectedAddr == comp || expectedAddr == comp))
                     {
                         message = "The given address is derived from the given private key.";
                     }

@@ -20,10 +20,10 @@ namespace FinderOuter.ViewModels
         {
             InputTypeList = ListHelper.GetEnumDescItems<Bip32PathService.SeedType>().ToArray();
             WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
-            ExtraInputTypeList = ListHelper.GetEnumDescItems<InputType>(InputType.PrivateKey).ToArray();
+            CompareInputTypeList = ListHelper.GetEnumDescItems<CompareInputType>(CompareInputType.PrivateKey).ToArray();
 
             SelectedInputType = InputTypeList.First();
-            SelectedExtraInputType = ExtraInputTypeList.First();
+            SelectedCompareInputType = CompareInputTypeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
@@ -58,7 +58,7 @@ namespace FinderOuter.ViewModels
 
         public IEnumerable<DescriptiveItem<Bip32PathService.SeedType>> InputTypeList { get; }
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
-        public IEnumerable<DescriptiveItem<InputType>> ExtraInputTypeList { get; }
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
 
         private DescriptiveItem<Bip32PathService.SeedType> _selInType;
@@ -68,11 +68,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selInType, value);
         }
 
-        private DescriptiveItem<InputType> _selExtraInType;
-        public DescriptiveItem<InputType> SelectedExtraInputType
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
         {
-            get => _selExtraInType;
-            set => this.RaiseAndSetIfChanged(ref _selExtraInType, value);
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private BIP0039.WordLists _selWordLst;
@@ -154,7 +154,7 @@ namespace FinderOuter.ViewModels
         public override void Find()
         {
             PathService.FindPath(Input, SelectedInputType.Value, SelectedWordListType, PassPhrase,
-                                 ExtraInput, SelectedExtraInputType.Value, Count);
+                                 ExtraInput, SelectedCompareInputType.Value, Count);
         }
 
         public void Example()
@@ -175,8 +175,8 @@ namespace FinderOuter.ViewModels
             ExtraInput = (string)ex[4];
 
             int temp3 = (int)ex[5];
-            Debug.Assert(temp3 < ExtraInputTypeList.Count());
-            SelectedExtraInputType = ExtraInputTypeList.ElementAt(temp3);
+            Debug.Assert(temp3 < CompareInputTypeList.Count());
+            SelectedCompareInputType = CompareInputTypeList.ElementAt(temp3);
 
             Count = (uint)ex[6];
 

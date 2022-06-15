@@ -648,7 +648,7 @@ namespace FinderOuter.Services
         }
 
         public async void Find(string mnemonic, MnemonicTypes mnType, BIP0039.WordLists wl,
-                               string extra, InputType extraType, string path, int passLength, byte[] allValues)
+                               string comp, CompareInputType compType, string path, int passLength, byte[] allValues)
         {
             report.Init();
 
@@ -660,8 +660,8 @@ namespace FinderOuter.Services
                 return;
             else if (!TrySetPath(path))
                 return;
-            else if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                report.Fail($"Invalid extra input or input type {extraType}.");
+            else if (!inputService.TryGetCompareService(compType, comp, out comparer))
+                report.Fail($"Invalid extra input or input type {compType}.");
             else if (!TrySetSalt(passLength, mnType, out byte[] salt))
                 return;
             else

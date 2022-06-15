@@ -34,8 +34,8 @@
              Watermark="Optional (preferably a public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="1"/>
-    <ComboBox Items="{Binding ExtraInputTypeList}"
-              SelectedItem="{Binding SelectedExtraInputType}"
+    <ComboBox Items="{Binding CompareInputTypeList}"
+              SelectedItem="{Binding SelectedCompareInputType}"
               Classes="DescriptiveItem"
               Grid.Column="1"
               Grid.Row="1"/>

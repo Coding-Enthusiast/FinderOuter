@@ -4,8 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
@@ -1627,7 +1627,7 @@ namespace FinderOuter.Services
         }
 
 
-        public async void Find(string bip38, string extra, InputType extraType, int passLength, byte[] allValues)
+        public async void Find(string bip38, string comp, CompareInputType compType, int passLength, byte[] allValues)
         {
             report.Init();
 
@@ -1639,8 +1639,8 @@ namespace FinderOuter.Services
                 report.Fail("Passwords bigger than 64 bytes are not supported yet.");
             if (!inputService.IsValidBase58Bip38(bip38, out string msg))
                 report.Fail(msg);
-            if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                report.Fail($"Invalid compare string or compare string type ({extraType}).");
+            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+                report.Fail($"Invalid compare string or compare string type ({compType}).");
             else if (!inputService.TryDecodeBip38(bip38, out byte[] data, out byte[] salt, out bool isComp, out bool isEc, out bool hasLot, out string error))
                 report.Fail(error);
             else

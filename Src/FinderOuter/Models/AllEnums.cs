@@ -16,17 +16,7 @@ namespace FinderOuter.Models
     }
 
 
-    public enum EncodingName
-    {
-        Base16,
-        Base43,
-        Base58,
-        Base58Check,
-        Base64,
-    }
-
-
-    public enum InputType
+    public enum CompareInputType
     {
         [Description("Address created using compressed public key")]
         AddrComp,
@@ -40,6 +30,16 @@ namespace FinderOuter.Models
         Pubkey,
         [Description("Private key in WIF (Base-58) format")]
         PrivateKey,
+    }
+
+
+    public enum EncodingName
+    {
+        Base16,
+        Base43,
+        Base58,
+        Base58Check,
+        Base64,
     }
 
 

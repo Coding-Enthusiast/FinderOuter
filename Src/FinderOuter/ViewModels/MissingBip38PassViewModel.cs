@@ -19,8 +19,8 @@ namespace FinderOuter.ViewModels
         public MissingBip38PassViewModel()
         {
             Bip38Service = new(Result);
-            InputTypeList = ListHelper.GetEnumDescItems(new InputType[] { InputType.PrivateKey }).ToArray();
-            SelectedInputType = InputTypeList.First();
+            CompareInputTypeList = ListHelper.GetEnumDescItems(new CompareInputType[] { CompareInputType.PrivateKey }).ToArray();
+            SelectedCompareInputType = CompareInputTypeList.First();
             PassRecoveryModeList = ListHelper.GetEnumDescItems<PassRecoveryMode>().ToArray();
             SelectedPassRecoveryMode = PassRecoveryModeList.First();
 
@@ -56,14 +56,14 @@ namespace FinderOuter.ViewModels
 
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();
-        public IEnumerable<DescriptiveItem<InputType>> InputTypeList { get; }
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
-        private DescriptiveItem<InputType> _inT;
-        public DescriptiveItem<InputType> SelectedInputType
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
         {
-            get => _inT;
-            set => this.RaiseAndSetIfChanged(ref _inT, value);
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private DescriptiveItem<PassRecoveryMode> _recMode;
@@ -199,7 +199,7 @@ namespace FinderOuter.ViewModels
 
             if (success)
             {
-                Bip38Service.Find(Bip38, CompareString, SelectedInputType.Value, PassLength, allValues); 
+                Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues); 
             }
             else
             {
@@ -216,8 +216,8 @@ namespace FinderOuter.ViewModels
             Bip38 = (string)ex[0];
 
             int temp = (int)ex[1];
-            Debug.Assert(temp < InputTypeList.Count());
-            SelectedInputType = InputTypeList.ElementAt(temp);
+            Debug.Assert(temp < CompareInputTypeList.Count());
+            SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);
 
             CompareString = (string)ex[2];
             PassLength = (int)ex[3];

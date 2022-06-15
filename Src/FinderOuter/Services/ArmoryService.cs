@@ -6,8 +6,8 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using FinderOuter.Backend;
-using FinderOuter.Backend.Hashing;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
@@ -559,14 +559,14 @@ namespace FinderOuter.Services
         }
 
 
-        public async void FindMissing(string phrase, char missChar, string extra, InputType extraType)
+        public async void FindMissing(string phrase, char missChar, string comp, CompareInputType compType)
         {
             report.Init();
 
             if (!inputService.IsMissingCharValid(missChar))
                 report.Fail("Missing character is not accepted.");
-            else if (!inputService.TryGetCompareService(extraType, extra, out comparer))
-                report.Fail($"Invalid extra input or input type {extraType}.");
+            else if (!inputService.TryGetCompareService(compType, comp, out comparer))
+                report.Fail($"Invalid extra input or input type {compType}.");
             else if (string.IsNullOrWhiteSpace(phrase))
                 report.Fail("Recovery phrase can not be null or empty.");
             else

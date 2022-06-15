@@ -18,16 +18,16 @@ namespace FinderOuter.Services
 {
     public class InputService
     {
-        public bool TryGetCompareService(InputType inType, string input, out ICompareService result)
+        public bool TryGetCompareService(CompareInputType inType, string input, out ICompareService result)
         {
             result = inType switch
             {
-                InputType.AddrComp => new PrvToAddrCompComparer(),
-                InputType.AddrUnComp => new PrvToAddrUncompComparer(),
-                InputType.AddrBoth => new PrvToAddrBothComparer(),
-                InputType.AddrNested => new PrvToAddrNestedComparer(),
-                InputType.Pubkey => new PrvToPubComparer(),
-                InputType.PrivateKey => new PrvToPrvComparer(),
+                CompareInputType.AddrComp => new PrvToAddrCompComparer(),
+                CompareInputType.AddrUnComp => new PrvToAddrUncompComparer(),
+                CompareInputType.AddrBoth => new PrvToAddrBothComparer(),
+                CompareInputType.AddrNested => new PrvToAddrNestedComparer(),
+                CompareInputType.Pubkey => new PrvToPubComparer(),
+                CompareInputType.PrivateKey => new PrvToPrvComparer(),
                 _ => null
             };
             return !(result is null) && result.Init(input);
