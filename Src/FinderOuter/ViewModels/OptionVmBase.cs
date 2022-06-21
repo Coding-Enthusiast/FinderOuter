@@ -50,6 +50,14 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selMisC, value);
         }
 
+        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; protected set; }
+
+        private DescriptiveItem<CompareInputType> _selCompType;
+        public DescriptiveItem<CompareInputType> SelectedCompareInputType
+        {
+            get => _selCompType;
+            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
+        }
 
         private string _exName = string.Empty;
         public string ExampleButtonName

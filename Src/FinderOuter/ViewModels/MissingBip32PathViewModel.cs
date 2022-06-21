@@ -58,21 +58,12 @@ namespace FinderOuter.ViewModels
 
         public IEnumerable<DescriptiveItem<Bip32PathService.SeedType>> InputTypeList { get; }
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
-
 
         private DescriptiveItem<Bip32PathService.SeedType> _selInType;
         public DescriptiveItem<Bip32PathService.SeedType> SelectedInputType
         {
             get => _selInType;
             set => this.RaiseAndSetIfChanged(ref _selInType, value);
-        }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private BIP0039.WordLists _selWordLst;

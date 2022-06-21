@@ -115,15 +115,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isElecTVisible, value);
         }
 
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
-        }
-
         private string _mnemonic;
         public string Mnemonic
         {

@@ -72,7 +72,6 @@ namespace FinderOuter.ViewModels
         private readonly MiniKeyService miniService;
         private readonly MiniKeySearchSpace searchSpace;
 
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
         private string _input;
         public string Input
@@ -86,13 +85,6 @@ namespace FinderOuter.ViewModels
                     isChanged = true;
                 }
             }
-        }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private string _input2;

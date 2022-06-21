@@ -66,7 +66,6 @@ namespace FinderOuter.ViewModels
         public IPasswordService PassService { get; set; } = new PasswordService();
         public IEnumerable<BIP0039.WordLists> WordListsList { get; }
         public IEnumerable<MnemonicTypes> MnemonicTypesList { get; }
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
         private MnemonicTypes _selMnT;
@@ -81,13 +80,6 @@ namespace FinderOuter.ViewModels
         {
             get => _selWordLst;
             set => this.RaiseAndSetIfChanged(ref _selWordLst, value);
-        }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private DescriptiveItem<PassRecoveryMode> _recMode;

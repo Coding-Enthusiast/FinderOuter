@@ -56,15 +56,7 @@ namespace FinderOuter.ViewModels
 
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
-        }
 
         private DescriptiveItem<PassRecoveryMode> _recMode;
         public DescriptiveItem<PassRecoveryMode> SelectedPassRecoveryMode
@@ -199,7 +191,7 @@ namespace FinderOuter.ViewModels
 
             if (success)
             {
-                Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues); 
+                Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues);
             }
             else
             {

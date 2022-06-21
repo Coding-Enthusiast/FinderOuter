@@ -65,7 +65,6 @@ namespace FinderOuter.ViewModels
         private readonly Base16Sevice b16Service;
         private readonly B16SearchSpace searchSpace;
 
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
         private string _input;
         public string Input
@@ -79,13 +78,6 @@ namespace FinderOuter.ViewModels
         {
             get => _input2;
             set => this.RaiseAndSetIfChanged(ref _input2, value);
-        }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
 

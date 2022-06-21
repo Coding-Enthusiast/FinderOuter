@@ -76,7 +76,6 @@ namespace FinderOuter.ViewModels
 
 
         public IEnumerable<Base58Type> InputTypeList { get; private set; }
-        public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; }
 
         private Base58Type _selInpT;
         public Base58Type SelectedInputType
@@ -104,13 +103,6 @@ namespace FinderOuter.ViewModels
                     isChanged = true;
                 }
             }
-        }
-
-        private DescriptiveItem<CompareInputType> _selCompType;
-        public DescriptiveItem<CompareInputType> SelectedCompareInputType
-        {
-            get => _selCompType;
-            set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
         private string _input2;
