@@ -87,6 +87,18 @@ namespace FinderOuter.Services.SearchSpaces
         }
 
 
+        public bool ProcessNoMissing(out string message)
+        {
+            if (MissCount != 0)
+            {
+                message = "This method should not be called with missing characters.";
+                return false;
+            }
+
+            return InputService.IsValidMinikey(Input, out message);
+        }
+
+
         public bool SetValues(string[][] result)
         {
             if (result.Length != MissCount || result.Any(x => x.Length < 2))

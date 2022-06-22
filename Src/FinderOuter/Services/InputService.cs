@@ -33,21 +33,23 @@ namespace FinderOuter.Services
             return !(result is null) && result.Init(input);
         }
 
-        public string CheckMiniKey(string key)
+        public bool IsValidMinikey(string key, out string message)
         {
             try
             {
                 using MiniPrivateKey mini = new(key);
-                return $"Compressed:{Environment.NewLine}" +
-                       $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
-                       $"   Address: {Address.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
-                       $"Uncompressed:{Environment.NewLine}" +
-                       $"         WIF: {mini.ToWif(false)}{Environment.NewLine}" +
-                       $"     Address: {Address.GetP2pkh(mini.ToPublicKey(), false)}";
+                message = $"Compressed:{Environment.NewLine}" +
+                          $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
+                          $"   Address: {Address.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
+                          $"Uncompressed:{Environment.NewLine}" +
+                          $"         WIF: {mini.ToWif(false)}{Environment.NewLine}" +
+                          $"     Address: {Address.GetP2pkh(mini.ToPublicKey(), false)}";
+                return true;
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                message = $"Invalid minikey. Error: {ex.Message}";
+                return false;
             }
         }
 

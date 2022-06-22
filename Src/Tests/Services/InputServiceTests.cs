@@ -20,12 +20,13 @@ namespace Tests.Services
 
 
         [Theory]
-        [InlineData("", "can not be null")]
-        [InlineData("SzavMBLoXU6kDrqtUVmffv", "Compressed:")]
-        public void CheckMiniKeyTest(string key, string expectedMsg)
+        [InlineData("", false, "can not be null")]
+        [InlineData("SzavMBLoXU6kDrqtUVmffv", true, "Compressed:")]
+        public void IsValidMinikeyTest(string key, bool expected, string expectedMsg)
         {
             InputService serv = new();
-            string actualMsg = serv.CheckMiniKey(key);
+            bool actual = serv.IsValidMinikey(key, out string actualMsg);
+            Assert.Equal(expected, actual);
             Assert.Contains(expectedMsg, actualMsg);
         }
 

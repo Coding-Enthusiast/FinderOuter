@@ -493,8 +493,8 @@ namespace FinderOuter.Services
                 if (ss.MissCount == 0)
                 {
                     report.AddMessageSafe("The given input has no missing characters, verifying it as a complete minikey.");
-                    report.AddMessageSafe(inputService.CheckMiniKey(ss.Input));
-                    report.FoundAnyResult = true;
+                    report.FoundAnyResult = ss.ProcessNoMissing(out string msg);
+                    report.AddMessageSafe(msg);
                     report.Finalize();
                     return;
                 }
