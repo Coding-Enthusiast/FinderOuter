@@ -26,6 +26,24 @@ namespace FinderOuter.Backend.ECC
             isNormalized = true;
         }
 
+        public UInt256_5x52(uint u0, uint u1, uint u2, uint u3, uint u4, uint u5, uint u6, uint u7)
+        {
+            // Each part stores 52 bits except last that is 48 bits
+            // 32 + 20(rem:32-20=12)
+            b0 = u0 | ((ulong)(u1 & 0b00000000_00001111_11111111_11111111U) << 32);
+            // 12 + 32 + 8(24)
+            b1 = (u1 >> 20) | ((ulong)u2 << 12) | ((ulong)(u3 & 0b00000000_00000000_00000000_11111111U) << 44);
+            // 24 + 28(4)
+            b2 = (u3 >> 8) | ((ulong)(u4 & 0b00001111_11111111_11111111_11111111U) << 24);
+            // 4 + 32 + 16(16)
+            b3 = (u4 >> 28) | ((ulong)u5 << 4) | ((u6 & 0b00000000_00000000_11111111_11111111U) << 36);
+            // 16 + 32
+            b4 = (u6 >> 16) | ((ulong)u7 << 16);
+
+            magnitude = 1;
+            isNormalized = true;
+        }
+
         public UInt256_5x52(ulong u0, ulong u1, ulong u2, ulong u3, ulong u4, int magnitude, bool normalized)
         {
             b0 = u0; b1 = u1; b2 = u2; b3 = u3; b4 = u4;
@@ -133,9 +151,6 @@ namespace FinderOuter.Backend.ECC
             ba[1] = (byte)(b4 >> 32); // 8(40-8=32)
             ba[0] = (byte)(b4 >> 40); // Take 8 bits (rem=48-8=40)
         }
-
-
-
 
 
         public UInt256_5x52 Normalize()
@@ -314,6 +329,7 @@ namespace FinderOuter.Backend.ECC
             return new(r0, r1, r2, r3, r4, m + 1, false);
         }
 
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CMov(ref UInt256_5x52 r, UInt256_5x52 a, int flag)
         {
@@ -328,6 +344,323 @@ namespace FinderOuter.Backend.ECC
                 (r.b4 & mask0) | (a.b4 & mask1),
                 a.magnitude > r.magnitude ? a.magnitude : r.magnitude,
                 r.isNormalized & a.isNormalized);
+        }
+
+
+        public UInt256_5x52 Sqr() => Sqr(1);
+
+        private UInt256_5x52 Sqr(int times)
+        {
+            Debug.Assert(magnitude <= 8);
+
+            const ulong M = 0xfffffffffffff, R = 0x1000003d10;
+            ulong t3, t4, tx;
+            ulong u0;
+            ulong r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0;
+            ulong c, d;
+            ulong a0 = b0, a1 = b1, a2 = b2, a3 = b3, a4 = b4;
+
+            for (int i = 0; i < times; i++)
+            {
+                d = (a0 * 2) * a3;
+                d += (a1 * 2) * a2;
+                c = a4 * a4;
+                d += (c & M) * R;
+                c >>= 52;
+                t3 = d & M;
+                d >>= 52;
+                a4 *= 2;
+                d += a0 * a4;
+                d += (a1 * 2) * a3;
+                d += a2 * a2;
+                d += c * R;
+                t4 = d & M;
+                d >>= 52;
+                tx = t4 >> 48;
+                t4 &= M >> 4;
+                c = a0 * a0;
+                d += a1 * a4;
+                d += (a2 * 2) * a3;
+                u0 = d & M;
+                d >>= 52;
+                u0 = (u0 << 4) | tx;
+                c += u0 * (R >> 4);
+                r0 = c & M;
+                c >>= 52;
+                a0 *= 2;
+                c += a0 * a1;
+                d += a2 * a4;
+                d += a3 * a3;
+                c += (d & M) * R;
+                d >>= 52;
+                r1 = c & M;
+                c >>= 52;
+                c += a0 * a2;
+                c += a1 * a1;
+                d += a3 * a4;
+                c += (d & M) * R;
+                d >>= 52;
+                r2 = c & M;
+                c >>= 52;
+                c += t3;
+                c += d * R;
+                r3 = c & M;
+                c >>= 52;
+                c += t4;
+                r4 = c;
+            }
+
+            return new(r0, r1, r2, r3, r4, 1, false);
+        }
+
+
+        public UInt256_5x52 InverseVariable()
+        {
+            return Inverse();
+        }
+
+        public UInt256_5x52 Inverse()
+        {
+            UInt256_5x52 x2, x3, x6, x9, x11, x22, x44, x88, x176, x220, x223, t1;
+            /* The binary representation of (p - 2) has 5 blocks of 1s, with lengths in
+			 *  { 1, 2, 22, 223 }. Use an addition chain to calculate 2^n - 1 for each block:
+			 *  [1], [2], 3, 6, 9, 11, [22], 44, 88, 176, 220, [223]
+			 */
+
+            x2 = Sqr();
+            x2 = x2 * this;
+
+            x3 = x2.Sqr();
+            x3 = x3 * this;
+
+            x6 = x3;
+            x6 = x6.Sqr(3);
+            x6 = x6 * x3;
+
+            x9 = x6;
+            x9 = x9.Sqr(3);
+            x9 = x9 * x3;
+
+            x11 = x9;
+            x11 = x11.Sqr(2);
+
+            x11 = x11 * x2;
+
+            x22 = x11;
+            x22 = x22.Sqr(11);
+            x22 = x22 * x11;
+
+            x44 = x22;
+            x44 = x44.Sqr(22);
+            x44 = x44 * x22;
+
+            x88 = x44;
+            x88 = x88.Sqr(44);
+            x88 = x88 * x44;
+
+            x176 = x88;
+            x176 = x176.Sqr(88);
+            x176 = x176 * x88;
+
+            x220 = x176;
+            x220 = x220.Sqr(44);
+            x220 = x220 * x44;
+
+            x223 = x220;
+            x223 = x223.Sqr(3);
+            x223 = x223 * x3;
+
+            /* The final result is then assembled using a sliding window over the blocks. */
+
+            t1 = x223;
+            t1 = t1.Sqr(23);
+            t1 = t1 * x22;
+
+            t1 = t1.Sqr(5);
+            t1 = t1 * this;
+            t1 = t1.Sqr(3);
+            t1 = t1 * x2;
+            t1 = t1.Sqr(2);
+            return this * t1;
+        }
+
+
+        public UInt256_5x52 Multiply(uint a)
+        {
+            UInt256_5x52 r = new(
+                b0 * a,
+                b1 * a,
+                b2 * a,
+                b3 * a,
+                b4 * a,
+                magnitude * (int)a, false);
+            return r;
+        }
+
+        public UInt256_5x52 Multiply(in UInt256_5x52 b)
+        {
+            UInt256_5x52 r = MulInner(b, 1, false);
+            return r;
+        }
+
+
+        private UInt256_5x52 MulInner(in UInt256_5x52 b, int magnitude, bool normalized)
+        {
+            const ulong M = 0xfffffffffffff, R = 0x1000003d10;
+
+            ulong t3, t4, tx;
+            ulong u0;
+            ulong r0, r1, r2, r3, r4;
+
+            /* d += a3 * b0 */
+            /* d += a2 * b1 */
+            /* d += a1 * b2 */
+            /* d = a0 * b3 */
+            ulong d = b3 * b.b0 +
+                      b2 * b.b1 +
+                      b1 * b.b2 +
+                      b0 * b.b3;
+            /* c = a4 * b4 */
+            ulong c = b4 * b.b4;
+            /* d += (c & M) * R */
+            d += (c & M) * R;
+            /* c >>= 52 (%%r8 only) */
+            c >>= 52;
+            /* t3 (tmp1) = d & M */
+            t3 = d & M;
+            /* d >>= 52 */
+            d >>= 52;
+
+            /* d += a4 * b0 */
+            /* d += a3 * b1 */
+            /* d += a2 * b2 */
+            /* d += a1 * b3 */
+            /* d += a0 * b4 */
+            d += b4 * b.b0 +
+                 b3 * b.b1 +
+                 b2 * b.b2 +
+                 b1 * b.b3 +
+                 b0 * b.b4;
+            /* d += c * R */
+            d += c * R;
+            /* t4 = d & M (%%rsi) */
+            t4 = d & M;
+            /* d >>= 52 */
+            d >>= 52;
+            /* tx = t4 >> 48 (tmp3) */
+            tx = t4 >> 48;
+            /* t4 &= (M >> 4) (tmp2) */
+            t4 &= (M >> 4);
+            /* c = a0 * b0 */
+            c = b0 * b.b0;
+
+            /* d += a4 * b1 */
+            /* d += a3 * b2 */
+            /* d += a2 * b3 */
+            /* d += a1 * b4 */
+            d += b4 * b.b1 +
+                 b3 * b.b2 +
+                 b2 * b.b3 +
+                 b1 * b.b4;
+            /* u0 = d & M (%%rsi) */
+            u0 = d & M;
+            /* d >>= 52 */
+            d >>= 52;
+            /* u0 = (u0 << 4) | tx (%%rsi) */
+            u0 = (u0 << 4) | tx;
+            /* c += u0 * (R >> 4) */
+            c += u0 * (R >> 4);
+            /* r[0] = c & M */
+            r0 = c & M;
+            /* c >>= 52 */
+            c >>= 52;
+            /* c += a1 * b0 */
+            c += b1 * b.b0;
+            /* c += a0 * b1 */
+            c += b0 * b.b1;
+
+            /* d += a4 * b2 */
+            /* d += a3 * b3 */
+            /* d += a2 * b4 */
+            d += b4 * b.b2 +
+                 b3 * b.b3 +
+                 b2 * b.b4;
+            /* c += (d & M) * R */
+            c += (d & M) * R;
+            /* d >>= 52 */
+            d >>= 52;
+            /* r[1] = c & M */
+            r1 = c & M;
+            /* c >>= 52 */
+            c >>= 52;
+            /* c += a2 * b0 */
+            c += b2 * b.b0;
+            /* c += a1 * b1 */
+            c += b1 * b.b1;
+            /* c += a0 * b2 (last use of %%r10 = a0) */
+            c += b0 * b.b2;
+
+            /* d += a4 * b3 */
+            d += b4 * b.b3;
+            /* d += a3 * b4 */
+            d += b3 * b.b4;
+            /* c += (d & M) * R */
+            c += (d & M) * R;
+            /* d >>= 52 (%%rcx only) */
+            d >>= 52;
+            /* r[2] = c & M */
+            r2 = c & M;
+            /* c >>= 52 */
+            c >>= 52;
+            /* c += t3 */
+            c += t3;
+            /* c += d * R */
+            c += d * R;
+            /* r[3] = c & M */
+            r3 = c & M;
+            /* c >>= 52 (%%r8 only) */
+            c >>= 52;
+            /* c += t4 (%%r8 only) */
+            c += t4;
+            /* r[4] = c */
+            r4 = c;
+
+            return new UInt256_5x52(r0, r1, r2, r3, r4, magnitude, normalized);
+        }
+
+
+
+
+
+
+
+
+
+
+
+        public readonly UInt256_5x52 Add(in UInt256_5x52 a)
+        {
+            UInt256_5x52 r = new(
+                b0 + a.b0,
+                b1 + a.b1,
+                b2 + a.b2,
+                b3 + a.b3,
+                b4 + a.b4,
+                magnitude + a.magnitude,
+                false);
+            return r;
+        }
+
+        public static UInt256_5x52 operator +(in UInt256_5x52 a, in UInt256_5x52 b) => a.Add(b);
+        public static UInt256_5x52 operator *(in UInt256_5x52 a, uint b) => a.Multiply(b);
+        public static UInt256_5x52 operator *(in UInt256_5x52 a, in UInt256_5x52 b) => a.Multiply(b);
+
+
+        public bool Equals(UInt256_5x52 b)
+        {
+            UInt256_5x52 na = Negate(1);
+            na += b;
+            return na.NormalizesToZero();
         }
     }
 }
