@@ -44,6 +44,20 @@ namespace FinderOuter.Backend.ECC
             isNormalized = true;
         }
 
+        public UInt256_5x52(ulong u0, ulong u1, ulong u2, ulong u3)
+        {
+            // Each part stores 52 bits except last that is 48 bits
+
+            b0 = u0 & 0xFFFFFFFFFFFFF;
+            b1 = u0 >> 52 | ((u1 << 12) & 0xFFFFFFFFFFFFFUL);
+            b2 = u1 >> 40 | ((u2 << 24) & 0xFFFFFFFFFFFFFUL);
+            b3 = u2 >> 28 | ((u3 << 36) & 0xFFFFFFFFFFFFFUL);
+            b4 = u3 >> 16;
+
+            magnitude = 1;
+            isNormalized = true;
+        }
+
         public UInt256_5x52(ulong u0, ulong u1, ulong u2, ulong u3, ulong u4, int magnitude, bool normalized)
         {
             b0 = u0; b1 = u1; b2 = u2; b3 = u3; b4 = u4;
@@ -152,6 +166,17 @@ namespace FinderOuter.Backend.ECC
             ba[0] = (byte)(b4 >> 40); // Take 8 bits (rem=48-8=40)
         }
 
+        public UInt256_4x64 ToUInt256_4x64()
+        {
+            Debug.Assert(isNormalized);
+
+            ulong u0 = b0 | b1 << 52;
+            ulong u1 = b1 >> 12 | b2 << 40;
+            ulong u2 = b2 >> 24 | b3 << 28;
+            ulong u3 = b3 >> 36 | b4 << 16;
+
+            return new UInt256_4x64(u0, u1, u2, u3);
+        }
 
         public UInt256_5x52 Normalize()
         {
@@ -629,13 +654,81 @@ namespace FinderOuter.Backend.ECC
         }
 
 
+        public bool Sqrt(out UInt256_5x52 result)
+        {
+            /* Given that p is congruent to 3 mod 4, we can compute the square root of
+			 *  a mod p as the (p+1)/4'th power of a.
+			 *
+			 *  As (p+1)/4 is an even number, it will have the same result for a and for
+			 *  (-a). Only one of these two numbers actually has a square root however,
+			 *  so we test at the end by squaring and comparing to the input.
+			 *  Also because (p+1)/4 is an even number, the computed square root is
+			 *  itself always a square (a ** ((p+1)/4) is the square of a ** ((p+1)/8)).
+			 */
+            UInt256_5x52 x2, x3, x6, x9, x11, x22, x44, x88, x176, x220, x223, t1;
 
+            /* The binary representation of (p + 1)/4 has 3 blocks of 1s, with lengths in
+			 *  { 2, 22, 223 }. Use an addition chain to calculate 2^n - 1 for each block:
+			 *  1, [2], 3, 6, 9, 11, [22], 44, 88, 176, 220, [223]
+			 */
 
+            x2 = Sqr();
+            x2 = x2 * this;
 
+            x3 = x2.Sqr();
+            x3 = x3 * this;
 
+            x6 = x3;
+            x6 = x6.Sqr(3);
+            x6 = x6 * x3;
 
+            x9 = x6;
+            x9 = x9.Sqr(3);
+            x9 = x9 * x3;
 
+            x11 = x9;
+            x11 = x11.Sqr(2);
+            x11 = x11 * x2;
 
+            x22 = x11;
+            x22 = x22.Sqr(11);
+            x22 = x22 * x11;
+
+            x44 = x22;
+            x44 = x44.Sqr(22);
+            x44 = x44 * x22;
+
+            x88 = x44;
+            x88 = x88.Sqr(44);
+            x88 = x88 * x44;
+
+            x176 = x88;
+            x176 = x176.Sqr(88);
+            x176 = x176 * x88;
+
+            x220 = x176;
+            x220 = x220.Sqr(44);
+            x220 = x220 * x44;
+
+            x223 = x220;
+            x223 = x223.Sqr(3);
+            x223 = x223 * x3;
+
+            /* The final result is then assembled using a sliding window over the blocks. */
+
+            t1 = x223;
+            t1 = t1.Sqr(23);
+            t1 = t1 * x22;
+            t1 = t1.Sqr(6);
+            t1 = t1 * x2;
+            t1 = t1.Sqr();
+            result = t1.Sqr();
+
+            /* Check that a square root was actually calculated */
+
+            t1 = result.Sqr();
+            return t1.Equals(this);
+        }
 
 
         public readonly UInt256_5x52 Add(in UInt256_5x52 a)
