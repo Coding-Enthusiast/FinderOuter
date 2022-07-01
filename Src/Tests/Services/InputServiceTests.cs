@@ -3,7 +3,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.Comparers;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -18,6 +21,39 @@ namespace Tests.Services
         private const string ValidP2pkhAddr = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
         private const string ValidP2shAddr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
 
+        private const string ValidPubHexComp = "030b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17";
+        private const string ValidPubHexUncomp = "040b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17b95aedf5242b50b5c82147697351941032602332d5cc81531eec98a9b8f9c7cd";
+
+
+        [Theory]
+        [InlineData(CompareInputType.AddrComp, ValidP2pkhAddr, true, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrComp, "", false, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrComp, ValidP2shAddr, false, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, ValidP2pkhAddr, true, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, "", false, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, ValidP2shAddr, false, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrBoth, ValidP2pkhAddr, true, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrBoth, ValidP2shAddr, false, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrBoth, "", false, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrNested, ValidP2shAddr, true, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.AddrNested, ValidP2pkhAddr, false, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.AddrNested, "", false, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidCompKey, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey1, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey2, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, "", false, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidP2pkhAddr, false, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidPubHexComp, true, typeof(PrvToPubComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidPubHexUncomp, true, typeof(PrvToPubComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidP2pkhAddr, false, typeof(PrvToPubComparer))]
+        public void TryGetCompareServiceTest(CompareInputType t, string input, bool expB, Type expType)
+        {
+            InputService serv = new();
+            bool actualB = serv.TryGetCompareService(t, input, out ICompareService actual);
+
+            Assert.Equal(expB, actualB);
+            Assert.IsType(expType, actual);
+        }
 
         [Theory]
         [InlineData("", false, "can not be null")]
