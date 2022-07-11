@@ -117,7 +117,8 @@ namespace FinderOuter.Backend.ECC
 
 
         public static UInt128 operator &(UInt128 left, UInt128 right) => new(left.b0 & right.b0, left.b1 & right.b1);
-        public static UInt128 operator &(UInt128 left, ulong right) => new(left.b0 & right, left.b1);
+        public static UInt128 operator &(UInt128 left, ulong right) => new(left.b0 & right, 0);
+        public static UInt128 operator &(ulong right, UInt128 left) => new(left.b0 & right, 0);
         public static UInt128 operator |(UInt128 left, UInt128 right) => new(left.b0 | right.b0, left.b1 | right.b1);
         public static UInt128 operator ^(UInt128 left, UInt128 right) => new(left.b0 ^ right.b0, left.b1 ^ right.b1);
 
