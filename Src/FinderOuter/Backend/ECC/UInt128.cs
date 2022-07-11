@@ -46,18 +46,19 @@ namespace FinderOuter.Backend.ECC
             ulong u1 = left.b1 + ((u0 < left.b0) ? 1U : 0U);
             return new UInt128(u0, u1);
         }
+        public static UInt128 operator +(ulong right, UInt128 left) => left + right;
 
 
         public static UInt128 operator *(UInt128 left, UInt128 right)
         {
-            uint x0 = (uint)left.b0;
-            uint x1 = (uint)(left.b0 >> 32);
-            uint x2 = (uint)left.b1;
-            uint x3 = (uint)(left.b1 >> 32);
-            uint y0 = (uint)right.b0;
-            uint y1 = (uint)(right.b0 >> 32);
-            uint y2 = (uint)right.b1;
-            uint y3 = (uint)(right.b1 >> 32);
+            ulong x0 = (uint)left.b0;
+            ulong x1 = (uint)(left.b0 >> 32);
+            ulong x2 = (uint)left.b1;
+            ulong x3 = (uint)(left.b1 >> 32);
+            ulong y0 = (uint)right.b0;
+            ulong y1 = (uint)(right.b0 >> 32);
+            ulong y2 = (uint)right.b1;
+            ulong y3 = (uint)(right.b1 >> 32);
 
             ulong uv = x0 * y0;
             uint w0 = (uint)uv; ulong c = uv >> 32;
@@ -87,12 +88,12 @@ namespace FinderOuter.Backend.ECC
         }
         public static UInt128 operator *(UInt128 left, ulong right)
         {
-            uint x0 = (uint)left.b0;
-            uint x1 = (uint)(left.b0 >> 32);
-            uint x2 = (uint)left.b1;
-            uint x3 = (uint)(left.b1 >> 32);
-            uint y0 = (uint)right;
-            uint y1 = (uint)(right >> 32);
+            ulong x0 = (uint)left.b0;
+            ulong x1 = (uint)(left.b0 >> 32);
+            ulong x2 = (uint)left.b1;
+            ulong x3 = (uint)(left.b1 >> 32);
+            ulong y0 = (uint)right;
+            ulong y1 = (uint)(right >> 32);
 
             ulong uv = x0 * y0;
             uint w0 = (uint)uv; ulong c = uv >> 32;
@@ -112,6 +113,8 @@ namespace FinderOuter.Backend.ECC
 
             return new UInt128(w0, w1, w2, w3);
         }
+        public static UInt128 operator *(ulong right, UInt128 left) => left * right;
+
 
         public static UInt128 operator &(UInt128 left, UInt128 right) => new(left.b0 & right.b0, left.b1 & right.b1);
         public static UInt128 operator &(UInt128 left, ulong right) => new(left.b0 & right, left.b1);
