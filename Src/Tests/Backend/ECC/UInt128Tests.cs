@@ -161,6 +161,29 @@ namespace Tests.Backend.ECC
         }
 
         [Theory]
+        [InlineData(0, 0, 0, 0, 0)]
+        [InlineData(0, 0, 1, 0, 0)]
+        [InlineData(0, 0, 63, 0, 0)]
+        [InlineData(0, 0, 64, 0, 0)]
+        [InlineData(0, 0, 65, 0, 0)]
+        [InlineData(0, 0, 128, 0, 0)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 1, 0x2211fa4f88adbcd3, 0x62fed6db2214b8f1)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 16, 0x71e24423f49f115b, 0x0000c5fdadb64429)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 63, 0x8bfb5b6c8852e3c4, 0x0000000000000001)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 64, 0xc5fdadb6442971e2, 0x0000000000000000)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 65, 0x62fed6db2214b8f1, 0x0000000000000000)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 80, 0x0000c5fdadb64429, 0x0000000000000000)]
+        [InlineData(0x4423f49f115b79a6, 0xc5fdadb6442971e2, 127, 0x0000000000000001, 0x0000000000000000)]
+        public void ShiftRightTest(ulong u0, ulong u1, int shift, ulong exp0, ulong exp1)
+        {
+            UInt128 a = new(u0, u1);
+            UInt128 actual = a >> shift;
+
+            Assert.Equal(exp0, actual.b0);
+            Assert.Equal(exp1, actual.b1);
+        }
+
+        [Theory]
         [InlineData(0, 0, 0, 0)]
         [InlineData(0xffffffffffffffff, 0xffffffffffffffff, 0, 0)]
         [InlineData(0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff)]
