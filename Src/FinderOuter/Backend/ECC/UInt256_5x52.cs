@@ -711,8 +711,8 @@ namespace FinderOuter.Backend.ECC
                + (UInt128)b2 * b.b0;
             Debug.Assert((c >> 114).IsZero);
             /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 p2 p1 p0] */
-            d += (UInt128)b3 * b4
-               + (UInt128)b4 * b3;
+            d += (UInt128)b3 * b.b4
+               + (UInt128)b4 * b.b3;
             Debug.Assert((d >> 114).IsZero);
             /* [d 0 0 t4 t3 c t1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
             c += (UInt128)R * (ulong)d; d >>= 64;
