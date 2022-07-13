@@ -374,65 +374,139 @@ namespace FinderOuter.Backend.ECC
 
         public UInt256_5x52 Sqr() => Sqr(1);
 
-        private UInt256_5x52 Sqr(int times)
+        public UInt256_5x52 Sqr(int times)
         {
             Debug.Assert(magnitude <= 8);
 
-            const ulong M = 0xfffffffffffff, R = 0x1000003d10;
-            ulong t3, t4, tx;
-            ulong u0;
-            ulong r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0;
-            ulong c, d;
+            const ulong M = 0xFFFFFFFFFFFFFUL, R = 0x1000003D10UL;
+            ulong t3, t4, tx, u0;
+            UInt128 c, d;
             ulong a0 = b0, a1 = b1, a2 = b2, a3 = b3, a4 = b4;
+            ulong r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0;
+
 
             for (int i = 0; i < times; i++)
             {
-                d = (a0 * 2) * a3;
-                d += (a1 * 2) * a2;
-                c = a4 * a4;
-                d += (c & M) * R;
-                c >>= 52;
-                t3 = d & M;
-                d >>= 52;
+                Debug.Assert(a0 >> 56 == 0);
+                Debug.Assert(a1 >> 56 == 0);
+                Debug.Assert(a2 >> 56 == 0);
+                Debug.Assert(a3 >> 56 == 0);
+                Debug.Assert(a4 >> 52 == 0);
+
+                /**  [... a b c] is a shorthand for ... + a<<104 + b<<52 + c<<0 mod n.
+                 *  px is a shorthand for sum(a[i]*a[x-i], i=0..x).
+                 *  Note that [x 0 0 0 0 0] = [x*R].
+                 */
+
+                d = (UInt128)(a0 * 2) * a3
+                   + (UInt128)(a1 * 2) * a2;
+                Debug.Assert((d >> 114).IsZero);
+                /* [d 0 0 0] = [p3 0 0 0] */
+                c = (UInt128)a4 * a4;
+                Debug.Assert((c >> 112).IsZero);
+                /* [c 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
+                d += (UInt128)R * (ulong)c; c >>= 64;
+                Debug.Assert((d >> 115).IsZero);
+                Debug.Assert((c >> 48).IsZero);
+                /* [(c<<12) 0 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
+                t3 = d.b0 & M; d >>= 52;
+                Debug.Assert(t3 >> 52 == 0);
+                Debug.Assert((d >> 63).IsZero);
+                /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
+
                 a4 *= 2;
-                d += a0 * a4;
-                d += (a1 * 2) * a3;
-                d += a2 * a2;
-                d += c * R;
-                t4 = d & M;
-                d >>= 52;
-                tx = t4 >> 48;
-                t4 &= M >> 4;
-                c = a0 * a0;
-                d += a1 * a4;
-                d += (a2 * 2) * a3;
-                u0 = d & M;
-                d >>= 52;
+                d += (UInt128)a0 * a4
+                   + (UInt128)(a1 * 2) * a3
+                   + (UInt128)a2 * a2;
+                Debug.Assert((d >> 115).IsZero);
+                /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+                d += (UInt128)(R << 12) * (ulong)c;
+                Debug.Assert((d >> 116).IsZero);
+                /* [d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+                t4 = d.b0 & M; d >>= 52;
+                Debug.Assert(t4 >> 52 == 0);
+                Debug.Assert((d >> 64).IsZero);
+                /* [d t4 t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+                tx = (t4 >> 48); t4 &= (M >> 4);
+                Debug.Assert(tx >> 4 == 0);
+                Debug.Assert(t4 >> 48 == 0);
+                /* [d t4+(tx<<48) t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+
+                c = (UInt128)a0 * a0;
+                Debug.Assert((c >> 112).IsZero);
+                /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 0 p4 p3 0 0 p0] */
+                d += (UInt128)a1 * a4
+                   + (UInt128)(a2 * 2) * a3;
+                Debug.Assert((d >> 114).IsZero);
+                /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+                u0 = d.b0 & M; d >>= 52;
+                Debug.Assert(u0 >> 52 == 0);
+                Debug.Assert((d >> 62).IsZero);
+                /* [d u0 t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+                /* [d 0 t4+(tx<<48)+(u0<<52) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
                 u0 = (u0 << 4) | tx;
-                c += u0 * (R >> 4);
-                r0 = c & M;
-                c >>= 52;
+                Debug.Assert(u0 >> 56 == 0);
+                /* [d 0 t4+(u0<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+                c += (UInt128)u0 * (R >> 4);
+                Debug.Assert((c >> 113).IsZero);
+                /* [d 0 t4 t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+                r0 = c.b0 & M; c >>= 52;
+                Debug.Assert(r0 >> 52 == 0);
+                Debug.Assert((c >> 61).IsZero);
+                /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 0 p0] */
+
                 a0 *= 2;
-                c += a0 * a1;
-                d += a2 * a4;
-                d += a3 * a3;
-                c += (d & M) * R;
-                d >>= 52;
-                r1 = c & M;
-                c >>= 52;
-                c += a0 * a2;
-                c += a1 * a1;
-                d += a3 * a4;
-                c += (d & M) * R;
-                d >>= 52;
-                r2 = c & M;
-                c >>= 52;
-                c += t3;
-                c += d * R;
-                r3 = c & M;
-                c >>= 52;
+                c += (UInt128)a0 * a1;
+                Debug.Assert((c >> 114).IsZero);
+                /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 p1 p0] */
+                d += (UInt128)a2 * a4
+                   + (UInt128)a3 * a3;
+                Debug.Assert((d >> 114).IsZero);
+                /* [d 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
+                c += (d & M) * R; d >>= 52;
+                Debug.Assert((c >> 115).IsZero);
+                Debug.Assert((d >> 62).IsZero);
+                /* [d 0 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
+                r1 = c.b0 & M; c >>= 52;
+                Debug.Assert(r1 >> 52 == 0);
+                Debug.Assert((c >> 63).IsZero);
+                /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
+
+                c += (UInt128)a0 * a2
+                   + (UInt128)a1 * a1;
+                Debug.Assert((c >> 114).IsZero);
+                /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 p2 p1 p0] */
+                d += (UInt128)a3 * a4;
+                Debug.Assert((d >> 114).IsZero);
+                /* [d 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+                c += (UInt128)R * (ulong)d; d >>= 64;
+                Debug.Assert((c >> 115).IsZero);
+                Debug.Assert((d >> 50).IsZero);
+                /* [(d<<12) 0 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+                r2 = c.b0 & M; c >>= 52;
+                Debug.Assert(r2 >> 52 == 0);
+                Debug.Assert((c >> 63).IsZero);
+                /* [(d<<12) 0 0 0 t4 t3+c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+
+                c += (UInt128)(R << 12) * (ulong)d + t3;
+                Debug.Assert((c >> 100).IsZero);
+                /* [t4 c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+                r3 = c.b0 & M; c >>= 52;
+                Debug.Assert(r3 >> 52 == 0);
+                Debug.Assert((c >> 48).IsZero);
+                /* [t4+c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
                 c += t4;
-                r4 = c;
+                Debug.Assert((c >> 49).IsZero);
+                /* [c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+                r4 = c.b0;
+                Debug.Assert(r4 >> 49 == 0);
+                /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+
+                a0 = r0;
+                a1 = r1;
+                a2 = r2;
+                a3 = r3;
+                a4 = r4;
             }
 
             return new(r0, r1, r2, r3, r4, 1, false);
@@ -531,126 +605,140 @@ namespace FinderOuter.Backend.ECC
 
         private UInt256_5x52 MulInner(in UInt256_5x52 b, int magnitude, bool normalized)
         {
-            const ulong M = 0xfffffffffffff, R = 0x1000003d10;
+            UInt128 c, d;
+            ulong t3, t4, tx, u0;
+            const ulong M = 0xFFFFFFFFFFFFFUL, R = 0x1000003D10UL;
 
-            ulong t3, t4, tx;
-            ulong u0;
-            ulong r0, r1, r2, r3, r4;
+            Debug.Assert(b0 >> 56 == 0);
+            Debug.Assert(b1 >> 56 == 0);
+            Debug.Assert(b2 >> 56 == 0);
+            Debug.Assert(b3 >> 56 == 0);
+            Debug.Assert(b4 >> 52 == 0);
+            Debug.Assert(b.b0 >> 56 == 0);
+            Debug.Assert(b.b1 >> 56 == 0);
+            Debug.Assert(b.b2 >> 56 == 0);
+            Debug.Assert(b.b3 >> 56 == 0);
+            Debug.Assert(b.b4 >> 52 == 0);
 
-            /* d += a3 * b0 */
-            /* d += a2 * b1 */
-            /* d += a1 * b2 */
-            /* d = a0 * b3 */
-            ulong d = b3 * b.b0 +
-                      b2 * b.b1 +
-                      b1 * b.b2 +
-                      b0 * b.b3;
-            /* c = a4 * b4 */
-            ulong c = b4 * b.b4;
-            /* d += (c & M) * R */
-            d += (c & M) * R;
-            /* c >>= 52 (%%r8 only) */
-            c >>= 52;
-            /* t3 (tmp1) = d & M */
-            t3 = d & M;
-            /* d >>= 52 */
-            d >>= 52;
+            /*  [... a b c] is a shorthand for ... + a<<104 + b<<52 + c<<0 mod n.
+             *  for 0 <= x <= 4, px is a shorthand for sum(a[i]*b[x-i], i=0..x).
+             *  for 4 <= x <= 8, px is a shorthand for sum(a[i]*b[x-i], i=(x-4)..4)
+             *  Note that [x 0 0 0 0 0] = [x*R].
+             */
 
-            /* d += a4 * b0 */
-            /* d += a3 * b1 */
-            /* d += a2 * b2 */
-            /* d += a1 * b3 */
-            /* d += a0 * b4 */
-            d += b4 * b.b0 +
-                 b3 * b.b1 +
-                 b2 * b.b2 +
-                 b1 * b.b3 +
-                 b0 * b.b4;
-            /* d += c * R */
-            d += c * R;
-            /* t4 = d & M (%%rsi) */
-            t4 = d & M;
-            /* d >>= 52 */
-            d >>= 52;
-            /* tx = t4 >> 48 (tmp3) */
-            tx = t4 >> 48;
-            /* t4 &= (M >> 4) (tmp2) */
-            t4 &= (M >> 4);
-            /* c = a0 * b0 */
-            c = b0 * b.b0;
+            d = (UInt128)b0 * b.b3
+               + (UInt128)b1 * b.b2
+               + (UInt128)b2 * b.b1
+               + (UInt128)b3 * b.b0;
+            Debug.Assert((d >> 114).IsZero);
+            /* [d 0 0 0] = [p3 0 0 0] */
+            c = (UInt128)b4 * b.b4;
+            Debug.Assert((c >> 112).IsZero);
+            /* [c 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
+            d += (UInt128)R * (ulong)c; c >>= 64;
+            Debug.Assert((d >> 115).IsZero);
+            Debug.Assert((c >> 48).IsZero);
+            /* [(c<<12) 0 0 0 0 0 d 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
+            t3 = d.b0 & M; d >>= 52;
+            Debug.Assert(t3 >> 52 == 0);
+            Debug.Assert((d >> 63).IsZero);
+            /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 0 p3 0 0 0] */
 
-            /* d += a4 * b1 */
-            /* d += a3 * b2 */
-            /* d += a2 * b3 */
-            /* d += a1 * b4 */
-            d += b4 * b.b1 +
-                 b3 * b.b2 +
-                 b2 * b.b3 +
-                 b1 * b.b4;
-            /* u0 = d & M (%%rsi) */
-            u0 = d & M;
-            /* d >>= 52 */
-            d >>= 52;
-            /* u0 = (u0 << 4) | tx (%%rsi) */
+            d += (UInt128)b0 * b.b4
+               + (UInt128)b1 * b.b3
+               + (UInt128)b2 * b.b2
+               + (UInt128)b3 * b.b1
+               + (UInt128)b4 * b.b0;
+            Debug.Assert((d >> 115).IsZero);
+            /* [(c<<12) 0 0 0 0 d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+            d += (UInt128)(R << 12) * (ulong)c;
+            Debug.Assert((d >> 116).IsZero);
+            /* [d t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+            t4 = d.b0 & M; d >>= 52;
+            Debug.Assert(t4 >> 52 == 0);
+            Debug.Assert((d >> 64).IsZero);
+            /* [d t4 t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+            tx = (t4 >> 48); t4 &= (M >> 4);
+            Debug.Assert(tx >> 4 == 0);
+            Debug.Assert(t4 >> 48 == 0);
+            /* [d t4+(tx<<48) t3 0 0 0] = [p8 0 0 0 p4 p3 0 0 0] */
+
+            c = (UInt128)b0 * b.b0;
+            Debug.Assert((c >> 112).IsZero);
+            /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 0 p4 p3 0 0 p0] */
+            d += (UInt128)b1 * b.b4
+               + (UInt128)b2 * b.b3
+               + (UInt128)b3 * b.b2
+               + (UInt128)b4 * b.b1;
+            Debug.Assert((d >> 115).IsZero);
+            /* [d t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+            u0 = d.b0 & M; d >>= 52;
+            Debug.Assert(u0 >> 52 == 0);
+            Debug.Assert((d >> 63).IsZero);
+            /* [d u0 t4+(tx<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+            /* [d 0 t4+(tx<<48)+(u0<<52) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
             u0 = (u0 << 4) | tx;
-            /* c += u0 * (R >> 4) */
-            c += u0 * (R >> 4);
-            /* r[0] = c & M */
-            r0 = c & M;
-            /* c >>= 52 */
-            c >>= 52;
-            /* c += a1 * b0 */
-            c += b1 * b.b0;
-            /* c += a0 * b1 */
-            c += b0 * b.b1;
+            Debug.Assert(u0 >> 56 == 0);
+            /* [d 0 t4+(u0<<48) t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+            c += (UInt128)u0 * (R >> 4);
+            Debug.Assert((c >> 115).IsZero);
+            /* [d 0 t4 t3 0 0 c] = [p8 0 0 p5 p4 p3 0 0 p0] */
+            ulong r0 = c.b0 & M; c >>= 52;
+            Debug.Assert(r0 >> 52 == 0);
+            Debug.Assert((c >> 61).IsZero);
+            /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 0 p0] */
 
-            /* d += a4 * b2 */
-            /* d += a3 * b3 */
-            /* d += a2 * b4 */
-            d += b4 * b.b2 +
-                 b3 * b.b3 +
-                 b2 * b.b4;
-            /* c += (d & M) * R */
-            c += (d & M) * R;
-            /* d >>= 52 */
-            d >>= 52;
-            /* r[1] = c & M */
-            r1 = c & M;
-            /* c >>= 52 */
-            c >>= 52;
-            /* c += a2 * b0 */
-            c += b2 * b.b0;
-            /* c += a1 * b1 */
-            c += b1 * b.b1;
-            /* c += a0 * b2 (last use of %%r10 = a0) */
-            c += b0 * b.b2;
+            c += (UInt128)b0 * b.b1
+               + (UInt128)b1 * b.b0;
+            Debug.Assert((c >> 114).IsZero);
+            /* [d 0 t4 t3 0 c r0] = [p8 0 0 p5 p4 p3 0 p1 p0] */
+            d += (UInt128)b2 * b.b4
+               + (UInt128)b3 * b.b3
+               + (UInt128)b4 * b.b2;
+            Debug.Assert((d >> 114).IsZero);
+            /* [d 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
+            c += (d & M) * R; d >>= 52;
+            Debug.Assert((c >> 115).IsZero);
+            Debug.Assert((d >> 62).IsZero);
+            /* [d 0 0 t4 t3 0 c r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
+            ulong r1 = c.b0 & M; c >>= 52;
+            Debug.Assert(r1 >> 52 == 0);
+            Debug.Assert((c >> 63).IsZero);
+            /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 0 p1 p0] */
 
-            /* d += a4 * b3 */
-            d += b4 * b.b3;
-            /* d += a3 * b4 */
-            d += b3 * b.b4;
-            /* c += (d & M) * R */
-            c += (d & M) * R;
-            /* d >>= 52 (%%rcx only) */
-            d >>= 52;
-            /* r[2] = c & M */
-            r2 = c & M;
-            /* c >>= 52 */
-            c >>= 52;
-            /* c += t3 */
-            c += t3;
-            /* c += d * R */
-            c += d * R;
-            /* r[3] = c & M */
-            r3 = c & M;
-            /* c >>= 52 (%%r8 only) */
-            c >>= 52;
-            /* c += t4 (%%r8 only) */
+            c += (UInt128)b0 * b.b2
+               + (UInt128)b1 * b.b1
+               + (UInt128)b2 * b.b0;
+            Debug.Assert((c >> 114).IsZero);
+            /* [d 0 0 t4 t3 c r1 r0] = [p8 0 p6 p5 p4 p3 p2 p1 p0] */
+            d += (UInt128)b3 * b4
+               + (UInt128)b4 * b3;
+            Debug.Assert((d >> 114).IsZero);
+            /* [d 0 0 t4 t3 c t1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+            c += (UInt128)R * (ulong)d; d >>= 64;
+            Debug.Assert((c >> 115).IsZero);
+            Debug.Assert((d >> 50).IsZero);
+            /* [(d<<12) 0 0 0 t4 t3 c r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+
+            ulong r2 = c.b0 & M; c >>= 52;
+            Debug.Assert(r2 >> 52 == 0);
+            Debug.Assert((c >> 63).IsZero);
+            /* [(d<<12) 0 0 0 t4 t3+c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+            c += (UInt128)(R << 12) * (ulong)d + t3;
+            Debug.Assert((c >> 100).IsZero);
+            /* [t4 c r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+            ulong r3 = c.b0 & M; c >>= 52;
+            Debug.Assert(r3 >> 52 == 0);
+            Debug.Assert((c >> 48).IsZero);
+            /* [t4+c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
             c += t4;
-            /* r[4] = c */
-            r4 = c;
+            Debug.Assert((c >> 49).IsZero);
+            /* [c r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
+            ulong r4 = c.b0;
+            Debug.Assert(r4 >> 49 == 0);
+            /* [r4 r3 r2 r1 r0] = [p8 p7 p6 p5 p4 p3 p2 p1 p0] */
 
-            return new UInt256_5x52(r0, r1, r2, r3, r4, magnitude, normalized);
+            return new(r0, r1, r2, r3, r4, magnitude, normalized);
         }
 
 
