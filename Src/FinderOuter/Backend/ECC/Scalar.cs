@@ -204,7 +204,7 @@ namespace FinderOuter.Backend.ECC
             Debug.Assert(offset >= 0);
             Debug.Assert(count >= 0);
             Debug.Assert((offset + count - 1) >> 5 == offset >> 5);
-            return (uint)((GetChunk(offset >> 5) >> (offset & 0x1F)) & ((1 << count) - 1));
+            return (GetChunk(offset >> 5) >> (offset & 0x1F)) & ((1U << count) - 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
