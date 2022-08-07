@@ -55,6 +55,16 @@ namespace Tests.Services
             Assert.IsType(expType, actual);
         }
 
+        [Fact]
+        public void TryGetCompareService_NullTest()
+        {
+            InputService serv = new();
+            bool actualB = serv.TryGetCompareService((CompareInputType)1000, "", out ICompareService actual);
+
+            Assert.False(actualB);
+            Assert.Null(actual);
+        }
+
         [Theory]
         [InlineData("", false, "can not be null")]
         [InlineData("SzavMBLoXU6kDrqtUVmffv", true, "Compressed:")]
