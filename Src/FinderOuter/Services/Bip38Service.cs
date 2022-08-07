@@ -4,7 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using FinderOuter.Backend.ECC;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -315,8 +316,8 @@ namespace FinderOuter.Services
                         decryptedResult[i + 3] ^= (byte)final[j];
                     }
 
-                    Scalar key = new(decryptedResult, out int overflow);
-                    if (overflow == 0 && localComparer.Compare(comparer.Calc.MultiplyByG(key)))
+                    Scalar8x32 key = new(decryptedResult, out bool overflow);
+                    if (!overflow && localComparer.Compare(comparer.Calc.MultiplyByG(key)))
                     {
                         loopState.Stop();
                         report.FoundAnyResult = true;
@@ -605,8 +606,8 @@ namespace FinderOuter.Services
 
                     // pt is now passFactor
                     // pt is now passFactor
-                    Scalar passFactor = new(pt, out int overflow);
-                    if (overflow != 0)
+                    Scalar8x32 passFactor = new(pt, out bool overflow);
+                    if (overflow)
                     {
                         continue;
                     }
@@ -849,7 +850,7 @@ namespace FinderOuter.Services
                     Sha256Fo.CompressDouble24(pt);
 
                     // pt is factorb
-                    Scalar key = new Scalar(pt, out _).Multiply(passFactor);
+                    Scalar8x32 key = new Scalar8x32(pt, out _).Multiply(passFactor);
 
                     if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
                     {
@@ -1124,8 +1125,8 @@ namespace FinderOuter.Services
                     Sha256Fo.Compress96SecondBlock(pt);
 
                     // pt is now passFactor
-                    Scalar passFactor = new(pt, out int overflow);
-                    if (overflow != 0)
+                    Scalar8x32 passFactor = new(pt, out bool overflow);
+                    if (overflow)
                     {
                         continue;
                     }
@@ -1368,7 +1369,7 @@ namespace FinderOuter.Services
                     Sha256Fo.CompressDouble24(pt);
 
                     // pt is factorb
-                    Scalar key = new Scalar(pt, out _).Multiply(passFactor);
+                    Scalar8x32 key = new Scalar8x32(pt, out _).Multiply(passFactor);
 
                     if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
                     {

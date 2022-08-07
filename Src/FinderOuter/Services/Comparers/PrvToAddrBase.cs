@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.ECC;
 
 namespace FinderOuter.Services.Comparers
@@ -28,8 +29,8 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key)
         {
-            Scalar k = new(key, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 k = new(key, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -37,6 +38,6 @@ namespace FinderOuter.Services.Comparers
             return Compare(pt);
         }
 
-        public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
+        public bool Compare(Scalar8x32 key) => Compare(Calc.MultiplyByG(key));
     }
 }

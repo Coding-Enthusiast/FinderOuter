@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend.ECC;
 using System;
@@ -35,8 +36,8 @@ namespace FinderOuter.Services.Comparers
         public Calc Calc => _calc;
         public unsafe bool Compare(uint* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -47,8 +48,8 @@ namespace FinderOuter.Services.Comparers
 
         public unsafe bool Compare(ulong* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -66,8 +67,8 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key)
         {
-            Scalar sc = new(key, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 sc = new(key, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -76,6 +77,6 @@ namespace FinderOuter.Services.Comparers
             return actual.SequenceEqual(pubBa);
         }
 
-        public bool Compare(Scalar key) => Compare(Calc.MultiplyByG(key));
+        public bool Compare(Scalar8x32 key) => Compare(Calc.MultiplyByG(key));
     }
 }

@@ -5,8 +5,9 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
-using FinderOuter.Backend.Hashing;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using System;
 
 namespace FinderOuter.Services.Comparers
@@ -17,7 +18,7 @@ namespace FinderOuter.Services.Comparers
     public class PrvToPrvComparer : ICompareService
     {
         private byte[] expectedBytes;
-        private Scalar expectedKey;
+        private Scalar8x32 expectedKey;
 
         public bool Init(string data)
         {
@@ -50,7 +51,7 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expectedBytes).SequenceEqual(key);
 
-        public bool Compare(Scalar key) => key == expectedKey;
+        public bool Compare(Scalar8x32 key) => key == expectedKey;
 
         public bool Compare(in PointJacobian point) => throw new NotImplementedException();
     }

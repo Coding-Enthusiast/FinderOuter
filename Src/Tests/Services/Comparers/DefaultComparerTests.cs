@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend.ECC;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Services.Comparers;
 using Xunit;
 
@@ -39,7 +39,7 @@ namespace Tests.Services.Comparers
             DefaultComparer comp = new();
             Assert.True(comp.Compare(new byte[1]));
             Assert.True(comp.Compare(new PointJacobian()));
-            Assert.True(comp.Compare(new Scalar()));
+            Assert.True(comp.Compare(new Scalar8x32()));
             unsafe
             {
                 uint[] arr32 = new uint[1];

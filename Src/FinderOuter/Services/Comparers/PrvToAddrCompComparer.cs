@@ -4,8 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.Hashing;
-using FinderOuter.Backend.ECC;
 using System;
 
 namespace FinderOuter.Services.Comparers
@@ -25,8 +25,8 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(uint* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -39,8 +39,8 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(ulong* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }

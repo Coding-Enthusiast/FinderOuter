@@ -4,8 +4,9 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.ECC;
+using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -88,8 +89,8 @@ namespace FinderOuter.Services
             oPt[14] = 0x5c5c5c5c5c5c5c5cU;
             oPt[15] = 0x5c5c5c5c5c5c5c5cU;
 
-            Scalar sclrParent = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 sclrParent = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -199,7 +200,7 @@ namespace FinderOuter.Services
                 Sha512Fo.Compress192SecondBlock(hPt, wPt);
 
                 // New private key is (parentPrvKey + int(hPt)) % order
-                sclrParent = sclrParent.Add(new Scalar(hPt, out _), out _);
+                sclrParent = sclrParent.Add(new Scalar8x32(hPt, out _), out _);
             }
 
             // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path

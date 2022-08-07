@@ -4,8 +4,9 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using FinderOuter.Backend.Hashing;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.ECC;
+using FinderOuter.Backend.Hashing;
 using FinderOuter.Services.Comparers;
 using System.Collections.Generic;
 using Xunit;
@@ -81,8 +82,8 @@ namespace Tests.Services.Comparers
             {
                 Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
 
-                Scalar key = new(pt, out int overflow);
-                Assert.Equal(0, overflow);
+                Scalar8x32 key = new(pt, out bool overflow);
+                Assert.False(overflow);
                 Calc calc = new();
                 string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
 
@@ -106,8 +107,8 @@ namespace Tests.Services.Comparers
                 // Get hashstate ready first
                 Sha512Fo.CompressData(dPt, data.Length, data.Length, hPt, wPt);
 
-                Scalar key = new(hPt, out int overflow);
-                Assert.Equal(0, overflow);
+                Scalar8x32 key = new(hPt, out bool overflow);
+                Assert.False(overflow);
                 Calc calc = new();
                 string pubHex = calc.GetPubkey(key, true).ToArray().ToBase16();
                 bool b = comp.Init(pubHex);

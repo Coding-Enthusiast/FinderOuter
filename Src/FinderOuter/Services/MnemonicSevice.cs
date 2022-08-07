@@ -5,8 +5,9 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend.ECC;
+using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -282,8 +283,8 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
-                Scalar sclrParent = new(hPt, out int overflow);
-                if (overflow != 0)
+                Scalar8x32 sclrParent = new(hPt, out bool overflow);
+                if (overflow)
                 {
                     return false;
                 }
@@ -376,7 +377,7 @@ namespace FinderOuter.Services
 
                     // New private key is (parentPrvKey + int(hPt)) % order
                     // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
-                    sclrParent = sclrParent.Add(new Scalar(hPt, out _), out _);
+                    sclrParent = sclrParent.Add(new Scalar8x32(hPt, out _), out _);
                 }
 
                 // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path

@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend.ECC;
 using FinderOuter.Models;
@@ -128,9 +129,9 @@ namespace FinderOuter.Services
                         }
                     }
 
-                    Scalar tempVal = new(temp, out _);
+                    Scalar8x32 tempVal = new(temp, out _);
                     PointJacobian tempPub = calc.MultiplyByG(in tempVal);
-                    PointJacobian pub = tempPub.AddVariable(smallPub);
+                    PointJacobian pub = tempPub.AddVar(smallPub, out _);
 
                     if (comparer.Compare(pub))
                     {
@@ -148,7 +149,7 @@ namespace FinderOuter.Services
         private unsafe void Loop()
         {
             Calc calc = new();
-            Scalar smallVal = new(searchSpace.preComputed, out _);
+            Scalar8x32 smallVal = new(searchSpace.preComputed, out _);
             PointJacobian smallPub = calc.MultiplyByG(smallVal);
 
             if (searchSpace.MissCount == 1)
@@ -175,9 +176,9 @@ namespace FinderOuter.Services
                             tmp[index] |= (byte)i;
                         }
 
-                        Scalar tempVal = new(temp, out _);
+                        Scalar8x32 tempVal = new(temp, out _);
                         PointJacobian tempPub = calc.MultiplyByG(tempVal);
-                        PointJacobian pub = tempPub.AddVariable(smallPub);
+                        PointJacobian pub = tempPub.AddVar(smallPub, out _);
                         if (comparer.Compare(pub))
                         {
                             char[] origHex = searchSpace.Input.ToCharArray();

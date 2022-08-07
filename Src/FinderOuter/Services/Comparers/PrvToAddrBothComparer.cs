@@ -4,8 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.Hashing;
-using FinderOuter.Backend.ECC;
 using System;
 
 namespace FinderOuter.Services.Comparers
@@ -25,8 +25,8 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(uint* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -45,8 +45,8 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(ulong* hPt)
         {
-            Scalar key = new(hPt, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 key = new(hPt, out bool overflow);
+            if (overflow)
             {
                 return false;
             }
@@ -67,7 +67,16 @@ namespace FinderOuter.Services.Comparers
         {
             Point pub = point.ToPoint();
 
-            Span<byte> uncomp = pub.ToByteArray(out byte firstByte);
+            UInt256_10x26 xNorm = pub.x.NormalizeVar();
+            UInt256_10x26 yNorm = pub.y.NormalizeVar();
+
+            byte firstByte = yNorm.IsOdd ? (byte)3 : (byte)2;
+
+            Span<byte> uncomp = new byte[65];
+            uncomp[0] = 4;
+            xNorm.WriteToSpan(uncomp[1..]);
+            yNorm.WriteToSpan(uncomp[33..]);
+
             ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
             if (uncompHash.SequenceEqual(hash))
             {

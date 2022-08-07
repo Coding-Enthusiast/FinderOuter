@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.ECC;
@@ -69,7 +70,7 @@ namespace FinderOuter.Services
             report.AddMessageSafe($"Found the key: {tempWif}");
             report.FoundAnyResult = true;
         }
-        private void WifLoopMissingEnd(in Scalar smallKey, int start, long max,
+        private void WifLoopMissingEnd(in Scalar8x32 smallKey, int start, long max,
                                        ICompareService comparer, ParallelLoopState loopState)
         {
             if (loopState.IsStopped)
@@ -77,8 +78,8 @@ namespace FinderOuter.Services
                 return;
             }
 
-            Scalar toAddSc = new((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
-            Scalar initial = smallKey.Add(toAddSc, out int overflow);
+            Scalar8x32 toAddSc = new((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
+            Scalar8x32 initial = smallKey.Add(toAddSc, out int overflow);
             if (overflow != 0)
             {
                 return;
@@ -97,7 +98,7 @@ namespace FinderOuter.Services
                     loopState.Stop();
                     break;
                 }
-                pt = pt.AddVariable(g);
+                pt = pt.AddVar(g, out _);
             }
 
             report.IncrementProgress();
@@ -182,7 +183,7 @@ namespace FinderOuter.Services
                 return;
             }
 
-            Scalar sc = new(Base58.Decode(smallWif).SubArray(1, 32), out int overflow);
+            Scalar8x32 sc = new(Base58.Decode(smallWif).SubArray(1, 32), out bool overflow);
 
             isWifEndCompressed = compressed;
             wifEndStart = start;
@@ -255,6 +256,7 @@ namespace FinderOuter.Services
         {
             Debug.Assert(searchSpace.MissCount - misStart >= 1);
             Permutation[] items = new Permutation[searchSpace.MissCount - misStart];
+            ICompareService localComp = comparer.Clone();
 
             ulong* tmp = stackalloc ulong[precomputed.Length];
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
@@ -1306,9 +1308,9 @@ namespace FinderOuter.Services
                         {
                             if (!string.IsNullOrEmpty(comp))
                                 report.AddMessage($"Could not instantiate ICompareService (invalid {compType}).");
-                            comparer = null;
+                            comparer = new DefaultComparer();
                         }
-                        // TODO: set compared to a default always-return-true one
+
                         await FindPrivateKey();
                         break;
                     case Base58Type.Address:
