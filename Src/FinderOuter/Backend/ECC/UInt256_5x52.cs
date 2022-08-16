@@ -126,7 +126,7 @@ namespace FinderOuter.Backend.ECC
         public void WriteToSpan(Span<byte> ba)
         {
             Debug.Assert(isNormalized);
-            Debug.Assert(ba.Length == 32);
+            Debug.Assert(ba.Length >= 32);
 
             // Note: Last item is 48 bits, the rest are 52 bits
             // Read comments from bottom to make sense, array is set in reverse for optimization

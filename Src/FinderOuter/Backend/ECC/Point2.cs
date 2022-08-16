@@ -151,7 +151,7 @@ namespace FinderOuter.Backend.ECC
         {
             UInt256_5x52 x2 = x.Sqr();
             UInt256_5x52 x3 = x * x2;
-            UInt256_5x52 c = new(Calc.CurveB);
+            UInt256_5x52 c = new(7);
             c += x3;
             if (!c.Sqrt(out UInt256_5x52 y))
             {
