@@ -86,6 +86,23 @@ namespace Tests.Backend.ECC
         }
 
         [Theory]
+        [InlineData(0, 0, 0, 0)]
+        [InlineData(ulong.MaxValue, 0, 0, 0)]
+        [InlineData(ulong.MaxValue, 1, ulong.MaxValue, 0)]
+        [InlineData(ulong.MaxValue, ulong.MaxValue, 0x0000000000000001, 0xfffffffffffffffe)]
+        [InlineData(0x4e6ca1245be885b5, 0x9ee5d871da3da389, 0x920708233ab2ccdd, 0x30ad74ef1f04eb52)]
+        public void MultiplyTest(ulong x, ulong y, ulong exp0, ulong exp1)
+        {
+            UInt128 actual1 = UInt128.Multiply(x, y);
+            UInt128 actual2 = (UInt128)x * y;
+
+            Assert.Equal(exp0, actual1.b0);
+            Assert.Equal(exp1, actual1.b1);
+            Assert.Equal(exp0, actual2.b0);
+            Assert.Equal(exp1, actual2.b1);
+        }
+
+        [Theory]
         [InlineData(0, 0, 0, 0, 0, 0)]
         [InlineData(0xffffffffffffffff, 0xffffffffffffffff, 0, 0, 0xffffffffffffffff, 0xffffffffffffffff)]
         [InlineData(0xffffffffffffffff, 0xffffffffffffffff, 0, 1, 0xffffffffffffffff, 0)]
