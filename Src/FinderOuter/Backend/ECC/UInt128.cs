@@ -34,6 +34,41 @@ namespace FinderOuter.Backend.ECC
         public bool IsZero => (b0 | b1) == 0;
 
 
+        public static UInt128 Multiply(ulong left, ulong right)
+        {
+            ulong x0 = (uint)left;
+            ulong x1 = left >> 32;
+            ulong y0 = (uint)right;
+            ulong y1 = right >> 32;
+
+            // The following needs benchmark to be replaced by below code
+            //ulong hi = x1 * y1;
+            //ulong mid = x0 * y1;
+            //ulong lo = x0 * y0;
+            //ulong mid2 = y0 * x1;
+            //mid += mid2;
+            //hi += mid >> 32;
+            //if (mid < mid2) hi += 1ul << 32;
+            //mid <<= 32;
+            //lo += mid;
+            //if (lo < mid) hi++;
+            //return new UInt128(lo, hi);
+
+            ulong uv = x0 * y0;
+            uint w0 = (uint)uv; ulong c = uv >> 32;
+            uv = (x1 * y0) + c;
+            uint w1 = (uint)uv;
+            uint w2 = (uint)(uv >> 32);
+
+            uv = w1 + (x0 * y1);
+            w1 = (uint)uv; c = uv >> 32;
+            uv = w2 + (x1 * y1) + c;
+            w2 = (uint)uv;
+            uint w3 = (uint)(uv >> 32);
+
+            return new UInt128(w0, w1, w2, w3);
+        }
+
         public static UInt128 operator +(UInt128 left, UInt128 right)
         {
             ulong u0 = left.b0 + right.b0;
