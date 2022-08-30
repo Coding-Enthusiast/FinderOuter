@@ -14,6 +14,9 @@ namespace FinderOuter.Services.SearchSpaces
     public class PasswordSearchSpace : SearchSpaceBase
     {
         public int PasswordLength { get; private set; }
+        /// <summary>
+        /// Maximum possible password size in bytes (will be padded to be divisible by 4)
+        /// </summary>
         public int MaxPasswordSize { get; private set; }
         public byte[] AllValues { get; private set; }
         public int[] PermutationLengths { get; private set; }
@@ -96,6 +99,16 @@ namespace FinderOuter.Services.SearchSpaces
                 }
                 Debug.Assert(max > 0);
                 MaxPasswordSize += max;
+            }
+
+            while (MaxPasswordSize % 4 != 0)
+            {
+                MaxPasswordSize++;
+            }
+            if (MaxPasswordSize > Sha256Fo.BlockByteSize)
+            {
+                // error = "Password is too long (bigger than SHA256 block size).";
+                return false;
             }
 
             AllValues = stream.ToByteArray();
