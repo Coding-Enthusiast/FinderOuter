@@ -37,6 +37,8 @@ namespace FinderOuter.ViewModels
 
             this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
                 .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
+            this.WhenAnyValue(x => x.SelectedPassRecoveryMode)
+                .Subscribe(x => PassLenToolTip = $"Number of {(x.Value == PassRecoveryMode.Alphanumeric ? "character" : "word")}s in the passphrase");
 
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
@@ -53,6 +55,13 @@ namespace FinderOuter.ViewModels
             $"Note that since BIP-38 algorithm is designed to be very expensive, hence this option is very slow at recovering " +
             $"passwords. Don't expect more than 3 or 4 checks per second per thread (the more CPU/cores you have the faster " +
             $"it will be).";
+
+        private string _passLenTip;
+        public string PassLenToolTip
+        {
+            get => _passLenTip;
+            set => this.RaiseAndSetIfChanged(ref _passLenTip, value);
+        }
 
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();
