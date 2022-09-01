@@ -10,11 +10,29 @@
     <vm:MissingBip38PassViewModel/>
   </Design.DataContext>
 
-  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
-    <TextBox Text="{Binding Bip38}"
-             Watermark="BIP-38 string"
-             Grid.Column="0"
-             Grid.Row="0"/>
+  <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
+    <Grid ColumnDefinitions="*,auto">
+      <TextBox Text="{Binding Bip38}"
+               Watermark="BIP-38 string"
+               Grid.Column="0"/>
+      <NumericUpDown Value="{Binding PassLength}"
+                   Minimum="1"
+                   Watermark="Passphrase length"
+                   ToolTip.Tip="{Binding PassLenToolTip}"
+                   Grid.Column="1"/>
+    </Grid>
+
+    <ComboBox Items="{Binding PassRecoveryModeList}"
+              SelectedItem="{Binding SelectedPassRecoveryMode}"
+              Grid.Column="1"
+              Grid.Row="0">
+      <ComboBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Value}"
+                     ToolTip.Tip="{Binding Description}"/>
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
 
     <TextBox Text="{Binding CompareString}"
              Watermark="Compare string (public key or address)"
@@ -35,60 +53,52 @@
       </ComboBox.ItemTemplate>
     </ComboBox>
 
-    <Grid ColumnDefinitions="130,*" Grid.Column="0" Grid.Row="2">
-      <NumericUpDown Value="{Binding PassLength}"
-                     Minimum="1"
-                     Watermark="Passphrase length"
-                     Grid.Column="0"
-                     Grid.RowSpan="2"/>
-      <TextBox Text="{Binding CustomChars}"
-               Watermark="Enter custom password characters here (no space needed)"
-               IsVisible="{Binding !IsCheckBoxVisible}"
-               Grid.Column="1"/>
-      <Button Classes="Help"
-              CommandParameter="{Binding CustomCharPassKb}"
-              IsVisible="{Binding !IsCheckBoxVisible}"
-              Grid.Column="1"/>
-      <Grid ColumnDefinitions="auto,auto,*" RowDefinitions="*,*" IsVisible="{Binding IsCheckBoxVisible}" Grid.Column="1">
-        <CheckBox Content="Upper case (A-Z)"
-                        IsChecked="{Binding IsUpperCase}"
-                        Grid.Column="0"
-                        Grid.Row="0"/>
-        <CheckBox Content="Lower case (a-z)"
-                  IsChecked="{Binding IsLowerCase}"
-                  Grid.Column="0"
-                  Grid.Row="1"/>
-        <CheckBox Content="Numbers (0-9)"
-                  IsChecked="{Binding IsNumber}"
-                  Grid.Column="1"
-                  Grid.Row="0"/>
-        <CheckBox Content="{Binding AllSymbols}"
-                  IsChecked="{Binding IsSymbol}"
-                  Grid.Column="1"
-                  Grid.Row="1"/>
-        <CheckBox Content="Space"
-                  IsChecked="{Binding UseSpace}"
-                  Grid.Column="2"
-                  Grid.Row="0"/>
-        <Button Classes="Help"
-                CommandParameter="{Binding AlphanumericPassKb}"
-                IsVisible="{Binding IsCheckBoxVisible}"
-                Grid.Column="2"
-                Grid.Row="1"/>
-      </Grid>
-    </Grid>
+    <TextBox Text="dd"
+             Watermark="List of characters or words in the passphrase (separate words with space)"
+             Grid.Column="0" Grid.Row="2"/>
 
-    <ComboBox Items="{Binding PassRecoveryModeList}"
-              SelectedItem="{Binding SelectedPassRecoveryMode}"
-              Grid.Column="1"
-              Grid.Row="2">
-      <ComboBox.ItemTemplate>
-        <DataTemplate>
-          <TextBlock Text="{Binding Value}"
-                     ToolTip.Tip="{Binding Description}"/>
-        </DataTemplate>
-      </ComboBox.ItemTemplate>
-    </ComboBox>
+    <Expander Header="Advanced (limit search space)" IsExpanded="True" Grid.Column="0" Grid.Row="3">
+      <Grid ColumnDefinitions="1*,3*,auto" RowDefinitions="auto,*">
+        <Button Content="Start"
+                Command="{Binding StartCommand}"
+                Width="70"
+                Grid.Column="0"
+                Grid.Row="0"/>
+
+        <StackPanel Orientation="Vertical" Spacing="5" Grid.Column="0" Grid.Row="1">
+          <Button Content="Add all words" Command="{Binding AddAllCommand}"/>
+          <Button Content="Clear list" Command="{Binding ClearAllCommand}"/>
+          <Button Content="Remove selected" Command="{Binding RemoveSelectedCommand}"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="auto,*,auto" Margin="5,0,5,0" Grid.Column="1" Grid.Row="0">
+          <Button Content="&#60;"
+                  Command="{Binding PreviousCommand}"
+                  ToolTip.Tip="Previous missing word"
+                  Width="50"
+                  Grid.Column="0"/>
+          <TextBlock Text="{Binding SelectedStep}"
+                     TextAlignment="Center"
+                     Width="120"
+                     Grid.Column="1"/>
+          <Button Content="&#62;"
+                  Command="{Binding NextCommand}"
+                  ToolTip.Tip="Next missing word"
+                  Width="50"
+                  Grid.Column="2"/>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Spacing="5" Grid.Column="2" Grid.Row="0">
+          <TextBlock Text="Total: "/>
+          <TextBlock Text="{Binding CurrentItems.Count}"/>
+        </StackPanel>
+
+        <ListBox Items="{Binding CurrentItems}"
+                 SelectedItem="{Binding SelectedItem}"
+                 Height="130"
+                 Margin="3"
+                 Grid.Column="1" Grid.Row="1"/>
+      </Grid>
+    </Expander>
 
   </Grid>
 </UserControl>
