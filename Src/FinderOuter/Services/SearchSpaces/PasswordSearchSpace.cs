@@ -20,6 +20,7 @@ namespace FinderOuter.Services.SearchSpaces
         public int MaxPasswordSize { get; private set; }
         public byte[] AllValues { get; private set; }
         public int[] PermutationLengths { get; private set; }
+        public string[] AllWords { get; set; }
 
         public bool Process(int passLength, out string error)
         {
