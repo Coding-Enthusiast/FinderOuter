@@ -6,9 +6,11 @@
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
+using FinderOuter.Services.SearchSpaces;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -35,10 +37,10 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
-                .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
             this.WhenAnyValue(x => x.SelectedPassRecoveryMode)
                 .Subscribe(x => PassLenToolTip = $"Number of {(x.Value == PassRecoveryMode.Alphanumeric ? "character" : "word")}s in the passphrase");
+            this.WhenAnyValue(x => x.SelectedPassRecoveryMode)
+                .Subscribe(x => IsCharMode = x.Value == PassRecoveryMode.Alphanumeric);
 
             HasExample = true;
             IObservable<bool> isExampleVisible = this.WhenAnyValue(
@@ -47,6 +49,16 @@ namespace FinderOuter.ViewModels
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());
+
+            IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+
+            StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
+            AddCommand = ReactiveCommand.Create(Add, isFindEnabled);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            AddLowerCommand = ReactiveCommand.Create(AddLower, canAdd);
+            AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
+            AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
+            AddSymbolCommand = ReactiveCommand.Create(AddSymbol, canAdd);
         }
 
 
@@ -63,6 +75,8 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _passLenTip, value);
         }
 
+        private readonly PasswordSearchSpace searchSpace = new();
+
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
@@ -74,14 +88,13 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _recMode, value);
         }
 
-        // TODO: this may be better as a different view model and a user interface loaded in UI so that we can have more than
-        // 2 choices (for now it works fine!)
-        private bool _isChkVisible;
-        public bool IsCheckBoxVisible
+        private bool _isCMode;
+        public bool IsCharMode
         {
-            get => _isChkVisible;
-            set => this.RaiseAndSetIfChanged(ref _isChkVisible, value);
+            get => _isCMode;
+            set => this.RaiseAndSetIfChanged(ref _isCMode, value);
         }
+
 
         private string _bip38;
         public string Bip38
@@ -103,13 +116,6 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private string _customChars;
-        public string CustomChars
-        {
-            get => _customChars;
-            set => this.RaiseAndSetIfChanged(ref _customChars, value);
-        }
-
         private string _comp;
         public string CompareString
         {
@@ -117,95 +123,133 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _comp, value);
         }
 
-        private bool _isUpper;
-        public bool IsUpperCase
+        private string _fPath;
+        public string FilePath
         {
-            get => _isUpper;
-            set => this.RaiseAndSetIfChanged(ref _isUpper, value);
+            get => _fPath;
+            set => this.RaiseAndSetIfChanged(ref _fPath, value);
         }
 
-        private bool _isLower;
-        public bool IsLowerCase
-        {
-            get => _isLower;
-            set => this.RaiseAndSetIfChanged(ref _isLower, value);
-        }
-
-        private bool _isNum;
-        public bool IsNumber
-        {
-            get => _isNum;
-            set => this.RaiseAndSetIfChanged(ref _isNum, value);
-        }
-
-        private bool _isSymbol;
-        public bool IsSymbol
-        {
-            get => _isSymbol;
-            set => this.RaiseAndSetIfChanged(ref _isSymbol, value);
-        }
-
-        private bool _useSpace;
-        public bool UseSpace
-        {
-            get => _useSpace;
-            set => this.RaiseAndSetIfChanged(ref _useSpace, value);
-        }
 
         public static string AllSymbols => $"Symbols ({ConstantsFO.AllSymbols})";
 
 
-        public PasswordType PassType
+        private void Start()
         {
-            get
+            isChanged = false;
+            Index = 0;
+            Max = 0;
+            IsProcessed = searchSpace.Process(PassLength, out string error);
+
+            if (IsProcessed)
             {
-                PasswordType result = PasswordType.None;
-                if (IsUpperCase)
+                allItems = new ObservableCollection<string>[searchSpace.MissCount];
+                for (int i = 0; i < allItems.Length; i++)
                 {
-                    result |= PasswordType.UpperCase;
+                    allItems[i] = new();
                 }
-                if (IsLowerCase)
-                {
-                    result |= PasswordType.LowerCase;
-                }
-                if (IsNumber)
-                {
-                    result |= PasswordType.Numbers;
-                }
-                if (IsSymbol)
-                {
-                    result |= PasswordType.Symbols;
-                }
-                if (UseSpace)
-                {
-                    result |= PasswordType.Space;
-                }
-
-                return result;
-            }
-        }
-
-
-
-        public override void Find()
-        {
-            byte[] allValues = null;
-            string error = null;
-            bool success = SelectedPassRecoveryMode.Value switch
-            {
-                PassRecoveryMode.Alphanumeric => PassService.TryGetAllValues(PassType, out allValues, out error),
-                PassRecoveryMode.CustomChars => PassService.TryGetAllValues(CustomChars, out allValues, out error),
-                _ => false,
-            };
-
-            if (success)
-            {
-                Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues);
+                Max = allItems.Length;
+                Index = Max == 0 ? 0 : 1;
             }
             else
             {
-                Result.Init();
-                Result.Fail(error);
+                Result.AddMessage(error);
+            }
+        }
+
+        private void AddToList(IEnumerable<string> items)
+        {
+            foreach (string item in items)
+            {
+                if (!CurrentItems.Contains(item))
+                {
+                    CurrentItems.Add(item);
+                }
+            }
+        }
+
+        public IReactiveCommand AddAllCommand { get; }
+        private void AddAll()
+        {
+            AddToList(searchSpace.AllWords);
+        }
+
+        public IReactiveCommand AddCommand { get; }
+        private void Add()
+        {
+            if (!string.IsNullOrEmpty(ToAdd))
+            {
+                if (!CurrentItems.Contains(ToAdd))
+                {
+                    CurrentItems.Add(ToAdd);
+                }
+            }
+        }
+
+        public IReactiveCommand AddLowerCommand { get; }
+        private void AddLower()
+        {
+            AddToList(ConstantsFO.LowerCase.ToCharArray().Cast<string>());
+        }
+
+        public IReactiveCommand AddUpperCommand { get; }
+        private void AddUpper()
+        {
+            AddToList(ConstantsFO.UpperCase.ToCharArray().Cast<string>());
+        }
+
+        public IReactiveCommand AddNumberCommand { get; }
+        private void AddNumber()
+        {
+            AddToList(ConstantsFO.Numbers.ToCharArray().Cast<string>());
+        }
+
+        public IReactiveCommand AddSymbolCommand { get; }
+        private void AddSymbol()
+        {
+            AddToList(ConstantsFO.AllSymbols.ToCharArray().Cast<string>());
+        }
+
+
+        public override async void Find()
+        {
+            if (isChanged && IsProcessed)
+            {
+                MessageBoxResult res = await WinMan.ShowMessageBox(MessageBoxType.YesNo, ConstantsFO.ChangedMessage);
+                if (res == MessageBoxResult.Yes)
+                {
+                    IsProcessed = false;
+                }
+                else
+                {
+                    ResetSearchSpace();
+                    return;
+                }
+            }
+
+            if (!IsProcessed)
+            {
+                Start();
+                foreach (ObservableCollection<string> item in allItems)
+                {
+                    foreach (string word in searchSpace.AllWords)
+                    {
+                        item.Add(word);
+                    }
+                }
+            }
+
+            if (IsProcessed)
+            {
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                {
+                    //Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues);
+                    ResetSearchSpace();
+                }
+                else
+                {
+                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                }
             }
         }
 
@@ -227,13 +271,13 @@ namespace FinderOuter.ViewModels
             Debug.Assert(temp < PassRecoveryModeList.Count());
             SelectedPassRecoveryMode = PassRecoveryModeList.ElementAt(temp);
 
-            CustomChars = (string)ex[5];
+            //CustomChars = (string)ex[5];
 
-            PasswordType flag = (PasswordType)(ulong)ex[6];
-            IsUpperCase = flag.HasFlag(PasswordType.UpperCase);
-            IsLowerCase = flag.HasFlag(PasswordType.LowerCase);
-            IsNumber = flag.HasFlag(PasswordType.Numbers);
-            IsSymbol = flag.HasFlag(PasswordType.Symbols);
+            //PasswordType flag = (PasswordType)(ulong)ex[6];
+            //IsUpperCase = flag.HasFlag(PasswordType.UpperCase);
+            //IsLowerCase = flag.HasFlag(PasswordType.LowerCase);
+            //IsNumber = flag.HasFlag(PasswordType.Numbers);
+            //IsSymbol = flag.HasFlag(PasswordType.Symbols);
 
             Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[7]}";
         }
