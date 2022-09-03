@@ -9,6 +9,7 @@ using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
+using FinderOuter.Services.SearchSpaces;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -30,6 +31,7 @@ namespace FinderOuter.Services
         private readonly IReport report;
         private readonly InputService inputService;
         private ICompareService comparer;
+        private PasswordSearchSpace searchSpace;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,11 +54,25 @@ namespace FinderOuter.Services
             return false;
         }
 
-        public unsafe void MainLoop(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength,
-                                    int firstItem, ParallelLoopState loopState)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe bool MoveNext(PermutationVar* items, int len)
         {
+            for (int i = len - 1; i >= 0; i--)
+            {
+                if (items[i].Increment())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public unsafe void MainLoop(byte[] data, byte[] salt, int firstItem, ParallelLoopState loopState)
+        {
+            // TODO: move salt to searchspace and convert to uint?
             Debug.Assert(salt.Length == 4);
-            Debug.Assert(passLength <= Sha256Fo.BlockByteSize);
+            Debug.Assert(searchSpace.PasswordLength <= Sha256Fo.BlockByteSize);
 
             // The whole process:
             // dk = Scrypt(cost-param=16384, blockSizeFactor=8, parallelization=8).Derive(pass, salt, dkLen=64)
@@ -77,10 +93,10 @@ namespace FinderOuter.Services
             uint saltUint = (uint)(salt[0] << 24 | salt[1] << 16 | salt[2] << 8 | salt[3]);
             ICompareService localComparer = comparer.Clone();
 
-            int[] items = new int[passLength];
-            items[0] = firstItem;
-            int passPad = passLength % 4;
-            uint[] passValues = new uint[passLength / 4 + (passPad != 0 ? 1 : 0)];
+            PermutationVar[] items = new PermutationVar[searchSpace.PasswordLength];
+            Span<byte> passBa = new byte[searchSpace.MaxPasswordSize];
+            int passPad = passBa.Length % 4;
+            Span<uint> passUa = new uint[passBa.Length / 4 + (passPad != 0 ? 1 : 0)];
 
             uint[] InnerPads = Enumerable.Repeat(0x36363636U, 16).ToArray();
             uint[] OuterPads = Enumerable.Repeat(0x5c5c5c5cU, 16).ToArray();
@@ -96,11 +112,33 @@ namespace FinderOuter.Services
             uint* iPtStore = wPt + Sha256Fo.WorkingVectorSize;
             uint* oPtStore = iPtStore + Sha256Fo.HashStateSize;
 
-            fixed (byte* valPt = &allValues[0])
-            fixed (int* itemsPt = &items[0])
+            fixed (byte* passBaPt = &passBa[0], allVals = &searchSpace.AllValues[0])
+            fixed (int* lens = &searchSpace.PermutationLengths[0])
+            fixed (PermutationVar* itemsPt = &items[0])
             fixed (uint* ipadSource = &InnerPads[0], opadSource = &OuterPads[0])
-            fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passVal = &passValues[0])
+            fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passUaPt = &passUa[0])
             {
+                byte* tvals = allVals;
+                int* tlens = lens;
+                for (int i = 0; i < items.Length; i++)
+                {
+                    int size = searchSpace.PermutationCounts[i];
+                    items[i] = new PermutationVar(size, tvals, tlens);
+                    tvals += size;
+                    tlens += size;
+                }
+
+                for (int i = 0; i < firstItem; i++)
+                {
+#if DEBUG
+                    bool b =
+#endif
+                    itemsPt[0].Increment();
+#if DEBUG
+                    Debug.Assert(b);
+#endif
+                }
+
                 do
                 {
                     if (loopState.IsStopped)
@@ -112,42 +150,31 @@ namespace FinderOuter.Services
 
                     // HMAC key (sets pads) is the password and is fixed for both PBKDF2 calls so we can set the pads
                     // and compute the hashstate after first block compression
-                    int passIndex = 0; int itemIndex = 0;
-                    for (; itemIndex < items.Length - passPad; passIndex++, itemIndex += 4)
-                    {
-                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
-                        Debug.Assert(itemsPt[itemIndex + 1] < allValues.Length);
-                        Debug.Assert(itemsPt[itemIndex + 2] < allValues.Length);
-                        Debug.Assert(itemsPt[itemIndex + 3] < allValues.Length);
 
-                        passVal[passIndex] = (uint)((valPt[itemsPt[itemIndex]] << 24) |
-                                                    (valPt[itemsPt[itemIndex + 1]] << 16) |
-                                                    (valPt[itemsPt[itemIndex + 2]] << 8) |
-                                                     valPt[itemsPt[itemIndex + 3]]);
-                    }
-                    uint val = 0;
-                    int shift = 24;
-                    while (itemIndex < items.Length)
+                    passBa.Clear();
+                    passUa.Clear();
+                    int totalPassLen = 0;
+                    foreach (var item in items)
                     {
-                        Debug.Assert(shift > 0);
-                        Debug.Assert(itemsPt[itemIndex] < allValues.Length);
-
-                        val |= (uint)(valPt[itemsPt[itemIndex]] << shift);
-                        itemIndex++;
-                        shift -= 8;
+                        totalPassLen += item.WriteValue(passBaPt + totalPassLen, passBa.Length);
                     }
-                    if (shift != 24)
+                    Debug.Assert(totalPassLen <= searchSpace.MaxPasswordSize);
+                    // TODO: merge the following 2 loops? wPt[i] ^= (passBaPt[j] << 24) ...
+                    for (int i = 0, j = 0; i < passUa.Length; i++, j += 4)
                     {
-                        Debug.Assert(passIndex < passValues.Length);
-                        passVal[passIndex] = val;
+                        Debug.Assert(j + 4 < passBa.Length);
+                        passUaPt[i] = (uint)((passBaPt[j] << 24) |
+                                             (passBaPt[j + 1] << 16) |
+                                             (passBaPt[j + 2] << 8) |
+                                              passBaPt[j + 3]);
                     }
 
                     // Compress first block (64 byte inner pad)
                     Sha256Fo.Init(pt);
                     *(Block64*)wPt = *(Block64*)ipadSource;
-                    for (int i = 0; i < passValues.Length; i++)
+                    for (int i = 0; i < passUa.Length; i++)
                     {
-                        wPt[i] ^= passVal[i];
+                        wPt[i] ^= passUaPt[i];
                     }
                     Sha256Fo.SetW(wPt);
                     Sha256Fo.CompressBlockWithWSet(pt);
@@ -157,9 +184,9 @@ namespace FinderOuter.Services
                     // Compress first block (64 byte outer pad)
                     Sha256Fo.Init(pt);
                     *(Block64*)wPt = *(Block64*)opadSource;
-                    for (int i = 0; i < passValues.Length; i++)
+                    for (int i = 0; i < passUa.Length; i++)
                     {
-                        wPt[i] ^= passVal[i];
+                        wPt[i] ^= passUaPt[i];
                     }
                     Sha256Fo.SetW(wPt);
                     Sha256Fo.CompressBlockWithWSet(pt);
@@ -322,17 +349,17 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         report.FoundAnyResult = true;
 
-                        char[] temp = new char[passLength];
+                        char[] temp = new char[totalPassLen];
                         for (int i = 0; i < temp.Length; i++)
                         {
-                            temp[i] = (char)valPt[itemsPt[i]];
+                            temp[i] = (char)passBaPt[i];
                         }
 
                         report.AddMessageSafe($"Password is: {new string(temp)}");
                         return;
                     }
 
-                } while (ParallelMoveNext(itemsPt, items.Length, allValues.Length));
+                } while (MoveNext(itemsPt + 1, items.Length - 1));
             }
 
             report.IncrementProgress();
@@ -1603,11 +1630,10 @@ namespace FinderOuter.Services
         private static uint R(uint a, int b) => unchecked((a << b) | (a >> (32 - b)));
 
 
-        private void StartParallel(byte[] data, byte[] salt, bool isComp, byte[] allValues, int passLength)
+        private void StartParallel(byte[] data, byte[] salt, byte[] allValues, int passLength)
         {
             report.SetProgressStep(allValues.Length);
-            Parallel.For(0, allValues.Length,
-                    (firstItem, state) => MainLoop(data, salt, isComp, allValues, passLength, firstItem, state));
+            Parallel.For(0, allValues.Length, (firstItem, state) => MainLoop(data, salt, firstItem, state));
         }
 
         private void StartParallelEC(byte[] data, byte[] salt, bool isComp, bool hasLot, byte[] allValues, int passLength)
@@ -1655,7 +1681,7 @@ namespace FinderOuter.Services
                 }
                 else
                 {
-                    await Task.Run(() => StartParallel(data, salt, isComp, allValues, passLength));
+                    await Task.Run(() => StartParallel(data, salt, allValues, passLength));
                 }
 
                 report.Finalize();
