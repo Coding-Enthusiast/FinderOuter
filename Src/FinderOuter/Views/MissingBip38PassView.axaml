@@ -53,28 +53,27 @@
       </ComboBox.ItemTemplate>
     </ComboBox>
 
-    <TextBox Text="dd"
-             Watermark="List of characters or words in the passphrase (separate words with space)"
-             Grid.Column="0" Grid.Row="2"/>
+    <Grid ColumnDefinitions="*,auto" Grid.Column="0" Grid.Row="2">
+      <TextBox Text="{Binding FilePath}"
+               Watermark="Path to the text file containing all possible words or characters in the passphrase (one item per line)"
+               Grid.Column="0"/>
+      <Button Content="Open"
+              Command="{Binding Open}"
+              Width="70"
+              Grid.Column="1"/>
+    </Grid>
 
     <Expander Header="Advanced (limit search space)" IsExpanded="True" Grid.Column="0" Grid.Row="3">
-      <Grid ColumnDefinitions="1*,3*,auto" RowDefinitions="auto,*">
+      <Grid ColumnDefinitions="*,2*,auto" RowDefinitions="auto,*">
         <Button Content="Start"
                 Command="{Binding StartCommand}"
                 Width="70"
                 Grid.Column="0"
                 Grid.Row="0"/>
-
-        <StackPanel Orientation="Vertical" Spacing="5" Grid.Column="0" Grid.Row="1">
-          <Button Content="Add all words" Command="{Binding AddAllCommand}"/>
-          <Button Content="Clear list" Command="{Binding ClearAllCommand}"/>
-          <Button Content="Remove selected" Command="{Binding RemoveSelectedCommand}"/>
-        </StackPanel>
-
         <Grid ColumnDefinitions="auto,*,auto" Margin="5,0,5,0" Grid.Column="1" Grid.Row="0">
           <Button Content="&#60;"
                   Command="{Binding PreviousCommand}"
-                  ToolTip.Tip="Previous missing word"
+                  ToolTip.Tip="Previous missing char"
                   Width="50"
                   Grid.Column="0"/>
           <TextBlock Text="{Binding SelectedStep}"
@@ -83,7 +82,7 @@
                      Grid.Column="1"/>
           <Button Content="&#62;"
                   Command="{Binding NextCommand}"
-                  ToolTip.Tip="Next missing word"
+                  ToolTip.Tip="Next missing char"
                   Width="50"
                   Grid.Column="2"/>
         </Grid>
@@ -92,11 +91,36 @@
           <TextBlock Text="{Binding CurrentItems.Count}"/>
         </StackPanel>
 
+        <Grid RowDefinitions="auto,*" Grid.Column="0" Grid.Row="1">
+          <Grid ColumnDefinitions="*,auto" Grid.Row="0">
+            <TextBox Text="{Binding ToAdd}" Grid.Column="0" MinHeight="30"/>
+            <Button Content="+" Command="{Binding AddCommand}" Height="30" Width="30" Grid.Column="1"/>
+          </Grid>
+          <StackPanel Orientation="Vertical" Spacing="2" IsVisible="{Binding IsCharMode}" Grid.Row="1">
+            <Button Content="Add all lower case" Command="{Binding AddLowerCommand}"/>
+            <Button Content="Add all upper case" Command="{Binding AddUpperCommand}"/>
+            <Button Content="Add all numbers" Command="{Binding AddNumberCommand}"/>
+            <Button Content="Add all symbols" Command="{Binding AddSymbolCommand}"/>
+          </StackPanel>
+        </Grid>
+
         <ListBox Items="{Binding CurrentItems}"
                  SelectedItem="{Binding SelectedItem}"
-                 Height="130"
+                 Height="150"
                  Margin="3"
                  Grid.Column="1" Grid.Row="1"/>
+
+        <Grid RowDefinitions="auto,auto,auto,auto" Grid.Column="2" Grid.Row="1">
+          <Button Content="Add all" Command="{Binding AddAllCommand}"
+                  Margin="2"
+                  Grid.Row="0"/>
+          <Button Content="Remove selected" Command="{Binding RemoveSelectedCommand}"
+                  Margin="2"
+                  Grid.Row="1"/>
+          <Button Content="Clear list" Command="{Binding ClearAllCommand}"
+                  Margin="2"
+                  Grid.Row="2"/>
+        </Grid>
       </Grid>
     </Expander>
 
