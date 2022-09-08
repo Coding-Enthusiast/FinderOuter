@@ -53,14 +53,15 @@
       </ComboBox.ItemTemplate>
     </ComboBox>
 
-    <Grid ColumnDefinitions="*,auto" Grid.Column="0" Grid.Row="2">
-      <TextBox Text="{Binding FilePath}"
-               Watermark="Path to the text file containing all possible words or characters in the passphrase (one item per line)"
-               Grid.Column="0"/>
+    <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="2">
       <Button Content="Open"
+              ToolTip.Tip="Open a .txt file containing a list of possible words or characters in the password. Separate each item with a new line"
               Command="{Binding Open}"
               Width="70"
-              Grid.Column="1"/>
+              Grid.Column="0"/>
+      <TextBlock Text="{Binding OpenResult}"
+                 Margin="2"
+                 Grid.Column="1"/>
     </Grid>
 
     <Expander Header="Advanced (limit search space)" IsExpanded="True" Grid.Column="0" Grid.Row="3">
