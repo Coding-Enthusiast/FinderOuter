@@ -158,7 +158,7 @@ namespace FinderOuter.ViewModels
             isChanged = false;
             Index = 0;
             Max = 0;
-            IsProcessed = searchSpace.Process(PassLength, out string error);
+            IsProcessed = searchSpace.Process(Bip38, PassLength, out string error);
 
             if (IsProcessed)
             {

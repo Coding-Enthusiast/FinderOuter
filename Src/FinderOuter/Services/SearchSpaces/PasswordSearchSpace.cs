@@ -13,6 +13,9 @@ namespace FinderOuter.Services.SearchSpaces
 {
     public class PasswordSearchSpace : SearchSpaceBase
     {
+        /// <summary>
+        /// Number of chars/words in the password
+        /// </summary>
         public int PasswordLength { get; private set; }
         /// <summary>
         /// Maximum possible password size in bytes (will be padded to be divisible by 4)
@@ -22,13 +25,40 @@ namespace FinderOuter.Services.SearchSpaces
         public int[] PermutationLengths { get; private set; }
         public string[] AllWords { get; set; }
 
-        public bool Process(int passLength, out string error)
+        public bool isComp, isEc, hasLot;
+        public byte[] encryptedBA;
+        public uint salt;
+
+
+        public bool Process(string bip38, int passLength, out string error)
         {
+            // I don't think anyone has a 1 char password so we take the lazy route and reject it (at least for now)
+            if (passLength <= 1)
+            {
+                error = "Passwords smaller than 1 byte are not supported.";
+                return false;
+            }
+            // Passwords bigger than 64 bytes need to be hashed first inside HMACSHA256 so we need a different MainLoop code
+            // Considering that 64 byte is too big to brute force, we simply reject it
             if (passLength > Sha256Fo.BlockByteSize)
             {
                 error = "Password is too long (bigger than SHA256 block size).";
                 return false;
             }
+
+            if (!InputService.IsValidBase58Bip38(bip38, out error))
+            {
+                return false;
+            }
+            else if (!InputService.TryDecodeBip38(bip38, out encryptedBA, out byte[] saltBa, out isComp, out isEc, out hasLot, out error))
+            {
+                return false;
+            }
+            else
+            {
+                salt = (uint)(saltBa[0] << 24 | saltBa[1] << 16 | saltBa[2] << 8 | saltBa[3]);
+            }
+
             PasswordLength = passLength;
 
             error = string.Empty;
