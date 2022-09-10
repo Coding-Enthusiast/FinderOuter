@@ -50,11 +50,13 @@ namespace FinderOuter.ViewModels
 
             SetExamples(GetExampleData());
 
+            IObservable<bool> canAddWords = this.WhenAnyValue(x => x.IsProcessed, x => x.searchSpace.AllWords,
+                (b, all) => b == true && all != null && all.Length != 0);
             IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
 
             StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
             AddCommand = ReactiveCommand.Create(Add, isFindEnabled);
-            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAddWords);
             AddLowerCommand = ReactiveCommand.Create(AddLower, canAdd);
             AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
@@ -79,6 +81,7 @@ namespace FinderOuter.ViewModels
 
         public Bip38Service Bip38Service { get; }
         public IPasswordService PassService { get; set; } = new PasswordService();
+        public IFileManager FileMan { get; set; } = new FileManager();
         public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
 
         private DescriptiveItem<PassRecoveryMode> _recMode;
@@ -100,7 +103,14 @@ namespace FinderOuter.ViewModels
         public string Bip38
         {
             get => _bip38;
-            set => this.RaiseAndSetIfChanged(ref _bip38, value);
+            set
+            {
+                if (value != _bip38)
+                {
+                    this.RaiseAndSetIfChanged(ref _bip38, value);
+                    isChanged = true;
+                }
+            }
         }
 
         private int _passLen = 1;
@@ -112,7 +122,11 @@ namespace FinderOuter.ViewModels
                 if (value < 1)
                     value = 1;
 
-                this.RaiseAndSetIfChanged(ref _passLen, value);
+                if (value != _passLen)
+                {
+                    this.RaiseAndSetIfChanged(ref _passLen, value);
+                    isChanged = true;
+                }
             }
         }
 
@@ -123,16 +137,21 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _comp, value);
         }
 
-        private string _fPath;
-        public string FilePath
+
+        private string _ores;
+        public string OpenResult
         {
-            get => _fPath;
-            set => this.RaiseAndSetIfChanged(ref _fPath, value);
+            get => _ores;
+            set => this.RaiseAndSetIfChanged(ref _ores, value);
         }
 
-
-        public static string AllSymbols => $"Symbols ({ConstantsFO.AllSymbols})";
-
+        public async void Open()
+        {
+            string[] res = await FileMan.OpenAsync();
+            OpenResult = $"Number of items: {res.Length:n0}";
+            searchSpace.AllWords = res;
+            isChanged = true;
+        }
 
         private void Start()
         {
@@ -143,7 +162,7 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                allItems = new ObservableCollection<string>[searchSpace.MissCount];
+                allItems = new ObservableCollection<string>[searchSpace.PasswordLength];
                 for (int i = 0; i < allItems.Length; i++)
                 {
                     allItems[i] = new();
