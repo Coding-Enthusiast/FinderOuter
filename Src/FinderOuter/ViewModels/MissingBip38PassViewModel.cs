@@ -262,7 +262,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
-                    //Bip38Service.Find(Bip38, CompareString, SelectedCompareInputType.Value, PassLength, allValues);
+                    Bip38Service.Find(searchSpace, CompareString, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
