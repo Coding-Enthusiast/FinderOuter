@@ -74,8 +74,6 @@ namespace FinderOuter.Services.SearchSpaces
             }
 
             int totalLen = 0;
-            int maxLen = 0;
-            int maxIndex = 0;
             for (int i = 0; i < result.Length; i++)
             {
                 if (result[i].Length < 1)
@@ -83,27 +81,10 @@ namespace FinderOuter.Services.SearchSpaces
                     return false;
                 }
                 totalLen += result[i].Length;
-
-                if (result[i].Length > maxLen)
-                {
-                    maxLen = result[i].Length;
-                    maxIndex = i;
-                }
-            }
-
-            if (maxIndex != 0)
-            {
-                string[] t1 = result[maxIndex];
-                result[maxIndex] = result[0];
-                result[0] = t1;
-
-                int t2 = MissingIndexes[maxIndex];
-                MissingIndexes[maxIndex] = MissingIndexes[0];
-                MissingIndexes[0] = t2;
             }
 
             PermutationLengths = new int[totalLen];
-            PermutationCounts = new int[MissCount];
+            PermutationCounts = new int[PasswordLength];
 
             FastStream stream = new();
             int index1 = 0;
