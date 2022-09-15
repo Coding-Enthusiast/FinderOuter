@@ -23,6 +23,7 @@ namespace FinderOuter.Services.SearchSpaces
         public int MaxPasswordSize { get; private set; }
         public byte[] AllValues { get; private set; }
         public int[] PermutationLengths { get; private set; }
+        public int[] PermutationSizes { get; private set; }
         public string[] AllWords { get; set; }
 
         public bool isComp, isEc, hasLot;
@@ -85,6 +86,7 @@ namespace FinderOuter.Services.SearchSpaces
 
             PermutationLengths = new int[totalLen];
             PermutationCounts = new int[PasswordLength];
+            PermutationSizes = new int[PasswordLength];
 
             FastStream stream = new();
             int index1 = 0;
@@ -92,17 +94,13 @@ namespace FinderOuter.Services.SearchSpaces
             MaxPasswordSize = 0;
             foreach (string[] item in result)
             {
-                PermutationCounts[index2++] = item.Length;
                 int max = 0;
                 foreach (string s in item)
                 {
-                    if (s.Length > 1)
-                    {
-                        return false;
-                    }
                     byte[] t = Encoding.UTF8.GetBytes(s);
                     stream.Write(t);
                     PermutationLengths[index1++] = t.Length;
+                    PermutationSizes[index2] += t.Length;
 
                     if (s.Length > max)
                     {
@@ -111,6 +109,8 @@ namespace FinderOuter.Services.SearchSpaces
                 }
                 Debug.Assert(max > 0);
                 MaxPasswordSize += max;
+
+                PermutationCounts[index2++] = item.Length;
             }
 
             while (MaxPasswordSize % 4 != 0)
