@@ -93,8 +93,8 @@ namespace FinderOuter.Services
 
             PermutationVar[] items = new PermutationVar[searchSpace.PasswordLength];
             Span<byte> passBa = new byte[searchSpace.MaxPasswordSize];
-            int passPad = passBa.Length % 4;
-            Span<uint> passUa = new uint[passBa.Length / 4 + (passPad != 0 ? 1 : 0)];
+            Debug.Assert(passBa.Length % 4 == 0);
+            Span<uint> passUa = new uint[passBa.Length / 4];
 
             uint[] InnerPads = Enumerable.Repeat(0x36363636U, 16).ToArray();
             uint[] OuterPads = Enumerable.Repeat(0x5c5c5c5cU, 16).ToArray();
@@ -160,7 +160,7 @@ namespace FinderOuter.Services
                     // TODO: merge the following 2 loops? wPt[i] ^= (passBaPt[j] << 24) ...
                     for (int i = 0, j = 0; i < passUa.Length; i++, j += 4)
                     {
-                        Debug.Assert(j + 4 < passBa.Length);
+                        Debug.Assert(j + 3 < passBa.Length);
                         passUaPt[i] = (uint)((passBaPt[j] << 24) |
                                              (passBaPt[j + 1] << 16) |
                                              (passBaPt[j + 2] << 8) |
@@ -404,8 +404,8 @@ namespace FinderOuter.Services
 
             PermutationVar[] items = new PermutationVar[searchSpace.PasswordLength];
             Span<byte> passBa = new byte[searchSpace.MaxPasswordSize];
-            int passPad = passBa.Length % 4;
-            Span<uint> passUa = new uint[passBa.Length / 4 + (passPad != 0 ? 1 : 0)];
+            Debug.Assert(passBa.Length % 4 == 0);
+            Span<uint> passUa = new uint[passBa.Length / 4];
 
             // TODO: should these 2 arrays be merged?
             uint[] v = new uint[4194304];
@@ -477,7 +477,7 @@ namespace FinderOuter.Services
                     // TODO: merge the following 2 loops? wPt[i] ^= (passBaPt[j] << 24) ...
                     for (int i = 0, j = 0; i < passUa.Length; i++, j += 4)
                     {
-                        Debug.Assert(j + 4 < passBa.Length);
+                        Debug.Assert(j + 3 < passBa.Length);
                         passUaPt[i] = (uint)((passBaPt[j] << 24) |
                                              (passBaPt[j + 1] << 16) |
                                              (passBaPt[j + 2] << 8) |
@@ -947,8 +947,8 @@ namespace FinderOuter.Services
 
             PermutationVar[] items = new PermutationVar[searchSpace.PasswordLength];
             Span<byte> passBa = new byte[searchSpace.MaxPasswordSize];
-            int passPad = passBa.Length % 4;
-            Span<uint> passUa = new uint[passBa.Length / 4 + (passPad != 0 ? 1 : 0)];
+            Debug.Assert(passBa.Length % 4 == 0);
+            Span<uint> passUa = new uint[passBa.Length / 4];
 
             // TODO: should these 2 arrays be merged?
             uint[] v = new uint[4194304];
@@ -1021,7 +1021,7 @@ namespace FinderOuter.Services
                     // TODO: merge the following 2 loops? wPt[i] ^= (passBaPt[j] << 24) ...
                     for (int i = 0, j = 0; i < passUa.Length; i++, j += 4)
                     {
-                        Debug.Assert(j + 4 < passBa.Length);
+                        Debug.Assert(j + 3 < passBa.Length);
                         passUaPt[i] = (uint)((passBaPt[j] << 24) |
                                              (passBaPt[j + 1] << 16) |
                                              (passBaPt[j + 2] << 8) |
@@ -1650,8 +1650,10 @@ namespace FinderOuter.Services
 
         private void StartParallel()
         {
-            report.SetProgressStep(searchSpace.AllValues.Length);
-            Parallel.For(0, searchSpace.AllValues.Length, (firstItem, state) => MainLoop(firstItem, state));
+            int max = searchSpace.PermutationCounts[0];
+            report.SetProgressStep(max);
+            ParallelOptions op = new ParallelOptions() { MaxDegreeOfParallelism = 1 };
+            Parallel.For(0, max, op, (firstItem, state) => MainLoop(firstItem, state));
         }
 
         private void StartParallelEC()
@@ -1660,12 +1662,16 @@ namespace FinderOuter.Services
             if (searchSpace.hasLot)
             {
                 report.AddMessageSafe("EC mult mode with LOT/Sequence");
-                Parallel.For(0, searchSpace.AllValues.Length, (firstItem, state) => MainLoopECLot(firstItem, state));
+                int max = searchSpace.PermutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem, state) => MainLoopECLot(firstItem, state));
             }
             else
             {
                 report.AddMessageSafe("EC mult mode with no LOT/Sequence");
-                Parallel.For(0, searchSpace.AllValues.Length, (firstItem, state) => MainLoopECNoLot(firstItem, state));
+                int max = searchSpace.PermutationCounts[0];
+                report.SetProgressStep(max);
+                Parallel.For(0, max, (firstItem, state) => MainLoopECNoLot(firstItem, state));
             }
         }
 
