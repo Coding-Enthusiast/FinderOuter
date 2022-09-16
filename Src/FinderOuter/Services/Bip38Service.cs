@@ -111,7 +111,7 @@ namespace FinderOuter.Services
             uint* oPtStore = iPtStore + Sha256Fo.HashStateSize;
 
             fixed (byte* passBaPt = &passBa[0], allVals = &searchSpace.AllValues[0])
-            fixed (int* lens = &searchSpace.PermutationLengths[0])
+            fixed (int* lens = &searchSpace.PermutationLengths[0], sizePt = &searchSpace.PermutationSizes[0])
             fixed (PermutationVar* itemsPt = &items[0])
             fixed (uint* ipadSource = &InnerPads[0], opadSource = &OuterPads[0])
             fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passUaPt = &passUa[0])
@@ -122,7 +122,7 @@ namespace FinderOuter.Services
                 {
                     int size = searchSpace.PermutationCounts[i];
                     items[i] = new PermutationVar(size, tvals, tlens);
-                    tvals += size;
+                    tvals += sizePt[i];
                     tlens += size;
                 }
 
@@ -430,7 +430,7 @@ namespace FinderOuter.Services
             }
 
             fixed (byte* passBaPt = &passBa[0], allVals = &searchSpace.AllValues[0])
-            fixed (int* lens = &searchSpace.PermutationLengths[0])
+            fixed (int* lens = &searchSpace.PermutationLengths[0], sizePt = &searchSpace.PermutationSizes[0])
             fixed (PermutationVar* itemsPt = &items[0])
             fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passUaPt = &passUa[0])
             {
@@ -440,7 +440,7 @@ namespace FinderOuter.Services
                 {
                     int size = searchSpace.PermutationCounts[i];
                     items[i] = new PermutationVar(size, tvals, tlens);
-                    tvals += size;
+                    tvals += sizePt[i];
                     tlens += size;
                 }
 
@@ -973,7 +973,7 @@ namespace FinderOuter.Services
             }
 
             fixed (byte* passBaPt = &passBa[0], allVals = &searchSpace.AllValues[0])
-            fixed (int* lens = &searchSpace.PermutationLengths[0])
+            fixed (int* lens = &searchSpace.PermutationLengths[0], sizePt = &searchSpace.PermutationSizes[0])
             fixed (PermutationVar* itemsPt = &items[0])
             fixed (uint* vPt = &v[0], dkPt = &derivedKey[0], passUaPt = &passUa[0])
             {
@@ -983,7 +983,7 @@ namespace FinderOuter.Services
                 {
                     int size = searchSpace.PermutationCounts[i];
                     items[i] = new PermutationVar(size, tvals, tlens);
-                    tvals += size;
+                    tvals += sizePt[i];
                     tlens += size;
                 }
 
@@ -1652,8 +1652,7 @@ namespace FinderOuter.Services
         {
             int max = searchSpace.PermutationCounts[0];
             report.SetProgressStep(max);
-            ParallelOptions op = new ParallelOptions() { MaxDegreeOfParallelism = 1 };
-            Parallel.For(0, max, op, (firstItem, state) => MainLoop(firstItem, state));
+            Parallel.For(0, max, (firstItem, state) => MainLoop(firstItem, state));
         }
 
         private void StartParallelEC()
