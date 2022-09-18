@@ -304,6 +304,24 @@ namespace FinderOuter.ViewModels
                     $"{Environment.NewLine}" +
                     $"Estimated time: <3 sec"
                 },
+                {
+                    "6PnSz7B4XnPQUTBrUanV8kruDCnAegfMzFnpiKuv121zURVRyjWbbwyMKL",
+                    1, // CompareInputType
+                    "13rpixbWp9QngeEvgysmwcXCdWuM94t2CQ",
+                    4, // Pass length
+                    new string[4][]
+                    {
+                        new string[4] { "2", "4", "6", "8" },
+                        new string[5] { "?", "!", ".", "@", "$" },
+                        new string[6] { "A", "r", "b", "c", "x", "T" },
+                        new string[2] { "H", "I" }
+                    },
+                    $"Random.{Environment.NewLine}" +
+                    $"This example is a BIP38 encrypted key with a 4-character passphrase (8?rH). " +
+                    $"You can see how a possible list of characters for each part is set." +
+                    $"{Environment.NewLine}" +
+                    $"Estimated time: <3 sec"
+                },
             };
         }
     }
