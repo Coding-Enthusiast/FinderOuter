@@ -67,10 +67,11 @@ namespace FinderOuter.Services.SearchSpaces
         }
 
 
-        public bool SetValues(string[][] result)
+        public bool SetValues(string[][] result, out string error)
         {
             if (result.Length != PasswordLength || result.Any(x => x.Length < 1))
             {
+                error = "Invalid array length.";
                 return false;
             }
 
@@ -79,6 +80,7 @@ namespace FinderOuter.Services.SearchSpaces
             {
                 if (result[i].Length < 1)
                 {
+                    error = "At least 2 possible items is needed.";
                     return false;
                 }
                 totalLen += result[i].Length;
@@ -119,12 +121,13 @@ namespace FinderOuter.Services.SearchSpaces
             }
             if (MaxPasswordSize > Sha256Fo.BlockByteSize)
             {
-                // error = "Password is too long (bigger than SHA256 block size).";
+                error = "Password is too long (bigger than SHA256 block size).";
                 return false;
             }
 
             AllValues = stream.ToByteArray();
 
+            error = string.Empty;
             return true;
         }
     }

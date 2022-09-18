@@ -20,11 +20,10 @@ namespace FinderOuter.ViewModels
     {
         public MissingBip38PassViewModel()
         {
+            isCaseSensitive = true;
             Bip38Service = new(Result);
             CompareInputTypeList = ListHelper.GetEnumDescItems(new CompareInputType[] { CompareInputType.PrivateKey }).ToArray();
             SelectedCompareInputType = CompareInputTypeList.First();
-            PassRecoveryModeList = ListHelper.GetEnumDescItems<PassRecoveryMode>().ToArray();
-            SelectedPassRecoveryMode = PassRecoveryModeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Bip38,
@@ -37,26 +36,19 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            this.WhenAnyValue(x => x.SelectedPassRecoveryMode)
-                .Subscribe(x => PassLenToolTip = $"Number of {(x.Value == PassRecoveryMode.Alphanumeric ? "character" : "word")}s in the passphrase");
-            this.WhenAnyValue(x => x.SelectedPassRecoveryMode)
-                .Subscribe(x => IsCharMode = x.Value == PassRecoveryMode.Alphanumeric);
-
             HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
+            IObservable<bool> isExampleEnable = this.WhenAnyValue(
                 x => x.Result.CurrentState,
                 (state) => state != State.Working && HasExample);
-            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleEnable);
 
             SetExamples(GetExampleData());
 
-            IObservable<bool> canAddWords = this.WhenAnyValue(x => x.IsProcessed, x => x.searchSpace.AllWords,
-                (b, all) => b == true && all != null && all.Length != 0);
             IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
 
             StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
-            AddCommand = ReactiveCommand.Create(Add, isFindEnabled);
-            AddAllCommand = ReactiveCommand.Create(AddAll, canAddWords);
+            AddCommand = ReactiveCommand.Create(Add, canAdd);
+            AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
             AddLowerCommand = ReactiveCommand.Create(AddLower, canAdd);
             AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
@@ -70,34 +62,12 @@ namespace FinderOuter.ViewModels
             $"passwords. Don't expect more than 3 or 4 checks per second per thread (the more CPU/cores you have the faster " +
             $"it will be).";
 
-        private string _passLenTip;
-        public string PassLenToolTip
-        {
-            get => _passLenTip;
-            set => this.RaiseAndSetIfChanged(ref _passLenTip, value);
-        }
+        public static string PassLenToolTip => "Number of words in the passphrase.";
 
         private readonly PasswordSearchSpace searchSpace = new();
 
         public Bip38Service Bip38Service { get; }
-        public IPasswordService PassService { get; set; } = new PasswordService();
         public IFileManager FileMan { get; set; } = new FileManager();
-        public IEnumerable<DescriptiveItem<PassRecoveryMode>> PassRecoveryModeList { get; }
-
-        private DescriptiveItem<PassRecoveryMode> _recMode;
-        public DescriptiveItem<PassRecoveryMode> SelectedPassRecoveryMode
-        {
-            get => _recMode;
-            set => this.RaiseAndSetIfChanged(ref _recMode, value);
-        }
-
-        private bool _isCMode;
-        public bool IsCharMode
-        {
-            get => _isCMode;
-            set => this.RaiseAndSetIfChanged(ref _isCMode, value);
-        }
-
 
         private string _bip38;
         public string Bip38
@@ -148,7 +118,7 @@ namespace FinderOuter.ViewModels
         public async void Open()
         {
             string[] res = await FileMan.OpenAsync();
-            OpenResult = $"Number of items: {res.Length:n0}";
+            OpenResult = $"Number of items:{Environment.NewLine}{res.Length:n0}";
             searchSpace.AllWords = res;
             isChanged = true;
         }
@@ -190,7 +160,14 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddAllCommand { get; }
         private void AddAll()
         {
-            AddToList(searchSpace.AllWords);
+            if (searchSpace.AllWords is not null && searchSpace.AllWords.Length != 0)
+            {
+                AddToList(searchSpace.AllWords);
+            }
+            else
+            {
+                Result.AddMessage("No password list is defined yet. Use the \"Open\" button to set it.");
+            }
         }
 
         public IReactiveCommand AddCommand { get; }
@@ -208,25 +185,25 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddLowerCommand { get; }
         private void AddLower()
         {
-            AddToList(ConstantsFO.LowerCase.ToCharArray().Cast<string>());
+            AddToList(ConstantsFO.LowerCase.ToCharArray().Select(c => c.ToString()));
         }
 
         public IReactiveCommand AddUpperCommand { get; }
         private void AddUpper()
         {
-            AddToList(ConstantsFO.UpperCase.ToCharArray().Cast<string>());
+            AddToList(ConstantsFO.UpperCase.ToCharArray().Select(c => c.ToString()));
         }
 
         public IReactiveCommand AddNumberCommand { get; }
         private void AddNumber()
         {
-            AddToList(ConstantsFO.Numbers.ToCharArray().Cast<string>());
+            AddToList(ConstantsFO.Numbers.ToCharArray().Select(c => c.ToString()));
         }
 
         public IReactiveCommand AddSymbolCommand { get; }
         private void AddSymbol()
         {
-            AddToList(ConstantsFO.AllSymbols.ToCharArray().Cast<string>());
+            AddToList(ConstantsFO.AllSymbols.ToCharArray().Select(c => c.ToString()));
         }
 
 
@@ -248,6 +225,11 @@ namespace FinderOuter.ViewModels
 
             if (!IsProcessed)
             {
+                if (searchSpace.AllWords is null || searchSpace.AllWords.Length == 0)
+                {
+                    Result.AddMessage("No password list is defined yet. Use the \"Open\" button to set it.");
+                    return;
+                }
                 Start();
                 foreach (ObservableCollection<string> item in allItems)
                 {
@@ -260,14 +242,14 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray(), out string error))
                 {
                     Bip38Service.Find(searchSpace, CompareString, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
                 {
-                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                    Result.AddMessage(error);
                 }
             }
         }
@@ -286,51 +268,41 @@ namespace FinderOuter.ViewModels
             CompareString = (string)ex[2];
             PassLength = (int)ex[3];
 
-            temp = (int)ex[4];
-            Debug.Assert(temp < PassRecoveryModeList.Count());
-            SelectedPassRecoveryMode = PassRecoveryModeList.ElementAt(temp);
+            Start();
 
-            //CustomChars = (string)ex[5];
+            Debug.Assert(allItems.Length == PassLength);
+            string[][] items = (string[][])ex[4];
+            for (int i = 0; i < items.Length; i++)
+            {
+                foreach (var item in items[i])
+                {
+                    allItems[i].Add(item);
+                }
+            }
 
-            //PasswordType flag = (PasswordType)(ulong)ex[6];
-            //IsUpperCase = flag.HasFlag(PasswordType.UpperCase);
-            //IsLowerCase = flag.HasFlag(PasswordType.LowerCase);
-            //IsNumber = flag.HasFlag(PasswordType.Numbers);
-            //IsSymbol = flag.HasFlag(PasswordType.Symbols);
-
-            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[7]}";
+            Result.Message = $"Example {exampleIndex} of {totalExampleCount}. Source: {(string)ex[5]}";
         }
 
         private ExampleData GetExampleData()
         {
-            return new ExampleData<string, int, string, int, int, string, ulong, string>()
+            return new ExampleData<string, int, string, int, string[][], string>()
             {
                 {
-                    "6PRSR1GPq9Y7a6cCDwR2EshQGHXF4tWqGKHy2uU3qwRpcw4zZA4zz7GT1W",
-                    1, // InputType
-                    "1PSuGX1gXt8iu7gftMVsLg66EVuA1fRDz2",
-                    2, // Pass length
-                    0, // Recovery mode
-                    "",
-                    2, // Pass type flag
+                    "6PYXYyDuJtuDRYfnth2qqcEP9G9TdqvK8qJC2PAoyFTi7rvCdzcmeq4Y5a",
+                    0, // CompareInputType
+                    "1MNcUQ2XeU2cA9z9HdbqkDMrB1c1WPgKn4",
+                    3, // Pass length
+                    new string[3][]
+                    {
+                        new string[3] { "FinderOuter", "Finderouter", "finderouter" },
+                        new string[5] { "was", "Is", "is", "!", "@" },
+                        new string[4] { "fast", "quick", "Fast", "Awesome" }
+                    },
                     $"Random.{Environment.NewLine}" +
-                    $"This example is a BIP38 with a very simple password using only lower case letters (ab)." +
+                    $"This example is a BIP38 encrypted key with a 3-word passphrase (FinderOuterIsFast). " +
+                    $"You can see how a possible list of words for each word is set." +
                     $"{Environment.NewLine}" +
-                    $"Estimated time: <1 sec"
-                },
-                {
-                    "6PRKDN49yuCFZ5gzPq4iGY7Av9FZ1YEXXpgsDXTsXEMjZoUVMLtzXBxw5Q",
-                    1, // InputType
-                    "13TQwKK5vsxziCKJucwhATRqi23ogkAh66",
-                    4, // Pass length
-                    1, // Recovery mode
-                    "!jRrSs",
-                    0, // Pass type flag
-                    $"Random.{Environment.NewLine}" +
-                    $"This example is a BIP38 with a longer password using lower and upper case letters and symbols (j!RS). " +
-                    $"But we know the possible characters used in the password so the recovery is a lot faster." +
-                    $"{Environment.NewLine}" +
-                    $"Estimated time: ~20 sec"
+                    $"Estimated time: <3 sec"
                 },
             };
         }
