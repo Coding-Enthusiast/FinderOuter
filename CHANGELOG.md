@@ -1,6 +1,15 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.15.0.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.16.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.16.0 (2022-09-19)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.15.0.0...v0.16.0.0)  
+* Moving ECC to Bitcoin.Net (more tested and optimized)
+* Introduce search space for BIP38 password recovery option
+* Add a new option to open a file containing list of words to be used in the passphrase
+* Fix checking inputs with no missing characters
+* Many improvements in different recovery options
+* Some additional tests, bug fixes, code and UI improvements
 
 ### Release 0.15.0 (2022-05-19)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.14.0.0...v0.15.0.0)  
