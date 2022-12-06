@@ -79,8 +79,8 @@ namespace FinderOuter.Services
             }
 
             Scalar8x32 toAddSc = new((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
-            Scalar8x32 initial = smallKey.Add(toAddSc, out int overflow);
-            if (overflow != 0)
+            Scalar8x32 initial = smallKey.Add(toAddSc, out bool overflow);
+            if (overflow)
             {
                 return;
             }

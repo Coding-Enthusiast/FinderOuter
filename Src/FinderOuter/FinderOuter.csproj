@@ -2,13 +2,13 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>0.16.0.0</AssemblyVersion>
-    <FileVersion>0.16.0.0</FileVersion>
+    <AssemblyVersion>0.16.0.1</AssemblyVersion>
+    <FileVersion>0.16.0.1</FileVersion>
     <PackageProjectUrl>https://github.com/Coding-Enthusiast/FinderOuter</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Coding-Enthusiast/FinderOuter</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright (c) 2020 Coding Enthusiast</Copyright>
-    <Version>0.16.0.0</Version>
+    <Version>0.16.0.1</Version>
     <Company>Autarkysoft</Company>
     <Authors>Coding-Enthusiast</Authors>
     <PackageTags>bitcoin</PackageTags>
@@ -58,7 +58,7 @@
     <None Remove="Views\MissingMnemonicView.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.21.0" />
+    <PackageReference Include="Autarkysoft.Bitcoin" Version="0.22.0" />
     <PackageReference Include="Avalonia" Version="0.10.18" />
     <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
