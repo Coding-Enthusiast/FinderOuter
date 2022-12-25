@@ -20,8 +20,8 @@ namespace FinderOuter.ViewModels
             OptionList = new OptionVmBase[]
             {
                 new MessageSignatureViewModel(),
-                new MissingBase58ViewModel(),
                 new MissingBase16ViewModel(),
+                new MissingBase58ViewModel(),
                 new MissingMiniPrivateKeyViewModel(),
                 new MissingBip38PassViewModel(),
                 new MissingMnemonicViewModel(),
