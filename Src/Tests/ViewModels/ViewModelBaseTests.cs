@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tests.ViewModels
 {
-    public class ViewModelBaseTest : ViewModelBase
+    public class ViewModelBaseTests : ViewModelBase
     {
         [Fact]
         public void RaiseCloseEventTest()
