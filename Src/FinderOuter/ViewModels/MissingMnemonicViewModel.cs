@@ -30,8 +30,8 @@ namespace FinderOuter.ViewModels
             MnService = new MnemonicSevice(Result);
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Mnemonic,
-                x => x.AdditionalInfo,
+                x => x.Input,
+                x => x.CompareInput,
                 x => x.KeyPath,
                 x => x.Result.CurrentState,
                 (mn, extra, path, state) =>
@@ -115,28 +115,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isElecTVisible, value);
         }
 
-        private string _mnemonic;
-        public string Mnemonic
-        {
-            get => _mnemonic;
-            set
-            {
-                if (value != _mnemonic)
-                {
-                    this.RaiseAndSetIfChanged(ref _mnemonic, value);
-                    isChanged = true;
-                }
-            }
-        }
-
-
-        private string _additional;
-        public string AdditionalInfo
-        {
-            get => _additional;
-            set => this.RaiseAndSetIfChanged(ref _additional, value);
-        }
-
         private string _pass;
         public string PassPhrase
         {
@@ -157,7 +135,7 @@ namespace FinderOuter.ViewModels
             isChanged = false;
             Index = 0;
             Max = 0;
-            IsProcessed = searchSpace.Process(Mnemonic, SelectedMissingChar, SelectedMnemonicType, SelectedWordListType, SelectedElectrumMnType, out string error);
+            IsProcessed = searchSpace.Process(Input, SelectedMissingChar, SelectedMnemonicType, SelectedWordListType, SelectedElectrumMnType, out string error);
 
             if (IsProcessed)
             {
@@ -283,7 +261,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
-                    MnService.FindMissing(searchSpace, PassPhrase, KeyPath, AdditionalInfo, SelectedCompareInputType.Value);
+                    MnService.FindMissing(searchSpace, PassPhrase, KeyPath, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -298,7 +276,7 @@ namespace FinderOuter.ViewModels
         {
             object[] ex = GetNextExample();
 
-            Mnemonic = (string)ex[0];
+            Input = (string)ex[0];
             SelectedMissingChar = MissingChars[(int)ex[1]];
 
             int temp1 = (int)ex[2];
@@ -315,7 +293,7 @@ namespace FinderOuter.ViewModels
 
             PassPhrase = (string)ex[5];
             KeyPath = (string)ex[6];
-            AdditionalInfo = (string)ex[7];
+            CompareInput = (string)ex[7];
 
             int temp4 = (int)ex[8];
             Debug.Assert(temp4 < CompareInputTypeList.Count());

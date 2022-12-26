@@ -20,7 +20,7 @@
             Grid.Column="0"
             Grid.Row="0"/>
 
-    <TextBox Text="{Binding AdditionalInput}"
+    <TextBox Text="{Binding CompareInput}"
              Watermark="Additional data to check against (private key, public key or address)"
              Grid.Column="0"
              Grid.Row="1"/>

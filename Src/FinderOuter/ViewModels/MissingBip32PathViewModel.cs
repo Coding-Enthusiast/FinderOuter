@@ -26,10 +26,10 @@ namespace FinderOuter.ViewModels
             SelectedCompareInputType = CompareInputTypeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input,
-                x => x.ExtraInput,
+                x => x.XKey,
+                x => x.CompareInput,
                 x => x.Result.CurrentState,
-                (input1, input2, state) => !string.IsNullOrEmpty(input1) && !string.IsNullOrEmpty(input2) && state != State.Working);
+                (s1, s2, state) => !string.IsNullOrEmpty(s1) && !string.IsNullOrEmpty(s2) && state != State.Working);
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
             this.WhenAnyValue(x => x.SelectedInputType)
@@ -80,15 +80,15 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isMn, value);
         }
 
-        private string _input;
-        public string Input
+        private string _xk;
+        public string XKey
         {
-            get => _input;
+            get => _xk;
             set
             {
-                if (value != _input)
+                if (value != _xk)
                 {
-                    this.RaiseAndSetIfChanged(ref _input, value);
+                    this.RaiseAndSetIfChanged(ref _xk, value);
                     if (!string.IsNullOrEmpty(value))
                     {
                         // Guess type
@@ -114,13 +114,6 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private string _additional;
-        public string ExtraInput
-        {
-            get => _additional;
-            set => this.RaiseAndSetIfChanged(ref _additional, value);
-        }
-
         private string _pass;
         public string PassPhrase
         {
@@ -144,15 +137,15 @@ namespace FinderOuter.ViewModels
 
         public override void Find()
         {
-            PathService.FindPath(Input, SelectedInputType.Value, SelectedWordListType, PassPhrase,
-                                 ExtraInput, SelectedCompareInputType.Value, Count);
+            PathService.FindPath(XKey, SelectedInputType.Value, SelectedWordListType, PassPhrase,
+                                 CompareInput, SelectedCompareInputType.Value, Count);
         }
 
         public void Example()
         {
             object[] ex = GetNextExample();
 
-            Input = (string)ex[0];
+            XKey = (string)ex[0];
 
             int temp1 = (int)ex[1];
             Debug.Assert(temp1 < InputTypeList.Count());
@@ -163,7 +156,7 @@ namespace FinderOuter.ViewModels
             SelectedWordListType = WordListsList.ElementAt(temp2);
 
             PassPhrase = (string)ex[3];
-            ExtraInput = (string)ex[4];
+            CompareInput = (string)ex[4];
 
             int temp3 = (int)ex[5];
             Debug.Assert(temp3 < CompareInputTypeList.Count());

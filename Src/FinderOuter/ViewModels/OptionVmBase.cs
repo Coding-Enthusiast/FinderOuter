@@ -50,6 +50,27 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selMisC, value);
         }
 
+        private string _input;
+        public string Input
+        {
+            get => _input;
+            set
+            {
+                if (value != _input)
+                {
+                    this.RaiseAndSetIfChanged(ref _input, value);
+                    isChanged = true;
+                }
+            }
+        }
+
+        private string _comp;
+        public string CompareInput
+        {
+            get => _comp;
+            set => this.RaiseAndSetIfChanged(ref _comp, value);
+        }
+
         public IEnumerable<DescriptiveItem<CompareInputType>> CompareInputTypeList { get; protected set; }
 
         private DescriptiveItem<CompareInputType> _selCompType;

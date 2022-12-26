@@ -18,7 +18,7 @@
             CommandParameter="{Binding InputKb}"
             Grid.Column="0"
             Grid.Row="0"/>
-    <TextBox Text="{Binding AdditionalInput}"
+    <TextBox Text="{Binding CompareInput}"
              Watermark="Additional data to check against (address or public key)"
              Grid.Column="0"
              Grid.Row="1"/>

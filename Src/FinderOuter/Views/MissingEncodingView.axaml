@@ -17,7 +17,7 @@
   </UserControl.Resources>
 
   <Grid RowDefinitions="*,auto">
-    <TextBox Text="{Binding Input}"
+    <TextBox Text="{Binding Text}"
              Watermark="Input string"
              AcceptsReturn="True"
              Grid.Row="0"/>

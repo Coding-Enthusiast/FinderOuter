@@ -22,7 +22,7 @@ namespace FinderOuter.ViewModels
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
-                x => x.AdditionalInput,
+                x => x.CompareInput,
                 x => x.Result.CurrentState,
                 (b58, extra, state) =>
                             !string.IsNullOrEmpty(b58) &&
@@ -53,24 +53,9 @@ namespace FinderOuter.ViewModels
         private readonly ArmoryService service;
 
 
-        private string _input;
-        public string Input
-        {
-            get => _input;
-            set => this.RaiseAndSetIfChanged(ref _input, value);
-        }
-
-        private string _input2;
-        public string AdditionalInput
-        {
-            get => _input2;
-            set => this.RaiseAndSetIfChanged(ref _input2, value);
-        }
-
-
         public override void Find()
         {
-            service.FindMissing(Input, SelectedMissingChar, AdditionalInput, SelectedCompareInputType.Value);
+            service.FindMissing(Input, SelectedMissingChar, CompareInput, SelectedCompareInputType.Value);
         }
 
         public void Example()
@@ -79,7 +64,7 @@ namespace FinderOuter.ViewModels
 
             Input = (string)ex[0];
             SelectedMissingChar = MissingChars[(int)ex[1]];
-            AdditionalInput = (string)ex[2];
+            CompareInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < CompareInputTypeList.Count());
             SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);

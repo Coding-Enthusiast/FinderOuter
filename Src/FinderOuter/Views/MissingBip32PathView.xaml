@@ -11,7 +11,7 @@
   </Design.DataContext>
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
-    <TextBox Text="{Binding Input}"
+    <TextBox Text="{Binding XKey}"
              Watermark="Enter mnemonic or extended key here"
              Height="86"
              Grid.Column="0"
@@ -39,7 +39,7 @@
              Grid.Row="1"/>
 
     <Grid ColumnDefinitions="*,auto" Grid.Column="0" Grid.Row="2">
-      <TextBox Text="{Binding ExtraInput}"
+      <TextBox Text="{Binding CompareInput}"
                Watermark="Additional input (preferably a private key or public key, if not enter an address)"
                Grid.Column="0"/>
       <NumericUpDown Text="{Binding Count}"

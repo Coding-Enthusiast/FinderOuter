@@ -91,28 +91,6 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private string _input;
-        public string Input
-        {
-            get => _input;
-            set
-            {
-                if (value != _input)
-                {
-                    this.RaiseAndSetIfChanged(ref _input, value);
-                    isChanged = true;
-                }
-            }
-        }
-
-        private string _input2;
-        public string ExtraInput
-        {
-            get => _input2;
-            set => this.RaiseAndSetIfChanged(ref _input2, value);
-        }
-
-
         private void Start()
         {
             isChanged = false;
@@ -255,7 +233,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
                 {
-                    b58Service.Find(searchSpace, ExtraInput, SelectedCompareInputType.Value);
+                    b58Service.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -276,7 +254,7 @@ namespace FinderOuter.ViewModels
             Debug.Assert(temp1 < InputTypeList.Count());
             SelectedInputType = InputTypeList.ElementAt(temp1);
 
-            ExtraInput = (string)ex[3];
+            CompareInput = (string)ex[3];
 
             int temp2 = (int)ex[4];
             Debug.Assert(temp2 < CompareInputTypeList.Count());

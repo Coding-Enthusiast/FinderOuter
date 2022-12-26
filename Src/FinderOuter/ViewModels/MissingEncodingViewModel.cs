@@ -27,8 +27,8 @@ namespace FinderOuter.ViewModels
             };
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input,
-                (input) => !string.IsNullOrEmpty(input));
+                x => x.Text,
+                (txt) => !string.IsNullOrEmpty(txt));
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
         }
@@ -43,15 +43,15 @@ namespace FinderOuter.ViewModels
 
         public IEnumerable<EncodingState> EncodingList { get; }
 
-        private string _input;
-        public string Input
+        private string _txt;
+        public string Text
         {
-            get => _input;
+            get => _txt;
             set
             {
-                if (_input != value)
+                if (_txt != value)
                 {
-                    this.RaiseAndSetIfChanged(ref _input, value);
+                    this.RaiseAndSetIfChanged(ref _txt, value);
                     foreach (EncodingState item in EncodingList)
                     {
                         item.Possible = Possibility.Maybe;
@@ -79,21 +79,21 @@ namespace FinderOuter.ViewModels
 
         private byte[] CheckBase16()
         {
-            string input = Input;
-            if (Input.StartsWith(Base16.Prefix))
+            string temp = Text;
+            if (Text.StartsWith(Base16.Prefix))
             {
-                input = Input.Replace(Base16.Prefix, "");
+                temp = Text.Replace(Base16.Prefix, "");
             }
 
-            if (HasValidChars(Base16.CharSet, input.ToLower()))
+            if (HasValidChars(Base16.CharSet, temp.ToLower()))
             {
-                if (Input.Length % 2 != 0)
+                if (temp.Length % 2 != 0)
                 {
-                    Result.AddMessage("Input length is invalid (has to be divisible by 2).");
+                    Result.AddMessage("Text length is invalid for Base-16 encoding (has to be divisible by 2).");
                 }
                 else
                 {
-                    bool b = Base16.TryDecode(Input, out byte[] result);
+                    bool b = Base16.TryDecode(temp, out byte[] result);
                     Debug.Assert(b && result != null);
                     return result;
                 }
@@ -103,9 +103,9 @@ namespace FinderOuter.ViewModels
 
         private byte[] CheckBase43()
         {
-            if (HasValidChars(Base43.CharSet, Input))
+            if (HasValidChars(Base43.CharSet, Text))
             {
-                bool b = Base43.TryDecode(Input, out byte[] result);
+                bool b = Base43.TryDecode(Text, out byte[] result);
                 Debug.Assert(b && result != null);
                 return result;
             }
@@ -114,27 +114,27 @@ namespace FinderOuter.ViewModels
 
         private byte[] CheckBase58(bool checksum)
         {
-            if (HasValidChars(Base58.CharSet, Input))
+            if (HasValidChars(Base58.CharSet, Text))
             {
                 if (checksum)
                 {
-                    if (Base58.IsValidWithChecksum(Input))
+                    if (Base58.IsValidWithChecksum(Text))
                     {
-                        bool b = Base58.TryDecodeWithChecksum(Input, out byte[] result);
+                        bool b = Base58.TryDecodeWithChecksum(Text, out byte[] result);
                         Debug.Assert(b && result != null);
                         return result;
                     }
                     else
                     {
-                        Result.AddMessage("Input has an invalid checksum. Skipping checksum validation.");
-                        bool b = Base58.TryDecode(Input, out byte[] result);
+                        Result.AddMessage("Text has an invalid checksum. Skipping checksum validation.");
+                        bool b = Base58.TryDecode(Text, out byte[] result);
                         Debug.Assert(b && result != null);
                         return result;
                     }
                 }
                 else
                 {
-                    bool b = Base58.TryDecode(Input, out byte[] result);
+                    bool b = Base58.TryDecode(Text, out byte[] result);
                     Debug.Assert(b && result != null);
                     return result;
                 }
@@ -145,14 +145,14 @@ namespace FinderOuter.ViewModels
         public void Decode(EncodingName name)
         {
             Result.Init();
-            if (string.IsNullOrEmpty(Input))
+            if (string.IsNullOrEmpty(Text))
             {
-                Result.AddMessage("Input can not be null or empty.");
+                Result.AddMessage("Text can not be null or empty.");
                 Result.Finalize();
                 return;
             }
 
-            Result.AddMessage($"Input has {Input.Length} character{(Input.Length > 1 ? "s" : "")}.");
+            Result.AddMessage($"Text has {Text.Length} character{(Text.Length > 1 ? "s" : "")}.");
 
             try
             {
@@ -162,7 +162,7 @@ namespace FinderOuter.ViewModels
                     EncodingName.Base43 => CheckBase43(),
                     EncodingName.Base58 => CheckBase58(false),
                     EncodingName.Base58Check => CheckBase58(true),
-                    EncodingName.Base64 => Convert.FromBase64String(Input),
+                    EncodingName.Base64 => Convert.FromBase64String(Text),
                     _ => throw new NotImplementedException(),
                 };
 
@@ -184,7 +184,7 @@ namespace FinderOuter.ViewModels
         {
             foreach (EncodingState item in EncodingList)
             {
-                item.SetPossibility(Input);
+                item.SetPossibility(Text);
             }
         }
     }

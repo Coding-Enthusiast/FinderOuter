@@ -29,7 +29,7 @@ namespace FinderOuter.ViewModels
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
-                x => x.ExtraInput,
+                x => x.CompareInput,
                 x => x.Result.CurrentState, (miniKey, addr, state) =>
                             !string.IsNullOrEmpty(miniKey) &&
                             !string.IsNullOrEmpty(addr) &&
@@ -71,29 +71,6 @@ namespace FinderOuter.ViewModels
 
         private readonly MiniKeyService miniService;
         private readonly MiniKeySearchSpace searchSpace;
-
-
-        private string _input;
-        public string Input
-        {
-            get => _input;
-            set
-            {
-                if (value != _input)
-                {
-                    this.RaiseAndSetIfChanged(ref _input, value);
-                    isChanged = true;
-                }
-            }
-        }
-
-        private string _input2;
-        public string ExtraInput
-        {
-            get => _input2;
-            set => this.RaiseAndSetIfChanged(ref _input2, value);
-        }
-
 
         private void Start()
         {
@@ -237,7 +214,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
                 {
-                    miniService.Find(searchSpace, ExtraInput, SelectedCompareInputType.Value);
+                    miniService.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -253,7 +230,7 @@ namespace FinderOuter.ViewModels
 
             Input = (string)ex[0];
             SelectedMissingChar = MissingChars[(int)ex[1]];
-            ExtraInput = (string)ex[2];
+            CompareInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < CompareInputTypeList.Count());
             SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);

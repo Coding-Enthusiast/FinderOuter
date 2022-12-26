@@ -11,7 +11,7 @@
   </Design.DataContext>
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
-    <TextBox Text="{Binding Mnemonic}"
+    <TextBox Text="{Binding Input}"
              Watermark="Mnemonic (seed phrase), separate each word with a space"
              Height="86"
              Grid.Column="0"
@@ -23,7 +23,7 @@
                 SelectedItem="{Binding SelectedWordListType}"/>
     </StackPanel>
 
-    <TextBox Text="{Binding AdditionalInfo}"
+    <TextBox Text="{Binding CompareInput}"
              Watermark="Additional info (preferably a private key or public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="1"/>

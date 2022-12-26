@@ -28,8 +28,8 @@ namespace FinderOuter.ViewModels
             SelectedPassRecoveryMode = PassRecoveryModeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Mnemonic,
-                x => x.AdditionalInfo,
+                x => x.Input,
+                x => x.CompareInput,
                 x => x.KeyPath,
                 x => x.Result.CurrentState,
                 (mn, extra, path, state) =>
@@ -96,13 +96,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isChkVisible, value);
         }
 
-        private string _mnemonic;
-        public string Mnemonic
-        {
-            get => _mnemonic;
-            set => this.RaiseAndSetIfChanged(ref _mnemonic, value);
-        }
-
         private int _passLen = 1;
         public int PassLength
         {
@@ -121,13 +114,6 @@ namespace FinderOuter.ViewModels
         {
             get => _customChars;
             set => this.RaiseAndSetIfChanged(ref _customChars, value);
-        }
-
-        private string _additional;
-        public string AdditionalInfo
-        {
-            get => _additional;
-            set => this.RaiseAndSetIfChanged(ref _additional, value);
         }
 
         private string _path;
@@ -220,8 +206,8 @@ namespace FinderOuter.ViewModels
 
             if (success)
             {
-                MnService.Find(Mnemonic, SelectedMnemonicType, SelectedWordListType,
-                               AdditionalInfo, SelectedCompareInputType.Value, KeyPath, PassLength, allValues);
+                MnService.Find(Input, SelectedMnemonicType, SelectedWordListType,
+                               CompareInput, SelectedCompareInputType.Value, KeyPath, PassLength, allValues);
             }
             else
             {
@@ -235,7 +221,7 @@ namespace FinderOuter.ViewModels
         {
             object[] ex = GetNextExample();
 
-            Mnemonic = (string)ex[0];
+            Input = (string)ex[0];
 
             int temp1 = (int)ex[1];
             Debug.Assert(temp1 < MnemonicTypesList.Count());
@@ -249,7 +235,7 @@ namespace FinderOuter.ViewModels
             Debug.Assert(temp3 < CompareInputTypeList.Count());
             SelectedCompareInputType = CompareInputTypeList.ElementAt(temp3);
 
-            AdditionalInfo = (string)ex[4];
+            CompareInput = (string)ex[4];
             KeyPath = (string)ex[5];
 
             int temp4 = (int)ex[6];

@@ -11,7 +11,7 @@
   </Design.DataContext>
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
-    <TextBox Text="{Binding Bip38}"
+    <TextBox Text="{Binding Input}"
              Watermark="BIP-38 string"
              Grid.Column="0"
              Grid.Row="0"/>
@@ -23,7 +23,7 @@
                    Grid.Column="1"
                    Grid.Row="0"/>
 
-    <TextBox Text="{Binding CompareString}"
+    <TextBox Text="{Binding CompareInput}"
              Watermark="Compare string (public key or address)"
              Grid.Column="0"
              Grid.Row="1"/>

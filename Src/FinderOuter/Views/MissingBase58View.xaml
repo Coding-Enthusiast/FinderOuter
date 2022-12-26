@@ -30,7 +30,7 @@
                 Margin="1"/>
     </StackPanel>
 
-    <TextBox Text="{Binding ExtraInput}"
+    <TextBox Text="{Binding CompareInput}"
              Watermark="Optional (preferably a public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="1"/>

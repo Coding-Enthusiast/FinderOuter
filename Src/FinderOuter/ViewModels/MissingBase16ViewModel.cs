@@ -66,21 +66,6 @@ namespace FinderOuter.ViewModels
         private readonly B16SearchSpace searchSpace;
 
 
-        private string _input;
-        public string Input
-        {
-            get => _input;
-            set => this.RaiseAndSetIfChanged(ref _input, value);
-        }
-
-        private string _input2;
-        public string AdditionalInput
-        {
-            get => _input2;
-            set => this.RaiseAndSetIfChanged(ref _input2, value);
-        }
-
-
         private void Start()
         {
             isChanged = false;
@@ -179,7 +164,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
                 {
-                    b16Service.Find(searchSpace, AdditionalInput, SelectedCompareInputType.Value);
+                    b16Service.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -196,7 +181,7 @@ namespace FinderOuter.ViewModels
 
             Input = (string)ex[0];
             SelectedMissingChar = MissingChars[(int)ex[1]];
-            AdditionalInput = (string)ex[2];
+            CompareInput = (string)ex[2];
             int temp = (int)ex[3];
             Debug.Assert(temp < CompareInputTypeList.Count());
             SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);

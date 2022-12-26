@@ -26,8 +26,8 @@ namespace FinderOuter.ViewModels
             SelectedCompareInputType = CompareInputTypeList.First();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Bip38,
-                x => x.CompareString,
+                x => x.Input,
+                x => x.CompareInput,
                 x => x.Result.CurrentState,
                 (mn, extra, state) =>
                             !string.IsNullOrEmpty(mn) &&
@@ -69,19 +69,6 @@ namespace FinderOuter.ViewModels
         public Bip38Service Bip38Service { get; }
         public IFileManager FileMan { get; set; } = new FileManager();
 
-        private string _bip38;
-        public string Bip38
-        {
-            get => _bip38;
-            set
-            {
-                if (value != _bip38)
-                {
-                    this.RaiseAndSetIfChanged(ref _bip38, value);
-                    isChanged = true;
-                }
-            }
-        }
 
         private int _passLen = 1;
         public int PassLength
@@ -98,13 +85,6 @@ namespace FinderOuter.ViewModels
                     isChanged = true;
                 }
             }
-        }
-
-        private string _comp;
-        public string CompareString
-        {
-            get => _comp;
-            set => this.RaiseAndSetIfChanged(ref _comp, value);
         }
 
 
@@ -128,7 +108,7 @@ namespace FinderOuter.ViewModels
             isChanged = false;
             Index = 0;
             Max = 0;
-            IsProcessed = searchSpace.Process(Bip38, PassLength, out string error);
+            IsProcessed = searchSpace.Process(Input, PassLength, out string error);
 
             if (IsProcessed)
             {
@@ -244,7 +224,7 @@ namespace FinderOuter.ViewModels
             {
                 if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray(), out string error))
                 {
-                    Bip38Service.Find(searchSpace, CompareString, SelectedCompareInputType.Value);
+                    Bip38Service.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
@@ -259,13 +239,13 @@ namespace FinderOuter.ViewModels
         {
             object[] ex = GetNextExample();
 
-            Bip38 = (string)ex[0];
+            Input = (string)ex[0];
 
             int temp = (int)ex[1];
             Debug.Assert(temp < CompareInputTypeList.Count());
             SelectedCompareInputType = CompareInputTypeList.ElementAt(temp);
 
-            CompareString = (string)ex[2];
+            CompareInput = (string)ex[2];
             PassLength = (int)ex[3];
 
             Start();
