@@ -20,7 +20,6 @@ namespace FinderOuter.ViewModels
     {
         public MissingBip38PassViewModel()
         {
-            isCaseSensitive = true;
             Bip38Service = new(Result);
             CompareInputTypeList = ListHelper.GetEnumDescItems(new CompareInputType[] { CompareInputType.PrivateKey }).ToArray();
             SelectedCompareInputType = CompareInputTypeList.First();
@@ -153,6 +152,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddCommand { get; }
         private void Add()
         {
+            // TODO: should we add a warning about extra spaces here?
             if (!string.IsNullOrEmpty(ToAdd))
             {
                 if (!CurrentItems.Contains(ToAdd))

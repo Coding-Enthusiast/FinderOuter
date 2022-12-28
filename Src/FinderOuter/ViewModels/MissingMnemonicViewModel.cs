@@ -173,6 +173,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddSimilarCommand { get; }
         private void AddSimilar()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (string.IsNullOrWhiteSpace(ToAdd))
             {
                 Result.AddMessage("Word to add can not be null or empty.");
@@ -187,6 +188,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (!string.IsNullOrEmpty(ToAdd) && searchSpace.allWords.Contains(ToAdd))
             {
                 if (!CurrentItems.Contains(ToAdd))
@@ -203,6 +205,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddStartCommand { get; }
         private void AddStart()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.StartsWith(ToAdd)));
@@ -212,6 +215,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddEndCommand { get; }
         private void AddEnd()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.EndsWith(ToAdd)));
@@ -221,6 +225,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddContainCommand { get; }
         private void AddContain()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.Contains(ToAdd)));

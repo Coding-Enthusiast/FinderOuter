@@ -45,7 +45,6 @@ namespace FinderOuter.ViewModels
 
 
 
-        protected bool isCaseSensitive = false;
         protected bool isChanged = false;
 
 
@@ -142,7 +141,7 @@ namespace FinderOuter.ViewModels
             get => _index;
             protected set
             {
-                if (value < 0 || value > allItems.Length)
+                if (value < 0 || value > allItems?.Length)
                 {
                     value = 0;
                 }
@@ -199,7 +198,7 @@ namespace FinderOuter.ViewModels
         public string ToAdd
         {
             get => _toAdd;
-            set => this.RaiseAndSetIfChanged(ref _toAdd, isCaseSensitive ? value : value.ToLowerInvariant().Trim());
+            set => this.RaiseAndSetIfChanged(ref _toAdd, value);
         }
 
         public IReactiveCommand RemoveSelectedCommand { get; }

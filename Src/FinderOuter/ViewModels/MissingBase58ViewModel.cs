@@ -20,8 +20,6 @@ namespace FinderOuter.ViewModels
     {
         public MissingBase58ViewModel()
         {
-            isCaseSensitive = true;
-
             // Don't move this line, service must be instantiated here
             InputService inServ = new();
             b58Service = new Base58Service(Result);
@@ -153,6 +151,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddSimilarCommand { get; }
         private void AddSimilar()
         {
+            ToAdd = ToAdd.Trim();
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1)
             {
                 // Characters outside of Base58 charset are accepted here
@@ -187,6 +186,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
+            ToAdd = ToAdd.Trim();
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B58SearchSpace.AllChars.Contains(ToAdd[0]))
             {
                 if (!CurrentItems.Contains(ToAdd))
@@ -196,7 +196,7 @@ namespace FinderOuter.ViewModels
             }
             else
             {
-                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+                Result.AddMessage($"The entered character ({ToAdd}) is not a valid Base-58 character.");
             }
         }
 

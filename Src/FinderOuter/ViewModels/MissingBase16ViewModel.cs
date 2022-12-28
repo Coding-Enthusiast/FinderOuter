@@ -117,6 +117,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
+            ToAdd = ToAdd.Trim().ToLowerInvariant();
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
             {
                 if (!CurrentItems.Contains(ToAdd))
@@ -126,7 +127,7 @@ namespace FinderOuter.ViewModels
             }
             else
             {
-                Result.AddMessage($"The entered character ({ToAdd}) is not found in Base-58 character list.");
+                Result.AddMessage($"The entered character ({ToAdd}) is not a valid Base-16 character.");
             }
         }
 
