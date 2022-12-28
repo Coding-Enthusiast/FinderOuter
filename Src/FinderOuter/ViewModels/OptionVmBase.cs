@@ -19,9 +19,14 @@ namespace FinderOuter.ViewModels
     /// </summary>
     public abstract class OptionVmBase : ViewModelBase
     {
-        public OptionVmBase()
+        public OptionVmBase() : this(new Report(), new WindowManager())
         {
-            WinMan = new WindowManager();
+        }
+
+        public OptionVmBase(IReport report, IWindowManager winMan)
+        {
+            Result = report ?? new Report();
+            WinMan = winMan ?? new WindowManager();
             MissingChars = ConstantsFO.MissingSymbols.ToCharArray();
             SelectedMissingChar = MissingChars[0];
 
@@ -39,8 +44,27 @@ namespace FinderOuter.ViewModels
         }
 
 
+
+        protected bool isCaseSensitive = false;
+        protected bool isChanged = false;
+
+
         public abstract string OptionName { get; }
         public abstract string Description { get; }
+
+
+        public static string MissingToolTip => ConstantsFO.MissingToolTip;
+        public static KB InputKb => KB.DamagedInput;
+        public static KB ExtraInputKb => KB.ExtraInput;
+        public static KB Bip32PathKb => KB.Bip32Path;
+        public static KB AlphanumericPassKb => KB.AlphanumericPass;
+        public static KB CustomCharPassKb => KB.CustomCharPass;
+
+
+        public IReport Result { get; }
+        public IWindowManager WinMan { get; }
+        public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
+
         public char[] MissingChars { get; }
 
         private char _selMisC;
@@ -80,21 +104,8 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
 
-        private string _exName = string.Empty;
-        public string ExampleButtonName
-        {
-            get => _exName;
-            set => this.RaiseAndSetIfChanged(ref _exName, value);
-        }
 
-        private IReport _res = new Report();
-        public IReport Result
-        {
-            get => _res;
-            set => this.RaiseAndSetIfChanged(ref _res, value);
-        }
-
-        public static string MissingToolTip => ConstantsFO.MissingToolTip;
+        protected ObservableCollection<string>[] allItems;
 
         private ObservableCollection<string> _items;
         public ObservableCollection<string> CurrentItems
@@ -110,13 +121,11 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selItem, value);
         }
 
-        protected ObservableCollection<string>[] allItems;
-
         private string _step;
         public string SelectedStep
         {
             get => _step;
-            set => this.RaiseAndSetIfChanged(ref _step, value);
+            protected set => this.RaiseAndSetIfChanged(ref _step, value);
         }
 
 
@@ -133,6 +142,11 @@ namespace FinderOuter.ViewModels
             get => _index;
             protected set
             {
+                if (value < 0 || value > allItems.Length)
+                {
+                    value = 0;
+                }
+
                 if (_index != value)
                 {
                     this.RaiseAndSetIfChanged(ref _index, value);
@@ -157,7 +171,6 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
         }
 
-        protected bool isChanged;
 
         protected void ResetSearchSpace()
         {
@@ -181,7 +194,6 @@ namespace FinderOuter.ViewModels
             Index--;
         }
 
-        protected bool isCaseSensitive = false;
 
         private string _toAdd;
         public string ToAdd
@@ -206,6 +218,13 @@ namespace FinderOuter.ViewModels
         public bool HasExample { get; protected set; }
         protected int exampleIndex, totalExampleCount;
         private IEnumerator<object[]> exampleEnumerator;
+
+        private string _exName = string.Empty;
+        public string ExampleButtonName
+        {
+            get => _exName;
+            set => this.RaiseAndSetIfChanged(ref _exName, value);
+        }
 
         protected void SetExamples(ExampleData data)
         {
@@ -240,14 +259,5 @@ namespace FinderOuter.ViewModels
 
         public IReactiveCommand FindCommand { get; protected set; }
         public abstract void Find();
-
-
-        public static KB InputKb => KB.DamagedInput;
-        public static KB ExtraInputKb => KB.ExtraInput;
-        public static KB Bip32PathKb => KB.Bip32Path;
-        public static KB AlphanumericPassKb => KB.AlphanumericPass;
-        public static KB CustomCharPassKb => KB.CustomCharPass;
-        public IWindowManager WinMan { get; set; }
-        public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
     }
 }
