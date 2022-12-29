@@ -38,10 +38,7 @@ namespace FinderOuter.ViewModels
 
             PathService = new Bip32PathService(Result);
 
-            HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working && HasExample);
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());

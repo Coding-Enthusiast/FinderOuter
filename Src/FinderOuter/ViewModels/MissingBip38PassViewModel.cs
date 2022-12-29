@@ -35,10 +35,7 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            HasExample = true;
-            IObservable<bool> isExampleEnable = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working && HasExample);
+            IObservable<bool> isExampleEnable = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleEnable);
 
             SetExamples(GetExampleData());

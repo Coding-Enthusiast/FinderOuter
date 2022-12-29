@@ -42,10 +42,7 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working && HasExample);
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);

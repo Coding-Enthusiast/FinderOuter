@@ -35,10 +35,7 @@ namespace FinderOuter.ViewModels
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
-            HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working);
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             CompareInputTypeList = ListHelper.GetEnumDescItems(CompareInputType.PrivateKey).ToArray();

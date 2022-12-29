@@ -43,10 +43,7 @@ namespace FinderOuter.ViewModels
             this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
                 .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
 
-            HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working && HasExample);
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());

@@ -37,10 +37,7 @@ namespace FinderOuter.ViewModels
             CompareInputTypeList = ListHelper.GetEnumDescItems(CompareInputType.PrivateKey).ToArray();
             SelectedCompareInputType = CompareInputTypeList.First();
 
-            HasExample = true;
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(
-                x => x.Result.CurrentState,
-                (state) => state != State.Working);
+            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
             SetExamples(GetExampleData());
