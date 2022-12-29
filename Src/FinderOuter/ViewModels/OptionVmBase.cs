@@ -204,13 +204,13 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand RemoveSelectedCommand { get; }
         private void RemoveSelected()
         {
-            CurrentItems.Remove(SelectedItem);
+            CurrentItems?.Remove(SelectedItem);
         }
 
         public IReactiveCommand ClearAllCommand { get; }
         private void ClearAll()
         {
-            CurrentItems.Clear();
+            CurrentItems?.Clear();
         }
 
 
@@ -236,6 +236,9 @@ namespace FinderOuter.ViewModels
 
         protected object[] GetNextExample()
         {
+            Debug.Assert(HasExample);
+            Debug.Assert(exampleEnumerator is not null);
+
             if (exampleEnumerator.MoveNext())
             {
                 exampleIndex++;
