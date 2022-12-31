@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using System;
 using System.Numerics;
 
 namespace FinderOuter.Services.SearchSpaces
@@ -13,7 +14,7 @@ namespace FinderOuter.Services.SearchSpaces
 
         public string Input { get; protected set; }
         public uint[] AllPermutationValues { get; protected set; }
-        public int[] PermutationCounts { get; protected set; }
+        public int[] PermutationCounts { get; protected set; } = Array.Empty<int>();
         public int[] MissingIndexes { get; protected set; }
         public int MissCount { get; protected set; }
 
