@@ -12,7 +12,7 @@ namespace FinderOuter.Services.SearchSpaces
 {
     public class B16SearchSpace : SearchSpaceBase
     {
-        public readonly char[] AllChars = ConstantsFO.Base16Chars.ToCharArray();
+        public static readonly char[] AllChars = ConstantsFO.Base16Chars.ToCharArray();
         public byte[] preComputed;
 
         public bool Process(string input, char missChar, out string error)

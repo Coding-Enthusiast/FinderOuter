@@ -101,13 +101,13 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddAllCommand { get; }
         private void AddAll()
         {
-            AddToList(searchSpace.AllChars);
+            AddToList(B16SearchSpace.AllChars);
         }
 
         public IReactiveCommand AddNumberCommand { get; }
         private void AddNumber()
         {
-            AddToList(searchSpace.AllChars.Where(c => char.IsDigit(c)));
+            AddToList(B16SearchSpace.AllChars.Where(c => char.IsDigit(c)));
         }
 
 
@@ -115,7 +115,7 @@ namespace FinderOuter.ViewModels
         private void AddExact()
         {
             ToAdd = ToAdd.Trim().ToLowerInvariant();
-            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && searchSpace.AllChars.Contains(ToAdd[0]))
+            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B16SearchSpace.AllChars.Contains(ToAdd[0]))
             {
                 if (!CurrentItems.Contains(ToAdd))
                 {
@@ -151,7 +151,7 @@ namespace FinderOuter.ViewModels
                 Start();
                 foreach (ObservableCollection<string> item in allItems)
                 {
-                    foreach (char c in searchSpace.AllChars)
+                    foreach (char c in B16SearchSpace.AllChars)
                     {
                         item.Add(c.ToString());
                     }
