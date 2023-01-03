@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Services.SearchSpaces;
 using System.Collections.Generic;
 using Xunit;
@@ -13,14 +14,20 @@ namespace Tests.Services.SearchSpaces
     {
         public static IEnumerable<object[]> GetProcessCases()
         {
-            yield return new object[] { "a", 'z', false, "Missing character is not accepted.", 0, null };
-            yield return new object[] { null, '*', false, "Input contains invalid base-16 character(s).", 0, null };
-            yield return new object[] { string.Empty, '*', false, "Input contains invalid base-16 character(s).", 0, null };
-            yield return new object[] { "a", '*', false, "Input length is 1 instead of 64.", 0, null };
+            yield return new object[] 
+            {
+                "a", 'z', false, $"Invalid missing character. Choose one from {ConstantsFO.MissingSymbols}", 0, null 
+            };
+            yield return new object[] { null, '*', false, "Key can not be null or empty.", 0, null };
+            yield return new object[] { string.Empty, '*', false, "Key can not be null or empty.", 0, null };
+            yield return new object[] 
+            { 
+                "a", '*', false, "A Base-16 private key must have 64 characters. Input is missing 63 character(s).", 0, null
+            };
             yield return new object[]
             {
                 "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", '*', false,
-                "This is a problematic key to brute force, please open a new issue on GitHub for this case.", 0, null
+                "Out of range (invalid) private key.", 0, null
             };
             yield return new object[]
             {

@@ -74,8 +74,9 @@ namespace FinderOuter.Services
                 return false;
             }
 
-            if (!CheckChars(key, Base16.CharSet, missChar, out message))
+            if (string.IsNullOrEmpty(key))
             {
+                message = "Key can not be null or empty.";
                 return false;
             }
 
@@ -83,6 +84,11 @@ namespace FinderOuter.Services
             {
                 message = $"A Base-16 private key must have 64 characters. Input " +
                           $"{((key.Length > 64) ? $"has {key.Length - 64} extra" : $"is missing {64 - key.Length}")} character(s).";
+                return false;
+            }
+
+            if (!CheckChars(key.ToLower(), Base16.CharSet, missChar, out message))
+            {
                 return false;
             }
 

@@ -19,25 +19,8 @@ namespace FinderOuter.Services.SearchSpaces
         {
             Input = input;
 
-            if (!InputService.IsMissingCharValid(missChar))
+            if (!InputService.IsValidBase16Key(input, missChar, out error))
             {
-                error = "Missing character is not accepted.";
-                return false;
-            }
-            else if (string.IsNullOrWhiteSpace(input) ||
-                     !input.All(c => ConstantsFO.Base16Chars.Contains(char.ToLower(c)) || c == missChar))
-            {
-                error = "Input contains invalid base-16 character(s).";
-                return false;
-            }
-            else if (input.Length != 64)
-            {
-                error = $"Input length is {input.Length} instead of 64.";
-                return false;
-            }
-            else if (!InputService.IsPrivateKeyInRange(Base16.Decode(input.Replace(missChar, 'f'))))
-            {
-                error = "This is a problematic key to brute force, please open a new issue on GitHub for this case.";
                 return false;
             }
             else
