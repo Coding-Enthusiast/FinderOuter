@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using FinderOuter.Services.Comparers;
@@ -24,6 +25,127 @@ namespace Tests.Services
         private const string ValidPubHexComp = "030b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17";
         private const string ValidPubHexUncomp = "040b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17b95aedf5242b50b5c82147697351941032602332d5cc81531eec98a9b8f9c7cd";
 
+
+        [Theory]
+        [InlineData('*', true)]
+        [InlineData('-', true)]
+        [InlineData('$', true)]
+        [InlineData('_', true)]
+        [InlineData(' ', false)]
+        [InlineData('a', false)]
+        [InlineData('B', false)]
+        [InlineData('`', false)]
+        [InlineData('(', false)]
+        public void IsMissingCharValidTest(char c, bool expected)
+        {
+            InputService serv = new();
+            Assert.Equal(expected, serv.IsMissingCharValid(c));
+        }
+
+        public static IEnumerable<object[]> GetCheckCharsCases()
+        {
+            yield return new object[] { "abc", "abcde", '*', true, "" };
+            yield return new object[] { "ab1", "abcde", '*', false, "Invalid character \"1\" found at index=2." };
+            yield return new object[] { "fabcde", "abcde", '*', false, "Invalid character \"f\" found at index=0." };
+            yield return new object[]
+            {
+                "faAcde", "abcde", '*', false,
+                $"Invalid character \"f\" found at index=0.{Environment.NewLine}Invalid character \"A\" found at index=2."
+            };
+            yield return new object[] { "a*b", "abcde", '?', false, "Invalid character \"*\" found at index=1." };
+            yield return new object[] { " ", "abcde", '*', false, "Invalid character \" \" found at index=0." };
+            yield return new object[] { "a ", "abcde", '*', false, "Invalid character \" \" found at index=1." };
+            yield return new object[] { "a*b", "abcde", '*', true, "" };
+            yield return new object[] { "***", "abcde", '*', true, "" };
+        }
+        [Theory]
+        [MemberData(nameof(GetCheckCharsCases))]
+        public void CheckCharsTest(string input, string charSet, char ignore, bool expected, string expErr)
+        {
+            InputService serv = new();
+            bool actual = serv.CheckChars(input, charSet, ignore, out string error);
+            Assert.Equal(expected, actual);
+            Assert.Equal(expErr, error);
+        }
+
+        public static IEnumerable<object[]> GetBase16KeyCases()
+        {
+            yield return new object[]
+            {
+                "0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a529473",
+                '*',
+                true,
+                "Given key is valid."
+            };
+            yield return new object[]
+            {
+                "0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a529473",
+                'x',
+                false,
+                $"Invalid missing character. Choose one from {ConstantsFO.MissingSymbols}"
+            };
+            yield return new object[]
+            {
+                "0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a5294734",
+                '*',
+                false,
+                "A Base-16 private key must have 64 characters. Input has 1 extra character(s)."
+            };
+            yield return new object[]
+            {
+                "0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a5294",
+                '*',
+                false,
+                "A Base-16 private key must have 64 characters. Input is missing 2 character(s)."
+            };
+            yield return new object[]
+            {
+                "*591b71f000d4c4b8060c7b3d248*b6*9db*74d6*3cdb*dcf13809de5a5*947*",
+                '*',
+                true,
+                "Given key is valid."
+            };
+            yield return new object[]
+            {
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                '*',
+                false,
+                "Out of range (invalid) private key."
+            };
+            yield return new object[]
+            {
+                // N
+                "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+                '*',
+                false,
+                "Out of range (invalid) private key."
+            };
+            yield return new object[]
+            {
+                // N-1
+                "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+                '*',
+                true,
+                "Given key is valid."
+            };
+            yield return new object[]
+            {
+                // N-1 but incrementing the missing char (last char) will lead to overflow
+                "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd036414*",
+                '*',
+                false,
+                "The given key is an edge case that can overflow."
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetBase16KeyCases))]
+        public void IsValidBase16KeyTest(string key, char c, bool expB, string expectedMsg)
+        {
+            InputService serv = new();
+            bool actB = serv.IsValidBase16Key(key, c, out string actualMsg);
+            Assert.Equal(expB, actB);
+            Assert.Equal(expectedMsg, actualMsg);
+        }
 
         [Theory]
         [InlineData(CompareInputType.AddrComp, ValidP2pkhAddr, true, typeof(PrvToAddrCompComparer))]
@@ -92,6 +214,20 @@ namespace Tests.Services
             Assert.Equal(expectedMsg, actualMsg);
         }
 
+        [Theory]
+        [InlineData(ValidCompKey)]
+        [InlineData(ValidUnCompKey1)]
+        [InlineData(ValidUnCompKey2)]
+        [InlineData("5HueCGU8*MjxEXxiPuD5BDku4MkFqeZyd4dZ*jvhTVqvbTLvyT*")]
+        [InlineData("K%dMAjG^erYan$eui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP9*617")]
+        [InlineData("L53fCHmQhbNp1B4JipfBtf*HZH7cAibzG9oK19X(iFzxHgAkz6JK")]
+        public void CanBePrivateKeyTest(string key)
+        {
+            InputService serv = new();
+            bool actual = serv.CanBePrivateKey(key, out string error);
+            Assert.True(actual, error);
+            Assert.Null(error);
+        }
 
         [Theory]
         [InlineData(ValidP2pkhAddr, true, "The given address is a valid base-58 encoded address used for P2PKH scripts.")]
@@ -106,37 +242,6 @@ namespace Tests.Services
             bool actB = serv.IsValidBase58Address(addr, out string actualMsg);
             Assert.Equal(expB, actB);
             Assert.Equal(expectedMsg, actualMsg);
-        }
-
-
-        [Theory]
-        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a529473", true, "Given key is valid.")]
-        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a52947", false, "Base-16 private keys must be 64 characters long.")]
-        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a5294734", false, "Base-16 private keys must be 64 characters long.")]
-        [InlineData("0591b71f000d4c4b8060c7b3d2488b619db074d603cdbddcf13809de5a52947X", false, "Invalid Base-16 string.")]
-        [InlineData("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", false, "Out of range private key.")]
-        public void IsValidBase16KeyTest(string key, bool expB, string expectedMsg)
-        {
-            InputService serv = new();
-            bool actB = serv.IsValidBase16Key(key, out string actualMsg);
-            Assert.Equal(expB, actB);
-            Assert.Equal(expectedMsg, actualMsg);
-        }
-
-
-        [Theory]
-        [InlineData(ValidCompKey)]
-        [InlineData(ValidUnCompKey1)]
-        [InlineData(ValidUnCompKey2)]
-        [InlineData("5HueCGU8*MjxEXxiPuD5BDku4MkFqeZyd4dZ*jvhTVqvbTLvyT*")]
-        [InlineData("K%dMAjG^erYan$eui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP9*617")]
-        [InlineData("L53fCHmQhbNp1B4JipfBtf*HZH7cAibzG9oK19X(iFzxHgAkz6JK")]
-        public void CanBePrivateKeyTest(string key)
-        {
-            InputService serv = new();
-            bool actual = serv.CanBePrivateKey(key, out string error);
-            Assert.True(actual, error);
-            Assert.Null(error);
         }
 
         [Theory]
@@ -207,21 +312,7 @@ namespace Tests.Services
             Assert.Contains(expError, error);
         }
 
-        [Theory]
-        [InlineData('*', true)]
-        [InlineData('-', true)]
-        [InlineData('$', true)]
-        [InlineData('_', true)]
-        [InlineData(' ', false)]
-        [InlineData('a', false)]
-        [InlineData('B', false)]
-        [InlineData('`', false)]
-        [InlineData('(', false)]
-        public void IsMissingCharValidTest(char c, bool expected)
-        {
-            InputService serv = new();
-            Assert.Equal(expected, serv.IsMissingCharValid(c));
-        }
+
 
         [Theory]
         [InlineData("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2", true, "77bff20c60e522dfaa3350c39b030a5d004e839a")]

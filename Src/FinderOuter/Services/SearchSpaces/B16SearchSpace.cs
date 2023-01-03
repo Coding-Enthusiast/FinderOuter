@@ -90,8 +90,8 @@ namespace FinderOuter.Services.SearchSpaces
                 message = "This method should not be called with missing characters.";
                 return false;
             }
-
-            return InputService.IsValidBase16Key(Input, out message);
+            // TODO: make sure passing the hard-coded missing char is not causing problems.
+            return InputService.IsValidBase16Key(Input, '*', out message);
         }
 
         public bool SetValues(string[][] result)

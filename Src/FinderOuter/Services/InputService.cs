@@ -5,13 +5,13 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 
 namespace FinderOuter.Services
@@ -30,8 +30,80 @@ namespace FinderOuter.Services
                 CompareInputType.PrivateKey => new PrvToPrvComparer(),
                 _ => null
             };
-            return !(result is null) && result.Init(input);
+            return (result is not null) && result.Init(input);
         }
+
+
+        public bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
+
+        public bool CheckChars(ReadOnlySpan<char> array, ReadOnlySpan<char> charSet, char ignore, out string error)
+        {
+            bool isValid = true;
+            error = string.Empty;
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (!charSet.Contains(array[i]) && array[i] != ignore)
+                {
+                    isValid = false;
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        error += Environment.NewLine;
+                    }
+                    error += $"Invalid character \"{array[i]}\" found at index={i}.";
+                }
+            }
+            return isValid;
+        }
+
+        public bool IsPrivateKeyInRange(byte[] key)
+        {
+            if (key.Length != 32)
+            {
+                return false;
+            }
+            Scalar8x32 temp = new(key, out bool overflow);
+            return !temp.IsZero && !overflow;
+        }
+
+
+        public bool IsValidBase16Key(string key, char missChar, out string message)
+        {
+            if (!IsMissingCharValid(missChar))
+            {
+                message = $"Invalid missing character. Choose one from {ConstantsFO.MissingSymbols}";
+                return false;
+            }
+
+            if (!CheckChars(key, Base16.CharSet, missChar, out message))
+            {
+                return false;
+            }
+
+            if (key.Length != 64)
+            {
+                message = $"A Base-16 private key must have 64 characters. Input " +
+                          $"{((key.Length > 64) ? $"has {key.Length - 64} extra" : $"is missing {64 - key.Length}")} character(s).";
+                return false;
+            }
+
+            if (!Base16.TryDecode(key.Replace(missChar, 'f'), out byte[] ba))
+            {
+                // This should never happen
+                message = "Invalid Base-16 string.";
+                return false;
+            }
+            else if (!IsPrivateKeyInRange(ba))
+            {
+                message = key.Contains(missChar) ?
+                    "The given key is an edge case that can overflow." :
+                    "Out of range (invalid) private key.";
+                return false;
+            }
+
+            message = "Given key is valid.";
+            return true;
+        }
+
 
         public bool IsValidMinikey(string key, out string message)
         {
@@ -114,28 +186,7 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsValidBase16Key(string key, out string message)
-        {
-            if (key.Length != 64)
-            {
-                message = "Base-16 private keys must be 64 characters long.";
-                return false;
-            }
 
-            if (!Base16.TryDecode(key, out byte[] ba))
-            {
-                message = "Invalid Base-16 string.";
-                return false;
-            }
-            else if (!IsPrivateKeyInRange(ba))
-            {
-                message = "Out of range private key.";
-                return false;
-            }
-
-            message = "Given key is valid.";
-            return true;
-        }
 
 
         public bool CanBePrivateKey(string key, out string error)
@@ -303,19 +354,6 @@ namespace FinderOuter.Services
 
             error = null;
             return true;
-        }
-
-        public bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
-
-        public bool IsPrivateKeyInRange(byte[] key)
-        {
-            if (key.Length > 32)
-            {
-                return false;
-            }
-            BigInteger val = key.ToBigInt(true, true);
-            BigInteger max = BigInteger.Parse("115792089237316195423570985008687907852837564279074904382605163141518161494336");
-            return val >= BigInteger.One && val <= max;
         }
 
 
