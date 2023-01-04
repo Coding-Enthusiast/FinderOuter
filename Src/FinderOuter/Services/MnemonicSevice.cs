@@ -7,7 +7,6 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -27,12 +26,10 @@ namespace FinderOuter.Services
         public MnemonicSevice(IReport rep)
         {
             report = rep;
-            inputService = new InputService();
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
 
         private readonly byte[][] allWordsBytes = new byte[2048][];
         public const byte SpaceByte = 32;
@@ -1439,7 +1436,7 @@ namespace FinderOuter.Services
                 this.path = null;
             }
 
-            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            if (!InputService.TryGetCompareService(compType, comp, out comparer))
             {
                 report.Fail($"Invalid extra input or input type {compType}.");
                 comparer = null;

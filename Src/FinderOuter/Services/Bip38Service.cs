@@ -24,12 +24,10 @@ namespace FinderOuter.Services
         public Bip38Service(IReport rep)
         {
             report = rep;
-            inputService = new();
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private ICompareService comparer;
         private PasswordSearchSpace searchSpace;
 
@@ -1679,7 +1677,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            if (!InputService.TryGetCompareService(compType, comp, out comparer))
             {
                 report.Fail($"Invalid compare string or compare string type ({compType}).");
             }

@@ -22,7 +22,6 @@ namespace Tests.Services.SearchSpaces
         public void ConstructorTest()
         {
             MockSearchSpace ss = new();
-            Assert.NotNull(ss.InputService);
             Assert.NotNull(ss.PermutationCounts);
         }
 

@@ -16,9 +16,9 @@ using System.Text;
 
 namespace FinderOuter.Services
 {
-    public class InputService
+    public static class InputService
     {
-        public bool TryGetCompareService(CompareInputType inType, string input, out ICompareService result)
+        public static bool TryGetCompareService(CompareInputType inType, string input, out ICompareService result)
         {
             result = inType switch
             {
@@ -34,9 +34,10 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
+        public static bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
 
-        public bool CheckChars(ReadOnlySpan<char> array, ReadOnlySpan<char> charSet, char ignore, out string error)
+
+        public static bool CheckChars(ReadOnlySpan<char> array, ReadOnlySpan<char> charSet, char ignore, out string error)
         {
             bool isValid = true;
             error = string.Empty;
@@ -55,9 +56,9 @@ namespace FinderOuter.Services
             return isValid;
         }
 
-        public bool IsPrivateKeyInRange(byte[] key)
+        public static bool IsPrivateKeyInRange(byte[] key)
         {
-            if (key.Length != 32)
+            if (key?.Length != 32)
             {
                 return false;
             }
@@ -66,7 +67,7 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsValidBase16Key(string key, char missChar, out string message)
+        public static bool IsValidBase16Key(string key, char missChar, out string message)
         {
             if (!IsMissingCharValid(missChar))
             {
@@ -111,7 +112,7 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsValidMinikey(string key, out string message)
+        public static bool IsValidMinikey(string key, out string message)
         {
             try
             {
@@ -131,7 +132,8 @@ namespace FinderOuter.Services
             }
         }
 
-        public bool IsValidBase58Bip38(string bip38, out string message)
+
+        public static bool IsValidBase58Bip38(string bip38, out string message)
         {
             if (!Base58.IsValid(bip38))
             {
@@ -160,7 +162,7 @@ namespace FinderOuter.Services
             return true;
         }
 
-        public bool IsValidBase58Address(string address, out string message)
+        public static bool IsValidBase58Address(string address, out string message)
         {
             if (!Base58.IsValid(address))
             {
@@ -192,10 +194,7 @@ namespace FinderOuter.Services
         }
 
 
-
-
-
-        public bool CanBePrivateKey(string key, out string error)
+        public static bool CanBePrivateKey(string key, out string error)
         {
             if (key.Length == ConstantsFO.PrivKeyCompWifLen)
             {
@@ -231,7 +230,8 @@ namespace FinderOuter.Services
             }
         }
 
-        public bool IsValidWif(string key, out string message)
+
+        public static bool IsValidWif(string key, out string message)
         {
             if (!Base58.IsValid(key))
             {
@@ -287,7 +287,7 @@ namespace FinderOuter.Services
             }
         }
 
-        public bool CheckIncompletePrivateKey(string key, char missingChar, out string error)
+        public static bool CheckIncompletePrivateKey(string key, char missingChar, out string error)
         {
             if (!IsMissingCharValid(missingChar))
             {
@@ -363,7 +363,7 @@ namespace FinderOuter.Services
         }
 
 
-        public bool IsValidAddress(string address, bool ignoreP2SH, out byte[] hash)
+        public static bool IsValidAddress(string address, bool ignoreP2SH, out byte[] hash)
         {
             hash = null;
             if (string.IsNullOrWhiteSpace(address))
@@ -394,13 +394,13 @@ namespace FinderOuter.Services
         }
 
 
-        public bool NormalizeNFKD(string s, out string norm)
+        public static bool NormalizeNFKD(string s, out string norm)
         {
             norm = s.Normalize(NormalizationForm.FormKD);
             return !s.IsNormalized(NormalizationForm.FormKD);
         }
 
-        public bool TryDecodeBip38(string bip38, out byte[] data, out byte[] salt,
+        public static bool TryDecodeBip38(string bip38, out byte[] data, out byte[] salt,
                                    out bool isComp, out bool isEcMult, out bool hasLot, out string error)
         {
             isComp = false;

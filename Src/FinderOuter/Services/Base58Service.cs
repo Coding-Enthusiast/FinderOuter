@@ -9,7 +9,6 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
-using FinderOuter.Backend.ECC;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -28,13 +27,11 @@ namespace FinderOuter.Services
     {
         public Base58Service(IReport rep)
         {
-            inputService = new InputService();
             report = rep;
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private ICompareService comparer;
         private B58SearchSpace searchSpace;
 
@@ -1182,7 +1179,7 @@ namespace FinderOuter.Services
         {
             if (searchSpace.MissCount != 0) // Length must be correct then
             {
-                if (inputService.CanBePrivateKey(searchSpace.Input, out string error))
+                if (InputService.CanBePrivateKey(searchSpace.Input, out string error))
                 {
                     report.AddMessageSafe($"{(searchSpace.isComp ? "Compressed" : "Uncompressed")} private key " +
                                           $"missing {searchSpace.MissCount} characters was detected.");
@@ -1304,7 +1301,7 @@ namespace FinderOuter.Services
                 switch (searchSpace.inputType)
                 {
                     case Base58Type.PrivateKey:
-                        if (!inputService.TryGetCompareService(compType, comp, out comparer))
+                        if (!InputService.TryGetCompareService(compType, comp, out comparer))
                         {
                             if (!string.IsNullOrEmpty(comp))
                                 report.AddMessage($"Could not instantiate ICompareService (invalid {compType}).");

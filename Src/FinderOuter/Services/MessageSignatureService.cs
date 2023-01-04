@@ -21,14 +21,12 @@ namespace FinderOuter.Services
         public MessageSignatureService(IReport rep)
         {
             calc = new EllipticCurveCalculator();
-            inputService = new InputService();
             report = rep;
         }
 
 
         private readonly IReport report;
         private readonly EllipticCurveCalculator calc;
-        private readonly InputService inputService;
 
 
         private static Signature CreateFromRecId(byte[] sigBa)
@@ -147,7 +145,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (inputService.NormalizeNFKD(message, out string norm))
+            if (InputService.NormalizeNFKD(message, out string norm))
             {
                 message = norm;
                 report.AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");
@@ -333,7 +331,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (inputService.NormalizeNFKD(message, out string norm))
+            if (InputService.NormalizeNFKD(message, out string norm))
             {
                 message = norm;
                 report.AddMessage("Input message was normalized using Unicode Normalization Form Compatibility Decomposition.");

@@ -20,13 +20,11 @@ namespace FinderOuter.Services
     {
         public Base16Sevice(IReport rep)
         {
-            inputService = new InputService();
             report = rep;
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private ICompareService comparer;
         private B16SearchSpace searchSpace;
 
@@ -227,7 +225,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            if (!InputService.TryGetCompareService(compType, comp, out comparer))
                 report.Fail($"Could not instantiate ICompareService (invalid {compType}).");
             else
             {

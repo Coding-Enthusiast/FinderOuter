@@ -19,12 +19,10 @@ namespace FinderOuter.Services
         public Bip32PathService(IReport rep)
         {
             report = rep;
-            inputService = new InputService();
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private ICompareService comparer;
 
         public enum SeedType
@@ -103,7 +101,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            if (!InputService.TryGetCompareService(compType, comp, out comparer))
             {
                 report.Fail($"Invalid extra input or extra input type: {compType}");
                 return;

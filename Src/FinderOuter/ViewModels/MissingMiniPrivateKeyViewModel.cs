@@ -21,7 +21,6 @@ namespace FinderOuter.ViewModels
         public MissingMiniPrivateKeyViewModel()
         {
             // Don't move this line, service must be instantiated here
-            InputService inServ = new();
             miniService = new MiniKeyService(Result);
             searchSpace = new();
 

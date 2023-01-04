@@ -25,13 +25,11 @@ namespace FinderOuter.Services
         public ArmoryService(IReport rep)
         {
             report = rep;
-            inputService = new InputService();
         }
 
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private readonly Calc calc = new();
 
         private ICompareService comparer;
@@ -563,9 +561,9 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!inputService.IsMissingCharValid(missChar))
+            if (!InputService.IsMissingCharValid(missChar))
                 report.Fail("Missing character is not accepted.");
-            else if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            else if (!InputService.TryGetCompareService(compType, comp, out comparer))
                 report.Fail($"Invalid extra input or input type {compType}.");
             else if (string.IsNullOrWhiteSpace(phrase))
                 report.Fail("Recovery phrase can not be null or empty.");

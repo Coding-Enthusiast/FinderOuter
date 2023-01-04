@@ -6,7 +6,6 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -25,12 +24,10 @@ namespace FinderOuter.Services
         public MnemonicExtensionService(IReport rep)
         {
             report = rep;
-            inputService = new InputService();
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private BIP0032Path path;
         private ICompareService comparer;
 
@@ -661,7 +658,7 @@ namespace FinderOuter.Services
                 return;
             else if (!TrySetPath(path))
                 return;
-            else if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            else if (!InputService.TryGetCompareService(compType, comp, out comparer))
                 report.Fail($"Invalid extra input or input type {compType}.");
             else if (!TrySetSalt(passLength, mnType, out byte[] salt))
                 return;

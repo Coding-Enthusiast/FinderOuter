@@ -10,8 +10,6 @@ namespace FinderOuter.Services.SearchSpaces
 {
     public abstract class SearchSpaceBase
     {
-        public InputService InputService { get; set; } = new();
-
         public string Input { get; protected set; }
         public uint[] AllPermutationValues { get; protected set; }
         public int[] PermutationCounts { get; protected set; } = Array.Empty<int>();

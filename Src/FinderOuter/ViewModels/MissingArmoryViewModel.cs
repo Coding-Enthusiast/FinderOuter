@@ -17,7 +17,6 @@ namespace FinderOuter.ViewModels
         public MissingArmoryViewModel()
         {
             service = new ArmoryService(Result);
-            InputService inServ = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,

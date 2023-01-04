@@ -20,13 +20,11 @@ namespace FinderOuter.Services
     {
         public MiniKeyService(IReport rep)
         {
-            inputService = new InputService();
             report = rep;
         }
 
 
         private readonly IReport report;
-        private readonly InputService inputService;
         private ICompareService comparer;
         private MiniKeySearchSpace searchSpace;
 
@@ -486,7 +484,7 @@ namespace FinderOuter.Services
         {
             report.Init();
 
-            if (!inputService.TryGetCompareService(compType, comp, out comparer))
+            if (!InputService.TryGetCompareService(compType, comp, out comparer))
                 report.Fail("Invalid compare input or type.");
             else
             {

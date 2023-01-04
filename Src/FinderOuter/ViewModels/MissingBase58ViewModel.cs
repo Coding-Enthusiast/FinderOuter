@@ -21,7 +21,6 @@ namespace FinderOuter.ViewModels
         public MissingBase58ViewModel()
         {
             // Don't move this line, service must be instantiated here
-            InputService inServ = new();
             b58Service = new Base58Service(Result);
             searchSpace = new();
 
@@ -29,7 +28,7 @@ namespace FinderOuter.ViewModels
                 x => x.Input, x => x.SelectedMissingChar,
                 x => x.Result.CurrentState, (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
-                            inServ.IsMissingCharValid(c) &&
+                            InputService.IsMissingCharValid(c) &&
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);

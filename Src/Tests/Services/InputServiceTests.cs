@@ -27,6 +27,43 @@ namespace Tests.Services
 
 
         [Theory]
+        [InlineData(CompareInputType.AddrComp, ValidP2pkhAddr, true, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrComp, "", false, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrComp, ValidP2shAddr, false, typeof(PrvToAddrCompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, ValidP2pkhAddr, true, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, "", false, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrUnComp, ValidP2shAddr, false, typeof(PrvToAddrUncompComparer))]
+        [InlineData(CompareInputType.AddrBoth, ValidP2pkhAddr, true, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrBoth, ValidP2shAddr, false, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrBoth, "", false, typeof(PrvToAddrBothComparer))]
+        [InlineData(CompareInputType.AddrNested, ValidP2shAddr, true, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.AddrNested, ValidP2pkhAddr, false, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.AddrNested, "", false, typeof(PrvToAddrNestedComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidCompKey, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey1, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey2, true, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, "", false, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.PrivateKey, ValidP2pkhAddr, false, typeof(PrvToPrvComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidPubHexComp, true, typeof(PrvToPubComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidPubHexUncomp, true, typeof(PrvToPubComparer))]
+        [InlineData(CompareInputType.Pubkey, ValidP2pkhAddr, false, typeof(PrvToPubComparer))]
+        public void TryGetCompareServiceTest(CompareInputType t, string input, bool expB, Type expType)
+        {
+            bool actualB = InputService.TryGetCompareService(t, input, out ICompareService actual);
+            Assert.Equal(expB, actualB);
+            Assert.IsType(expType, actual);
+        }
+
+        [Fact]
+        public void TryGetCompareService_NullTest()
+        {
+            bool actualB = InputService.TryGetCompareService((CompareInputType)1000, "", out ICompareService actualComp);
+            Assert.False(actualB);
+            Assert.Null(actualComp);
+        }
+
+
+        [Theory]
         [InlineData('*', true)]
         [InlineData('-', true)]
         [InlineData('$', true)]
@@ -38,8 +75,7 @@ namespace Tests.Services
         [InlineData('(', false)]
         public void IsMissingCharValidTest(char c, bool expected)
         {
-            InputService serv = new();
-            Assert.Equal(expected, serv.IsMissingCharValid(c));
+            Assert.Equal(expected, InputService.IsMissingCharValid(c));
         }
 
         public static IEnumerable<object[]> GetCheckCharsCases()
@@ -62,11 +98,37 @@ namespace Tests.Services
         [MemberData(nameof(GetCheckCharsCases))]
         public void CheckCharsTest(string input, string charSet, char ignore, bool expected, string expErr)
         {
-            InputService serv = new();
-            bool actual = serv.CheckChars(input, charSet, ignore, out string error);
+            bool actual = InputService.CheckChars(input, charSet, ignore, out string error);
             Assert.Equal(expected, actual);
             Assert.Equal(expErr, error);
         }
+
+
+        public static IEnumerable<object[]> GetKeyInRangeCases()
+        {
+            yield return new object[] { null, false };
+            yield return new object[] { new byte[32], false };
+            yield return new object[]
+            {
+                Helper.HexToBytes("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"), false
+            };
+            yield return new object[]
+            {
+                Helper.HexToBytes("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"), false // N
+            };
+            yield return new object[]
+            {
+                Helper.HexToBytes("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140"), true // N-1
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetKeyInRangeCases))]
+        public void IsPrivateKeyInRange(byte[] key, bool expected)
+        {
+            bool actual = InputService.IsPrivateKeyInRange(key);
+            Assert.Equal(expected, actual);
+        }
+
 
         public static IEnumerable<object[]> GetBase16KeyCases()
         {
@@ -141,62 +203,22 @@ namespace Tests.Services
         [MemberData(nameof(GetBase16KeyCases))]
         public void IsValidBase16KeyTest(string key, char c, bool expB, string expectedMsg)
         {
-            InputService serv = new();
-            bool actB = serv.IsValidBase16Key(key, c, out string actualMsg);
+            bool actB = InputService.IsValidBase16Key(key, c, out string actualMsg);
             Assert.Equal(expB, actB);
             Assert.Equal(expectedMsg, actualMsg);
         }
 
-        [Theory]
-        [InlineData(CompareInputType.AddrComp, ValidP2pkhAddr, true, typeof(PrvToAddrCompComparer))]
-        [InlineData(CompareInputType.AddrComp, "", false, typeof(PrvToAddrCompComparer))]
-        [InlineData(CompareInputType.AddrComp, ValidP2shAddr, false, typeof(PrvToAddrCompComparer))]
-        [InlineData(CompareInputType.AddrUnComp, ValidP2pkhAddr, true, typeof(PrvToAddrUncompComparer))]
-        [InlineData(CompareInputType.AddrUnComp, "", false, typeof(PrvToAddrUncompComparer))]
-        [InlineData(CompareInputType.AddrUnComp, ValidP2shAddr, false, typeof(PrvToAddrUncompComparer))]
-        [InlineData(CompareInputType.AddrBoth, ValidP2pkhAddr, true, typeof(PrvToAddrBothComparer))]
-        [InlineData(CompareInputType.AddrBoth, ValidP2shAddr, false, typeof(PrvToAddrBothComparer))]
-        [InlineData(CompareInputType.AddrBoth, "", false, typeof(PrvToAddrBothComparer))]
-        [InlineData(CompareInputType.AddrNested, ValidP2shAddr, true, typeof(PrvToAddrNestedComparer))]
-        [InlineData(CompareInputType.AddrNested, ValidP2pkhAddr, false, typeof(PrvToAddrNestedComparer))]
-        [InlineData(CompareInputType.AddrNested, "", false, typeof(PrvToAddrNestedComparer))]
-        [InlineData(CompareInputType.PrivateKey, ValidCompKey, true, typeof(PrvToPrvComparer))]
-        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey1, true, typeof(PrvToPrvComparer))]
-        [InlineData(CompareInputType.PrivateKey, ValidUnCompKey2, true, typeof(PrvToPrvComparer))]
-        [InlineData(CompareInputType.PrivateKey, "", false, typeof(PrvToPrvComparer))]
-        [InlineData(CompareInputType.PrivateKey, ValidP2pkhAddr, false, typeof(PrvToPrvComparer))]
-        [InlineData(CompareInputType.Pubkey, ValidPubHexComp, true, typeof(PrvToPubComparer))]
-        [InlineData(CompareInputType.Pubkey, ValidPubHexUncomp, true, typeof(PrvToPubComparer))]
-        [InlineData(CompareInputType.Pubkey, ValidP2pkhAddr, false, typeof(PrvToPubComparer))]
-        public void TryGetCompareServiceTest(CompareInputType t, string input, bool expB, Type expType)
-        {
-            InputService serv = new();
-            bool actualB = serv.TryGetCompareService(t, input, out ICompareService actual);
-
-            Assert.Equal(expB, actualB);
-            Assert.IsType(expType, actual);
-        }
-
-        [Fact]
-        public void TryGetCompareService_NullTest()
-        {
-            InputService serv = new();
-            bool actualB = serv.TryGetCompareService((CompareInputType)1000, "", out ICompareService actual);
-
-            Assert.False(actualB);
-            Assert.Null(actual);
-        }
 
         [Theory]
         [InlineData("", false, "can not be null")]
         [InlineData("SzavMBLoXU6kDrqtUVmffv", true, "Compressed:")]
         public void IsValidMinikeyTest(string key, bool expected, string expectedMsg)
         {
-            InputService serv = new();
-            bool actual = serv.IsValidMinikey(key, out string actualMsg);
+            bool actual = InputService.IsValidMinikey(key, out string actualMsg);
             Assert.Equal(expected, actual);
             Assert.Contains(expectedMsg, actualMsg);
         }
+
 
         [Theory]
         [InlineData("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", true, "The given BIP-38 string is valid.")]
@@ -208,8 +230,7 @@ namespace Tests.Services
         [InlineData("6RMoGm8dMt4BH2WLE6jLYNeF6B4SZ4WHmg6PRggwCQYqJPPwU32uVBH8Be", false, "The given BIP-38 string has invalid starting bytes.")]
         public void IsValidBase58Bip38Test(string bip38, bool expected, string expectedMsg)
         {
-            InputService serv = new();
-            bool actual = serv.IsValidBase58Bip38(bip38, out string actualMsg);
+            bool actual = InputService.IsValidBase58Bip38(bip38, out string actualMsg);
             Assert.Equal(expected, actual);
             Assert.Equal(expectedMsg, actualMsg);
         }
@@ -223,8 +244,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtf*HZH7cAibzG9oK19X(iFzxHgAkz6JK")]
         public void CanBePrivateKeyTest(string key)
         {
-            InputService serv = new();
-            bool actual = serv.CanBePrivateKey(key, out string error);
+            bool actual = InputService.CanBePrivateKey(key, out string error);
             Assert.True(actual, error);
             Assert.Null(error);
         }
@@ -238,8 +258,7 @@ namespace Tests.Services
         [InlineData("34q4KRuJeVGJ79f8jRkexoEnFKP1fRjqp", false, "The given address starts with an invalid byte.")]
         public void IsValidBase58AddressTest(string addr, bool expB, string expectedMsg)
         {
-            InputService serv = new();
-            bool actB = serv.IsValidBase58Address(addr, out string actualMsg);
+            bool actB = InputService.IsValidBase58Address(addr, out string actualMsg);
             Assert.Equal(expB, actB);
             Assert.Equal(expectedMsg, actualMsg);
         }
@@ -256,8 +275,7 @@ namespace Tests.Services
         [InlineData("L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK1")]
         public void CanBePrivateKey_FalseTest(string key)
         {
-            InputService serv = new();
-            bool actual = serv.CanBePrivateKey(key, out _);
+            bool actual = InputService.CanBePrivateKey(key, out _);
             Assert.False(actual);
         }
 
@@ -276,8 +294,7 @@ namespace Tests.Services
         [InlineData("L53fCHmNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgA", '$')]
         public void CheckIncompletePrivateKeyTest(string key, char missingChar)
         {
-            InputService serv = new();
-            bool actual = serv.CheckIncompletePrivateKey(key, missingChar, out string error);
+            bool actual = InputService.CheckIncompletePrivateKey(key, missingChar, out string error);
             Assert.True(actual, error);
             Assert.Null(error);
         }
@@ -306,8 +323,7 @@ namespace Tests.Services
         [InlineData("mwdMAjGmerYanjeui5SHS7Jkm", '*', "The first character of the given private key is not valid.")]
         public void CheckIncompletePrivateKey_FailTest(string key, char missingChar, string expError)
         {
-            InputService serv = new();
-            bool actual = serv.CheckIncompletePrivateKey(key, missingChar, out string error);
+            bool actual = InputService.CheckIncompletePrivateKey(key, missingChar, out string error);
             Assert.False(actual);
             Assert.Contains(expError, error);
         }
@@ -319,8 +335,7 @@ namespace Tests.Services
         [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", true, "e8df018c7e326cc253faac7e46cdc51e68542c42")]
         public void IsValidAddressTest(string addr, bool ignore, string expectedHash)
         {
-            InputService serv = new();
-            bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
+            bool actual = InputService.IsValidAddress(addr, ignore, out byte[] actualHash);
             Assert.True(actual);
             Assert.Equal(Helper.HexToBytes(expectedHash), actualHash);
         }
@@ -337,8 +352,7 @@ namespace Tests.Services
         [InlineData("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5md2", true)]
         public void IsValidAddress_FalseTest(string addr, bool ignore)
         {
-            InputService serv = new();
-            bool actual = serv.IsValidAddress(addr, ignore, out byte[] actualHash);
+            bool actual = InputService.IsValidAddress(addr, ignore, out byte[] actualHash);
             Assert.False(actual);
             Assert.Null(actualHash);
         }
@@ -453,8 +467,7 @@ namespace Tests.Services
         public void TryDecodeBip38Test(string bip38, bool expValid, byte[] expData, byte[] expSalt,
                                        bool expComp, bool expEC, bool expLot, string expErr)
         {
-            InputService serv = new();
-            bool actualValid = serv.TryDecodeBip38(bip38, out byte[] data, out byte[] salt,
+            bool actualValid = InputService.TryDecodeBip38(bip38, out byte[] data, out byte[] salt,
                 out bool isComp, out bool isEC, out bool hasLot, out string error);
 
             Assert.Equal(expValid, actualValid);

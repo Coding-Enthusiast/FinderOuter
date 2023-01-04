@@ -22,7 +22,6 @@ namespace FinderOuter.ViewModels
         {
             // Don't move this line, service must be instantiated here
             b16Service = new Base16Sevice(Result);
-            InputService inServ = new();
             searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
