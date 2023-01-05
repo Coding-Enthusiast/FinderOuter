@@ -20,6 +20,6 @@ namespace FinderOuter.Services.Comparers
         public unsafe bool Compare(ulong* hPt) => true;
         public bool Compare(in PointJacobian point) => true;
         public bool Compare(byte[] key) => true;
-        public bool Compare(Scalar8x32 key) => true;
+        public bool Compare(in Scalar8x32 key) => true;
     }
 }

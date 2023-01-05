@@ -51,7 +51,7 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expectedBytes).SequenceEqual(key);
 
-        public bool Compare(Scalar8x32 key) => key == expectedKey;
+        public bool Compare(in Scalar8x32 key) => key == expectedKey;
 
         public bool Compare(in PointJacobian point) => throw new NotImplementedException();
     }

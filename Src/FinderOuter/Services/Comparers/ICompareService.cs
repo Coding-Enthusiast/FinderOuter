@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using FinderOuter.Backend.ECC;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -31,6 +30,6 @@ namespace FinderOuter.Services.Comparers
         bool Init(string data);
         ICompareService Clone();
         bool Compare(byte[] key);
-        bool Compare(Scalar8x32 key);
+        bool Compare(in Scalar8x32 key);
     }
 }

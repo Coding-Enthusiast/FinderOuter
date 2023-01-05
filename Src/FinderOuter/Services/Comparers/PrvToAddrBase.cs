@@ -38,6 +38,6 @@ namespace FinderOuter.Services.Comparers
             return Compare(pt);
         }
 
-        public bool Compare(Scalar8x32 key) => Compare(Calc.MultiplyByG(key));
+        public bool Compare(in Scalar8x32 key) => Compare(Calc.MultiplyByG(key));
     }
 }
