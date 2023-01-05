@@ -7,7 +7,6 @@ using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
-using FinderOuter.Backend.ECC;
 using System;
 
 namespace FinderOuter.Services.Comparers
@@ -17,6 +16,9 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {
+        public string CompareType => "Public key";
+
+
         private byte[] pubBa;
 
         public bool Init(string pubHex)

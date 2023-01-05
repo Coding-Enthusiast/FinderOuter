@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using FinderOuter.Backend.ECC;
 
 namespace FinderOuter.Services.Comparers
 {
@@ -20,6 +19,7 @@ namespace FinderOuter.Services.Comparers
 
         public abstract ICompareService Clone();
 
+        public string CompareType => "Address";
         protected readonly Calc _calc = new();
         public Calc Calc => _calc;
 

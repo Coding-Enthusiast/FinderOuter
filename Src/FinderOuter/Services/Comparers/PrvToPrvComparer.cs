@@ -6,7 +6,6 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using FinderOuter.Backend.ECC;
 using FinderOuter.Backend.Hashing;
 using System;
 
@@ -17,6 +16,8 @@ namespace FinderOuter.Services.Comparers
     /// </summary>
     public class PrvToPrvComparer : ICompareService
     {
+        public string CompareType => "Privatekey";
+
         private byte[] expectedBytes;
         private Scalar8x32 expectedKey;
 
