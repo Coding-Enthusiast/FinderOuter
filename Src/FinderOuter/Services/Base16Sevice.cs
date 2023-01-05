@@ -226,38 +226,16 @@ namespace FinderOuter.Services
             report.Init();
 
             if (!InputService.TryGetCompareService(compType, comp, out comparer))
+            {
                 report.Fail($"Could not instantiate ICompareService (invalid {compType}).");
+            }
+            else if (ss.MissCount == 0)
+            {
+                report.FoundAnyResult = ss.ProcessNoMissing(comparer, out string message);
+                report.AddMessageSafe(message);
+            }
             else
             {
-                if (ss.MissCount == 0)
-                {
-                    if (ss.ProcessNoMissing(out string message))
-                    {
-                        try
-                        {
-                            using PrivateKey prv = new(Base16.Decode(ss.Input));
-                            bool check = new AddressService().Compare(comp, compType, prv, out string msg);
-                            if (check)
-                            {
-                                report.Pass(msg);
-                            }
-                            else
-                            {
-                                report.Fail(msg);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            report.Fail($"Key is out of range {ex.Message}");
-                        }
-                    }
-                    else
-                    {
-                        report.Pass(message);
-                    }
-                    return;
-                }
-
                 report.AddMessage($"The given key is missing {ss.MissCount} characters.");
                 report.SetTotal(ss.GetTotal());
                 report.Timer.Start();

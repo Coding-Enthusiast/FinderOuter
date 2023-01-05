@@ -3,8 +3,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Linq;
 
@@ -66,15 +68,42 @@ namespace FinderOuter.Services.SearchSpaces
             }
         }
 
-        public bool ProcessNoMissing(out string message)
+        public bool ProcessNoMissing(ICompareService comparer, out string message)
         {
             if (MissCount != 0)
             {
                 message = "This method should not be called with missing characters.";
                 return false;
             }
-            // TODO: make sure passing the hard-coded missing char is not causing problems.
-            return InputService.IsValidBase16Key(Input, '*', out message);
+            // A quick check to make sure no exceptions are thrown later (this should alwyas pass since
+            // Input is already processed)
+            if (!Base16.TryDecode(Input, out byte[] ba) || ba.Length != 32)
+            {
+                message = "Invalid Base-16 key.";
+                return false;
+            }
+
+            Scalar8x32 key = new(ba, out bool overflow);
+            if (key.IsZero || overflow)
+            {
+                message = "The given key is out of range.";
+                return false;
+            }
+
+            bool success = comparer.Compare(key);
+            if (success)
+            {
+                message = $"The given key is valid and the given {comparer.CompareType} is correctly derived from it.";
+                return true;
+            }
+            else
+            {
+                // TODO: generate all addresses here?
+                message = "";
+
+
+                return false;
+            }
         }
 
         public bool SetValues(string[][] result)
