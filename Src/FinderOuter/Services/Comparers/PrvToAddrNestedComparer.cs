@@ -14,8 +14,7 @@ namespace FinderOuter.Services.Comparers
     {
         public override bool Init(string address)
         {
-            AddressService serv = new();
-            return serv.CheckAndGetHash_P2sh(address, out hash);
+            return AddressService.CheckAndGetHash_P2sh(address, out hash);
         }
 
         public override ICompareService Clone()

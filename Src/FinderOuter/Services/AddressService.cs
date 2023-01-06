@@ -10,13 +10,13 @@ using FinderOuter.Models;
 
 namespace FinderOuter.Services
 {
-    public class AddressService
+    public static class AddressService
     {
         /// <summary>
         /// Checks the given address and returns its decoded hash.
         /// Works only for P2PKH and P2WPKH addresses
         /// </summary>
-        public bool CheckAndGetHash(string address, out byte[] hash)
+        public static bool CheckAndGetHash(string address, out byte[] hash)
         {
             hash = null;
             if (string.IsNullOrWhiteSpace(address))
@@ -42,7 +42,7 @@ namespace FinderOuter.Services
         /// Checks the given address and returns its decoded hash.
         /// Works only for P2SH addresses
         /// </summary>
-        public bool CheckAndGetHash_P2sh(string address, out byte[] hash)
+        public static bool CheckAndGetHash_P2sh(string address, out byte[] hash)
         {
             if (string.IsNullOrWhiteSpace(address) || address[0] != '3')
             {
@@ -56,7 +56,7 @@ namespace FinderOuter.Services
         }
 
 
-        public bool Compare(string expectedAddr, CompareInputType compType, PrivateKey prv, out string message)
+        public static bool Compare(string expectedAddr, CompareInputType compType, PrivateKey prv, out string message)
         {
             PublicKey pub = prv.ToPublicKey();
             if (compType == CompareInputType.AddrNested)

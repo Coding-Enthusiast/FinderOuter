@@ -13,8 +13,7 @@ namespace FinderOuter.Services.Comparers
 
         public virtual bool Init(string address)
         {
-            AddressService serv = new();
-            return serv.CheckAndGetHash(address, out hash);
+            return AddressService.CheckAndGetHash(address, out hash);
         }
 
         public abstract ICompareService Clone();
