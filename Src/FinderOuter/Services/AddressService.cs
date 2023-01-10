@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin.Blockchain.Scripts;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Models;
+using System.Text;
 
 namespace FinderOuter.Services
 {
@@ -154,6 +155,18 @@ namespace FinderOuter.Services
             }
 
             return true;
+        }
+
+        public static string GetAllAddresses(PublicKey pub)
+        {
+            StringBuilder sb = new(4 * 32);
+            
+            sb.AppendLine($"Compressed P2PKH:   {Address.GetP2pkh(pub)}");
+            sb.AppendLine($"Uncompressed P2PKH: {Address.GetP2pkh(pub, false)}");
+            sb.AppendLine($"P2WPKH:             {Address.GetP2wpkh(pub)}");
+            sb.AppendLine($"P2SH-P2WPKH:  {Address.GetP2sh_P2wpkh(pub)}");
+
+            return sb.ToString();
         }
     }
 }
