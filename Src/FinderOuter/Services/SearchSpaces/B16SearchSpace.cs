@@ -98,9 +98,9 @@ namespace FinderOuter.Services.SearchSpaces
             }
             else
             {
-                // TODO: generate all addresses here?
-                message = "";
-
+                // TODO: change this to use the new ECC implementation
+                using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs.PrivateKey prv = new(ba);
+                message = AddressService.GetAllAddresses(prv.ToPublicKey());
 
                 return false;
             }
