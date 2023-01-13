@@ -17,13 +17,14 @@ namespace FinderOuter.Services.Comparers
     public class PrvToPubComparer : ICompareService
     {
         public string CompareType => "Public key";
-
+        public bool IsInitialized { get; private set; }
 
         private byte[] pubBa;
 
         public bool Init(string pubHex)
         {
-            return Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out _);
+            IsInitialized = Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out _);
+            return IsInitialized;
         }
 
         public ICompareService Clone()

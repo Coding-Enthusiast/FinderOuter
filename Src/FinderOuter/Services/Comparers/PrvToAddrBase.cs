@@ -13,12 +13,14 @@ namespace FinderOuter.Services.Comparers
 
         public virtual bool Init(string address)
         {
-            return AddressService.CheckAndGetHash(address, out hash);
+            IsInitialized = AddressService.CheckAndGetHash(address, out hash);
+            return IsInitialized;
         }
 
         public abstract ICompareService Clone();
 
         public string CompareType => "Address";
+        public bool IsInitialized { get; protected set; }
         protected readonly Calc _calc = new();
         public Calc Calc => _calc;
 

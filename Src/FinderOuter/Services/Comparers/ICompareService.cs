@@ -10,6 +10,7 @@ namespace FinderOuter.Services.Comparers
     public interface ICompareService
     {
         public string CompareType { get; }
+        public bool IsInitialized { get; }
         public Calc Calc { get; }
 
         /// <summary>

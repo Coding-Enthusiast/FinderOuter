@@ -17,6 +17,7 @@ namespace FinderOuter.Services.Comparers
     public class PrvToPrvComparer : ICompareService
     {
         public string CompareType => "Privatekey";
+        public bool IsInitialized { get; private set; }
 
         private byte[] expectedBytes;
         private Scalar8x32 expectedKey;
@@ -28,12 +29,14 @@ namespace FinderOuter.Services.Comparers
                 using PrivateKey temp = new(data);
                 expectedBytes = temp.ToBytes();
                 expectedKey = new(expectedBytes, out _);
-                return true;
+                IsInitialized = true;
             }
             catch (Exception)
             {
-                return false;
+                IsInitialized = false;
             }
+
+            return IsInitialized;
         }
 
         public ICompareService Clone()

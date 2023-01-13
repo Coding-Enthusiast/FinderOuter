@@ -9,7 +9,8 @@ namespace FinderOuter.Services.Comparers
 {
     public class DefaultComparer : ICompareService
     {
-        public string CompareType => "None.";
+        public string CompareType => "None";
+        public bool IsInitialized => true;
         public bool Init(string data) => true;
         public ICompareService Clone() => this;
 
