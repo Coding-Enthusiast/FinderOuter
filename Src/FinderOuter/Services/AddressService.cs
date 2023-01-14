@@ -159,12 +159,12 @@ namespace FinderOuter.Services
 
         public static string GetAllAddresses(PublicKey pub)
         {
-            StringBuilder sb = new(4 * 32);
-            
+            StringBuilder sb = new(4 * 64);
+
             sb.AppendLine($"Compressed P2PKH:   {Address.GetP2pkh(pub)}");
             sb.AppendLine($"Uncompressed P2PKH: {Address.GetP2pkh(pub, false)}");
             sb.AppendLine($"P2WPKH:             {Address.GetP2wpkh(pub)}");
-            sb.AppendLine($"P2SH-P2WPKH:  {Address.GetP2sh_P2wpkh(pub)}");
+            sb.AppendLine($"P2SH-P2WPKH:        {Address.GetP2sh_P2wpkh(pub)}");
 
             return sb.ToString();
         }
