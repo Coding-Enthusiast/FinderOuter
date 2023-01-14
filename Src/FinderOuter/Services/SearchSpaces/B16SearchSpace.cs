@@ -70,12 +70,18 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool ProcessNoMissing(ICompareService comparer, out string message)
         {
+            if (!comparer.IsInitialized)
+            {
+                message = "Comparer is not initializd.";
+                return false;
+            }
+
             if (MissCount != 0)
             {
                 message = "This method should not be called with missing characters.";
                 return false;
             }
-            // A quick check to make sure no exceptions are thrown later (this should alwyas pass since
+            // A quick check to make sure no exceptions are thrown later (this should always pass since
             // Input is already processed)
             if (!Base16.TryDecode(Input, out byte[] ba) || ba.Length != 32)
             {
