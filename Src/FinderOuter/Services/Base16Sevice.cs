@@ -145,9 +145,8 @@ namespace FinderOuter.Services
 
         private unsafe void Loop()
         {
-            Calc calc = new();
             Scalar8x32 smallVal = new(searchSpace.preComputed, out _);
-            PointJacobian smallPub = calc.MultiplyByG(smallVal);
+            PointJacobian smallPub = comparer.Calc.MultiplyByG(smallVal);
 
             if (searchSpace.MissCount == 1)
             {
@@ -174,7 +173,7 @@ namespace FinderOuter.Services
                         }
 
                         Scalar8x32 tempVal = new(temp, out _);
-                        PointJacobian tempPub = calc.MultiplyByG(tempVal);
+                        PointJacobian tempPub = comparer.Calc.MultiplyByG(tempVal);
                         PointJacobian pub = tempPub.AddVar(smallPub, out _);
                         if (comparer.Compare(pub))
                         {
@@ -242,9 +241,9 @@ namespace FinderOuter.Services
 
                 searchSpace = ss;
                 await Task.Run(() => Loop());
-
-                report.Finalize();
             }
+
+            report.Finalize();
         }
     }
 }
