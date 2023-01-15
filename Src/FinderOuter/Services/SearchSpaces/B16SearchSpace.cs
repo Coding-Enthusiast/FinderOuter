@@ -96,8 +96,7 @@ namespace FinderOuter.Services.SearchSpaces
                 return false;
             }
 
-            bool success = comparer.Compare(key);
-            if (success)
+            if (comparer.Compare(key))
             {
                 message = $"The given key is valid and the given {comparer.CompareType} is correctly derived from it.";
                 return true;
@@ -106,7 +105,10 @@ namespace FinderOuter.Services.SearchSpaces
             {
                 // TODO: change this to use the new ECC implementation
                 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs.PrivateKey prv = new(ba);
-                message = AddressService.GetAllAddresses(prv.ToPublicKey());
+                message = $"The given key is valid but the given {comparer.CompareType} can not be derived from it." +
+                          $"{Environment.NewLine}" +
+                          $"List of addresses that can be derived from this key:{Environment.NewLine}" +
+                          $"{AddressService.GetAllAddresses(prv.ToPublicKey())}";
 
                 return false;
             }
