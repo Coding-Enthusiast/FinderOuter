@@ -26,8 +26,8 @@ namespace FinderOuter.ViewModels
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
-                x => x.Result.CurrentState, (b58, state) =>
-                            !string.IsNullOrEmpty(b58) &&
+                x => x.Result.CurrentState, (b16, state) =>
+                            !string.IsNullOrEmpty(b16) &&
                             state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
@@ -50,12 +50,10 @@ namespace FinderOuter.ViewModels
 
 
         public override string OptionName => "Missing Base16";
-        public override string Description => $"Helps you recover missing Base-16 (hexadecimal) characters in private keys. " +
-            $"Since unlike WIF (Base-58) this format has no checksum, all combinations with any character is correct. " +
-            $"This is why the code has to check each combination against the additional data which can be an address or a " +
-            $"public key.{Environment.NewLine}" +
-            $"Enter the base-16 string and replace its missing characters with the symbol defined by missing character " +
-            $"parameter and press Find.";
+        public override string Description => $"This option is useful for recovering Base-16 (hexadecimal) private keys " +
+            $"with missing characters.{Environment.NewLine}" +
+            $"Enter the 64-digits long Base-16 encoded private key below and replace its missing characters with the " +
+            $"symbol defined by missing character drop-box and the corresponding address or public key then click Find.";
 
 
         private readonly Base16Sevice b16Service;
