@@ -3,9 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
 using FinderOuter.Services.SearchSpaces;
@@ -35,26 +33,6 @@ namespace FinderOuter.Services
             for (int i = len - 1; i >= 0; i--)
             {
                 if (items[i].Increment())
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe bool MoveNext(int* items, int len)
-        {
-            for (int i = len - 1; i >= 0; --i)
-            {
-                items[i] += 1;
-
-                if (items[i] == 16)
-                {
-                    items[i] = 0;
-                }
-                else
                 {
                     return true;
                 }
