@@ -78,7 +78,7 @@ namespace FinderOuter.Services
 
                 int misIndex = mi[0];
                 int firstIndex = misIndex / 2;
-                byte firstValue = (misIndex % 2 == 0) ? (byte)(firstItem << 4) : (byte)firstItem;
+                byte firstValue = (misIndex % 2 == 0) ? (byte)(valPt[firstItem] << 4) : (byte)valPt[firstItem];
                 tmp[firstIndex] = firstValue;
 
                 do
