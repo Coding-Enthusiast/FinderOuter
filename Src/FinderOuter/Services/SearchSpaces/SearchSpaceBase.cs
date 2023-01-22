@@ -73,7 +73,7 @@ namespace FinderOuter.Services.SearchSpaces
         }
 
 
-        public bool ProcessCharValues(string[][] array, char[] allChars, out string error)
+        public bool ProcessCharValues(string[][] array, char[] allChars, uint[] permutationVals, out string error)
         {
             Debug.Assert(array is not null);
             Debug.Assert(array.Length == MissCount);
@@ -98,7 +98,12 @@ namespace FinderOuter.Services.SearchSpaces
                         error = $"Given character ({s}) is not found in the valid characters list.";
                         return false;
                     }
-                    AllPermutationValues[index1++] = (uint)i;
+                    if (i > permutationVals.Length)
+                    {
+                        error = "Given permutation value list is not valid (this is a bug).";
+                        return false;
+                    }
+                    AllPermutationValues[index1++] = permutationVals[i];
                 }
             }
 
