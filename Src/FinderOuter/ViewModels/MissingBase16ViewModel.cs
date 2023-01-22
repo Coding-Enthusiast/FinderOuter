@@ -111,17 +111,21 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
-            if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B16SearchSpace.AllChars.Contains(ToAdd[0]))
+            if (ToAdd is not null)
             {
-                if (!CurrentItems.Contains(ToAdd))
+                ToAdd = ToAdd.Trim().ToLowerInvariant();
+                if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B16SearchSpace.AllChars.Contains(ToAdd[0]))
                 {
-                    CurrentItems.Add(ToAdd);
+                    if (!CurrentItems.Contains(ToAdd))
+                    {
+                        CurrentItems.Add(ToAdd);
+                    }
+                    ToAdd = string.Empty;
                 }
-            }
-            else
-            {
-                Result.AddMessage($"The entered character ({ToAdd}) is not a valid Base-16 character.");
+                else
+                {
+                    Result.AddMessage($"The entered character ({ToAdd}) is not a valid Base-16 character.");
+                }
             }
         }
 
@@ -157,14 +161,14 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray(), out string error))
                 {
                     b16Service.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
                 {
-                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                    Result.AddMessage(error);
                 }
             }
         }

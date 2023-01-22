@@ -114,67 +114,10 @@ namespace FinderOuter.Services.SearchSpaces
             }
         }
 
-        public bool SetValues(string[][] result)
+        public bool SetValues(string[][] array, out string error)
         {
-            if (result.Length != MissCount || result.Any(x => x.Length < 2))
-            {
-                return false;
-            }
-
-            int totalLen = 0;
-            int maxLen = 0;
-            int maxIndex = 0;
-            for (int i = 0; i < result.Length; i++)
-            {
-                if (result[i].Length <= 1)
-                {
-                    return false;
-                }
-                totalLen += result[i].Length;
-
-                if (result[i].Length > maxLen)
-                {
-                    maxLen = result[i].Length;
-                    maxIndex = i;
-                }
-            }
-
-            if (maxIndex != 0)
-            {
-                string[] t1 = result[maxIndex];
-                result[maxIndex] = result[0];
-                result[0] = t1;
-
-                int t2 = MissingIndexes[maxIndex];
-                MissingIndexes[maxIndex] = MissingIndexes[0];
-                MissingIndexes[0] = t2;
-            }
-
-            AllPermutationValues = new uint[totalLen];
-            PermutationCounts = new int[MissCount];
-
-            int index1 = 0;
-            int index2 = 0;
-
-            foreach (string[] item in result)
-            {
-                PermutationCounts[index2++] = item.Length;
-                foreach (string s in item)
-                {
-                    if (s.Length > 1)
-                    {
-                        return false;
-                    }
-                    int i = Array.IndexOf(AllChars, s[0]);
-                    if (i < 0)
-                    {
-                        return false;
-                    }
-                    AllPermutationValues[index1++] = (uint)i;
-                }
-            }
-
-            return true;
+            uint[] all = Enumerable.Range(0, AllChars.Length).Select(i => (uint)i).ToArray();
+            return ProcessValues(array, out error) && ProcessCharValues(array, AllChars, all, out error);
         }
     }
 }
