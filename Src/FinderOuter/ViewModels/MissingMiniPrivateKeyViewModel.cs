@@ -208,14 +208,14 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray()))
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).ToArray(), out string error))
                 {
                     miniService.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
                 {
-                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                    Result.AddMessage(error);
                 }
             }
         }
