@@ -42,7 +42,7 @@ namespace FinderOuter.Services.SearchSpaces
                 if (array[i] is null || array[i].Length < 2)
                 {
                     error = $"Search space values are not correctly set. " +
-                            $"Add at least 2 possible values for the {(array.Length - i).ToOrdinal()} missing position.";
+                            $"Add at least 2 possible values for the {(i + 1).ToOrdinal()} missing position.";
                     return false;
                 }
                 totalLen += array[i].Length;
