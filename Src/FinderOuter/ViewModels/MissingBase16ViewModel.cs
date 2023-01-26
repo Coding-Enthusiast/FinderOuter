@@ -20,40 +20,44 @@ namespace FinderOuter.ViewModels
     {
         public MissingBase16ViewModel()
         {
-            // Don't move this line, service must be instantiated here
             b16Service = new Base16Sevice(Result);
             searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
                 x => x.Input,
-                x => x.Result.CurrentState, (b16, state) =>
-                            !string.IsNullOrEmpty(b16) &&
-                            state != State.Working);
+                x => x.Result.CurrentState,
+                (b16, state) => !string.IsNullOrEmpty(b16) && state != State.Working);
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
             CompareInputTypeList = ListHelper.GetEnumDescItems(CompareInputType.PrivateKey).ToArray();
             SelectedCompareInputType = CompareInputTypeList.First();
 
-            IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
-            ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
+            IObservable<bool> isExampleEnabled = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
+            ExampleCommand = ReactiveCommand.Create(Example, isExampleEnabled);
 
             SetExamples(GetExampleData());
 
             IObservable<bool> canAdd = this.WhenAnyValue(x => x.IsProcessed, (b) => b == true);
+            IObservable<bool> canAddExact = this.WhenAnyValue(
+                x => x.IsProcessed, x => x.ToAdd,
+                (b, s) => b == true && !string.IsNullOrEmpty(s));
 
             StartCommand = ReactiveCommand.Create(Start, isFindEnabled);
             AddAllCommand = ReactiveCommand.Create(AddAll, canAdd);
-            AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
-            AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
+            AddNumbersCommand = ReactiveCommand.Create(AddNumbers, canAdd);
+            AddLetersCommand = ReactiveCommand.Create(AddLeters, canAdd);
+            AddExactCommand = ReactiveCommand.Create(AddExact, canAddExact);
         }
 
 
 
         public override string OptionName => "Missing Base16";
         public override string Description => $"This option is useful for recovering Base-16 (hexadecimal) private keys " +
-            $"with missing characters.{Environment.NewLine}" +
-            $"Enter the 64-digits long Base-16 encoded private key below and replace its missing characters with the " +
-            $"symbol defined by missing character drop-box and the corresponding address or public key then click Find.";
+            $"with missing characters at known positions.{Environment.NewLine}" +
+            $"Enter the 64-digit long Base-16 encoded private key below and replace its missing character(s) with the " +
+            $"symbol defined by missing character drop-box then click Find.{Environment.NewLine}" +
+            $"This recovery option requires the address or public key derived from this private key " +
+            $"to compare each permutation with.";
 
 
         private readonly Base16Sevice b16Service;
@@ -86,6 +90,11 @@ namespace FinderOuter.ViewModels
 
         private void AddToList(IEnumerable<char> items)
         {
+            if (items is null || CurrentItems is null)
+            {
+                return;
+            }
+
             foreach (char item in items)
             {
                 if (!CurrentItems.Contains(item.ToString()))
@@ -101,10 +110,16 @@ namespace FinderOuter.ViewModels
             AddToList(B16SearchSpace.AllChars);
         }
 
-        public IReactiveCommand AddNumberCommand { get; }
-        private void AddNumber()
+        public IReactiveCommand AddNumbersCommand { get; }
+        private void AddNumbers()
         {
             AddToList(B16SearchSpace.AllChars.Where(c => char.IsDigit(c)));
+        }
+
+        public IReactiveCommand AddLetersCommand { get; }
+        private void AddLeters()
+        {
+            AddToList(B16SearchSpace.AllChars.Where(c => char.IsLetter(c)));
         }
 
 
