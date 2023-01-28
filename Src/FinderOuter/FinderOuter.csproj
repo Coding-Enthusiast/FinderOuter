@@ -40,7 +40,6 @@
   <ItemGroup>
     <AvaloniaResource Remove="Views\AboutView.xaml" />
     <AvaloniaResource Remove="Views\HelpView.xaml" />
-    <AvaloniaResource Remove="Views\MessageSignatureView.xaml" />
     <AvaloniaResource Remove="Views\MissingBase16View.xaml" />
     <AvaloniaResource Remove="Views\MissingBase58View.xaml" />
     <AvaloniaResource Remove="Views\MissingBip32PathView.xaml" />
@@ -50,7 +49,6 @@
   <ItemGroup>
     <None Remove="Views\AboutView.xaml" />
     <None Remove="Views\HelpView.xaml" />
-    <None Remove="Views\MessageSignatureView.xaml" />
     <None Remove="Views\MissingBase16View.xaml" />
     <None Remove="Views\MissingBase58View.xaml" />
     <None Remove="Views\MissingBip32PathView.xaml" />
@@ -62,11 +60,6 @@
     <PackageReference Include="Avalonia" Version="0.10.18" />
     <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Views\MessageSignatureView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\MissingBase58View.xaml">
