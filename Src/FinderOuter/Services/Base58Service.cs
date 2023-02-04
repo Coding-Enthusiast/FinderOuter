@@ -4,8 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
@@ -143,7 +141,7 @@ namespace FinderOuter.Services
             BigInteger diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
-            SecP256k1 curve = new();
+            Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve.SecP256k1 curve = new();
             if (start == 0 || end >= curve.N)
             {
                 report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
@@ -160,7 +158,7 @@ namespace FinderOuter.Services
                     string tempWif = tempKey.ToWif(compressed);
                     if (tempWif.Contains(baseWif))
                     {
-                        PublicKey pub = tempKey.ToPublicKey();
+                        Point pub = tempKey.ToPublicKey(comparer.Calc);
                         string msg = $"Found the key: {tempWif}{Environment.NewLine}" +
                             $"     Compressed P2PKH address={Address.GetP2pkh(pub, true)}{Environment.NewLine}" +
                             $"     Uncompressed P2PKH address={Address.GetP2pkh(pub, false)}{Environment.NewLine}" +

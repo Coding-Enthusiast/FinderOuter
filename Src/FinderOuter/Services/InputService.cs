@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
@@ -116,13 +115,14 @@ namespace FinderOuter.Services
         {
             try
             {
+                Calc calc = new();
                 using MiniPrivateKey mini = new(key);
                 message = $"Compressed:{Environment.NewLine}" +
                           $"       WIF: {mini.ToWif(true)}{Environment.NewLine}" +
-                          $"   Address: {Address.GetP2pkh(mini.ToPublicKey(), true)}{Environment.NewLine}" +
+                          $"   Address: {Address.GetP2pkh(mini.ToPublicKey(calc), true)}{Environment.NewLine}" +
                           $"Uncompressed:{Environment.NewLine}" +
                           $"         WIF: {mini.ToWif(false)}{Environment.NewLine}" +
-                          $"     Address: {Address.GetP2pkh(mini.ToPublicKey(), false)}";
+                          $"     Address: {Address.GetP2pkh(mini.ToPublicKey(calc), false)}";
                 return true;
             }
             catch (Exception ex)

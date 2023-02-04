@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 
 namespace Tests
 {
@@ -14,11 +14,11 @@ namespace Tests
     {
         internal static string Prv1Wif = "L28Peud5cQcijrtMthAdUS8FynpM8PKZtnoUZb1VAio9WxKoebHt";
         internal static PrivateKey Prv1 => new(Prv1Wif);
-        internal static PublicKey Pub1
+        internal static Point Pub1
         {
             get
             {
-                PublicKey.TryRead(Pub1UnCompBytes, out PublicKey result);
+                Point.TryRead(Pub1UnCompBytes, out Point result);
                 return result;
             }
         }
@@ -52,11 +52,11 @@ namespace Tests
 
 
         internal static PrivateKey Prv2 => new("KxWSVSkSv3gGs2AmCF3qRCc6MqAikTL3n4wwMJjsfQikMU61ZQkL");
-        internal static PublicKey Pub2
+        internal static Point Pub2
         {
             get
             {
-                PublicKey.TryRead(Pub2UnCompBytes, out PublicKey result);
+                Point.TryRead(Pub2UnCompBytes, out Point result);
                 return result;
             }
         }
@@ -77,11 +77,11 @@ namespace Tests
 
 
         internal static PrivateKey Prv3 => new("KwToaM89oezgBF1TNjws2BC6Uo7nt57iWkFeqZQGibLBLgoYy2QT");
-        internal static PublicKey Pub3
+        internal static Point Pub3
         {
             get
             {
-                PublicKey.TryRead(Pub3UnCompBytes, out PublicKey result);
+                Point.TryRead(Pub3UnCompBytes, out Point result);
                 return result;
             }
         }

@@ -103,12 +103,11 @@ namespace FinderOuter.Services.SearchSpaces
             }
             else
             {
-                // TODO: change this to use the new ECC implementation
-                using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs.PrivateKey prv = new(ba);
+                PrivateKey prv = new(ba);
                 message = $"The given key is valid but the given {comparer.CompareType} can not be derived from it." +
                           $"{Environment.NewLine}" +
                           $"List of addresses that can be derived from this key:{Environment.NewLine}" +
-                          $"{AddressService.GetAllAddresses(prv.ToPublicKey())}";
+                          $"{AddressService.GetAllAddresses(prv.ToPublicKey(comparer.Calc))}";
 
                 return false;
             }

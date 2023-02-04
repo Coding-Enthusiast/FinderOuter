@@ -4,9 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Blockchain.Scripts;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
-using FinderOuter.Models;
 using System.Text;
 
 namespace FinderOuter.Services
@@ -24,8 +23,7 @@ namespace FinderOuter.Services
             {
                 return false;
             }
-
-            if (address[0] == '1')
+            else if (address[0] == '1')
             {
                 return Address.VerifyType(address, PubkeyScriptType.P2PKH, out hash);
             }
@@ -57,107 +55,7 @@ namespace FinderOuter.Services
         }
 
 
-        public static bool Compare(string expectedAddr, CompareInputType compType, PrivateKey prv, out string message)
-        {
-            PublicKey pub = prv.ToPublicKey();
-            if (compType == CompareInputType.AddrNested)
-            {
-                if (expectedAddr == Address.GetP2sh_P2wpkh(pub))
-                {
-                    message = "The given address is derived from the given private key.";
-                }
-                else if (expectedAddr == Address.GetP2sh_P2wpkh(pub, false))
-                {
-                    message = "The given address is derived from the given private key but it uses " +
-                              "uncompressed pubkey which is non-standard.";
-                }
-                else
-                {
-                    message = "Can not derive the given address from this private key.";
-                    return false;
-                }
-            }
-            else
-            {
-                if (expectedAddr.StartsWith("bc"))
-                {
-                    if (expectedAddr == Address.GetP2wpkh(pub))
-                    {
-                        message = "The given address is derived from the given private key.";
-                    }
-                    else if (expectedAddr == Address.GetP2wpkh(pub, false))
-                    {
-                        message = "The given address is derived from the given private key but it uses " +
-                                  "uncompressed pubkey which is non-standard.";
-                    }
-                    else
-                    {
-                        message = "Can not derive the given address from this private key.";
-                        return false;
-                    }
-                }
-                else if (expectedAddr.StartsWith("1"))
-                {
-                    string comp = Address.GetP2pkh(pub);
-                    string uncomp = Address.GetP2pkh(pub, false);
-
-                    if (compType == CompareInputType.AddrComp)
-                    {
-                        if (expectedAddr == comp)
-                        {
-                            message = "The given address is derived from the given private key.";
-                        }
-                        else if (expectedAddr == uncomp)
-                        {
-                            message = "The given address is derived from the given private key but uses " +
-                                      "the uncompressed public key.";
-                            return false;
-                        }
-                        else
-                        {
-                            message = "Can not derive the given address from this private key.";
-                            return false;
-                        }
-                    }
-                    else if (compType == CompareInputType.AddrUnComp)
-                    {
-                        if (expectedAddr == uncomp)
-                        {
-                            message = "The given address is derived from the given private key.";
-                        }
-                        else if (expectedAddr == comp)
-                        {
-                            message = "The given address is derived from the given private key but uses " +
-                                      "the compressed public key.";
-                            return false;
-                        }
-                        else
-                        {
-                            message = "Can not derive the given address from this private key.";
-                            return false;
-                        }
-                    }
-                    else if (compType == CompareInputType.AddrBoth && (expectedAddr == comp || expectedAddr == comp))
-                    {
-                        message = "The given address is derived from the given private key.";
-                    }
-                    else
-                    {
-                        message = "Can not derive the given address from this private key.";
-                        return false;
-                    }
-                }
-                else
-                {
-                    message = "Possible invalid address type.";
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public static string GetAllAddresses(PublicKey pub)
+        public static string GetAllAddresses(in Point pub)
         {
             StringBuilder sb = new(4 * 64);
 
