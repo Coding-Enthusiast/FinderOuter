@@ -54,71 +54,54 @@ namespace FinderOuter.Services.SearchSpaces
 
         private bool ProcessPrivateKey(string key, char missChar, out string error)
         {
-            MissCount = key.Count(c => c == missChar);
-            if (MissCount == 0)
+            Debug.Assert(MissCount > 0);
+
+            if (InputService.CanBePrivateKey(key, out error))
             {
-                if (key[0] != ConstantsFO.PrivKeyCompChar1 && key[0] != ConstantsFO.PrivKeyCompChar2 &&
-                    key[0] != ConstantsFO.PrivKeyUncompChar)
+                MissingIndexes = new int[MissCount];
+                multMissingIndexes = new int[MissCount];
+                isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
+
+                const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
+                multPow58 = isComp
+                    ? GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, uLen, 16)
+                    : GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, uLen, 24);
+
+                preComputed = new ulong[uLen];
+
+                // calculate what we already have and store missing indexes
+                int mis = 0;
+                for (int i = key.Length - 1, j = 0; i >= 0; i--)
                 {
-                    error = "The given key has an invalid first character.";
-                    return false;
+                    int t = (key.Length - 1 - i) * uLen;
+                    if (key[i] != missChar)
+                    {
+                        int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
+                        int chunk = (index * key.Length * uLen) + t;
+                        for (int k = uLen - 1; k >= 0; k--, j++)
+                        {
+                            preComputed[k] += multPow58[k + chunk];
+                        }
+                    }
+                    else
+                    {
+                        MissingIndexes[mis] = i;
+                        multMissingIndexes[mis] = t;
+                        mis++;
+                        j += uLen;
+                    }
                 }
-                else
-                {
-                    error = null;
-                    return true;
-                }
+
+                return true;
             }
             else
             {
-                if (InputService.CanBePrivateKey(key, out error))
-                {
-                    MissingIndexes = new int[MissCount];
-                    multMissingIndexes = new int[MissCount];
-                    isComp = key.Length == ConstantsFO.PrivKeyCompWifLen;
-
-                    const int uLen = 10; // Maximum result (58^52) is 39 bytes = 39/4 = 10 uint
-                    multPow58 = isComp
-                        ? GetShiftedMultPow58(ConstantsFO.PrivKeyCompWifLen, uLen, 16)
-                        : GetShiftedMultPow58(ConstantsFO.PrivKeyUncompWifLen, uLen, 24);
-
-                    preComputed = new ulong[uLen];
-
-                    // calculate what we already have and store missing indexes
-                    int mis = 0;
-                    for (int i = key.Length - 1, j = 0; i >= 0; i--)
-                    {
-                        int t = (key.Length - 1 - i) * uLen;
-                        if (key[i] != missChar)
-                        {
-                            int index = ConstantsFO.Base58Chars.IndexOf(key[i]);
-                            int chunk = (index * key.Length * uLen) + t;
-                            for (int k = uLen - 1; k >= 0; k--, j++)
-                            {
-                                preComputed[k] += multPow58[k + chunk];
-                            }
-                        }
-                        else
-                        {
-                            MissingIndexes[mis] = i;
-                            multMissingIndexes[mis] = t;
-                            mis++;
-                            j += uLen;
-                        }
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return false;
             }
         }
 
         private bool ProcessAddress(string address, char missChar, out string error)
         {
-            MissCount = address.Count(c => c == missChar);
             if (MissCount == 0)
             {
                 if (address[0] != ConstantsFO.B58AddressChar1 && address[0] != ConstantsFO.B58AddressChar2)
@@ -181,7 +164,6 @@ namespace FinderOuter.Services.SearchSpaces
 
         private bool ProcessBip38(string bip38, char missChar, out string error)
         {
-            MissCount = bip38.Count(c => c == missChar);
             if (MissCount == 0)
             {
                 error = null;
@@ -238,18 +220,28 @@ namespace FinderOuter.Services.SearchSpaces
             Input = input;
             inputType = t;
 
-            if (!InputService.IsMissingCharValid(missChar))
+            if (string.IsNullOrEmpty(input))
+            {
+                error = "Input can not be null or empty.";
+                return false;
+            }
+            else if (!InputService.IsMissingCharValid(missChar))
             {
                 error = "Missing character is not accepted.";
                 return false;
             }
-            else if (string.IsNullOrWhiteSpace(Input) || !Input.All(c => ConstantsFO.Base58Chars.Contains(c) || c == missChar))
+            else if (!InputService.CheckChars(input, AllChars, missChar, out error))
             {
-                error = "Input contains invalid base-58 character(s).";
                 return false;
             }
             else
             {
+                MissCount = input.Count(c => c == missChar);
+                if (MissCount == 0)
+                {
+                    error = null;
+                    return true;
+                }
                 switch (t)
                 {
                     case Base58Type.PrivateKey:

@@ -15,15 +15,15 @@ namespace Tests.Services
 {
     public class InputServiceTests
     {
-        private const string ValidCompKey = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ";
-        private const string ValidUnCompKey1 = "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617";
-        private const string ValidUnCompKey2 = "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK";
+        internal const string ValidCompKey = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ";
+        internal const string ValidUnCompKey1 = "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617";
+        internal const string ValidUnCompKey2 = "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK";
 
-        private const string ValidP2pkhAddr = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
-        private const string ValidP2shAddr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
+        internal const string ValidP2pkhAddr = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2";
+        internal const string ValidP2shAddr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
 
-        private const string ValidPubHexComp = "030b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17";
-        private const string ValidPubHexUncomp = "040b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17b95aedf5242b50b5c82147697351941032602332d5cc81531eec98a9b8f9c7cd";
+        internal const string ValidPubHexComp = "030b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17";
+        internal const string ValidPubHexUncomp = "040b3ad1cea48c61bdcff356675d92010290cdc2e04e1c9e68b6a01d3cec746c17b95aedf5242b50b5c82147697351941032602332d5cc81531eec98a9b8f9c7cd";
 
 
         [Theory]

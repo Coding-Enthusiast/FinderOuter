@@ -225,7 +225,7 @@ namespace FinderOuter.Services
             }
             else
             {
-                error = "Given key has an invalid length";
+                error = "Given key has an invalid length.";
                 return false;
             }
         }
@@ -244,7 +244,12 @@ namespace FinderOuter.Services
                 return false;
             }
 
-            byte[] keyBa = Base58.DecodeWithChecksum(key);
+            if (!Base58.TryDecodeWithChecksum(key, out byte[] keyBa))
+            {
+                message = "Could not decode the given key.";
+                return false;
+            }
+            
             if (keyBa[0] != ConstantsFO.PrivKeyFirstByte)
             {
                 message = $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";

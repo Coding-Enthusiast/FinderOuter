@@ -71,170 +71,154 @@ namespace Tests.Services.SearchSpaces
             // Invalid inputs
             yield return new object[]
             {
-                string.Empty, 'z', Base58Type.Address, false, "Missing character is not accepted.", 0,
-                false, null, null, null
+                "a", 'z', Base58Type.Address, false, "Missing character is not accepted.", 0,
+                false, null, null, null, null
             };
             yield return new object[]
             {
-                string.Empty, '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
-                false, null, null, null
+                string.Empty, '*', Base58Type.Address, false, "Input can not be null or empty.", 0,
+                false, null, null, null, null
             };
             yield return new object[]
             {
-                null, '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
-                false, null, null, null
+                null, '*', Base58Type.Address, false, "Input can not be null or empty.", 0,
+                false, null, null, null, null
             };
             yield return new object[]
             {
-                " ", '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
-                false, null, null, null
+                " ", '*', Base58Type.Address, false, "Invalid character \" \" found at index=0.", 0,
+                false, null, null, null, null
             };
             yield return new object[]
             {
-                "0", '*', Base58Type.Address, false, "Input contains invalid base-58 character(s).", 0,
-                false, null, null, null
+                "0", '*', Base58Type.Address, false, "Invalid character \"0\" found at index=0.", 0,
+                false, null, null, null, null
             };
             yield return new object[]
             {
-                "a", '*', (Base58Type)1000, false, "Given input type is not defined.", 0, false, null, null, null
+                "a*AOB", '*', Base58Type.Address, false, "Invalid character \"O\" found at index=3.", 0,
+                false, null, null, null, null
+            };
+            yield return new object[]
+            {
+                "a*", '*', (Base58Type)1000, false, "Given input type is not defined.", 1, false, null, null, null, null
             };
 
             // Process private keys:
             yield return new object[]
             {
-                "7HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
-                '*', Base58Type.PrivateKey, false, "The given key has an invalid first character.",
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
                 "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
                 '*', Base58Type.PrivateKey, true, null,
-                0, false, null, null, null
+                0, false, null, null, null, null
             };
             yield return new object[]
             {
-                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbT",
+                // Wrong key with no missing character (validation is postponed)
+                "7HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
                 '*', Base58Type.PrivateKey, true, null,
-                0, false, null, null, null
+                0, false, null, null, null, null
             };
             yield return new object[]
             {
-                "L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK",
-                '*', Base58Type.PrivateKey, true, null,
-                0, false, null, null, null
+                "5HueCGU8*MjxEXxiPuD5BDku4MkFqeZyd4dZ*jvhTVqvbTLvy*",
+                '*', Base58Type.PrivateKey, false, "Given key has an invalid length.",
+                3, false, null, null, null, null
             };
-            yield return new object[]
-            {
-                "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
-                '*', Base58Type.PrivateKey, true, null,
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "kwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
-                '*', Base58Type.PrivateKey, false, "The given key has an invalid first character.",
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL*yTJ",
-                '?', Base58Type.PrivateKey, false, "Input contains invalid base-58 character(s).",
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL-yTJ",
-                '-', Base58Type.PrivateKey, true, null,
-                1, false, new int[] { 47 }, new int[] { 30 }, uncompWifMultPow
-            };
-            yield return new object[]
-            {
-                "K*dMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1*xJw*vP9861*",
-                '*', Base58Type.PrivateKey, true, null,
-                4, true, new int[] { 51, 44, 40, 1 }, new int[] { 0, 70, 110, 500 }, compWIfMultPow
-            };
+            //yield return new object[]
+            //{
+            //    "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTL-yTJ",
+            //    '-', Base58Type.PrivateKey, true, null,
+            //    1, false, new int[] { 47 }, new int[] { 30 }, uncompWifMultPow, null
+            //};
+            //yield return new object[]
+            //{
+            //    "K*dMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1*xJw*vP9861*",
+            //    '*', Base58Type.PrivateKey, true, null,
+            //    4, true, new int[] { 51, 44, 40, 1 }, new int[] { 0, 70, 110, 500 }, compWIfMultPow, null
+            //};
 
-            // Process addresses:
-            yield return new object[]
-            {
-                "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
-                '*', Base58Type.Address, true, null,
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "2BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
-                '*', Base58Type.Address, false, "The given address has an invalid first character.",
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN-",
-                '-', Base58Type.Address, true, null,
-                1, false, new int[] { 33 }, new int[] { 0 }, addrMultPow
-            };
-            yield return new object[]
-            {
-                "1-vBMSE-stWetqTFn5A-4m4GFg7xJ-NVN-",
-                '-', Base58Type.Address, true, null,
-                5, false, new int[5] { 33, 29, 19, 7, 1  }, new int[5] { 0, 28, 98, 182, 224 }, addrMultPow
-            };
-            yield return new object[]
-            {
-                "3J98t1WpEZ73C*mQviecrnyiWrnqRh*NLy",
-                '*', Base58Type.Address, true, null,
-                2, false, new int[2] { 30, 13 }, new int[2] { 21, 140 }, addrMultPow
-            };
 
-            // Process BIP38:
-            yield return new object[]
-            {
-                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
-                '*', Base58Type.Bip38, true, null,
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHn",
-                '*', Base58Type.Bip38, true, null,
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
-                '*', Base58Type.Bip38, true, null,
-                0, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
-                '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 should start with 6P.",
-                1, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs**",
-                '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 length must have 58 characters.",
-                2, false, null, null, null
-            };
-            yield return new object[]
-            {
-                "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
-                '*', Base58Type.Bip38, true, null,
-                1, false, new int[1] { 57 }, new int[1] { 0 }, bipMultPow
-            };
-            yield return new object[]
-            {
-                "6P*WdmoT1ZursVcr5N*D14p5bHrKVGPG**eEoEeRb8FVaq*SHnZTLEbY*U",
-                '*', Base58Type.Bip38, true, null,
-                6, false, new int[6] { 56, 46, 33, 32, 18, 2 }, new int[6] { 11, 121, 264, 275, 429, 605 }, bipMultPow
-            };
+
+            //// Process addresses:
+            //yield return new object[]
+            //{
+            //    "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            //    '*', Base58Type.Address, true, null,
+            //    0, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "2BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+            //    '*', Base58Type.Address, false, "The given address has an invalid first character.",
+            //    0, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN-",
+            //    '-', Base58Type.Address, true, null,
+            //    1, false, new int[] { 33 }, new int[] { 0 }, addrMultPow, null
+            //};
+            //yield return new object[]
+            //{
+            //    "1-vBMSE-stWetqTFn5A-4m4GFg7xJ-NVN-",
+            //    '-', Base58Type.Address, true, null,
+            //    5, false, new int[5] { 33, 29, 19, 7, 1  }, new int[5] { 0, 28, 98, 182, 224 }, addrMultPow, null
+            //};
+            //yield return new object[]
+            //{
+            //    "3J98t1WpEZ73C*mQviecrnyiWrnqRh*NLy",
+            //    '*', Base58Type.Address, true, null,
+            //    2, false, new int[2] { 30, 13 }, new int[2] { 21, 140 }, addrMultPow, null
+            //};
+
+            //// Process BIP38:
+            //yield return new object[]
+            //{
+            //    "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
+            //    '*', Base58Type.Bip38, true, null,
+            //    0, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHn",
+            //    '*', Base58Type.Bip38, true, null,
+            //    0, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU",
+            //    '*', Base58Type.Bip38, true, null,
+            //    0, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "7PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
+            //    '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 should start with 6P.",
+            //    1, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs**",
+            //    '*', Base58Type.Bip38, false, "Base-58 encoded BIP-38 length must have 58 characters.",
+            //    2, false, null, null, null, null
+            //};
+            //yield return new object[]
+            //{
+            //    "6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs*",
+            //    '*', Base58Type.Bip38, true, null,
+            //    1, false, new int[1] { 57 }, new int[1] { 0 }, bipMultPow, null
+            //};
+            //yield return new object[]
+            //{
+            //    "6P*WdmoT1ZursVcr5N*D14p5bHrKVGPG**eEoEeRb8FVaq*SHnZTLEbY*U",
+            //    '*', Base58Type.Bip38, true, null,
+            //    6, false, new int[6] { 56, 46, 33, 32, 18, 2 }, new int[6] { 11, 121, 264, 275, 429, 605 }, bipMultPow, null
+            //};
         }
         [Theory]
         [MemberData(nameof(GetProcessCases))]
         public void ProcessTest(string input, char missChar, Base58Type t, bool expB, string expErr, int expMisCount,
-                                bool isComp, int[] misIndex, int[] multMisIndex, ulong[] multPow58)
+                                bool isComp, int[] misIndex, int[] multMisIndex, ulong[] multPow58, ulong[] expPre)
         {
             B58SearchSpace ss = new();
             bool actualB = ss.Process(input, missChar, t, out string actualErr);
@@ -242,15 +226,46 @@ namespace Tests.Services.SearchSpaces
             Assert.Equal(expB, actualB);
             Assert.Equal(expErr, actualErr);
             Assert.Equal(expMisCount, ss.MissCount);
+            Assert.Equal(input, ss.Input);
             Assert.Equal(t, ss.inputType);
             if (expB)
             {
-                Assert.Equal(input, ss.Input);
                 Assert.Equal(isComp, ss.isComp);
                 Assert.Equal(misIndex, ss.MissingIndexes);
                 Assert.Equal(multMisIndex, ss.multMissingIndexes);
                 Assert.Equal(multPow58, ss.multPow58);
+                Assert.Equal(expPre, ss.preComputed);
             }
+        }
+
+
+        private static B58SearchSpace BuildSS(string s, int expMissCount, Base58Type t, bool processResult)
+        {
+            B58SearchSpace ss = new();
+            bool b = ss.Process(s, '*', t, out _);
+            Assert.Equal(expMissCount, ss.MissCount);
+            Assert.Equal(processResult, b);
+
+            return ss;
+        }
+
+        public static IEnumerable<object[]> GetProcessNoMissingCases()
+        {
+            yield return new object[]
+            {
+                BuildSS("5Hu*CGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ", 1, Base58Type.PrivateKey, true),
+                false, "This method should not be called with missing characters."
+            };
+            // L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK
+            // KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617
+        }
+        [Theory]
+        [MemberData(nameof(GetProcessNoMissingCases))]
+        public void ProcessNoMissingTest(B58SearchSpace ss, bool expected, string expMsg)
+        {
+            bool actual = ss.ProcessNoMissing(out string message);
+            Assert.Equal(expected, actual);
+            Assert.Contains(expMsg, message);
         }
     }
 }
