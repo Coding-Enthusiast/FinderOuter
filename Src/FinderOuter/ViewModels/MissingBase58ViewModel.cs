@@ -227,14 +227,14 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
-                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray()))
+                if (searchSpace.SetValues(allItems.Select(x => x.ToArray()).Reverse().ToArray(), out string error))
                 {
                     b58Service.Find(searchSpace, CompareInput, SelectedCompareInputType.Value);
                     ResetSearchSpace();
                 }
                 else
                 {
-                    Result.AddMessage("Something went wrong when instantiating SearchSpace.");
+                    Result.AddMessage(error);
                 }
             }
         }

@@ -286,36 +286,47 @@ namespace FinderOuter.Services.SearchSpaces
         }
 
 
-        public bool SetValues(string[][] result)
+        public bool SetValues(string[][] array, out string error)
         {
-            if (result.Length != MissCount || result.Any(x => x.Length < 2))
+            if (array is null)
             {
+                // ViewModels should never send null array
+                error = "Permutations list can not be null (this is a bug).";
+                return false;
+            }
+
+            if (array.Length != MissCount)
+            {
+                error = "Permutations list doesn't have the same number of arrays as missing characters count.";
                 return false;
             }
 
             int totalLen = 0;
             int maxLen = 0;
             int maxIndex = 0;
-            for (int i = 0; i < result.Length; i++)
+            for (int i = 0; i < array.Length; i++)
             {
-                if (result[i].Length <= 1)
+                if (array[i] is null || array[i].Length < 2)
                 {
+                    error = $"Search space values are not correctly set. " +
+                            $"Add at least 2 possible values for the {(i + 1).ToOrdinal()} missing position.";
                     return false;
                 }
-                totalLen += result[i].Length;
 
-                if (result[i].Length > maxLen)
+                totalLen += array[i].Length;
+
+                if (array[i].Length > maxLen)
                 {
-                    maxLen = result[i].Length;
+                    maxLen = array[i].Length;
                     maxIndex = i;
                 }
             }
 
             if (maxIndex != 0)
             {
-                string[] t1 = result[maxIndex];
-                result[maxIndex] = result[0];
-                result[0] = t1;
+                string[] t1 = array[maxIndex];
+                array[maxIndex] = array[0];
+                array[0] = t1;
 
                 int t2 = MissingIndexes[maxIndex];
                 MissingIndexes[maxIndex] = MissingIndexes[0];
@@ -329,28 +340,8 @@ namespace FinderOuter.Services.SearchSpaces
             AllPermutationValues = new uint[totalLen];
             PermutationCounts = new int[MissCount];
 
-            int index1 = 0;
-            int index2 = 0;
-            char[] allChars = ConstantsFO.Base58Chars.ToCharArray();
-            foreach (string[] item in result)
-            {
-                PermutationCounts[index2++] = item.Length;
-                foreach (string s in item)
-                {
-                    if (s.Length > 1)
-                    {
-                        return false;
-                    }
-                    int i = Array.IndexOf(allChars, s[0]);
-                    if (i < 0)
-                    {
-                        return false;
-                    }
-                    AllPermutationValues[index1++] = (uint)i;
-                }
-            }
-
-            return true;
+            uint[] all = Enumerable.Range(0, AllChars.Length).Select(i => (uint)i).ToArray();
+            return ProcessCharValues(array, AllChars, all, out error);
         }
     }
 }
