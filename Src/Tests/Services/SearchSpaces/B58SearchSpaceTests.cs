@@ -263,11 +263,46 @@ namespace Tests.Services.SearchSpaces
         {
             yield return new object[]
             {
+                new B58SearchSpace() { inputType = (Base58Type)1000 }, false, "Undefined input type."
+            };
+            yield return new object[]
+            {
                 BuildSS("5Hu*CGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ", 1, Base58Type.PrivateKey, true),
                 false, "This method should not be called with missing characters."
             };
-            // L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK
-            // KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617
+
+            yield return new object[]
+            {
+                BuildSS("L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6Jk", 0, Base58Type.PrivateKey, true),
+                false, "The given key has an invalid checksum."
+            };
+            yield return new object[]
+            {
+                BuildSS("L53fCHmQhbNp1B4JipfBtfeHZH7cAibzG9oK19XfiFzxHgAkz6JK", 0, Base58Type.PrivateKey, true),
+                true, "The given key is a valid compressed private key."
+            };
+
+            yield return new object[]
+            {
+                BuildSS(InputServiceTests.ValidP2pkhAddr + "1", 0, Base58Type.Address, true),
+                false, "The given address has an invalid checksum."
+            };
+            yield return new object[]
+            {
+                BuildSS(InputServiceTests.ValidP2pkhAddr, 0, Base58Type.Address, true),
+                true, "The given address is a valid base-58 encoded address used for P2PKH scripts."
+            };
+
+            yield return new object[]
+            {
+                BuildSS("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYs1", 0, Base58Type.Bip38, true),
+                false, "The given BIP-38 string has an invalid checksum."
+            };
+            yield return new object[]
+            {
+                BuildSS("6PRWdmoT1ZursVcr5NiD14p5bHrKVGPG7yeEoEeRb8FVaqYSHnZTLEbYsU", 0, Base58Type.Bip38, true),
+                true, "The given BIP-38 string is valid."
+            };
         }
         [Theory]
         [MemberData(nameof(GetProcessNoMissingCases))]
