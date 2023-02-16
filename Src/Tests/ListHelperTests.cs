@@ -74,11 +74,26 @@ namespace Tests
         [Fact]
         public void GetEnumDescItems_WithExclusion_Test()
         {
-            IEnumerable<DescriptiveItem<Foo>> actual = ListHelper.GetEnumDescItems<Foo>(Foo.Foo2, Foo.Foo4);
+            IEnumerable<DescriptiveItem<Foo>> actual = ListHelper.GetEnumDescItems(Foo.Foo2, Foo.Foo4);
             IEnumerable<DescriptiveItem<Foo>> expected = new DescriptiveItem<Foo>[]
             {
                 new DescriptiveItem<Foo>(Foo.Foo1),
                 new DescriptiveItem<Foo>(Foo.Foo3),
+            };
+
+            Assert.Equal(expected, actual, new EqHelper<DescriptiveItem<Foo>>());
+        }
+
+        [Fact]
+        public void GetEnumDescItems_WithInvalidExclusion_Test()
+        {
+            IEnumerable<DescriptiveItem<Foo>> actual = ListHelper.GetEnumDescItems((Foo)1000);
+            IEnumerable<DescriptiveItem<Foo>> expected = new DescriptiveItem<Foo>[]
+            {
+                new DescriptiveItem<Foo>(Foo.Foo1),
+                new DescriptiveItem<Foo>(Foo.Foo2),
+                new DescriptiveItem<Foo>(Foo.Foo3),
+                new DescriptiveItem<Foo>(Foo.Foo4),
             };
 
             Assert.Equal(expected, actual, new EqHelper<DescriptiveItem<Foo>>());
