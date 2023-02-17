@@ -11,7 +11,7 @@ using System.Globalization;
 
 namespace FinderOuter.Backend.Mvvm.Converters
 {
-    class PossibilityToColorConverter : IValueConverter
+    public class PossibilityToColorConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
