@@ -41,14 +41,18 @@ namespace FinderOuter.Services.SearchSpaces
                 error = "Missing character is not accepted.";
                 return false;
             }
-            else if (string.IsNullOrWhiteSpace(Input) || !Input.All(c => AllChars.Contains(c) || c == missingChar))
+            else if (string.IsNullOrEmpty(input))
             {
-                error = "Input contains invalid base-58 character(s).";
+                error = "Input can not be null or empty.";
                 return false;
             }
             else if (!Input.StartsWith(ConstantsFO.MiniKeyStart))
             {
                 error = $"Minikey must start with {ConstantsFO.MiniKeyStart}.";
+                return false;
+            }
+            else if (!InputService.CheckChars(input, AllChars, missingChar, out error))
+            {
                 return false;
             }
             else
@@ -59,30 +63,28 @@ namespace FinderOuter.Services.SearchSpaces
                     error = null;
                     return true;
                 }
-                else
-                {
-                    MissingIndexes = new int[MissCount];
-                    switch (Input.Length)
-                    {
-                        case ConstantsFO.MiniKeyLen1:
-                            preComputed = new byte[ConstantsFO.MiniKeyLen1];
-                            break;
-                        case ConstantsFO.MiniKeyLen2:
-                            preComputed = new byte[ConstantsFO.MiniKeyLen2];
-                            break;
-                        case ConstantsFO.MiniKeyLen3:
-                            preComputed = new byte[ConstantsFO.MiniKeyLen3];
-                            break;
-                        default:
-                            error = $"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen2} or " +
-                                    $"{ConstantsFO.MiniKeyLen3}.";
-                            return false;
-                    }
 
-                    PreCompute(missingChar);
-                    error = null;
-                    return true;
+                MissingIndexes = new int[MissCount];
+                switch (Input.Length)
+                {
+                    case ConstantsFO.MiniKeyLen1:
+                        preComputed = new byte[ConstantsFO.MiniKeyLen1];
+                        break;
+                    case ConstantsFO.MiniKeyLen2:
+                        preComputed = new byte[ConstantsFO.MiniKeyLen2];
+                        break;
+                    case ConstantsFO.MiniKeyLen3:
+                        preComputed = new byte[ConstantsFO.MiniKeyLen3];
+                        break;
+                    default:
+                        error = $"Minikey length must be {ConstantsFO.MiniKeyLen1} or {ConstantsFO.MiniKeyLen2} or " +
+                                $"{ConstantsFO.MiniKeyLen3}.";
+                        return false;
                 }
+
+                PreCompute(missingChar);
+                error = null;
+                return true;
             }
         }
 
