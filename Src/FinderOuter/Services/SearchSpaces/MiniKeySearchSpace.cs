@@ -38,7 +38,7 @@ namespace FinderOuter.Services.SearchSpaces
 
             if (!InputService.IsMissingCharValid(missingChar))
             {
-                error = "Missing character is not accepted.";
+                error = $"Invalid missing character. Choose one from {ConstantsFO.MissingSymbols}";
                 return false;
             }
             else if (string.IsNullOrEmpty(input))
