@@ -73,5 +73,24 @@ namespace Tests.Services.SearchSpaces
                 Assert.Equal(expPre, ss.preComputed);
             }
         }
+
+
+        [Fact]
+        public void ProcessNoMissingTest()
+        {
+            MiniKeySearchSpace ss = new();
+
+            bool b = ss.Process("SzavMBLoXU6kDrqtUVmffv", '*', out _);
+            Assert.True(b);
+            b = ss.ProcessNoMissing(out string msg);
+            Assert.True(b);
+            Assert.Contains("Compressed", msg);
+
+            b = ss.Process("SzavMBLoXU6kDrqtUVmffvv", '*', out _);
+            Assert.True(b);
+            b = ss.ProcessNoMissing(out msg);
+            Assert.False(b);
+            Assert.Contains("Invalid minikey.", msg);
+        }
     }
 }
