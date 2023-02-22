@@ -5,7 +5,6 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;

@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Backend;
-using System;
 using System.Linq;
 using System.Text;
 
