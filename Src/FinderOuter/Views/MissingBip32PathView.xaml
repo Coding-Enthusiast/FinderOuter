@@ -12,6 +12,7 @@
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
     <TextBox Text="{Binding XKey}"
+             FontFamily="{Binding CjkFont}"
              Watermark="Enter mnemonic or extended key here"
              Height="86"
              Grid.Column="0"

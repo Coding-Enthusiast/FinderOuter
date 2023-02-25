@@ -12,6 +12,7 @@
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
     <TextBox Text="{Binding Input}"
+             FontFamily="{Binding CjkFont}"
              Watermark="Mnemonic (seed phrase), separate each word with a space"
              Height="86"
              Grid.Column="0"

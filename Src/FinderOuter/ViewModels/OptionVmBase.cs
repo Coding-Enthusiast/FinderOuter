@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Avalonia.Media;
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
@@ -102,6 +103,8 @@ namespace FinderOuter.ViewModels
             get => _selCompType;
             set => this.RaiseAndSetIfChanged(ref _selCompType, value);
         }
+
+        public FontFamily CjkFont => FontFamily.Parse("Microsoft YaHei,Simsun,苹方-简,宋体-简");
 
 
         protected ObservableCollection<string>[] allItems;
