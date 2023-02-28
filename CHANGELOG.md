@@ -1,6 +1,17 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.16.0.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.17.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.17.0 (2023-02-27)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.16.0.0...v0.17.0.0)  
+* Removed message signature verification
+* Solve issue #4 (not being able to enter words in CJK languages)
+* Completely rely on new Bitcoin.Net release for ECC (has some bug fixes and slight optimization)
+* Improve printed messages (errors and reports)
+* Improved how Base16, Base58 and MiniKey options handle configuring search-space which solves some bugs and returns better messages
+* Return a comprehensive message when an input contains invalid characters (the invalid char and index)
+* Small UI improvements
+* Various small bug fixes, code improvements, code cleanup and lots of new tests
 
 ### Release 0.16.0 (2022-09-19)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.15.0.0...v0.16.0.0)  
