@@ -171,6 +171,7 @@ namespace FinderOuter.ViewModels
                             }
                         }
                     }
+                    ToAdd = string.Empty;
                 }
             }
             else
@@ -189,6 +190,7 @@ namespace FinderOuter.ViewModels
                 {
                     CurrentItems.Add(ToAdd);
                 }
+                ToAdd = string.Empty;
             }
             else
             {
