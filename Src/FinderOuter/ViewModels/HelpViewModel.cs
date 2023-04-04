@@ -13,8 +13,6 @@ namespace FinderOuter.ViewModels
 {
     public enum HelpInputTypes
     {
-        [Description("Message signature")]
-        MsgSig,
         [Description("Wallet import format (WIF)")]
         Wif,
         [Description("Base-58 encoded private key")]
@@ -43,11 +41,6 @@ namespace FinderOuter.ViewModels
 
     public enum HelpSecondInputTypes
     {
-        [Description("not yet verified")]
-        MsgSigUnverified,
-        [Description("could not be verified")]
-        MsgSigBroken,
-
         [Description("missing some characters at known positions")]
         CharMissing,
         [Description("missing some characters at unknown positions")]
@@ -124,7 +117,7 @@ namespace FinderOuter.ViewModels
         /// <para/>1 -> extra input could help
         /// <para/>2 -> extra input is mandatory
         /// </param>
-        private string BuildStr(string option, string key, string missType, int extra, bool unknownPos)
+        private static string BuildStr(string option, string key, string missType, int extra, bool unknownPos)
         {
             string temp = "Having the corresponding publickey or address";
             return $"Choose {option} option, enter your {key}" +
@@ -133,13 +126,13 @@ namespace FinderOuter.ViewModels
                    $"{(extra == 0 ? string.Empty : extra == 1 ? $"{temp} is optional but helpful." : $"{temp} is mandatory.")}";
         }
 
-        private string BuildPassStr(string option, string key)
+        private static string BuildPassStr(string option, string key)
         {
             return $"Choose {option} option, enter your {key} and choose a password recovery mode. " +
                    $"Enter some information about your password and click Find.";
         }
 
-        private string BuildNotAvailable()
+        private static string BuildNotAvailable()
         {
             return "This option is not yet available.";
         }
@@ -155,8 +148,6 @@ namespace FinderOuter.ViewModels
 
                 switch (SelectedInput.Value)
                 {
-                    case HelpInputTypes.MsgSig:
-                        break;
                     case HelpInputTypes.Wif:
                     case HelpInputTypes.Base58Prv:
                         if (SelectedSecondary.Value == HelpSecondInputTypes.CharMissing)
@@ -282,7 +273,7 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private IEnumerable<DescriptiveItem<T>> ToDescItems<T>(params T[] values) where T : Enum
+        private static IEnumerable<DescriptiveItem<T>> ToDescItems<T>(params T[] values) where T : Enum
         {
             foreach (T item in values)
             {
@@ -290,17 +281,13 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private IEnumerable<DescriptiveItem<HelpSecondInputTypes>> GetSecondary(HelpInputTypes value)
+        private static IEnumerable<DescriptiveItem<HelpSecondInputTypes>> GetSecondary(HelpInputTypes value)
         {
-            if (value == HelpInputTypes.MsgSig)
-            {
-                return ToDescItems(HelpSecondInputTypes.MsgSigUnverified, HelpSecondInputTypes.MsgSigBroken);
-            }
-            else if (value == HelpInputTypes.Wif || value == HelpInputTypes.Base58Prv ||
-                     value == HelpInputTypes.P2pkhAddr || value == HelpInputTypes.P2shAddr ||
-                     value == HelpInputTypes.Base16Prv ||
-                     value == HelpInputTypes.MiniKey ||
-                     value == HelpInputTypes.Armory)
+            if (value == HelpInputTypes.Wif || value == HelpInputTypes.Base58Prv ||
+                value == HelpInputTypes.P2pkhAddr || value == HelpInputTypes.P2shAddr ||
+                value == HelpInputTypes.Base16Prv ||
+                value == HelpInputTypes.MiniKey ||
+                value == HelpInputTypes.Armory)
             {
                 return ToDescItems(HelpSecondInputTypes.CharMissing, HelpSecondInputTypes.CharMissingUnknown);
             }
