@@ -54,12 +54,14 @@ namespace FinderOuter.ViewModels
 
 
         public static string MissingToolTip => ConstantsFO.MissingToolTip;
-        public static KB InputKb => KB.DamagedInput;
-        public static KB ExtraInputKb => KB.ExtraInput;
-        public static KB Bip32PathKb => KB.Bip32Path;
-        public static KB AlphanumericPassKb => KB.AlphanumericPass;
-        public static KB CustomCharPassKb => KB.CustomCharPass;
-
+        // Don't change to static, it will break the OpenKB(KB) method
+#pragma warning disable CA1822 // Mark members as static
+        public KB InputKb => KB.DamagedInput;
+        public KB ExtraInputKb => KB.ExtraInput;
+        public KB Bip32PathKb => KB.Bip32Path;
+        public KB AlphanumericPassKb => KB.AlphanumericPass;
+        public KB CustomCharPassKb => KB.CustomCharPass;
+#pragma warning restore CA1822 // Mark members as static
 
         public IReport Result { get; }
         public IWindowManager WinMan { get; }
