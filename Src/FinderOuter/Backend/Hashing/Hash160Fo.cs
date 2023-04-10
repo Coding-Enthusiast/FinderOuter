@@ -13,7 +13,7 @@ namespace FinderOuter.Backend.Hashing
     /// <para/> This is more optimized and a lot faster than using .Net functions individually 
     /// specially when computing hash for small byte arrays such as 33 bytes (bitcoin public keys used in P2PKH scripts)
     /// </summary>
-    public static class Hash160
+    public static class Hash160Fo
     {
         /// <summary>
         /// Size of the hash result in bytes.

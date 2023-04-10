@@ -33,7 +33,7 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = _calc.GetPubkey(in key, false);
 
-            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
 
@@ -47,14 +47,14 @@ namespace FinderOuter.Services.Comparers
 
             Span<byte> toHash = _calc.GetPubkey(in key, false);
 
-            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
 
         public override bool Compare(in PointJacobian point)
         {
             Span<byte> toHash = point.ToPoint().ToByteArray(false);
-            ReadOnlySpan<byte> compHash = Hash160.Compress65(toHash);
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress65(toHash);
             return compHash.SequenceEqual(hash);
         }
     }

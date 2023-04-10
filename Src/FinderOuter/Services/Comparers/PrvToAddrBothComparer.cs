@@ -33,13 +33,13 @@ namespace FinderOuter.Services.Comparers
 
             _calc.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp);
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160Fo.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
         }
 
@@ -53,13 +53,13 @@ namespace FinderOuter.Services.Comparers
 
             _calc.GetPubkey(in key, out Span<byte> comp, out Span<byte> uncomp);
 
-            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp);
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress33(comp);
             if (compHash.SequenceEqual(hash))
             {
                 return true;
             }
 
-            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160Fo.Compress65(uncomp);
             return uncompHash.SequenceEqual(hash);
         }
 
@@ -77,7 +77,7 @@ namespace FinderOuter.Services.Comparers
             xNorm.WriteToSpan(uncomp[1..]);
             yNorm.WriteToSpan(uncomp[33..]);
 
-            ReadOnlySpan<byte> uncompHash = Hash160.Compress65(uncomp);
+            ReadOnlySpan<byte> uncompHash = Hash160Fo.Compress65(uncomp);
             if (uncompHash.SequenceEqual(hash))
             {
                 return true;
@@ -86,7 +86,7 @@ namespace FinderOuter.Services.Comparers
             Span<byte> comp = new byte[33];
             comp[0] = firstByte;
             uncomp.Slice(1, 32).CopyTo(comp[1..]);
-            ReadOnlySpan<byte> compHash = Hash160.Compress33(comp.ToArray());
+            ReadOnlySpan<byte> compHash = Hash160Fo.Compress33(comp.ToArray());
             return compHash.SequenceEqual(hash);
         }
     }

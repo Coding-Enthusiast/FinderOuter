@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Tests.Backend.Hashing
 {
-    public class Ripemd160Tests
+    public class Ripemd160FoTests
     {
         [Theory]
         [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "RIPEMD160", MemberType = typeof(HashTestCaseHelper))]
