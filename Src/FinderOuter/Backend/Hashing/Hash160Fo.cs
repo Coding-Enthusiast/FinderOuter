@@ -21,47 +21,6 @@ namespace FinderOuter.Backend.Hashing
         public const int HashByteSize = 20;
 
 
-        public static unsafe byte[] ComputeHash_static(Span<byte> data)
-        {
-            if (data.Length == 33)
-            {
-                return Compress33(data);
-            }
-            else if (data.Length == 65)
-            {
-                return Compress65(data);
-            }
-
-            uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
-            fixed (byte* dPt = data)
-            {
-                Sha256Fo.Init(pt);
-                Sha256Fo.CompressData(dPt, data.Length, data.Length, pt);
-
-                // Compute RIPEMD160
-                pt[12] = (pt[7] >> 24) | (pt[7] << 24) | ((pt[7] >> 8) & 0xff00) | ((pt[7] << 8) & 0xff0000);
-                pt[11] = (pt[6] >> 24) | (pt[6] << 24) | ((pt[6] >> 8) & 0xff00) | ((pt[6] << 8) & 0xff0000);
-                pt[10] = (pt[5] >> 24) | (pt[5] << 24) | ((pt[5] >> 8) & 0xff00) | ((pt[5] << 8) & 0xff0000);
-                pt[9] = (pt[4] >> 24) | (pt[4] << 24) | ((pt[4] >> 8) & 0xff00) | ((pt[4] << 8) & 0xff0000);
-                pt[8] = (pt[3] >> 24) | (pt[3] << 24) | ((pt[3] >> 8) & 0xff00) | ((pt[3] << 8) & 0xff0000);
-                pt[7] = (pt[2] >> 24) | (pt[2] << 24) | ((pt[2] >> 8) & 0xff00) | ((pt[2] << 8) & 0xff0000);
-                pt[6] = (pt[1] >> 24) | (pt[1] << 24) | ((pt[1] >> 8) & 0xff00) | ((pt[1] << 8) & 0xff0000);
-                pt[5] = (pt[0] >> 24) | (pt[0] << 24) |                       // Swap byte 1 and 4
-                        ((pt[0] >> 8) & 0xff00) | ((pt[0] << 8) & 0xff0000);  // Swap byte 2 and 3
-                pt[13] = 0b00000000_00000000_00000000_10000000U;
-                pt[14] = 0;
-                pt[15] = 0;
-                pt[16] = 0;
-                pt[19] = 256;
-
-                Ripemd160Fo.Init(pt);
-                Ripemd160Fo.CompressBlock(pt);
-
-                return Ripemd160Fo.GetBytes(pt);
-            }
-        }
-
-
         public static unsafe byte[] Compress22(Span<byte> data)
         {
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];

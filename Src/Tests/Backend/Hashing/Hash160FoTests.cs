@@ -12,21 +12,6 @@ namespace Tests.Backend.Hashing
 {
     public class Hash160FoTests
     {
-        [Fact]
-        public void ComputeHashTest()
-        {
-            byte[] data1 = Helper.HexToBytes("03306eeb63417d2e50c49bd5cb6256296116d6474c14853d64e008d281e392109a");
-            byte[] actual1 = Hash160Fo.ComputeHash_static(data1);
-            byte[] expected1 = Helper.HexToBytes("3edd2f8b85027645ddb5aec9ad59b3b60c396c7e");
-
-            byte[] data2 = Helper.HexToBytes("04306EEB63417D2E50C49BD5CB6256296116D6474C14853D64E008D281E392109AF3C0F0E015C966BE3DBB4BD09E4BE95EC109CCDFBEC4C4FD910E77091DC00A67");
-            byte[] actual2 = Hash160Fo.ComputeHash_static(data2);
-            byte[] expected2 = Helper.HexToBytes("543e87f1cde0a028ad4c33afc8052ed78846c216");
-
-            Assert.Equal(expected1, actual1);
-            Assert.Equal(expected2, actual2);
-        }
-
         private static byte[] GetRandomBytes(int len)
         {
             byte[] res = new byte[len];
