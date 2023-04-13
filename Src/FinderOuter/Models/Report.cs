@@ -33,7 +33,7 @@ namespace FinderOuter.Models
             set => this.RaiseAndSetIfChanged(ref _state, value);
         }
 
-        private string _msg;
+        private string _msg = string.Empty;
         public string Message
         {
             get => _msg;
@@ -66,10 +66,9 @@ namespace FinderOuter.Models
             AddMessageSafe($"Total number of permutations to check: {Total:n0}");
         }
 
-        public void SetTotal(int value, int exponent)
+        public void SetTotal(int value, int exponent) 
         {
-            Total = BigInteger.Pow(value, exponent);
-            AddMessageSafe($"Total number of permutations to check: {Total:n0}");
+            SetTotal(BigInteger.Pow(value, exponent));
         }
 
         public void Init()

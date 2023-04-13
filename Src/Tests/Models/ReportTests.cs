@@ -11,6 +11,23 @@ namespace Tests.Models
     public class ReportTests
     {
         [Fact]
+        public void ConstructorTest()
+        {
+            Report report = new();
+
+            Assert.Equal(State.Ready, report.CurrentState);
+            Assert.False(report.FoundAnyResult);
+            Assert.False(report.IsProgressVisible);
+            Assert.Equal(string.Empty, report.Message);
+            Assert.Equal(0, report.Progress);
+            Assert.NotNull(report.Timer);
+            Assert.False(report.Timer.IsRunning);
+            Assert.Equal(0, report.Timer.ElapsedMilliseconds);
+            Assert.Equal(0, report.Total);
+            Assert.NotNull(report.UIThread);
+        }
+
+        [Fact]
         public void InitTest()
         {
             Report report = new()
@@ -22,16 +39,16 @@ namespace Tests.Models
                 IsProgressVisible = true
             };
             report.Timer.Start();
-            report.SetTotal(1, 1);
+            report.SetTotal(1);
             Assert.Equal(1, report.Total);
 
             report.Init();
 
             Assert.Equal(State.Working, report.CurrentState);
             Assert.False(report.FoundAnyResult);
+            Assert.False(report.IsProgressVisible);
             Assert.Equal(string.Empty, report.Message);
             Assert.Equal(0, report.Progress);
-            Assert.False(report.IsProgressVisible);
             Assert.False(report.Timer.IsRunning);
             Assert.Equal(0, report.Timer.ElapsedMilliseconds);
             Assert.Equal(0, report.Total);
@@ -45,7 +62,7 @@ namespace Tests.Models
         [InlineData(true, State.FinishedSuccess, false, true)]
         [InlineData(false, State.FinishedFail, true, false)]
         [InlineData(false, State.FinishedFail, true, true)]
-        public void Finalize_FailRunTest(bool found, State expState, bool timer, bool total)
+        public void Finalize_FailRunTest(bool found, State expState, bool useTimer, bool setTotal)
         {
             Report report = new(new MockDispatcher())
             {
@@ -55,11 +72,11 @@ namespace Tests.Models
                 Progress = 50,
             };
 
-            if (timer)
+            if (useTimer)
             {
                 report.Timer.Start();
             }
-            if (total)
+            if (setTotal)
             {
                 report.SetTotal(10, 3);
             }
@@ -69,16 +86,16 @@ namespace Tests.Models
             Assert.Equal(expState, report.CurrentState);
             Assert.Equal(100, report.Progress);
             Assert.False(report.Timer.IsRunning);
-            if (timer)
+            if (useTimer)
             {
                 Assert.Contains("Foo", report.Message);
                 Assert.Contains("Elapsed time:", report.Message);
-                if (total)
+                if (setTotal)
                 {
                     Assert.Contains("k/s", report.Message);
                 }
             }
-            else if (total)
+            else if (setTotal)
             {
                 Assert.Contains("Total", report.Message);
                 Assert.DoesNotContain("k/s", report.Message);
