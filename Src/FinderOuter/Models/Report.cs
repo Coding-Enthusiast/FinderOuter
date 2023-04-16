@@ -80,7 +80,7 @@ namespace FinderOuter.Models
             percent = 0;
             IsProgressVisible = false;
             Timer.Reset();
-            Total = 0;
+            Total = BigInteger.Zero;
         }
 
         public bool Finalize(bool success)
