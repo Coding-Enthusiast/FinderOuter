@@ -179,6 +179,7 @@ namespace FinderOuter.ViewModels
             {
                 int threshold = 2;
                 AddToList(searchSpace.allWords.Where(w => w.LevenshteinDistance(ToAdd) < threshold));
+                ToAdd = string.Empty;
             }
         }
 
@@ -192,6 +193,7 @@ namespace FinderOuter.ViewModels
                 {
                     CurrentItems.Add(ToAdd);
                 }
+                ToAdd = string.Empty;
             }
             else
             {
@@ -206,6 +208,7 @@ namespace FinderOuter.ViewModels
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.StartsWith(ToAdd)));
+                ToAdd = string.Empty;
             }
         }
 
@@ -216,6 +219,7 @@ namespace FinderOuter.ViewModels
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.EndsWith(ToAdd)));
+                ToAdd = string.Empty;
             }
         }
 
@@ -226,6 +230,7 @@ namespace FinderOuter.ViewModels
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.Contains(ToAdd)));
+                ToAdd = string.Empty;
             }
         }
 
