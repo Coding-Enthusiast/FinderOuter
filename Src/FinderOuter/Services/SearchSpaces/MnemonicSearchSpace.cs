@@ -22,7 +22,6 @@ namespace FinderOuter.Services.SearchSpaces
         public MnemonicTypes mnType;
         public ElectrumMnemonic.MnemonicType elecMnType;
 
-        public bool IsProcessed { get; private set; }
 
         public bool TrySetWordList(BIP0039.WordLists wl)
         {
@@ -100,8 +99,6 @@ namespace FinderOuter.Services.SearchSpaces
         public bool Process(string mnemonic, char missChar, MnemonicTypes mnType, BIP0039.WordLists wl,
                             ElectrumMnemonic.MnemonicType elecMnType, out string error)
         {
-            IsProcessed = false;
-
             Input = mnemonic;
             this.wl = wl;
             this.mnType = mnType;
@@ -117,7 +114,6 @@ namespace FinderOuter.Services.SearchSpaces
                 return false;
             else
             {
-                IsProcessed = true;
                 return true;
             }
 
