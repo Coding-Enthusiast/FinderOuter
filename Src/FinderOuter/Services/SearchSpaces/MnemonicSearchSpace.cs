@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using System;
@@ -66,7 +67,7 @@ namespace FinderOuter.Services.SearchSpaces
                     if (words[i] != missCharStr && !allWords.Contains(words[i]))
                     {
                         invalidWord = true;
-                        error += $"Given mnemonic contains invalid word at index {i} ({words[i]}).{Environment.NewLine}";
+                        error += $"{(i + 1).ToOrdinal()} word ({words[i]}) is invalid.{Environment.NewLine}";
                     }
                 }
                 if (invalidWord)
