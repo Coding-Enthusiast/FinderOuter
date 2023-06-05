@@ -7,6 +7,7 @@ using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -123,58 +124,34 @@ namespace FinderOuter.Services.SearchSpaces
 
 
 
-        public bool SetValues(string[][] result)
+        public bool SetValues(string[][] array, out string error)
         {
-            if (result.Length != MissCount || result.Any(x => x.Length < 2))
-            {
-                return false;
-            }
-
-            int totalLen = 0;
-            int maxLen = 0;
-            int maxIndex = 0;
-            for (int i = 0; i < result.Length; i++)
-            {
-                if (result[i].Length <= 1 && result[i].Length > allWords.Length)
-                {
-                    return false;
-                }
-                totalLen += result[i].Length;
-
-                if (result[i].Length > maxLen)
-                {
-                    maxLen = result[i].Length;
-                    maxIndex = i;
-                }
-            }
-
-            if (maxIndex != 0)
-            {
-                string[] t1 = result[maxIndex];
-                result[maxIndex] = result[0];
-                result[0] = t1;
-
-                int t2 = MissingIndexes[maxIndex];
-                MissingIndexes[maxIndex] = MissingIndexes[0];
-                MissingIndexes[0] = t2;
-            }
-
-            AllPermutationValues = new uint[totalLen];
-            PermutationCounts = new int[MissCount];
+            ProcessValues(array, out error);
 
             int index1 = 0;
             int index2 = 0;
-            foreach (string[] item in result)
+            for (int i = 0; i < array.Length; i++)
             {
-                PermutationCounts[index2++] = item.Length;
-                foreach (string s in item)
+                Debug.Assert(array[i] is not null && array[i].Length >= 2);
+
+                PermutationCounts[index2++] = array[i].Length;
+                for (int j = 0; j < array[i].Length; j++)
                 {
-                    int i = Array.IndexOf(allWords, s);
-                    if (i < 0)
+                    if (string.IsNullOrEmpty(array[i][j]))
                     {
+                        error = $"{(j + 1).ToOrdinal()} variable entered for {(i + 1).ToOrdinal()} missing word " +
+                                $"({array[i][j]}) can not be null or empty.";
                         return false;
                     }
-                    AllPermutationValues[index1++] = (uint)i;
+
+                    int k = Array.IndexOf(allWords, array[i][j]);
+                    if (k < 0)
+                    {
+                        error = $"{(j + 1).ToOrdinal()} variable entered for {(i + 1).ToOrdinal()} missing word " +
+                                $"({array[i][j]}) is not found in the word-list.";
+                        return false;
+                    }
+                    AllPermutationValues[index1++] = (uint)k;
                 }
             }
 
