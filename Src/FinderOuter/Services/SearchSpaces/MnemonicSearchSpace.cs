@@ -126,7 +126,10 @@ namespace FinderOuter.Services.SearchSpaces
 
         public bool SetValues(string[][] array, out string error)
         {
-            ProcessValues(array, out error);
+            if (!ProcessValues(array, out error))
+            {
+                return false;
+            }
 
             int index1 = 0;
             int index2 = 0;
@@ -140,7 +143,7 @@ namespace FinderOuter.Services.SearchSpaces
                     if (string.IsNullOrEmpty(array[i][j]))
                     {
                         error = $"{(j + 1).ToOrdinal()} variable entered for {(i + 1).ToOrdinal()} missing word " +
-                                $"({array[i][j]}) can not be null or empty.";
+                                $"can not be null or empty.";
                         return false;
                     }
 
