@@ -15,6 +15,13 @@ namespace Tests.Services.SearchSpaces
 {
     public class MnemonicSearchSpaceTests
     {
+        private const string NoMiss = "shed slide night best wave buddy honey salmon fresh bitter seek else";
+        private const string OneMiss = "shed slide night * wave buddy honey salmon fresh bitter seek else";
+        private const string ThreeMiss = "shed slide night * wave * honey salmon fresh bitter * else";
+        private static readonly int[] OneMissIndex = new int[1] { 3 };
+        private static readonly int[] ThreeMissIndex = new int[3] { 3, 5, 10 };
+
+
         private static string[] GetWordList(BIP0039.WordLists wl, out int maxLen)
         {
             string[] result = BIP0039.GetAllWords(wl);
@@ -120,7 +127,7 @@ namespace Tests.Services.SearchSpaces
             };
             yield return new object[]
             {
-                "shed slide night best wave buddy honey salmon fresh bitter seek else", '*',
+                NoMiss, '*',
                 MnemonicTypes.BIP39, BIP0039.WordLists.English, ElectrumMnemonic.MnemonicType.Standard,
                 true, string.Empty,
                 enLst, // All words
@@ -166,6 +173,203 @@ namespace Tests.Services.SearchSpaces
             Assert.Equal(expMissingIndexes, ss.MissingIndexes);
             Assert.Equal(expWordCount, ss.wordCount);
             Assert.Equal(expWordIndexes, ss.wordIndexes);
+        }
+
+
+        private static MnemonicSearchSpace BuildSS(string s, int expMissCount, bool processResult)
+        {
+            MnemonicSearchSpace ss = new();
+            bool b = ss.Process(s, '*', MnemonicTypes.BIP39, BIP0039.WordLists.English, ElectrumMnemonic.MnemonicType.Standard, out _);
+            Assert.Equal(expMissCount, ss.MissCount);
+            Assert.Equal(processResult, b);
+
+            return ss;
+        }
+
+        public static IEnumerable<object[]> GetSetValuesCases()
+        {
+            // The following cases test SearchSpaceBase.ProcessValues() method that is thoroughly tested elsewhere
+            // Some cases are used here to ensure MnemonicSearchSpace treats returned value as it should
+            yield return new object[]
+            {
+                BuildSS(OneMiss, 1, true),
+                null, null,
+                false, "Permutations list can not be null",
+                OneMissIndex, null, Array.Empty<int>()
+            };
+            yield return new object[]
+            {
+                BuildSS(OneMiss, 1, true),
+                Array.Empty<string[]>(), Array.Empty<string[]>(),
+                false, "Permutations list doesn't have the same number of arrays as missing characters count.",
+                OneMissIndex, null, Array.Empty<int>()
+            };
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[1][], new string[1][],
+                false, "Permutations list doesn't have the same number of arrays as missing characters count.",
+                ThreeMissIndex, null, Array.Empty<int>()
+            };
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[4][], new string[4][],
+                false, "Permutations list doesn't have the same number of arrays as missing characters count.",
+                ThreeMissIndex, null, Array.Empty<int>()
+            };
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][] { null, new string[2] { "kidney", "same" }, new string[2] { "drift", "six" } },
+                new string[3][] { null, new string[2] { "kidney", "same" }, new string[2] { "drift", "six" } },
+                false,
+                "Search space values are not correctly set. Add at least 2 possible values for the 1st missing position.",
+                ThreeMissIndex, null, Array.Empty<int>()
+            };
+
+            // Testing the process part in MnemonicSearchSpace itself
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[2] { "kidney", null },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "drift", "six" }
+                },
+                new string[3][]
+                {
+                    new string[2] { "kidney", null },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "drift", "six" }
+                },
+                false,
+                "2nd variable entered for 1st missing word can not be null or empty.",
+                ThreeMissIndex,
+                new uint[6] { 979,0, 0,0, 0,0 },
+                new int[3] { 2, 0, 0 }
+            };
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "", "six" }
+                },
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "", "six" }
+                },
+                false,
+                "1st variable entered for 3rd missing word can not be null or empty.",
+                ThreeMissIndex,
+                new uint[6] { 979,455, 979,1527, 0,0 },
+                new int[3] { 2, 2, 2 }
+            };
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "foo" },
+                    new string[2] { "drift", "six" }
+                },
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "foo" },
+                    new string[2] { "drift", "six" }
+                },
+                false,
+                "2nd variable entered for 2nd missing word (foo) is not found in the word-list.",
+                ThreeMissIndex,
+                new uint[6] { 979,455, 979,0, 0,0 },
+                new int[3] { 2, 2, 0 }
+            };
+
+            // Valid list (equal size => no swapping)
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "drift", "six", }
+                },
+                new string[3][]
+                {
+                    new string[2] { "kidney", "decline" },
+                    new string[2] { "kidney", "same" },
+                    new string[2] { "drift", "six", }
+                },
+                true, string.Empty,
+                ThreeMissIndex,
+                new uint[6] { 979,455, 979,1527, 534,1614 },
+                new int[3] { 2, 2, 2 }
+            };
+            // Valid list (first array is bigger => no swapping)
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[4] { "kidney", "decline", "demand", "nation" },
+                    new string[2] { "kidney", "same" },
+                    new string[3] { "drift", "six", "gaze" }
+                },
+                new string[3][]
+                {
+                    new string[4] { "kidney", "decline", "demand", "nation" },
+                    new string[2] { "kidney", "same" },
+                    new string[3] { "drift", "six", "gaze" }
+                },
+                true, string.Empty,
+                ThreeMissIndex,
+                new uint[9] { 979,455,465,1178, 979,1527, 534,1614,773 },
+                new int[3] { 4, 2, 3 }
+            };
+            // Valid list (third array is bigger => swapped)
+            yield return new object[]
+            {
+                BuildSS(ThreeMiss, 3, true),
+                new string[3][]
+                {
+                    new string[3] { "drift", "six", "gaze" },
+                    new string[2] { "kidney", "same" },
+                    new string[4] { "kidney", "decline", "demand", "nation" },
+                },
+                new string[3][]
+                {
+                    new string[4] { "kidney", "decline", "demand", "nation" },
+                    new string[2] { "kidney", "same" },
+                    new string[3] { "drift", "six", "gaze" }
+                },
+                true, string.Empty,
+                new int[] { 10, 5, 3 }, // swapped
+                new uint[9] { 979,455,465,1178, 979,1527, 534,1614,773 },
+                new int[3] { 4, 2, 3 }
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetSetValuesCases))]
+        public void SetValuesTest(MnemonicSearchSpace ss, string[][] array, string[][] expArray, bool expected, string expMsg,
+                                  int[] expMissIndex, uint[] expPermVals, int[] expPermCounts)
+        {
+            bool actual = ss.SetValues(array, out string error);
+
+            Assert.Equal(expected, actual);
+            Assert.Contains(expMsg, error);
+            Assert.Equal(expArray, array);
+            Assert.Equal(expMissIndex, ss.MissingIndexes);
+            Assert.Equal(expPermVals, ss.AllPermutationValues);
+            Assert.Equal(expPermCounts, ss.PermutationCounts);
         }
     }
 }
