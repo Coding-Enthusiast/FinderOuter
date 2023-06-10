@@ -4,8 +4,10 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -122,6 +124,85 @@ namespace FinderOuter.Services.SearchSpaces
             return false;
         }
 
+
+        private BIP0032Path ProcessPath(string path, out string error)
+        {
+            BIP0032Path result;
+            try
+            {
+                result = new BIP0032Path(path);
+                error = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                error = $"Invalid path ({ex.Message}).";
+                result = null;
+            }
+
+            return result;
+        }
+
+        public bool ProcessNoMissing(ICompareService comparer, string pass, string path, out string message)
+        {
+            if (MissCount != 0)
+            {
+                message = "This method should not be called with missing characters (this is a bug).";
+                return false;
+            }
+
+            try
+            {
+                BIP0032 temp = mnType switch
+                {
+                    MnemonicTypes.BIP39 => new BIP0039(Input, wl, pass),
+                    MnemonicTypes.Electrum => new ElectrumMnemonic(Input, wl, pass),
+                    _ => throw new ArgumentException("Undefined mnemonic type (this is a bug).")
+                };
+
+                message = $"Given input is a valid {mnType} mnemonic.";
+
+                BIP0032Path bipPath = ProcessPath(path, out string error);
+                if (bipPath is null)
+                {
+                    message += Environment.NewLine;
+                    message += $"Could not set derivation path ({error}).";
+                    return true; // The mnemonic is valid, we just can't derive child keys to do extra checks
+                }
+
+                if (comparer is null || !comparer.IsInitialized)
+                {
+                    message = "Set the compare value correctly to verify the derived key/address.";
+                    return true; // Same as above
+                }
+
+                uint startIndex = bipPath.Indexes[^1];
+                uint[] indices = new uint[bipPath.Indexes.Length - 1];
+                Array.Copy(bipPath.Indexes, 0, indices, 0, indices.Length);
+                BIP0032Path newPath = new(indices);
+
+                PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
+                if (comparer.Compare(keys[0].ToBytes()))
+                {
+                    message += Environment.NewLine;
+                    message += $"The given child key is correctly derived from this mnemonic at {bipPath} path.";
+                    return true;
+                }
+                else
+                {
+                    message += Environment.NewLine;
+                    message += $"The given child key is not derived from this mnemonic or not at {bipPath} path.";
+                    message += $"List of all address types that can be derived from this mnemonic at the given path:" +
+                               $"{Environment.NewLine}" +
+                               $"{AddressService.GetAllAddresses(keys[0].ToPublicKey(comparer.Calc))}";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                message = $"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}";
+                return false;
+            }
+        }
 
 
         public bool SetValues(string[][] array, out string error)
