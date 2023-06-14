@@ -125,7 +125,7 @@ namespace FinderOuter.Services.SearchSpaces
         }
 
 
-        private BIP0032Path ProcessPath(string path, out string error)
+        public static BIP0032Path ProcessPath(string path, out string error)
         {
             BIP0032Path result;
             try
@@ -142,7 +142,7 @@ namespace FinderOuter.Services.SearchSpaces
             return result;
         }
 
-        public bool ProcessNoMissing(ICompareService comparer, string pass, string path, out string message)
+        public bool ProcessNoMissing(ICompareService comparer, string pass, BIP0032Path path, out string message)
         {
             if (MissCount != 0)
             {
@@ -161,11 +161,10 @@ namespace FinderOuter.Services.SearchSpaces
 
                 message = $"Given input is a valid {mnType} mnemonic.";
 
-                BIP0032Path bipPath = ProcessPath(path, out string error);
-                if (bipPath is null)
+                if (path is null)
                 {
                     message += Environment.NewLine;
-                    message += $"Could not set derivation path ({error}).";
+                    message += "Derivation path is not set.";
                     return true; // The mnemonic is valid, we just can't derive child keys to do extra checks
                 }
 
@@ -175,22 +174,22 @@ namespace FinderOuter.Services.SearchSpaces
                     return true; // Same as above
                 }
 
-                uint startIndex = bipPath.Indexes[^1];
-                uint[] indices = new uint[bipPath.Indexes.Length - 1];
-                Array.Copy(bipPath.Indexes, 0, indices, 0, indices.Length);
+                uint startIndex = path.Indexes[^1];
+                uint[] indices = new uint[path.Indexes.Length - 1];
+                Array.Copy(path.Indexes, 0, indices, 0, indices.Length);
                 BIP0032Path newPath = new(indices);
 
                 PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
                 if (comparer.Compare(keys[0].ToBytes()))
                 {
                     message += Environment.NewLine;
-                    message += $"The given child key is correctly derived from this mnemonic at {bipPath} path.";
+                    message += $"The given child key is correctly derived from this mnemonic at {path} path.";
                     return true;
                 }
                 else
                 {
                     message += Environment.NewLine;
-                    message += $"The given child key is not derived from this mnemonic or not at {bipPath} path.";
+                    message += $"The given child key is not derived from this mnemonic or not at {path} path.";
                     message += $"List of all address types that can be derived from this mnemonic at the given path:" +
                                $"{Environment.NewLine}" +
                                $"{AddressService.GetAllAddresses(keys[0].ToPublicKey(comparer.Calc))}";

@@ -1425,67 +1425,30 @@ namespace FinderOuter.Services
                 return;
             }
 
-            try
-            {
-                this.path = new BIP0032Path(path);
-            }
-            catch (Exception ex)
-            {
-                report.Fail($"Invalid path ({ex.Message}).");
-                this.path = null;
-            }
-
             if (!InputService.TryGetCompareService(compType, comp, out comparer))
             {
                 report.Fail($"Invalid extra input or input type {compType}.");
                 comparer = null;
             }
 
+            this.path = MnemonicSearchSpace.ProcessPath(path, out string pathError);
+
             if (ss.MissCount == 0)
             {
-                try
-                {
-                    BIP0032 temp = ss.mnType switch
-                    {
-                        MnemonicTypes.BIP39 => new BIP0039(ss.Input, ss.wl, pass),
-                        MnemonicTypes.Electrum => new ElectrumMnemonic(ss.Input, ss.wl, pass),
-                        _ => throw new ArgumentException("Undefined mnemonic type.")
-                    };
-
-                    report.Pass($"Given input is a valid {ss.mnType} mnemonic.");
-
-                    if (path is null || comparer is null)
-                    {
-                        report.AddMessageSafe("Path or compare input is not set correctly to check the derived key.");
-                        return;
-                    }
-
-                    uint startIndex = this.path.Indexes[^1];
-                    uint[] indices = new uint[this.path.Indexes.Length - 1];
-                    Array.Copy(this.path.Indexes, 0, indices, 0, indices.Length);
-                    BIP0032Path newPath = new(indices);
-
-                    PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
-                    if (comparer.Compare(keys[0].ToBytes()))
-                    {
-                        report.Pass($"The given child key is derived from this mnemonic at {this.path} path.");
-                    }
-                    else
-                    {
-                        report.Fail($"The given child key is not derived from this mnemonic or not at {this.path} path.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    report.Fail($"Mnemonic is not missing any characters but is invalid. Error: {ex.Message}");
-                }
-
+                report.FoundAnyResult = ss.ProcessNoMissing(comparer, pass, this.path, out string message);
+                report.AddMessageSafe(message);
                 return;
             }
 
-            if (path is null || comparer is null)
+            if (path is null)
             {
-                report.AddMessageSafe("Path or compare input is not set correctly to check the derived key.");
+                report.Fail($"Could not parse the given derivation path (error message: {pathError}).");
+                return;
+            }
+
+            if (comparer is null || !comparer.IsInitialized)
+            {
+                report.Fail("Set the compare value correctly to verify the derived key/address.");
                 return;
             }
 
