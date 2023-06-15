@@ -164,13 +164,14 @@ namespace FinderOuter.Services.SearchSpaces
                 if (path is null)
                 {
                     message += Environment.NewLine;
-                    message += "Derivation path is not set.";
+                    message += "Set the derivation path correctly to verify the derived key/address.";
                     return true; // The mnemonic is valid, we just can't derive child keys to do extra checks
                 }
 
                 if (comparer is null || !comparer.IsInitialized)
                 {
-                    message = "Set the compare value correctly to verify the derived key/address.";
+                    message += Environment.NewLine;
+                    message += "Set the compare value correctly to verify the derived key/address.";
                     return true; // Same as above
                 }
 
@@ -180,17 +181,26 @@ namespace FinderOuter.Services.SearchSpaces
                 BIP0032Path newPath = new(indices);
 
                 PrivateKey[] keys = temp.GetPrivateKeys(newPath, 1, startIndex);
+                if (keys is null || keys.Length < 1)
+                {
+                    // The chance of this happening is _nearly_ zero
+                    message += Environment.NewLine;
+                    message += "Could not derive any keys at the given path.";
+                    return false;
+                }
+
                 if (comparer.Compare(keys[0].ToBytes()))
                 {
                     message += Environment.NewLine;
-                    message += $"The given child key is correctly derived from this mnemonic at {path} path.";
+                    message += $"The given child key is correctly derived from this mnemonic at {path}";
                     return true;
                 }
                 else
                 {
                     message += Environment.NewLine;
-                    message += $"The given child key is not derived from this mnemonic or not at {path} path.";
-                    message += $"List of all address types that can be derived from this mnemonic at the given path:" +
+                    message += $"The given child key is not derived from this mnemonic or not at {path}";
+                    message += $"{Environment.NewLine}" +
+                               $"List of all address types that can be derived from this mnemonic at the given path:" +
                                $"{Environment.NewLine}" +
                                $"{AddressService.GetAllAddresses(keys[0].ToPublicKey(comparer.Calc))}";
                     return false;
