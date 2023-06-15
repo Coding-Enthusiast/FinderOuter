@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
+using FinderOuter.Services.Comparers;
 using FinderOuter.Services.SearchSpaces;
 using System;
 using System.Collections.Generic;
@@ -176,15 +177,104 @@ namespace Tests.Services.SearchSpaces
         }
 
 
-        private static MnemonicSearchSpace BuildSS(string s, int expMissCount, bool processResult)
+        private static MnemonicSearchSpace BuildSS(string s, int expMissCount, bool processResult,
+                                                   MnemonicTypes mnType = MnemonicTypes.BIP39)
         {
             MnemonicSearchSpace ss = new();
-            bool b = ss.Process(s, '*', MnemonicTypes.BIP39, BIP0039.WordLists.English, ElectrumMnemonic.MnemonicType.Standard, out _);
+            bool b = ss.Process(s, '*', mnType, BIP0039.WordLists.English, ElectrumMnemonic.MnemonicType.Standard, out _);
             Assert.Equal(expMissCount, ss.MissCount);
             Assert.Equal(processResult, b);
 
             return ss;
         }
+
+
+        public static IEnumerable<object[]> GetProcessNoMissingCases()
+        {
+            ICompareService comp_noInit = new PrvToAddrCompComparer();
+
+            ICompareService comp_wrongAddr = new PrvToAddrCompComparer();
+            Assert.True(comp_wrongAddr.Init(KeyHelper.Pub2CompAddr));
+
+            BIP0032Path path = new("m/84'/0'/0'/0/5");
+            ICompareService comp_noPass = new PrvToAddrCompComparer();
+            Assert.True(comp_noPass.Init("bc1qddpga3fkdgcc0wv64azacykr9vyrvqsahu0eeu"));
+
+            ICompareService comp_withPass = new PrvToAddrCompComparer();
+            Assert.True(comp_withPass.Init("bc1qt5e7ynnrazrvcn64dwcwhjyu2wdjzygumtv8jj"));
+            string pass = "foobar";
+
+            yield return new object[]
+            {
+                BuildSS(OneMiss, 1, true), new PrvToPubComparer(), null, null, false,
+                "This method should not be called with missing characters (this is a bug)."
+            };
+            yield return new object[]
+            {
+                BuildSS("shed slide night best wave buddy honey salmon fresh bitter seek seek", 0, true), comp_noInit,
+                null, null, false,
+                "Mnemonic is not missing any characters but is invalid. Error: Wrong checksum."
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true, MnemonicTypes.Electrum), comp_noInit,
+                null, null, false,
+                "Mnemonic is not missing any characters but is invalid. Error: Invalid mnemonic (undefined version)."
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), comp_noInit,
+                null, null, true,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"Set the derivation path correctly to verify the derived key/address."
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), null,
+                null, path, true,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"Set the compare value correctly to verify the derived key/address."
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), comp_noInit,
+                null, path, true,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"Set the compare value correctly to verify the derived key/address."
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), comp_wrongAddr,
+                null, path, false,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"The given child key is not derived from this mnemonic or not at m/84'/0'/0'/0/5{Environment.NewLine}" +
+                $"List of all address types that can be derived from this mnemonic at the given path:{Environment.NewLine}"
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), comp_noPass,
+                null, path, true,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"The given child key is correctly derived from this mnemonic at m/84'/0'/0'/0/5"
+            };
+            yield return new object[]
+            {
+                BuildSS(NoMiss, 0, true), comp_withPass,
+                pass, path, true,
+                $"Given input is a valid BIP39 mnemonic.{Environment.NewLine}" +
+                $"The given child key is correctly derived from this mnemonic at m/84'/0'/0'/0/5"
+            };
+        }
+        [Theory]
+        [MemberData(nameof(GetProcessNoMissingCases))]
+        public void ProcessNoMissingTest(MnemonicSearchSpace ss, ICompareService comparer, string pass, BIP0032Path path,
+                                         bool expected, string expMsg)
+        {
+            bool actual = ss.ProcessNoMissing(comparer, pass, path, out string message);
+            Assert.Equal(expected, actual);
+            Assert.Contains(expMsg, message);
+        }
+
 
         public static IEnumerable<object[]> GetSetValuesCases()
         {
