@@ -152,7 +152,7 @@ namespace FinderOuter.Services.SearchSpaces
 
             try
             {
-                BIP0032 temp = mnType switch
+                using BIP0032 temp = mnType switch
                 {
                     MnemonicTypes.BIP39 => new BIP0039(Input, wl, pass),
                     MnemonicTypes.Electrum => new ElectrumMnemonic(Input, wl, pass),
