@@ -1,8 +1,8 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
         xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
         mc:Ignorable="d" d:DesignHeight="750" d:DesignWidth="1000"
         x:Class="FinderOuter.Views.MainWindow"
@@ -26,8 +26,8 @@
 
   <Grid ColumnDefinitions="200,*" RowDefinitions="*,40">
 
-    <!--Left side collumn (containing option list, warning, version, about button)-->
-    <Grid RowDefinitions="*,auto,auto,auto" Grid.Column="0" Grid.Row="0">
+    <!--Left side collumn (containing option list, warnings, speeds, version, about button)-->
+    <Grid RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
       <ListBox Items="{Binding OptionList}"
                SelectedItem="{Binding SelectedOption}"
                SelectionMode="Toggle"
@@ -76,7 +76,33 @@
                  Margin="3"
                  Grid.Row="2"/>
 
-      <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
+      <Grid ColumnDefinitions="auto,*" RowDefinitions="auto,auto,auto" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
+        <TextBlock Text="Checked:"
+                   Margin="0,0,5,0"
+                   Grid.Column="0" Grid.Row="0"/>
+        <TextBlock Text="{Binding SelectedOption.Result.TotalChecked, StringFormat=\{0:N0\}}"
+                   ToolTip.Tip="Total keys checked"
+                   MinWidth="20"
+                   Grid.Column="1" Grid.Row="0"/>
+
+        <TextBlock Text="Speed:"
+                   Margin="0,0,5,0"
+                   Grid.Column="0" Grid.Row="1"/>
+        <TextBlock Text="{Binding SelectedOption.Result.Speed, StringFormat=\{0:N0\}}"
+                   ToolTip.Tip="Estimated speed (keys/second)"
+                   MinWidth="20"
+                   Grid.Column="1" Grid.Row="1"/>
+
+        <TextBlock Text="Time left:"
+                   Margin="0,0,5,0"
+                   Grid.Column="0" Grid.Row="2"/>
+        <TextBlock Text="{Binding SelectedOption.Result.Remaining, StringFormat=\{0:hh\\:mm\\:ss\}}"
+                   ToolTip.Tip="Estimated time remaining"
+                   MinWidth="30"
+                   Grid.Column="1" Grid.Row="2"/>
+      </Grid>
+
+      <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="4" Background="#e5e5e5">
         <Button Command="{Binding OpenAbout}"
                 ToolTip.Tip="About and Donate"
                 BorderThickness="0"
@@ -151,7 +177,7 @@
                  ShowProgressText="True"
                  Margin="3,0,3,3"
                  Grid.Column="1"
-                 Grid.Row="2">
+               Grid.Row="2">
       <ProgressBar.Styles>
         <Style Selector="ProgressBar /template/ Border">
           <Setter Property="CornerRadius" Value="0,20,20,0"/>
