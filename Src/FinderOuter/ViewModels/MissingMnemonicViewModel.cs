@@ -61,7 +61,6 @@ namespace FinderOuter.ViewModels
         }
 
 
-
         public override string OptionName => "Missing Mnemonic";
         public override string Description => $"This option is useful for recovering mnemonics (seed phrases) that are " +
             $"missing some words. It supports both BIP39 and Electrum standards.{Environment.NewLine}" +
@@ -72,6 +71,13 @@ namespace FinderOuter.ViewModels
 
 
         private readonly MnemonicSearchSpace searchSpace = new();
+
+        private string[] _wl;
+        public string[] WordList
+        {
+            get => _wl;
+            set => this.RaiseAndSetIfChanged(ref _wl, value);
+        }
 
         public MnemonicSevice MnService { get; }
 
@@ -136,6 +142,7 @@ namespace FinderOuter.ViewModels
 
             if (IsProcessed)
             {
+                WordList = searchSpace.allWords;
                 allItems = new ObservableCollection<string>[searchSpace.MissCount];
                 for (int i = 0; i < allItems.Length; i++)
                 {

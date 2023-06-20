@@ -74,11 +74,17 @@
 
     <Expander Header="Advanced (limit search space)" IsExpanded="False" Grid.Column="0" Grid.Row="3">
       <Grid ColumnDefinitions="auto,*,auto" RowDefinitions="auto,*">
-        <Button Content="Start"
+        <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="0">
+          <Button Content="Start"
                 Command="{Binding StartCommand}"
                 Width="70"
-                Grid.Column="0"
-                Grid.Row="0"/>
+                Grid.Column="0"/>
+          <ToggleSwitch Name="InputTypeToggle"
+                        OffContent="Normal" OnContent="Auto Complete"
+                        Margin="10,0,0,0"
+                        Grid.Column="1"/>
+        </Grid>
+
         <Grid ColumnDefinitions="auto,*,auto" Margin="5,0,5,0" Grid.Column="1" Grid.Row="0">
           <Button Content="&#60;"
                   Command="{Binding PreviousCommand}"
@@ -100,13 +106,33 @@
           <TextBlock Text="{Binding CurrentItems.Count}"/>
         </StackPanel>
 
-        <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*,*" Grid.Column="0" Grid.Row="1">
+        <Grid ColumnDefinitions="*,auto" Width="268" Grid.Column="0" Grid.Row="1"
+              IsVisible="{Binding ElementName=InputTypeToggle, Path=IsChecked}">
+          <AutoCompleteBox Text="{Binding ToAdd}"
+                           Items="{Binding WordList}"
+                           IsEnabled="{Binding ElementName=InputTypeToggle, Path=IsChecked}"
+                           IsTextCompletionEnabled="True"
+                           FilterMode="Contains"
+                           MaxDropDownHeight="200"
+                           Height="45"
+                           VerticalAlignment="Top"
+                           Grid.Column="0"/>
+          <Button Content="+" Command="{Binding AddExactCommand}"
+                  Margin="2,0,0,0" Width="45" Height="45"
+                  FontSize="20"
+                  VerticalAlignment="Top"
+                  Grid.Column="1"/>
+        </Grid>
+
+        <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*,*" Grid.Column="0" Grid.Row="1"
+              IsVisible="{Binding ElementName=InputTypeToggle, Path=!IsChecked}">
           <Grid.Styles>
             <Style Selector="Button">
               <Setter Property="Margin" Value="2"/>
               <Setter Property="Width" Value="130"/>
             </Style>
           </Grid.Styles>
+
           <TextBox Text="{Binding ToAdd}" Grid.ColumnSpan="2" Grid.Row="0" MinHeight="30"/>
           <Button Content="Similar words" Command="{Binding AddSimilarCommand}" Grid.Column="0" Grid.Row="1"/>
           <Button Content="Exact word" Command="{Binding AddExactCommand}" Grid.Column="1" Grid.Row="1"/>
