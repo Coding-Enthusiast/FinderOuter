@@ -207,15 +207,22 @@ namespace FinderOuter.Models
         {
             if (Progress is > 0 and <= 100)
             {
-                TotalChecked = (double)Total * Progress / 100;
-                double time = Timer.Elapsed.TotalSeconds;
-                if (time != 0 && TotalChecked != 0)
+                try
                 {
-                    Speed = TotalChecked / time;
-                    double remKeys = (double)Total - TotalChecked;
-                    Debug.Assert(remKeys >= 0);
-                    double d = remKeys / Speed;
-                    Remaining = TimeSpan.FromSeconds(d);
+                    TotalChecked = (double)Total * Progress / 100;
+                    double time = Timer.Elapsed.TotalSeconds;
+                    if (time != 0 && TotalChecked != 0)
+                    {
+                        Speed = TotalChecked / time;
+                        double remKeys = (double)Total - TotalChecked;
+                        Debug.Assert(remKeys >= 0);
+                        double d = remKeys / Speed;
+                        Remaining = TimeSpan.FromSeconds(d);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.Fail(ex.Message);
                 }
             }
         }
