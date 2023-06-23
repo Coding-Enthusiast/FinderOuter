@@ -1,6 +1,13 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.17.0.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.18.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.18.0 (2023-06-23)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.17.0.0...v0.18.0.0)  
+* Improve the returned message (errors and reports)
+* **New feature:** time estimation. Addresses [#30](https://github.com/Coding-Enthusiast/FinderOuter/issues/30)
+* **New feature:** Add an AutoCompleteBox to mnemonic recovery option to suggest words based on letters the user entered
+* Various bug fixes, code improvements and some additional tests
 
 ### Release 0.17.0 (2023-02-27)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.16.0.0...v0.17.0.0)  
