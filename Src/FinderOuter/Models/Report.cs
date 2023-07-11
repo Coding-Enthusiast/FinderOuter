@@ -8,6 +8,7 @@ using ReactiveUI;
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace FinderOuter.Models
 {
@@ -27,6 +28,7 @@ namespace FinderOuter.Models
 
 
         public IDispatcher UIThread { get; set; }
+        public Settings Settings { get; set; }
 
         private State _state;
         public State CurrentState
@@ -71,6 +73,17 @@ namespace FinderOuter.Models
         public void SetTotal(int value, int exponent)
         {
             SetTotal(BigInteger.Pow(value, exponent));
+        }
+
+        public ParallelOptions BuildParallelOptions()
+        {
+            ParallelOptions result = new();
+            if (Settings is not null)
+            {
+                Debug.Assert(Settings.CoreCount > 0);
+                result.MaxDegreeOfParallelism = Settings.CoreCount;
+            }
+            return result;
         }
 
         public void Init()
