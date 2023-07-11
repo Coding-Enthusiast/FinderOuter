@@ -17,17 +17,17 @@ namespace Tests.Models
             Settings settings = new();
 
             Assert.Equal(Environment.ProcessorCount, settings.MaxCoreCount);
-            Assert.Equal(1, settings.CoreCount);
+            Assert.Equal(Environment.ProcessorCount, settings.CoreCount);
+            Assert.True(settings.IsMax);
 
-            if (Environment.ProcessorCount == 1)
+            settings.CoreCount++;
+            Assert.Equal(Environment.ProcessorCount + 1, settings.CoreCount);
+            Assert.True(settings.IsMax);
+
+            if (Environment.ProcessorCount > 1)
             {
-                Assert.True(settings.IsMax);
-            }
-            else
-            {
+                settings.CoreCount = 1;
                 Assert.False(settings.IsMax);
-                settings.CoreCount = 1000;
-                Assert.True(settings.IsMax);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Tests.Models
         public void PropertyChangedTest()
         {
             Settings settings = new();
-            Assert.PropertyChanged(settings, nameof(settings.CoreCount), () => settings.CoreCount = 2);
+            Assert.PropertyChanged(settings, nameof(settings.CoreCount), () => settings.CoreCount++);
         }
 
         [Fact]

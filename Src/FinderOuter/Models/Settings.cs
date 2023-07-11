@@ -13,6 +13,7 @@ namespace FinderOuter.Models
         public Settings()
         {
             MaxCoreCount = Environment.ProcessorCount;
+            _coreCount = MaxCoreCount;
         }
 
         public int MaxCoreCount { get; }
