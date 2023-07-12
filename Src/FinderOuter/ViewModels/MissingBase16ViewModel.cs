@@ -18,8 +18,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingBase16ViewModel : OptionVmBase
     {
-        public MissingBase16ViewModel()
+        public MissingBase16ViewModel(Settings settings)
         {
+            Result.Settings = settings;
             b16Service = new Base16Sevice(Result);
             searchSpace = new();
 

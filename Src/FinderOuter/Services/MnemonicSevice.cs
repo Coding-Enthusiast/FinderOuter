@@ -516,7 +516,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop24(firstItem, firstIndex, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => Loop24(firstItem, firstIndex, state));
             }
             else
             {
@@ -705,7 +706,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop21(firstItem, firstIndex, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => Loop21(firstItem, firstIndex, state));
             }
             else
             {
@@ -845,7 +847,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop18(firstItem, firstIndex, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => Loop18(firstItem, firstIndex, state));
             }
             else
             {
@@ -983,7 +986,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop15(firstItem, firstIndex, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => Loop15(firstItem, firstIndex, state));
             }
             else
             {
@@ -1121,7 +1125,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => Loop12(firstItem, firstIndex, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => Loop12(firstItem, firstIndex, state));
             }
             else
             {
@@ -1295,7 +1300,8 @@ namespace FinderOuter.Services
             {
                 report.SetProgressStep(searchSpace.PermutationCounts[0]);
                 int firstIndex = searchSpace.MissingIndexes[0];
-                Parallel.For(0, searchSpace.PermutationCounts[0], (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, searchSpace.PermutationCounts[0], opts, (firstItem, state) => LoopElectrum(firstItem, firstIndex, mask, expected, state));
             }
             else
             {

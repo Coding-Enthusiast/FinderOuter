@@ -17,8 +17,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMnemonicPassViewModel : OptionVmBase
     {
-        public MissingMnemonicPassViewModel()
+        public MissingMnemonicPassViewModel(Settings settings)
         {
+            Result.Settings = settings;
             WordListsList = ListHelper.GetAllEnumValues<BIP0039.WordLists>().ToArray();
             MnemonicTypesList = ListHelper.GetAllEnumValues<MnemonicTypes>().ToArray();
             CompareInputTypeList = ListHelper.GetEnumDescItems<CompareInputType>().ToArray();

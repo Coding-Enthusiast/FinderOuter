@@ -18,8 +18,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMiniPrivateKeyViewModel : OptionVmBase
     {
-        public MissingMiniPrivateKeyViewModel()
+        public MissingMiniPrivateKeyViewModel(Settings settings)
         {
+            Result.Settings = settings;
             // Don't move this line, service must be instantiated here
             miniService = new MiniKeyService(Result);
             searchSpace = new();

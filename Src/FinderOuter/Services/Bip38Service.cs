@@ -1649,25 +1649,27 @@ namespace FinderOuter.Services
         {
             int max = searchSpace.PermutationCounts[0];
             report.SetProgressStep(max);
-            Parallel.For(0, max, (firstItem, state) => MainLoop(firstItem, state));
+            ParallelOptions opts = report.BuildParallelOptions();
+            Parallel.For(0, max, opts, (firstItem, state) => MainLoop(firstItem, state));
         }
 
         private void StartParallelEC()
         {
             report.SetProgressStep(searchSpace.AllValues.Length);
+            ParallelOptions opts = report.BuildParallelOptions();
             if (searchSpace.hasLot)
             {
                 report.AddMessageSafe("EC mult mode with LOT/Sequence");
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => MainLoopECLot(firstItem, state));
+                Parallel.For(0, max, opts, (firstItem, state) => MainLoopECLot(firstItem, state));
             }
             else
             {
                 report.AddMessageSafe("EC mult mode with no LOT/Sequence");
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => MainLoopECNoLot(firstItem, state));
+                Parallel.For(0, max, opts, (firstItem, state) => MainLoopECNoLot(firstItem, state));
             }
         }
 

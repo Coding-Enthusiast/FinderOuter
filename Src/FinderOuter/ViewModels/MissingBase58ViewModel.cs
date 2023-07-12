@@ -18,8 +18,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingBase58ViewModel : OptionVmBase
     {
-        public MissingBase58ViewModel()
+        public MissingBase58ViewModel(Settings settings)
         {
+            Result.Settings = settings;
             // Don't move this line, service must be instantiated here
             b58Service = new Base58Service(Result);
             searchSpace = new();

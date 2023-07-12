@@ -169,7 +169,9 @@ namespace FinderOuter.Services
             {
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => Loop(firstItem, smallPub, state));
+
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem, state) => Loop(firstItem, smallPub, state));
             }
         }
 

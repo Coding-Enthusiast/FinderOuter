@@ -18,8 +18,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingBip38PassViewModel : OptionVmBase
     {
-        public MissingBip38PassViewModel()
+        public MissingBip38PassViewModel(Settings settings)
         {
+            Result.Settings = settings;
             Bip38Service = new(Result);
             CompareInputTypeList = ListHelper.GetEnumDescItems(new CompareInputType[] { CompareInputType.PrivateKey }).ToArray();
             SelectedCompareInputType = CompareInputTypeList.First();

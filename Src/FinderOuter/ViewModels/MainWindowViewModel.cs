@@ -17,20 +17,21 @@ namespace FinderOuter.ViewModels
     {
         public MainWindowViewModel()
         {
+            WinMan = new WindowManager();
+            Settings = new();
+
             OptionList = new OptionVmBase[]
             {
-                new MissingBase16ViewModel(),
-                new MissingBase58ViewModel(),
-                new MissingMiniPrivateKeyViewModel(),
-                new MissingBip38PassViewModel(),
-                new MissingMnemonicViewModel(),
-                new MissingMnemonicPassViewModel(),
+                new MissingBase16ViewModel(Settings),
+                new MissingBase58ViewModel(Settings),
+                new MissingMiniPrivateKeyViewModel(Settings),
+                new MissingBip38PassViewModel(Settings),
+                new MissingMnemonicViewModel(Settings),
+                new MissingMnemonicPassViewModel(Settings),
                 new MissingBip32PathViewModel(),
                 new MissingArmoryViewModel(),
                 new MissingEncodingViewModel(),
             };
-
-            WinMan = new WindowManager();
         }
 
         private static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
@@ -92,6 +93,7 @@ namespace FinderOuter.ViewModels
         public HelpViewModel HelpVm => new();
 
         public IWindowManager WinMan { get; set; }
+        public Settings Settings { get; set; }
 
         public void OpenAbout() => WinMan.ShowDialog(new AboutViewModel());
     }

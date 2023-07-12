@@ -20,8 +20,9 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMnemonicViewModel : OptionVmBase
     {
-        public MissingMnemonicViewModel()
+        public MissingMnemonicViewModel(Settings settings)
         {
+            Result.Settings = settings;
             WordListsList = ListHelper.GetAllEnumValues<BIP0039.WordLists>().ToArray();
             MnemonicTypesList = ListHelper.GetAllEnumValues<MnemonicTypes>().ToArray();
             ElectrumMnemonicTypesList = ListHelper.GetAllEnumValues<ElectrumMnemonic.MnemonicType>().ToArray();

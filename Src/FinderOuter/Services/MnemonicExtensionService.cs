@@ -453,7 +453,8 @@ namespace FinderOuter.Services
             else
             {
                 report.SetProgressStep(allValues.Length);
-                Parallel.For(0, allValues.Length,
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, allValues.Length, opts,
                     (firstItem, state) => LoopBip39(pads, ParallelSalt(salt, allValues[firstItem]), allValues, passLength, state));
             }
         }

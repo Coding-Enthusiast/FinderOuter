@@ -173,7 +173,8 @@ namespace FinderOuter.Services
                 // which makes it the optimal number for using parallelization
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => Loop23(firstItem, comparer.Clone(), state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem, state) => Loop23(firstItem, comparer.Clone(), state));
             }
             else
             {
@@ -305,7 +306,8 @@ namespace FinderOuter.Services
             {
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => Loop27(firstItem, comparer.Clone(), state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem, state) => Loop27(firstItem, comparer.Clone(), state));
             }
             else
             {
@@ -438,7 +440,8 @@ namespace FinderOuter.Services
             {
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem, state) => Loop31(firstItem, comparer.Clone(), state));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem, state) => Loop31(firstItem, comparer.Clone(), state));
             }
             else
             {

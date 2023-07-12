@@ -76,30 +76,54 @@
                  Margin="3"
                  Grid.Row="2"/>
 
-      <Grid ColumnDefinitions="auto,*" RowDefinitions="auto,auto,auto" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
+      <Grid ColumnDefinitions="auto,*" RowDefinitions="auto,auto,auto,auto" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
+        <Expander Header="Settings" Margin="5,0,0,10" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" IsExpanded="False">
+          <Grid ColumnDefinitions="auto,*,auto">
+            <TextBlock Text="Cores:"/>
+            <Slider Value="{Binding Settings.CoreCount}"
+                    Minimum="1" Maximum="{Binding Settings.MaxCoreCount}"
+                    VerticalAlignment="Center"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    SmallChange="1" LargeChange="1"
+                    Grid.Column="1">
+              <Slider.Styles>
+                <Style Selector="Slider /template/Thumb">
+                  <Setter Property="ToolTip.Tip" Value="{Binding $parent[Slider].Value,Mode=OneWay,StringFormat='\{0:n0\} core'}" />
+                  <Setter Property="ToolTip.Placement" Value="Top"/>
+                  <Setter Property="ToolTip.VerticalOffset" Value="-5"/>
+                  <Setter Property="ToolTip.HorizontalOffset" Value="-10"/>
+                </Style>
+              </Slider.Styles>
+            </Slider>
+            <TextBlock Text="{Binding Settings.CoreCount}" Grid.Column="2"/>
+            <!--Add override button here? Grid.Column="2"-->
+          </Grid>
+        </Expander>
+
         <TextBlock Text="Checked:"
-                   Margin="0,0,5,0"
-                   Grid.Column="0" Grid.Row="0"/>
+                   Margin="5,0,5,0"
+                   Grid.Column="0" Grid.Row="1"/>
         <TextBlock Text="{Binding SelectedOption.Result.TotalChecked, StringFormat=\{0:N0\}}"
                    ToolTip.Tip="Total keys checked"
                    MinWidth="20"
-                   Grid.Column="1" Grid.Row="0"/>
+                   Grid.Column="1" Grid.Row="1"/>
 
         <TextBlock Text="Speed:"
-                   Margin="0,0,5,0"
-                   Grid.Column="0" Grid.Row="1"/>
+                   Margin="5,0,5,0"
+                   Grid.Column="0" Grid.Row="2"/>
         <TextBlock Text="{Binding SelectedOption.Result.Speed, StringFormat=\{0:N0\}}"
                    ToolTip.Tip="Estimated speed (keys/second)"
                    MinWidth="20"
-                   Grid.Column="1" Grid.Row="1"/>
+                   Grid.Column="1" Grid.Row="2"/>
 
         <TextBlock Text="Time left:"
-                   Margin="0,0,5,0"
-                   Grid.Column="0" Grid.Row="2"/>
+                   Margin="5,0,5,0"
+                   Grid.Column="0" Grid.Row="3"/>
         <TextBlock Text="{Binding SelectedOption.Result.Remaining, StringFormat=\{0:hh\\:mm\\:ss\}}"
                    ToolTip.Tip="Estimated time remaining"
                    MinWidth="30"
-                   Grid.Column="1" Grid.Row="2"/>
+                   Grid.Column="1" Grid.Row="3"/>
       </Grid>
 
       <Grid ColumnDefinitions="auto,*" Grid.Column="0" Grid.Row="4" Background="#e5e5e5">

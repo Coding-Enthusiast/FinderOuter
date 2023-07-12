@@ -189,7 +189,8 @@ namespace FinderOuter.Services
             report.SetTotal(diff);
             report.SetProgressStep(loopCount);
 
-            Parallel.For(0, loopCount, (i, state) =>
+            ParallelOptions opts = report.BuildParallelOptions();
+            Parallel.For(0, loopCount, opts, (i, state) =>
                              WifLoopMissingEnd(sc, i, i == loopCount - 1 ? loopLastMax : WifEndDiv, comparer.Clone(), state));
         }
 
@@ -357,7 +358,8 @@ namespace FinderOuter.Services
                 // That makes 5 the optimal number for using parallelization
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem) => LoopComp(ParallelPre(firstItem, 52), firstItem, 1));
             }
             else
             {
@@ -451,7 +453,8 @@ namespace FinderOuter.Services
             {
                 // Same as LoopComp()
                 report.SetProgressStep(58);
-                Parallel.For(0, 58, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, 58, opts, (firstItem) => LoopUncomp(ParallelPre(firstItem, 51), firstItem, 1));
             }
             else
             {
@@ -555,7 +558,8 @@ namespace FinderOuter.Services
             {
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem) => Loop21(ParallelPre21(firstItem), firstItem, 1));
             }
             else
             {
@@ -669,7 +673,8 @@ namespace FinderOuter.Services
             {
                 int max = searchSpace.PermutationCounts[0];
                 report.SetProgressStep(max);
-                Parallel.For(0, max, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1));
+                ParallelOptions opts = report.BuildParallelOptions();
+                Parallel.For(0, max, opts, (firstItem) => Loop58(ParallelPre58(firstItem), firstItem, 1));
             }
             else
             {
@@ -858,7 +863,8 @@ namespace FinderOuter.Services
 
                         Debug.Assert(pow[0] == 12);
 
-                        Parallel.For(0, 58, (c1, state) =>
+                        ParallelOptions opts = report.BuildParallelOptions();
+                        Parallel.For(0, 58, opts, (c1, state) =>
                         {
                             for (int c2 = 0; c2 < 58; c2++)
                             {
@@ -1007,10 +1013,8 @@ namespace FinderOuter.Services
                             }
 
                             CancellationTokenSource cancelToken = new();
-                            ParallelOptions options = new()
-                            {
-                                CancellationToken = cancelToken.Token,
-                            };
+                            ParallelOptions options = report.BuildParallelOptions();
+                            options.CancellationToken = cancelToken.Token;
 
                             try
                             {
