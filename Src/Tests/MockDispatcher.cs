@@ -5,7 +5,6 @@
 
 using Avalonia.Threading;
 using System;
-using System.Threading.Tasks;
 
 namespace Tests
 {
@@ -16,30 +15,9 @@ namespace Tests
             throw new NotImplementedException();
         }
 
-        public Task InvokeAsync(Action action, DispatcherPriority priority = DispatcherPriority.Normal)
+        public void Post(Action action, DispatcherPriority priority)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<TResult> InvokeAsync<TResult>(Func<TResult> function, DispatcherPriority priority = DispatcherPriority.Normal)
-        {
-            function.Invoke();
-            return null;
-        }
-
-        public Task InvokeAsync(Func<Task> function, DispatcherPriority priority = DispatcherPriority.Normal)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> function, DispatcherPriority priority = DispatcherPriority.Normal)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Post(Action action, DispatcherPriority priority = DispatcherPriority.Normal)
-        {
-            throw new NotImplementedException();
+            action.Invoke();
         }
 
         public void VerifyAccess()

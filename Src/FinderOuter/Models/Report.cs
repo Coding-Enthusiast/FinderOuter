@@ -18,7 +18,7 @@ namespace FinderOuter.Models
         {
         }
 
-        public Report(Dispatcher dispatcher)
+        public Report(IDispatcher dispatcher)
         {
             UIThread = dispatcher;
 
@@ -27,7 +27,7 @@ namespace FinderOuter.Models
         }
 
 
-        public Dispatcher UIThread { get; set; }
+        public IDispatcher UIThread { get; set; }
         public Settings Settings { get; set; }
 
         private State _state;
@@ -147,7 +147,7 @@ namespace FinderOuter.Models
         /// <param name="msg"></param>
         public void AddMessageSafe(string msg)
         {
-            _ = UIThread.InvokeAsync(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
+            UIThread.Post(() => Message += string.IsNullOrEmpty(Message) ? msg : $"{Environment.NewLine}{msg}");
         }
 
         public bool Fail(string msg)
@@ -179,7 +179,7 @@ namespace FinderOuter.Models
         {
             AddMessageSafe("Running in parallel.");
             percent = (double)100 / splitSize;
-            _ = UIThread.InvokeAsync(() => IsProgressVisible = true);
+            UIThread.Post(() => IsProgressVisible = true);
             updateTimer.Start();
         }
 
