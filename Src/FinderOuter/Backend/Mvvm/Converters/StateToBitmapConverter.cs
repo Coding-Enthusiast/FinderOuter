@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -31,8 +30,7 @@ namespace FinderOuter.Backend.Mvvm.Converters
                     _ => throw new NotImplementedException()
                 };
 
-                IAssetLoader assets = AvaloniaLocator.Current.GetService<IAssetLoader>();
-                using Stream asset = assets.Open(uri);
+                using Stream asset = AssetLoader.Open(uri);
                 return new Bitmap(asset);
             }
 

@@ -18,7 +18,7 @@ namespace FinderOuter.Models
         {
         }
 
-        public Report(IDispatcher dispatcher)
+        public Report(Dispatcher dispatcher)
         {
             UIThread = dispatcher;
 
@@ -27,7 +27,7 @@ namespace FinderOuter.Models
         }
 
 
-        public IDispatcher UIThread { get; set; }
+        public Dispatcher UIThread { get; set; }
         public Settings Settings { get; set; }
 
         private State _state;

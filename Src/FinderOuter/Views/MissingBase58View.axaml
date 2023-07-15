@@ -20,11 +20,11 @@
             Grid.Row="0"/>
 
     <StackPanel Orientation="Vertical" Spacing="5" Margin="3" Grid.Column="1" Grid.Row="0">
-      <ComboBox Items="{Binding MissingChars}"
+      <ComboBox ItemsSource="{Binding MissingChars}"
                 SelectedItem="{Binding SelectedMissingChar}"
                 ToolTip.Tip="{Binding MissingToolTip}"
                 Margin="1"/>
-      <ComboBox Items="{Binding InputTypeList}"
+      <ComboBox ItemsSource="{Binding InputTypeList}"
                 SelectedItem="{Binding SelectedInputType}"
                 ToolTip.Tip="Input type"
                 Margin="1"/>
@@ -34,7 +34,7 @@
              Watermark="Optional (preferably a public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="1"/>
-    <ComboBox Items="{Binding CompareInputTypeList}"
+    <ComboBox ItemsSource="{Binding CompareInputTypeList}"
               SelectedItem="{Binding SelectedCompareInputType}"
               Classes="DescriptiveItem"
               Grid.Column="1"
@@ -84,7 +84,7 @@
 
         </Grid>
 
-        <ListBox Items="{Binding CurrentItems}"
+        <ListBox ItemsSource="{Binding CurrentItems}"
                  SelectedItem="{Binding SelectedItem}"
                  Height="130"
                  Margin="3"

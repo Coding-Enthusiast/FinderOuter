@@ -23,7 +23,7 @@
              Grid.Row="0"/>
 
     <ItemsControl x:Name="itemCtrl"
-                  Items="{Binding EncodingList}"
+                  ItemsSource="{Binding EncodingList}"
                   Grid.Row="1">
       <ItemsControl.ItemTemplate>
         <DataTemplate>

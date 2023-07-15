@@ -29,7 +29,7 @@
               CommandParameter="{Binding ExtraInputKb}"
               Grid.Column="0"
               Grid.Row="2"/>
-      <ComboBox Items="{Binding CompareInputTypeList}"
+      <ComboBox ItemsSource="{Binding CompareInputTypeList}"
                 SelectedItem="{Binding SelectedCompareInputType}"
                 Classes="DescriptiveItem"
                 Grid.Column="1"/>
@@ -49,22 +49,22 @@
 
 
     <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
-      <ComboBox Items="{Binding MissingChars}"
+      <ComboBox ItemsSource="{Binding MissingChars}"
                 SelectedItem="{Binding SelectedMissingChar}"
                 ToolTip.Tip="{Binding MissingToolTip}"
                 Margin="1"/>
-      <ComboBox Items="{Binding MnemonicTypesList}"
+      <ComboBox ItemsSource="{Binding MnemonicTypesList}"
                 SelectedItem="{Binding SelectedMnemonicType}"
                 Margin="1"/>
     </StackPanel>
 
-    <ComboBox Items="{Binding WordListsList}"
+    <ComboBox ItemsSource="{Binding WordListsList}"
               SelectedItem="{Binding SelectedWordListType}"
               Margin="1"
               Grid.Column="1"
               Grid.Row="1"/>
 
-    <ComboBox Items="{Binding ElectrumMnemonicTypesList}"
+    <ComboBox ItemsSource="{Binding ElectrumMnemonicTypesList}"
               SelectedItem="{Binding SelectedElectrumMnType}"
               IsVisible="{Binding IsElectrumTypesVisible}"
               ToolTip.Tip="Electrum mnemonic type"
@@ -109,7 +109,7 @@
         <Grid ColumnDefinitions="*,auto" Width="268" Grid.Column="0" Grid.Row="1"
               IsVisible="{Binding ElementName=InputTypeToggle, Path=IsChecked}">
           <AutoCompleteBox Text="{Binding ToAdd}"
-                           Items="{Binding WordList}"
+                           ItemsSource="{Binding WordList}"
                            IsEnabled="{Binding ElementName=InputTypeToggle, Path=IsChecked}"
                            IsTextCompletionEnabled="True"
                            FilterMode="Contains"
@@ -141,7 +141,7 @@
           <Button Content="Words containing" Command="{Binding AddContainCommand}" Grid.Column="0" Grid.Row="3"/>
         </Grid>
 
-        <ListBox Items="{Binding CurrentItems}"
+        <ListBox ItemsSource="{Binding CurrentItems}"
                  SelectedItem="{Binding SelectedItem}"
                  Height="130"
                  Margin="3"

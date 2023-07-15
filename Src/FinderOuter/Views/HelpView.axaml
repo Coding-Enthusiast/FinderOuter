@@ -36,11 +36,11 @@
     <StackPanel Orientation="Horizontal" Spacing="3" Margin="0,0,0,20" Grid.Row="1">
       <TextBlock Text="I have"/>
       <TextBlock Text="{Binding IndefiniteArticle}"/>
-      <ComboBox Items="{Binding AllInputs}"
+      <ComboBox ItemsSource="{Binding AllInputs}"
                 SelectedItem="{Binding SelectedInput}"
                 Width="320"/>
       <TextBlock Text="that is"/>
-      <ComboBox Items="{Binding SecondaryItems}"
+      <ComboBox ItemsSource="{Binding SecondaryItems}"
                 SelectedItem="{Binding SelectedSecondary}"
                 Width="320"/>
     </StackPanel>

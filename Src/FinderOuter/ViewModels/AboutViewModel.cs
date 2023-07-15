@@ -4,6 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -12,8 +14,9 @@ namespace FinderOuter.ViewModels
 {
     public class AboutViewModel : VmWithSizeBase
     {
-        public AboutViewModel()
+        public AboutViewModel(/*IClipboard clipboard*/)
         {
+            //Clipboard = clipboard;
             // Window size has to be set or the new window that is build with WindowManager 
             // is going to have the same size as MainWindow
             Width = 600;
@@ -21,6 +24,7 @@ namespace FinderOuter.ViewModels
         }
 
 
+        public IClipboard Clipboard { get; set; }
         public string NameAndVersion => $"The FinderOuter {Assembly.GetExecutingAssembly().GetName().Version.ToString(4)}";
         public string SourceLink => "https://github.com/Coding-Enthusiast/FinderOuter";
         public string BitcointalkLink => "";
@@ -33,9 +37,12 @@ namespace FinderOuter.ViewModels
         private const string Bip21Extras = "?label=Coding-Enthusiast&message=Donation%20for%20FinderOuter%20project";
 
 
-        public void Copy(int i)
+        public async void Copy(int i)
         {
-            Application.Current.Clipboard.SetTextAsync(i == 1 ? DonationAddr1 : DonationAddr2);
+            if (Clipboard is not null)
+            {
+                await Clipboard.SetTextAsync(i == 1 ? DonationAddr1 : DonationAddr2);
+            }
         }
 
         // Taken from avalonia source code

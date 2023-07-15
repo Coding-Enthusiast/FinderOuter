@@ -18,7 +18,7 @@ namespace FinderOuter.Models
 
         public int MaxCoreCount { get; }
 
-        private int _coreCount = 1;
+        private int _coreCount;
         public int CoreCount
         {
             get => _coreCount;

@@ -4,20 +4,11 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
 namespace FinderOuter.Views
 {
-    public class MainWindow : Window
+    public partial class MainWindow : Window
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        public MainWindow() => InitializeComponent();
     }
 }

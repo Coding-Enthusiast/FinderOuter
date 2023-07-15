@@ -4,20 +4,11 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
 namespace FinderOuter.Views
 {
-    public class MissingBip32PathView : UserControl
+    public partial class MissingBip32PathView : UserControl
     {
-        public MissingBip32PathView()
-        {
-            InitializeComponent();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        public MissingBip32PathView() => InitializeComponent();
     }
 }

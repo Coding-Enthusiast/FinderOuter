@@ -18,7 +18,6 @@ namespace FinderOuter.ViewModels
         public MainWindowViewModel()
         {
             WinMan = new WindowManager();
-            Settings = new();
 
             OptionList = new OptionVmBase[]
             {
@@ -93,7 +92,7 @@ namespace FinderOuter.ViewModels
         public HelpViewModel HelpVm => new();
 
         public IWindowManager WinMan { get; set; }
-        public Settings Settings { get; set; }
+        public Settings Settings { get; set; } = new();
 
         public void OpenAbout() => WinMan.ShowDialog(new AboutViewModel());
     }

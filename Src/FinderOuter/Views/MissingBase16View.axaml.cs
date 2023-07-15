@@ -1,19 +1,14 @@
-﻿using Avalonia;
+﻿// The FinderOuter
+// Copyright (c) 2020 Coding Enthusiast
+// Distributed under the MIT software license, see the accompanying
+// file LICENCE or http://www.opensource.org/licenses/mit-license.php.
+
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
 namespace FinderOuter.Views
 {
-    public class MissingBase16View : UserControl
+    public partial class MissingBase16View : UserControl
     {
-        public MissingBase16View()
-        {
-            this.InitializeComponent();
-        }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        public MissingBase16View() => InitializeComponent();
     }
 }

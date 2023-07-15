@@ -29,14 +29,14 @@
             Grid.Column="0"
             Grid.Row="1"/>
 
-    <ComboBox Items="{Binding MissingChars}"
+    <ComboBox ItemsSource="{Binding MissingChars}"
               SelectedItem="{Binding SelectedMissingChar}"
               ToolTip.Tip="{Binding MissingToolTip}"
               Margin="1"
               VerticalAlignment="Top"
               Grid.Column="1"
               Grid.Row="0"/>
-    <ComboBox Items="{Binding CompareInputTypeList}"
+    <ComboBox ItemsSource="{Binding CompareInputTypeList}"
               SelectedItem="{Binding SelectedCompareInputType}"
               Grid.Column="1"
               Grid.Row="1">

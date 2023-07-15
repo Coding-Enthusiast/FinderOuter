@@ -18,9 +18,9 @@
              Grid.Column="0"
              Grid.Row="0"/>
     <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
-      <ComboBox Items="{Binding MnemonicTypesList}"
+      <ComboBox ItemsSource="{Binding MnemonicTypesList}"
                 SelectedItem="{Binding SelectedMnemonicType}"/>
-      <ComboBox Items="{Binding WordListsList}"
+      <ComboBox ItemsSource="{Binding WordListsList}"
                 SelectedItem="{Binding SelectedWordListType}"/>
     </StackPanel>
 
@@ -32,7 +32,7 @@
             CommandParameter="{Binding ExtraInputKb}"
             Grid.Column="0"
             Grid.Row="1"/>
-    <ComboBox Items="{Binding CompareInputTypeList}" SelectedItem="{Binding SelectedCompareInputType}"
+    <ComboBox ItemsSource="{Binding CompareInputTypeList}" SelectedItem="{Binding SelectedCompareInputType}"
               Grid.Column="1"
               Grid.Row="1">
       <ComboBox.ItemTemplate>
@@ -95,7 +95,7 @@
       </Grid>
     </Grid>
 
-    <ComboBox Items="{Binding PassRecoveryModeList}"
+    <ComboBox ItemsSource="{Binding PassRecoveryModeList}"
               SelectedItem="{Binding SelectedPassRecoveryMode}"
               Grid.Column="1"
               Grid.Row="3">

@@ -11,9 +11,9 @@
   </Design.DataContext>
 
   <Grid ColumnDefinitions="300,*">
-    <ListBox Items="{Binding KBList}"
-              SelectedItem="{Binding SelectedKB}"
-              Grid.Column="0">
+    <ListBox ItemsSource="{Binding KBList}"
+             SelectedItem="{Binding SelectedKB}"
+             Grid.Column="0">
       <ListBox.DataTemplates>
         <DataTemplate>
           <TextBlock Text="{Binding Description}"/>

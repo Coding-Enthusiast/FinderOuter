@@ -18,7 +18,7 @@
              Grid.Column="0"
              Grid.Row="0"/>
     <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="0">
-      <ComboBox Items="{Binding InputTypeList}"
+      <ComboBox ItemsSource="{Binding InputTypeList}"
                 SelectedItem="{Binding SelectedInputType}">
         <ComboBox.ItemTemplate>
           <DataTemplate>
@@ -28,7 +28,7 @@
         </ComboBox.ItemTemplate>
       </ComboBox>
 
-      <ComboBox Items="{Binding WordListsList}"
+      <ComboBox ItemsSource="{Binding WordListsList}"
                 SelectedItem="{Binding SelectedWordListType}"
                 IsVisible="{Binding IsMnemonic}"/>
     </StackPanel>
@@ -49,7 +49,7 @@
                      Minimum="1"
                      Grid.Column="1"/>
     </Grid>
-    <ComboBox Items="{Binding CompareInputTypeList}"
+    <ComboBox ItemsSource="{Binding CompareInputTypeList}"
               SelectedItem="{Binding SelectedCompareInputType}"
               Grid.Column="1"
               Grid.Row="2">

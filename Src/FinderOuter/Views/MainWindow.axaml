@@ -28,7 +28,7 @@
 
     <!--Left side collumn (containing option list, warnings, speeds, version, about button)-->
     <Grid RowDefinitions="*,auto,auto,auto,auto" Grid.Column="0" Grid.Row="0">
-      <ListBox Items="{Binding OptionList}"
+      <ListBox ItemsSource="{Binding OptionList}"
                SelectedItem="{Binding SelectedOption}"
                SelectionMode="Toggle"
                IsEnabled="{Binding !IsWorking}"
@@ -55,7 +55,7 @@
         </ListBox.Styles>
 
         <ListBox.DataTemplates>
-          <DataTemplate>
+          <DataTemplate DataType="{x:Type vm:OptionVmBase}">
             <TextBlock Text="{Binding OptionName}"/>
           </DataTemplate>
         </ListBox.DataTemplates>
