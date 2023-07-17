@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using Avalonia.Input.Platform;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
@@ -93,7 +94,11 @@ namespace FinderOuter.ViewModels
 
         public IWindowManager WinMan { get; set; }
         public Settings Settings { get; set; } = new();
+        public IClipboard Clipboard { get; set; }
 
-        public void OpenAbout() => WinMan.ShowDialog(new AboutViewModel());
+        public void OpenAbout()
+        {
+            WinMan.ShowDialog(new AboutViewModel(Clipboard));
+        }
     }
 }

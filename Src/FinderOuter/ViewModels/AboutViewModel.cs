@@ -3,8 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using System.Diagnostics;
 using System.Reflection;
@@ -14,9 +12,14 @@ namespace FinderOuter.ViewModels
 {
     public class AboutViewModel : VmWithSizeBase
     {
-        public AboutViewModel(/*IClipboard clipboard*/)
+        // Makes designer happy!
+        public AboutViewModel()
         {
-            //Clipboard = clipboard;
+        }
+
+        public AboutViewModel(IClipboard clipboard)
+        {
+            Clipboard = clipboard;
             // Window size has to be set or the new window that is build with WindowManager 
             // is going to have the same size as MainWindow
             Width = 600;
@@ -36,7 +39,6 @@ namespace FinderOuter.ViewModels
 
         private const string Bip21Extras = "?label=Coding-Enthusiast&message=Donation%20for%20FinderOuter%20project";
 
-
         public async void Copy(int i)
         {
             if (Clipboard is not null)
@@ -44,6 +46,8 @@ namespace FinderOuter.ViewModels
                 await Clipboard.SetTextAsync(i == 1 ? DonationAddr1 : DonationAddr2);
             }
         }
+        public void Copy1() => Copy(1);
+        public void Copy2() => Copy(2);
 
         // Taken from avalonia source code
         // https://github.com/AvaloniaUI/Avalonia/blob/4340831f29c2dda00cfc3993303921272fedfc61/src/Avalonia.Dialogs/AboutAvaloniaDialog.xaml

@@ -50,7 +50,7 @@
         <TextBlock Text="Donation:"/>
         <Button Classes="Hyperlink" Content="{Binding DonationAddr1}" CommandParameter="{Binding DonationUri1}"/>
         <Button Content="Copy"
-                Command="{Binding Copy}"
+                Command="{Binding Copy1}"
                 CommandParameter="1"
                 FontSize="12"
                 Margin="5,0,0,0"/>
@@ -60,14 +60,14 @@
         <TextBlock Text="Donation:"/>
         <Button Classes="Hyperlink" Content="{Binding DonationAddr2}" CommandParameter="{Binding DonationUri2}"/>
         <Button Content="Copy"
-                Command="{Binding Copy}"
+                Command="{Binding Copy2}"
                 CommandParameter="2"
                 FontSize="12"
                 Margin="5,0,0,0"/>
       </StackPanel>
 
       <StackPanel Orientation="Horizontal" Margin="0,50,0,0">
-        <TextBlock Text="Powered by Avalonia"/>
+        <TextBlock Text="Powered by Avalonia "/>
         <Button Classes="Hyperlink" CommandParameter="{Binding AvaloniaLink}"/>
       </StackPanel>
 

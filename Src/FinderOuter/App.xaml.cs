@@ -22,10 +22,12 @@ namespace FinderOuter
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                MainWindowViewModel vm = new();
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainWindowViewModel(),
+                    DataContext = vm
                 };
+                vm.Clipboard = desktop.MainWindow.Clipboard;
             }
 
             base.OnFrameworkInitializationCompleted();
