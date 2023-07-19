@@ -181,6 +181,7 @@
 
       <TextBox Text="{Binding SelectedOption.Result.Message, Mode=OneWay}"
                IsVisible="{Binding IsOptionSelected}"
+               UseFloatingWatermark="False"
                ScrollViewer.VerticalScrollBarVisibility="Auto"
                IsReadOnly="True"
                Grid.Row="3"/>
