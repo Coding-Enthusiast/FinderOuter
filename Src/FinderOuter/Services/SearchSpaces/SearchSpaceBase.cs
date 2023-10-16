@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend;
+using Autarkysoft.Bitcoin;
 using System;
 using System.Diagnostics;
 using System.Numerics;

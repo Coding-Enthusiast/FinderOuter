@@ -362,30 +362,6 @@ namespace FinderOuter.Backend
 
 
 
-    public static class IntExtension
-    {
-        public static string ToOrdinal(this int i)
-        {
-            return i <= 0
-                ? i.ToString()
-                : (i % 100) switch
-                {
-                    11 or 12 or 13 => $"{i}th",
-                    _ => (i % 10) switch
-                    {
-                        1 => $"{i}st",
-                        2 => $"{i}nd",
-                        3 => $"{i}rd",
-                        _ => $"{i}th",
-                    },
-                };
-        }
-    }
-
-
-
-
-
     public static class LongExtension
     {
         /// <summary>
