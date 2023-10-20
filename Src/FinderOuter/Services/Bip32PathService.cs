@@ -128,6 +128,17 @@ namespace FinderOuter.Services
                 }
                 catch (Exception ex)
                 {
+                    try
+                    {
+                        if (ElectrumMnemonic.IsOld(input))
+                        {
+                            report.Fail("This is an old ElectrumMnemonic. They are not supported yet.");
+                        }
+                    }
+                    catch
+                    {
+                    }
+
                     report.Fail($"Could not instantiate ElectrumMnemonic instance. Error: {ex.Message}");
                     return;
                 }
