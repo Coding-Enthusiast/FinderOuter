@@ -36,13 +36,13 @@ namespace FinderOuter.Services
         public static bool IsMissingCharValid(char c) => ConstantsFO.MissingSymbols.Contains(c);
 
 
-        public static bool CheckChars(ReadOnlySpan<char> array, ReadOnlySpan<char> charSet, char ignore, out string error)
+        public static bool CheckChars(ReadOnlySpan<char> array, ReadOnlySpan<char> charSet, char? ignore, out string error)
         {
             bool isValid = true;
             error = string.Empty;
             for (int i = 0; i < array.Length; i++)
             {
-                if (!charSet.Contains(array[i]) && array[i] != ignore)
+                if (!charSet.Contains(array[i]) && (!ignore.HasValue || array[i] != ignore.Value))
                 {
                     isValid = false;
                     if (!string.IsNullOrEmpty(error))
@@ -249,7 +249,7 @@ namespace FinderOuter.Services
                 message = "Could not decode the given key.";
                 return false;
             }
-            
+
             if (keyBa[0] != ConstantsFO.PrivKeyFirstByte)
             {
                 message = $"Invalid first key byte (actual={keyBa[0]}, expected={ConstantsFO.PrivKeyFirstByte}).";

@@ -92,10 +92,12 @@ namespace Tests.Services
             yield return new object[] { "a ", "abcde", '*', false, "Invalid character \" \" found at index=1." };
             yield return new object[] { "a*b", "abcde", '*', true, "" };
             yield return new object[] { "***", "abcde", '*', true, "" };
+            yield return new object[] { "ab", "abcde", null, true, "" };
+            yield return new object[] { "ab*", "abcde", null, false, "Invalid character \"*\" found at index=2." };
         }
         [Theory]
         [MemberData(nameof(GetCheckCharsCases))]
-        public void CheckCharsTest(string input, string charSet, char ignore, bool expected, string expErr)
+        public void CheckCharsTest(string input, string charSet, char? ignore, bool expected, string expErr)
         {
             bool actual = InputService.CheckChars(input, charSet, ignore, out string error);
             Assert.Equal(expected, actual);
