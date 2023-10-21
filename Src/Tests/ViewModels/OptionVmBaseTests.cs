@@ -8,7 +8,6 @@ using FinderOuter.Services;
 using FinderOuter.ViewModels;
 using System;
 using System.Collections.ObjectModel;
-using Xunit;
 
 namespace Tests.ViewModels
 {

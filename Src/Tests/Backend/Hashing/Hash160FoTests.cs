@@ -6,7 +6,6 @@
 using Autarkysoft.Bitcoin;
 using FinderOuter.Backend.Hashing;
 using System;
-using Xunit;
 
 namespace Tests.Backend.Hashing
 {

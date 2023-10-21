@@ -8,7 +8,6 @@ using FinderOuter.Models;
 using FinderOuter.Services;
 using System;
 using System.Text;
-using Xunit;
 
 namespace Tests.Services
 {

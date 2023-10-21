@@ -5,7 +5,6 @@
 
 using FinderOuter.Services.SearchSpaces;
 using System.Numerics;
-using Xunit;
 
 namespace Tests.Services.SearchSpaces
 {

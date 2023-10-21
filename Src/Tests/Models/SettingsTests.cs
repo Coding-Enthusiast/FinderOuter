@@ -5,7 +5,6 @@
 
 using FinderOuter.Models;
 using System;
-using Xunit;
 
 namespace Tests.Models
 {

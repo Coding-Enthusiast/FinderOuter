@@ -7,7 +7,6 @@ using FinderOuter.Models;
 using FinderOuter.Services;
 using FinderOuter.ViewModels;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Tests
 {

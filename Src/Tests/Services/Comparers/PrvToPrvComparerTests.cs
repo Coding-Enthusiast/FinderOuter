@@ -3,11 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using FinderOuter.Backend.ECC;
 using FinderOuter.Services.Comparers;
 using System.Collections.Generic;
-using System.Linq;
-using Xunit;
 
 namespace Tests.Services.Comparers
 {

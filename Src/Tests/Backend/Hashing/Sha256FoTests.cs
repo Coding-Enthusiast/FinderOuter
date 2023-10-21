@@ -8,7 +8,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Xunit;
 
 namespace Tests.Backend.Hashing
 {

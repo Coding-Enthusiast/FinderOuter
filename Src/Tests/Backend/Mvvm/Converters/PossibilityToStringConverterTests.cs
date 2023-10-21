@@ -5,7 +5,6 @@
 
 using FinderOuter.Backend.Mvvm.Converters;
 using FinderOuter.Models;
-using Xunit;
 
 namespace Tests.Backend.Mvvm.Converters
 {

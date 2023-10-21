@@ -5,7 +5,6 @@
 
 using FinderOuter.Backend;
 using System.Linq;
-using Xunit;
 
 namespace Tests.Backend
 {

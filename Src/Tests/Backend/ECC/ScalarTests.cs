@@ -5,7 +5,6 @@
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Backend.Hashing;
-using Xunit;
 
 namespace Tests.Backend.ECC
 {

@@ -7,7 +7,6 @@ using FinderOuter.Backend.Hashing;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Text;
-using Xunit;
 
 namespace Tests.Backend.Hashing
 {

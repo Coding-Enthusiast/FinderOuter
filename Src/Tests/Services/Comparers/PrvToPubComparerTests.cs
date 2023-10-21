@@ -5,11 +5,9 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
-using FinderOuter.Backend.ECC;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Services.Comparers;
 using System.Collections.Generic;
-using Xunit;
 
 namespace Tests.Services.Comparers
 {
