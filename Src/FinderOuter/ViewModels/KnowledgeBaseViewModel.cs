@@ -23,7 +23,7 @@ namespace FinderOuter.ViewModels
         public KnowledgeBaseViewModel(KB kb) : this()
         {
             int i = Array.FindIndex(KBList, x => x.Value == kb);
-            if (i >= 0)
+            if (i >= 0 && i < KBList.Length)
             {
                 // Note that using FirstOrDefault only sets SelectedKB and doesn't affect ListBox
                 SelectedKB = KBList.ElementAt(i);
