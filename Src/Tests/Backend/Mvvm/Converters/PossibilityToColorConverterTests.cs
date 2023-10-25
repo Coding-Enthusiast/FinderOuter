@@ -9,15 +9,15 @@ using FinderOuter.Models;
 
 namespace Tests.Backend.Mvvm.Converters
 {
-    public  class PossibilityToColorConverterTests
+    public class PossibilityToColorConverterTests
     {
         [Fact]
         public void ConvertTest()
         {
             PossibilityToColorConverter conv = new();
-            object actual1  = conv.Convert(Possibility.Maybe, null, null, null);
-            object actual2  = conv.Convert(Possibility.Possible, null, null, null);
-            object actual3  = conv.Convert(Possibility.Impossible, null, null, null);
+            object actual1 = conv.Convert(Possibility.Maybe, null, null, null);
+            object actual2 = conv.Convert(Possibility.Possible, null, null, null);
+            object actual3 = conv.Convert(Possibility.Impossible, null, null, null);
 
             Assert.Equal(Brushes.Blue, actual1);
             Assert.Equal(Brushes.Green, actual2);

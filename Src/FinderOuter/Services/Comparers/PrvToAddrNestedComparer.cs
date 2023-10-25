@@ -14,7 +14,7 @@ namespace FinderOuter.Services.Comparers
     {
         public override bool Init(string address)
         {
-            IsInitialized =  AddressService.CheckAndGetHash_P2sh(address, out hash);
+            IsInitialized = AddressService.CheckAndGetHash_P2sh(address, out hash);
             return IsInitialized;
         }
 
