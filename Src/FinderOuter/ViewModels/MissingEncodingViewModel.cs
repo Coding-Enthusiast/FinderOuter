@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Models;
+using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ namespace FinderOuter.ViewModels
 
         public IEnumerable<EncodingState> EncodingList { get; }
 
-        private string _txt;
+        private string _txt = string.Empty;
         public string Text
         {
             get => _txt;
@@ -61,22 +62,6 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private bool HasValidChars(ReadOnlySpan<char> charSet, string input)
-        {
-            bool b = true;
-
-            ReadOnlySpan<char> arr = input.AsSpan();
-            for (int i = 0; i < arr.Length; i++)
-            {
-                if (!charSet.Contains(arr[i]))
-                {
-                    Result.AddMessage($"Invalid character ({arr[i]}) found at index {i}.");
-                    b = false;
-                }
-            }
-            return b;
-        }
-
         private byte[] CheckBase16()
         {
             string temp = Text;
@@ -85,61 +70,68 @@ namespace FinderOuter.ViewModels
                 temp = Text.Replace(Base16.Prefix, "");
             }
 
-            if (HasValidChars(Base16.CharSet, temp.ToLower()))
+            if (temp.Length % 2 != 0)
             {
-                if (temp.Length % 2 != 0)
-                {
-                    Result.AddMessage("Text length is invalid for Base-16 encoding (has to be divisible by 2).");
-                }
-                else
-                {
-                    bool b = Base16.TryDecode(temp, out byte[] result);
-                    Debug.Assert(b && result != null);
-                    return result;
-                }
+                Result.AddMessage("Input length is invalid for Base-16 encoding (has to be divisible by 2).");
+                return null;
             }
-            return null;
+            else if (!InputService.CheckChars(temp, Base16.CharSet, null, out string error))
+            {
+                Result.AddMessage(error);
+                return null;
+            }
+            else
+            {
+                bool b = Base16.TryDecode(temp, out byte[] result);
+                Debug.Assert(b && result != null);
+                return result;
+            }
         }
 
         private byte[] CheckBase43()
         {
-            if (HasValidChars(Base43.CharSet, Text))
+            if (InputService.CheckChars(Text, Base43.CharSet, null, out string error))
             {
                 bool b = Base43.TryDecode(Text, out byte[] result);
                 Debug.Assert(b && result != null);
                 return result;
             }
-            return null;
+            else
+            {
+                Result.AddMessage(error);
+                return null;
+            }
         }
 
         private byte[] CheckBase58(bool checksum)
         {
-            if (HasValidChars(Base58.CharSet, Text))
+            if (InputService.CheckChars(Text, Base58.CharSet, null, out string error))
             {
+                bool b;
+                byte[] result;
                 if (checksum)
                 {
                     if (Base58.IsValidWithChecksum(Text))
                     {
-                        bool b = Base58.TryDecodeWithChecksum(Text, out byte[] result);
+                        b = Base58.TryDecodeWithChecksum(Text, out result);
                         Debug.Assert(b && result != null);
                         return result;
                     }
                     else
                     {
-                        Result.AddMessage("Text has an invalid checksum. Skipping checksum validation.");
-                        bool b = Base58.TryDecode(Text, out byte[] result);
-                        Debug.Assert(b && result != null);
-                        return result;
+                        Result.AddMessage("Input has an invalid checksum. Decoding without checksum validation.");
                     }
                 }
-                else
-                {
-                    bool b = Base58.TryDecode(Text, out byte[] result);
-                    Debug.Assert(b && result != null);
-                    return result;
-                }
+
+                b = Base58.TryDecode(Text, out result);
+                Debug.Assert(b && result != null);
+                return result;
             }
-            return null;
+            else
+            {
+                Result.AddMessage(error);
+                return null;
+            }
         }
 
         public void Decode(EncodingName name)
@@ -147,12 +139,12 @@ namespace FinderOuter.ViewModels
             Result.Init();
             if (string.IsNullOrEmpty(Text))
             {
-                Result.AddMessage("Text can not be null or empty.");
+                Result.AddMessage("Input can not be null or empty.");
                 Result.Finalize();
                 return;
             }
 
-            Result.AddMessage($"Text has {Text.Length} character{(Text.Length > 1 ? "s" : "")}.");
+            Result.AddMessage($"Input has {Text.Length} character{(Text.Length > 1 ? "s" : "")}.");
 
             try
             {
