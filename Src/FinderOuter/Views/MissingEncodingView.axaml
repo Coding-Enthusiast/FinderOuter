@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
              x:Class="FinderOuter.Views.MissingEncodingView">
 
   <Design.DataContext>
@@ -32,13 +32,15 @@
                        Foreground="{Binding Possible, Converter={StaticResource posToColConv}, Mode=OneWay}"
                        FontWeight="Bold"
                        Margin="4"
+					   Height="15" Width="20"
                        VerticalAlignment="Center"
+					   TextAlignment="Center"
                        Grid.Column="0"/>
             <TextBlock Text="{Binding Name}"
                        VerticalAlignment="Center"
                        Grid.Column="1"/>
             <Button Content="Decode"
-                    Command="{Binding ElementName=itemCtrl, Path=DataContext.Decode}"
+                    Command="{Binding ElementName=itemCtrl, Path=DataContext.DecodeCommand}"
                     CommandParameter="{Binding Name}"
                     Grid.Column="2"/>
           </Grid>

@@ -32,6 +32,7 @@ namespace FinderOuter.ViewModels
                 (txt) => !string.IsNullOrEmpty(txt));
 
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
+            DecodeCommand = ReactiveCommand.Create<EncodingName>(Decode);
         }
 
 
@@ -134,6 +135,7 @@ namespace FinderOuter.ViewModels
             }
         }
 
+        public IReactiveCommand DecodeCommand { get; private set; }
         public void Decode(EncodingName name)
         {
             Result.Init();
