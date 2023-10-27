@@ -68,7 +68,7 @@ namespace FinderOuter.ViewModels
             string temp = Text;
             if (Text.StartsWith(Base16.Prefix))
             {
-                temp = Text.Replace(Base16.Prefix, "");
+                temp = Text.Replace(Base16.Prefix, string.Empty);
             }
 
             if (temp.Length % 2 != 0)
@@ -163,7 +163,7 @@ namespace FinderOuter.ViewModels
                 if (ba != null)
                 {
                     Result.FoundAnyResult = true;
-                    Result.AddMessage($"Decoded data has {ba.Length} bytes.{Environment.NewLine}Data in Base-16: {ba.ToBase16()}");
+                    Result.AddMessage($"Decoded data has {ba.Length} bytes.{Environment.NewLine}Data in Base-16: 0x{ba.ToBase16()}");
                 }
             }
             catch (Exception ex)
