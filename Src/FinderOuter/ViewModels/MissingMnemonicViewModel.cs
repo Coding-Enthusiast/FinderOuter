@@ -20,6 +20,13 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMnemonicViewModel : OptionVmBase
     {
+        /// <summary>
+        /// Make designer happy!
+        /// </summary>
+        public MissingMnemonicViewModel() : this(new Settings())
+        {
+        }
+
         public MissingMnemonicViewModel(Settings settings)
         {
             Result.Settings = settings;
@@ -74,6 +81,9 @@ namespace FinderOuter.ViewModels
         private readonly MnemonicSearchSpace searchSpace = new();
 
         private string[] _wl;
+        /// <summary>
+        /// Used by AutoCompleteBox in UI
+        /// </summary>
         public string[] WordList
         {
             get => _wl;
