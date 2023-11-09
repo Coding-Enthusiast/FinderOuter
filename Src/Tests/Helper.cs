@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace Tests
 {
-    public class Helper
+    public static class Helper
     {
         private static readonly Calc _calc = new();
         public static Calc Calc => _calc;
@@ -47,6 +47,30 @@ namespace Tests
                             $"Actual type: {fieldVal.GetType()}{Environment.NewLine}" +
                             $"Expected type: {expected.GetType()}");
             }
+        }
+
+        public static void CallPrivateMethod<InstanceType>(this InstanceType instance, string methodName, params object[] parameters)
+        {
+            Type type = instance.GetType();
+            BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+            MethodInfo method = type.GetMethod(methodName, bindingAttr);
+            if (method is null)
+            {
+                Assert.Fail("Method was not found.");
+            }
+            method.Invoke(instance, parameters);
+        }
+
+        public static TReturn CallPrivateMethod<InstanceType, TReturn>(this InstanceType instance, string methodName, params object[] parameters)
+        {
+            Type type = instance.GetType();
+            BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+            MethodInfo method = type.GetMethod(methodName, bindingAttr);
+            if (method is null)
+            {
+                Assert.Fail("Method was not found.");
+            }
+            return (TReturn)method.Invoke(instance, parameters);
         }
 
         public static string ReadResources(string resourceName, string fileExtention = "json")
