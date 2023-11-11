@@ -144,7 +144,7 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private void Start()
+        public void Start()
         {
             isChanged = false;
             Index = 0;
@@ -180,15 +180,15 @@ namespace FinderOuter.ViewModels
         }
 
         public IReactiveCommand AddAllCommand { get; }
-        private void AddAll()
+        public void AddAll()
         {
             AddToList(searchSpace.allWords);
         }
 
         public IReactiveCommand AddSimilarCommand { get; }
-        private void AddSimilar()
+        public void AddSimilar()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
+            ToAdd = ToAdd?.Trim().ToLowerInvariant();
             if (string.IsNullOrWhiteSpace(ToAdd))
             {
                 Result.AddMessage("Word to add can not be null or empty.");
@@ -202,9 +202,9 @@ namespace FinderOuter.ViewModels
         }
 
         public IReactiveCommand AddExactCommand { get; }
-        private void AddExact()
+        public void AddExact()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
+            ToAdd = ToAdd?.Trim().ToLowerInvariant();
             if (!string.IsNullOrEmpty(ToAdd) && searchSpace.allWords.Contains(ToAdd))
             {
                 if (!CurrentItems.Contains(ToAdd))
@@ -220,35 +220,47 @@ namespace FinderOuter.ViewModels
         }
 
         public IReactiveCommand AddStartCommand { get; }
-        private void AddStart()
+        public void AddStart()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
+            ToAdd = ToAdd?.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.StartsWith(ToAdd)));
                 ToAdd = string.Empty;
             }
+            else
+            {
+                Result.AddMessage("Word to add can not be null or empty.");
+            }
         }
 
         public IReactiveCommand AddEndCommand { get; }
-        private void AddEnd()
+        public void AddEnd()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
+            ToAdd = ToAdd?.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.EndsWith(ToAdd)));
                 ToAdd = string.Empty;
             }
+            else
+            {
+                Result.AddMessage("Word to add can not be null or empty.");
+            }
         }
 
         public IReactiveCommand AddContainCommand { get; }
-        private void AddContain()
+        public void AddContain()
         {
-            ToAdd = ToAdd.Trim().ToLowerInvariant();
+            ToAdd = ToAdd?.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(ToAdd))
             {
                 AddToList(searchSpace.allWords.Where(x => x.Contains(ToAdd)));
                 ToAdd = string.Empty;
+            }
+            else
+            {
+                Result.AddMessage("Word to add can not be null or empty.");
             }
         }
 
