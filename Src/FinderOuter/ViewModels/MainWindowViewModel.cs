@@ -96,6 +96,18 @@ namespace FinderOuter.ViewModels
         public Settings Settings { get; set; } = new();
         public IClipboard Clipboard { get; set; }
 
+        private bool _isCap = true;
+        public bool IsCappedSettings
+        {
+            get => _isCap;
+            set => this.RaiseAndSetIfChanged(ref _isCap, value);
+        }
+
+        public void OverrideSettings()
+        {
+            IsCappedSettings = false;
+        }
+
         public void OpenAbout()
         {
             WinMan.ShowDialog(new AboutViewModel(Clipboard));
