@@ -14,11 +14,11 @@
     <ListBox ItemsSource="{Binding KBList}"
              SelectedItem="{Binding SelectedKB}"
              Grid.Column="0">
-      <ListBox.DataTemplates>
+      <ListBox.ItemTemplate>
         <DataTemplate>
           <TextBlock Text="{Binding Description}"/>
         </DataTemplate>
-      </ListBox.DataTemplates>
+      </ListBox.ItemTemplate>
     </ListBox>
 
     <StackPanel Orientation="Vertical" Spacing="3" Grid.Column="1">
