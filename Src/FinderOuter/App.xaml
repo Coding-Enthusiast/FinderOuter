@@ -18,7 +18,7 @@
 
     <!--Use Classes="Help" in any Button to change it into a round help button with "?" in it-->
     <Style Selector="Button.Help">
-      <Setter Property="Command" Value="{Binding OpenKB}"/>
+      <Setter Property="Command" Value="{Binding OpenKBCommand}"/>
       <Setter Property="CommandParameter" Value="Bitcoin"/>
       <Setter Property="CornerRadius" Value="20"/>
       <Setter Property="Margin" Value="6,6,5,5"/>

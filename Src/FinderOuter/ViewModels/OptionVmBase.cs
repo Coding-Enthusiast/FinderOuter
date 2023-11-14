@@ -6,7 +6,6 @@
 using Avalonia.Media;
 using FinderOuter.Backend;
 using FinderOuter.Models;
-using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -20,14 +19,13 @@ namespace FinderOuter.ViewModels
     /// </summary>
     public abstract class OptionVmBase : ViewModelBase
     {
-        public OptionVmBase() : this(new Report(), new WindowManager())
+        public OptionVmBase() : this(new Report())
         {
         }
 
-        public OptionVmBase(IReport report, IWindowManager winMan)
+        public OptionVmBase(IReport report)
         {
             Result = report ?? new Report();
-            WinMan = winMan ?? new WindowManager();
             MissingChars = ConstantsFO.MissingSymbols.ToCharArray();
             SelectedMissingChar = MissingChars[0];
 
@@ -42,8 +40,9 @@ namespace FinderOuter.ViewModels
             PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
             RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
             ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
+            Foo = ReactiveCommand.Create<KB>(OpenKB);
         }
-
+        public IReactiveCommand Foo { get; }
 
 
         protected bool isChanged = false;
@@ -54,18 +53,8 @@ namespace FinderOuter.ViewModels
 
 
         public static string MissingToolTip => ConstantsFO.MissingToolTip;
-        // Don't change to static, it will break the OpenKB(KB) method
-#pragma warning disable CA1822 // Mark members as static
-        public KB InputKb => KB.DamagedInput;
-        public KB ExtraInputKb => KB.ExtraInput;
-        public KB Bip32PathKb => KB.Bip32Path;
-        public KB AlphanumericPassKb => KB.AlphanumericPass;
-        public KB CustomCharPassKb => KB.CustomCharPass;
-#pragma warning restore CA1822 // Mark members as static
 
         public IReport Result { get; }
-        public IWindowManager WinMan { get; }
-        public void OpenKB(KB kb) => WinMan.ShowDialog(new KnowledgeBaseViewModel(kb));
 
         public char[] MissingChars { get; }
 

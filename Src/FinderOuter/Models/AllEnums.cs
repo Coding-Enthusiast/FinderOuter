@@ -68,6 +68,8 @@ namespace FinderOuter.Models
         AlphanumericPass,
         [Description("Password recovery mode (custom characters)")]
         CustomCharPass,
+        [Description("Number of threads used in settings")]
+        ThreadCount,
     }
 
 
