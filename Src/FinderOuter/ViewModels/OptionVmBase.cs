@@ -6,6 +6,7 @@
 using Avalonia.Media;
 using FinderOuter.Backend;
 using FinderOuter.Models;
+using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -19,11 +20,11 @@ namespace FinderOuter.ViewModels
     /// </summary>
     public abstract class OptionVmBase : ViewModelBase
     {
-        public OptionVmBase() : this(new Report())
+        public OptionVmBase() : this(new Report(), new WindowManager())
         {
         }
 
-        public OptionVmBase(IReport report)
+        public OptionVmBase(IReport report, IWindowManager winMan) : base(winMan)
         {
             Result = report ?? new Report();
             MissingChars = ConstantsFO.MissingSymbols.ToCharArray();
