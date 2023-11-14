@@ -160,6 +160,16 @@ namespace FinderOuter.ViewModels
                 $"b+akg+    abcdefghijkl+-={Environment.NewLine}" +
                 $"CE2022    CEce012{Environment.NewLine}",
 
+                KB.ThreadCount => 
+                $"Settings can be used to define the number of threads that FinderOuter is going to use for parallelism." +
+                $"{Environment.NewLine}" +
+                $"This is useful for setting a lower number of threads to keep some CPU power open for other works. But this will " +
+                $"obviously slow down the recovery process.{Environment.NewLine}" +
+                $"By default the maximum value is chosen that is based on number of logical processors; if it is not the correct " +
+                $"value the override button can be used to increase it. Keep in mind that increasing it to a value bigger than the " +
+                $"maximum number of available threads could negatively affect speed.{Environment.NewLine}" +
+                $"This value can not be changed after the recovery process starts.",
+
                 _ => string.Empty,
             };
         }

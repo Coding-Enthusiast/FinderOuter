@@ -78,16 +78,24 @@
 
       <Grid ColumnDefinitions="auto,*" RowDefinitions="auto,auto,auto,auto" Grid.Column="0" Grid.Row="3" Background="#e5e5e5">
         <Expander Header="Settings" Margin="5,0,0,10" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" IsExpanded="False">
-          <Grid ColumnDefinitions="auto,*,auto,auto">
-            <TextBlock Text="Cores:"/>
+          <Grid ColumnDefinitions="auto,auto,*,auto,auto">
+			<Button Classes="Help"
+					FontSize="8"
+					Height="18" Width="18"
+					Margin="0,0,2,0"
+					VerticalAlignment="Center"
+					CommandParameter="{Binding ThreadKb}"
+					Grid.Column="0"/>
+            <TextBlock Text="Cores:" Grid.Column="1"/>
             <Slider Value="{Binding Settings.CoreCount}"
-                    Minimum="1" Maximum="{Binding Settings.MaxCoreCount}"
+                    Minimum="1"
+					Maximum="{Binding Settings.MaxCoreCount}"
 					IsVisible="{Binding IsCappedSettings}"
                     VerticalAlignment="Center"
                     TickFrequency="1"
                     IsSnapToTickEnabled="True"
                     SmallChange="1" LargeChange="1"
-                    Grid.Column="1">
+                    Grid.Column="2">
               <Slider.Styles>
                 <Style Selector="Slider /template/Thumb">
                   <Setter Property="ToolTip.Tip" Value="{Binding $parent[Slider].Value,Mode=OneWay,StringFormat='\{0:n0\} core'}" />
@@ -99,15 +107,15 @@
             </Slider>
             <TextBlock Text="{Binding Settings.CoreCount}"
 					   IsVisible="{Binding IsCappedSettings}"
-					   Grid.Column="2"/>
+					   Grid.Column="3"/>
 			<NumericUpDown Value="{Binding Settings.CoreCount}"
                            IsVisible="{Binding !IsCappedSettings}"
 						   Height="40" Width="70"
-						   Grid.Column="2"/>
+						   Grid.Column="3"/>
 			<Button Content="Override" Command="{Binding OverrideSettings}"
 					IsEnabled="{Binding IsCappedSettings}"
 					Height="40"
-					Grid.Column="3"/>
+					Grid.Column="4"/>
           </Grid>
         </Expander>
 
