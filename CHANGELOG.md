@@ -1,6 +1,12 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.18.0.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.19.0 (2023-11-15)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.18.0.0...v0.19.0.0)  
+* Add settings to define the number of threads used in parallelism + KB entry
+* Old Electrum mnemonics are still not supported but they will be rejected with a clear message
+* Various bug fixes, code improvements, additional tests and some UI fixes
 
 ### Release 0.18.0 (2023-06-23)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.17.0.0...v0.18.0.0)  
