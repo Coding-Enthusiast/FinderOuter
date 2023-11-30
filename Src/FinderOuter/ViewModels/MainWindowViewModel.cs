@@ -18,8 +18,6 @@ namespace FinderOuter.ViewModels
     {
         public MainWindowViewModel()
         {
-            WinMan = new WindowManager();
-
             OptionList = new OptionVmBase[]
             {
                 new MissingBase16ViewModel(Settings),
@@ -92,7 +90,6 @@ namespace FinderOuter.ViewModels
 
         public HelpViewModel HelpVm => new();
 
-        public IWindowManager WinMan { get; set; }
         public Settings Settings { get; set; } = new();
         public IClipboard Clipboard { get; set; }
 
