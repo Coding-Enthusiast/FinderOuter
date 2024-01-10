@@ -99,7 +99,7 @@ namespace FinderOuter.ViewModels
         public FontFamily CjkFont => FontFamily.Parse("Microsoft YaHei,Simsun,苹方-简,宋体-简");
 
 
-        protected ObservableCollection<string>[] allItems;
+        protected ObservableCollection<string>[] allItems = [];
 
         private ObservableCollection<string> _items;
         public ObservableCollection<string> CurrentItems
