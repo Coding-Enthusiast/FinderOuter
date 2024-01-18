@@ -77,13 +77,11 @@ namespace FinderOuter.Services
             // decrypted = AES(key=dk[32:64]).decrypt(ECB,256,IV=null,nopadding)
             // key = decrypted ^ dk[0:32]
 
-            using AesManaged aes = new()
-            {
-                KeySize = 256,
-                Mode = CipherMode.ECB,
-                IV = new byte[16],
-                Padding = PaddingMode.None
-            };
+            using Aes aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.Mode = CipherMode.ECB;
+            aes.IV = new byte[16];
+            aes.Padding = PaddingMode.None;
 
             uint saltUint = searchSpace.salt;
             ICompareService localComparer = comparer.Clone();
@@ -384,13 +382,12 @@ namespace FinderOuter.Services
             // factorb = SHA256(SHA256(seedb_24))
             // key = (passFactor * factorb) % n
 
-            using AesManaged aes = new()
-            {
-                KeySize = 256,
-                Mode = CipherMode.ECB,
-                IV = new byte[16],
-                Padding = PaddingMode.None
-            };
+            using Aes aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.Mode = CipherMode.ECB;
+            aes.IV = new byte[16];
+            aes.Padding = PaddingMode.None;
+
 
             uint saltUint0 = searchSpace.salt;
             uint saltUint1 = (uint)(searchSpace.encryptedBA[0] << 24 | searchSpace.encryptedBA[1] << 16 |
@@ -927,13 +924,11 @@ namespace FinderOuter.Services
             // factorb = SHA256(SHA256(seedb_24))
             // key = (passFactor * factorb) % n
 
-            using AesManaged aes = new()
-            {
-                KeySize = 256,
-                Mode = CipherMode.ECB,
-                IV = new byte[16],
-                Padding = PaddingMode.None
-            };
+            using Aes aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.Mode = CipherMode.ECB;
+            aes.IV = new byte[16];
+            aes.Padding = PaddingMode.None;
 
             uint saltUint0 = searchSpace.salt;
             uint saltUint1 = (uint)(searchSpace.encryptedBA[0] << 24 | searchSpace.encryptedBA[1] << 16 |
