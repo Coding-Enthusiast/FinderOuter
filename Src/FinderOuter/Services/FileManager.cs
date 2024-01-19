@@ -3,12 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using FinderOuter.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Services
@@ -16,6 +16,7 @@ namespace FinderOuter.Services
     public interface IFileManager
     {
         public Task<string[]> OpenAsync();
+        public IStorageProvider StorageProvider { get; set; }
     }
 
 
@@ -23,22 +24,28 @@ namespace FinderOuter.Services
     public class FileManager : IFileManager
     {
         public IWindowManager WinMan { get; set; } = new WindowManager();
+        public IStorageProvider StorageProvider { get; set; }
 
         public async Task<string[]> OpenAsync()
         {
-            OpenFileDialog dialog = new()
+            FilePickerFileType fileType = new("txt")
+            {
+                Patterns = new string[] { "*.txt" }
+            };
+
+            FilePickerOpenOptions options = new()
             {
                 AllowMultiple = false,
+                FileTypeFilter = new FilePickerFileType[] { fileType },
+                Title = "Text files (.txt)"
             };
-            dialog.Filters.Add(new FileDialogFilter() { Name = "Text files (.txt)", Extensions = { "txt" } });
 
             try
             {
-                var lf = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
-                string[] dir = await dialog.ShowAsync(lf.MainWindow);
-                if (dir != null && dir.Length > 0)
+                IReadOnlyList<IStorageFile> dir = await StorageProvider.OpenFilePickerAsync(options);
+                if (dir != null && dir.Count > 0)
                 {
-                    return File.ReadAllLines(dir[0]);
+                    return File.ReadAllLines(dir.ElementAt(0).Path.LocalPath);
                 }
             }
             catch (Exception ex)

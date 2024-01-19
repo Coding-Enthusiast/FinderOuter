@@ -4,8 +4,8 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Avalonia.Input.Platform;
+using Avalonia.Platform.Storage;
 using FinderOuter.Models;
-using FinderOuter.Services;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -92,6 +92,24 @@ namespace FinderOuter.ViewModels
 
         public Settings Settings { get; set; } = new();
         public IClipboard Clipboard { get; set; }
+
+        private IStorageProvider _sp;
+        public IStorageProvider StorageProvider
+        {
+            get => _sp;
+            set
+            {
+                _sp = value;
+                foreach (var item in OptionList)
+                {
+                    if (item is MissingBip38PassViewModel b38)
+                    {
+                        b38.FileMan.StorageProvider = value;
+                        return;
+                    }
+                }
+            }
+        }
 
         private bool _isCap = true;
         public bool IsCappedSettings
