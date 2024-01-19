@@ -4,7 +4,6 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.KeyPairs;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Encoders;
 using System;
@@ -23,7 +22,7 @@ namespace FinderOuter.Services.Comparers
 
         public bool Init(string pubHex)
         {
-            IsInitialized = Base16.TryDecode(pubHex, out pubBa) && PublicKey.TryRead(pubBa, out _);
+            IsInitialized = Base16.TryDecode(pubHex, out pubBa) && Point.TryRead(pubBa, out _);
             return IsInitialized;
         }
 
