@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using System.Numerics;
 
 namespace Tests
 {
@@ -12,6 +13,10 @@ namespace Tests
     /// </summary>
     public static class KeyHelper
     {
+        private static readonly byte[] _order = BigInteger.Parse("115792089237316195423570985008687907852837564279074904382605163141518161494337").ToByteArray(true, true);
+        public static byte[] CurveOrder => _order;
+
+
         internal static string Prv1Wif = "L28Peud5cQcijrtMthAdUS8FynpM8PKZtnoUZb1VAio9WxKoebHt";
         internal static PrivateKey Prv1 => new(Prv1Wif);
         internal static Point Pub1

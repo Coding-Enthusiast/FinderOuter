@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using FinderOuter.Services.Comparers;
 using System;
@@ -96,7 +95,7 @@ namespace Tests.Services.Comparers
             b = comp.Compare(key);
             Assert.False(b);
 
-            key = new SecP256k1().N.ToByteArray(true, true);
+            key = KeyHelper.CurveOrder;
             b = comp.Compare(key);
             Assert.False(b);
         }
