@@ -373,10 +373,10 @@ namespace FinderOuter.Services
             hash = null;
             if (string.IsNullOrWhiteSpace(address))
                 return false;
-            if (address.StartsWith("3") && ignoreP2SH)
+            if (address.StartsWith('3') && ignoreP2SH)
                 return false;
 
-            if ((address.StartsWith("1") || address.StartsWith("3")) && Base58.IsValidWithChecksum(address))
+            if ((address.StartsWith('1') || address.StartsWith('3')) && Base58.IsValidWithChecksum(address))
             {
                 byte[] decoded = Base58.DecodeWithChecksum(address);
                 if (decoded[0] != 0 || decoded.Length != 21)

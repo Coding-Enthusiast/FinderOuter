@@ -18,7 +18,7 @@ namespace Tests.Services
         {
             byte[] expected = Encoding.UTF8.GetBytes(" ");
             Assert.Single(expected);
-            Assert.Equal(expected[0], MnemonicSevice.SpaceByte);
+            Assert.Equal(MnemonicSevice.SpaceByte, expected[0]);
         }
 
         [Fact]

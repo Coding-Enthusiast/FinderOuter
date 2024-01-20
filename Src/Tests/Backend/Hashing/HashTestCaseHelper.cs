@@ -22,7 +22,7 @@ namespace Tests.Backend.Hashing
             // Source of Test cases 
             // * RIPEMD160:
             // https://homes.esat.kuleuven.be/~bosselae/ripemd160.html
-            
+
             // * SHA256 and SHA512:
             // Used .Net Framework 4.7.2 System.Security.Cryptography.SHA256Managed
 
@@ -54,7 +54,7 @@ namespace Tests.Backend.Hashing
             JObject jObjs = Helper.ReadResources<JObject>(fileName);
             string jKey = sh_lo_va == "sh" ? "ShortMessage"
                 : sh_lo_va == "lo" ? "LongMessage"
-                : throw new ArgumentException();
+                : throw new ArgumentException("invalid name");
 
             foreach (JToken item in jObjs[jKey])
             {

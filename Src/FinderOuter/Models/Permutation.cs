@@ -18,7 +18,7 @@ namespace FinderOuter.Models
         public readonly int max;
         private int index;
         private readonly uint* pt;
-        
+
 
         public uint GetValue() => pt[index];
 

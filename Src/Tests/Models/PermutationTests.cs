@@ -43,7 +43,7 @@ namespace Tests.Models
 
                 Assert.Equal(1u, p.GetValue());
                 Assert.Equal(1u, p.GetValue()); // Repeated calls doesn't change value
-                
+
                 Assert.True(p.Increment());
                 Assert.Equal(2u, p.GetValue());
 

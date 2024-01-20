@@ -160,7 +160,7 @@ namespace FinderOuter.ViewModels
                 $"b+akg+    abcdefghijkl+-={Environment.NewLine}" +
                 $"CE2022    CEce012{Environment.NewLine}",
 
-                KB.ThreadCount => 
+                KB.ThreadCount =>
                 $"Settings can be used to define the number of threads that FinderOuter is going to use for parallelism." +
                 $"{Environment.NewLine}" +
                 $"This is useful for setting a lower number of threads to keep some CPU power open for other works. But this will " +
