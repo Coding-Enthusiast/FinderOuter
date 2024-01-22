@@ -10,6 +10,7 @@ using System;
 
 namespace FinderOuter
 {
+    [Obsolete]
     public class ViewLocator : IDataTemplate
     {
         public bool SupportsRecycling => false;
