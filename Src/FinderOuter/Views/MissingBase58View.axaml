@@ -4,7 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:CompileBindings="True"
+             x:DataType="vm:MissingBase58ViewModel"
              x:Class="FinderOuter.Views.MissingBase58View">
+  
   <Design.DataContext>
     <vm:MissingBase58ViewModel/>
   </Design.DataContext>

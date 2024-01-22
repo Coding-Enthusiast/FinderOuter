@@ -1,15 +1,26 @@
 ﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:FinderOuter"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels"
+             xmlns:views="clr-namespace:FinderOuter.Views"
              x:Class="FinderOuter.App"
              RequestedThemeVariant="Default">
-  <Application.DataTemplates>
-    <local:ViewLocator/>
-  </Application.DataTemplates>
 
   <Application.Styles>
     <SimpleTheme/>
   </Application.Styles>
+
+  <Application.DataTemplates>
+    <DataTemplate DataType="{x:Type vm:AboutViewModel}">
+      <views:AboutView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:MessageBoxViewModel}">
+      <views:MessageBoxView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:KnowledgeBaseViewModel}">
+      <views:KnowledgeBaseView/>
+    </DataTemplate>
+  </Application.DataTemplates>
 
   <Application.Styles>
     <Style Selector="Button">
@@ -18,7 +29,7 @@
 
     <!--Use Classes="Help" in any Button to change it into a round help button with "?" in it-->
     <Style Selector="Button.Help">
-      <Setter Property="Command" Value="{Binding OpenKBCommand}"/>
+      <Setter Property="Command" Value="{Binding OpenKBCommand}" x:DataType="vm:ViewModelBase"/>
       <Setter Property="CommandParameter" Value="Bitcoin"/>
       <Setter Property="CornerRadius" Value="20"/>
       <Setter Property="Margin" Value="6,6,5,5"/>

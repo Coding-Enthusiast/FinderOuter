@@ -18,6 +18,11 @@ namespace FinderOuter.ViewModels
 {
     public class MissingBip38PassViewModel : OptionVmBase
     {
+        // Makes designer happy!
+        public MissingBip38PassViewModel() : this(new Settings())
+        {
+        }
+
         public MissingBip38PassViewModel(Settings settings)
         {
             Result.Settings = settings;

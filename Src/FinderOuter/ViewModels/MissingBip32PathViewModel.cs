@@ -20,7 +20,7 @@ namespace FinderOuter.ViewModels
         {
             InputTypeList = ListHelper.GetEnumDescItems<Bip32PathService.SeedType>().ToArray();
             WordListsList = Enum.GetValues(typeof(BIP0039.WordLists)).Cast<BIP0039.WordLists>();
-            CompareInputTypeList = ListHelper.GetEnumDescItems<CompareInputType>(CompareInputType.PrivateKey).ToArray();
+            CompareInputTypeList = ListHelper.GetEnumDescItems(CompareInputType.PrivateKey).ToArray();
 
             SelectedInputType = InputTypeList.First();
             SelectedCompareInputType = CompareInputTypeList.First();
@@ -77,7 +77,7 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isMn, value);
         }
 
-        private string _xk;
+        private string _xk = string.Empty;
         public string XKey
         {
             get => _xk;
@@ -111,7 +111,7 @@ namespace FinderOuter.ViewModels
             }
         }
 
-        private string _pass;
+        private string _pass = string.Empty;
         public string PassPhrase
         {
             get => _pass;

@@ -63,7 +63,7 @@ namespace FinderOuter.ViewModels
         public OptionVmBase SelectedOption
         {
             get => _selOpt;
-            private set
+            set
             {
                 if (value is not null)
                 {

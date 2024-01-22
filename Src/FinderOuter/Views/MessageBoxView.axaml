@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
              mc:Ignorable="d"
+             x:CompileBindings="True"
+             x:DataType="vm:MessageBoxViewModel"
              MaxWidth="400"
              x:Class="FinderOuter.Views.MessageBoxView">
 

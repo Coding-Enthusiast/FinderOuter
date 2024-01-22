@@ -17,6 +17,11 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMnemonicPassViewModel : OptionVmBase
     {
+        // Makes designer happy!
+        public MissingMnemonicPassViewModel() : this(new Settings())
+        {
+        }
+
         public MissingMnemonicPassViewModel(Settings settings)
         {
             Result.Settings = settings;

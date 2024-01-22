@@ -3,9 +3,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             xmlns:models="clr-namespace:FinderOuter.Models"
              x:Class="FinderOuter.Views.KnowledgeBaseView"
              mc:Ignorable="d" d:DesignWidth="850" d:DesignHeight="450"
+             x:CompileBindings="True"
+             x:DataType="vm:KnowledgeBaseViewModel"
              FontSize="14">
+  
   <Design.DataContext>
     <vm:KnowledgeBaseViewModel/>
   </Design.DataContext>
@@ -15,7 +19,7 @@
              SelectedItem="{Binding SelectedKB}"
              Grid.Column="0">
       <ListBox.ItemTemplate>
-        <DataTemplate>
+        <DataTemplate DataType="{x:Type models:DescriptiveItem`1}">
           <TextBlock Text="{Binding Description}"/>
         </DataTemplate>
       </ListBox.ItemTemplate>
@@ -30,8 +34,6 @@
       <TextBlock Text="{Binding Description}"
                  Margin="3"
                  Grid.Column="1"/>
-      <Image Source="{Binding Image}"
-             Margin="3"/>
     </StackPanel>
 
   </Grid>

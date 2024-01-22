@@ -18,6 +18,11 @@ namespace FinderOuter.ViewModels
 {
     public class MissingBase58ViewModel : OptionVmBase
     {
+        // Makes designer happy!
+        public MissingBase58ViewModel() : this(new Settings())
+        {
+        }
+
         public MissingBase58ViewModel(Settings settings)
         {
             Result.Settings = settings;

@@ -18,6 +18,11 @@ namespace FinderOuter.ViewModels
 {
     public class MissingMiniPrivateKeyViewModel : OptionVmBase
     {
+        // Makes designer happy!
+        public MissingMiniPrivateKeyViewModel() : this(new Settings())
+        {
+        }
+
         public MissingMiniPrivateKeyViewModel(Settings settings)
         {
             Result.Settings = settings;

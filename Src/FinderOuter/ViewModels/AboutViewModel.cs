@@ -51,7 +51,7 @@ namespace FinderOuter.ViewModels
 
         // Taken from avalonia source code
         // https://github.com/AvaloniaUI/Avalonia/blob/4340831f29c2dda00cfc3993303921272fedfc61/src/Avalonia.Dialogs/AboutAvaloniaDialog.xaml
-        public static void OpenBrowser(string url)
+        public void OpenBrowser(string url)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {

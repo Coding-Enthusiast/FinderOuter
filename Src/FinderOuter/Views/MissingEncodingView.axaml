@@ -2,9 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters;assembly=FinderOuter"
-             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             xmlns:mvvm="clr-namespace:FinderOuter.Backend.Mvvm.Converters"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+             x:CompileBindings="True"
+             x:DataType="vm:MissingEncodingViewModel"
              x:Class="FinderOuter.Views.MissingEncodingView">
 
   <Design.DataContext>
@@ -40,7 +42,7 @@
                        VerticalAlignment="Center"
                        Grid.Column="1"/>
             <Button Content="Decode"
-                    Command="{Binding ElementName=itemCtrl, Path=DataContext.DecodeCommand}"
+                    Command="{Binding Path=$parent[ItemsControl].((vm:MissingEncodingViewModel)DataContext).DecodeCommand}"
                     CommandParameter="{Binding Name}"
                     Grid.Column="2"/>
           </Grid>
