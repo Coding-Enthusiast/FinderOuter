@@ -46,30 +46,30 @@ namespace FinderOuter.Backend
         public const int Bip38ByteLen = 39;
         public const int Bip38Base58Len = 58;
         public const string Bip38Start = "6P";
-        public static readonly byte[] Bip38Prefix = new byte[2] { 0x01, 0x42 };
-        public static readonly byte[] Bip38PrefixECMult = new byte[2] { 0x01, 0x43 };
+        public static readonly byte[] Bip38Prefix = [0x01, 0x42];
+        public static readonly byte[] Bip38PrefixECMult = [0x01, 0x43];
 
-        public static readonly string ChangedMessage = "Input is changed and the search-space needs to re-evaluated." +
+        public static readonly string ChangedMessage = "Input is changed and the search-space needs to be re-evaluated." +
             $"{Environment.NewLine}" +
             $"Click Yes to reset search-space to use default values or click No to manually set search-space.";
 
         // 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
-        public static readonly char[][] SimilarBase58Chars = new char[][]
-        {
-            new char[] { '0', 'o', 'C', 'G', 'c' },
-            new char[] { '1', 'L', 'l' },
-            new char[] { '5', 'S', 's' },
-            new char[] { '7', 'J', 'T', 'j', 't', 'I', 'i' },
-            new char[] { '8', 'B' },
-            new char[] { '9', 'g', 'q', 'P', 'p', 'D', 'd', 'b' },
-            new char[] { 'E', 'F', 'f' },
-            new char[] { 'K', 'k' },
-            new char[] { 'M', 'm' },
-            new char[] { 'N', 'n' },
-            new char[] { 'U', 'u', 'V', 'v', 'Y', 'y' },
-            new char[] { 'W', 'w' },
-            new char[] { 'X', 'x' },
-            new char[] { 'Z', 'z' },
-        };
+        public static readonly char[][] SimilarBase58Chars =
+        [
+            ['0', 'o', 'C', 'G', 'c'],
+            ['1', 'L', 'l'],
+            ['5', 'S', 's'],
+            ['7', 'J', 'T', 'j', 't', 'I', 'i'],
+            ['8', 'B'],
+            ['9', 'g', 'q', 'P', 'p', 'D', 'd', 'b'],
+            ['E', 'F', 'f'],
+            ['K', 'k'],
+            ['M', 'm'],
+            ['N', 'n'],
+            ['U', 'u', 'V', 'v', 'Y', 'y'],
+            ['W', 'w'],
+            ['X', 'x'],
+            ['Z', 'z'],
+        ];
     }
 }
