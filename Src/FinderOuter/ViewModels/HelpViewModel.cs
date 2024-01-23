@@ -65,7 +65,7 @@ namespace FinderOuter.ViewModels
     {
         public HelpViewModel()
         {
-            AllInputs = ListHelper.GetEnumDescItems<HelpInputTypes>();
+            AllInputs = ListHelper.GetEnumDescHelpInput();
         }
 
 
@@ -75,10 +75,10 @@ namespace FinderOuter.ViewModels
                                      $"If you are unsure which option to use, fill in the blanks below for help.";
 
 
-        public IEnumerable<DescriptiveItem<HelpInputTypes>> AllInputs { get; }
+        public IEnumerable<DescriptiveHelpInput> AllInputs { get; }
 
-        private DescriptiveItem<HelpInputTypes> _selInput;
-        public DescriptiveItem<HelpInputTypes> SelectedInput
+        private DescriptiveHelpInput _selInput;
+        public DescriptiveHelpInput SelectedInput
         {
             get => _selInput;
             set
@@ -90,8 +90,8 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private IEnumerable<DescriptiveItem<HelpSecondInputTypes>> _items2;
-        public IEnumerable<DescriptiveItem<HelpSecondInputTypes>> SecondaryItems
+        private IEnumerable<DescriptiveHelpInput2> _items2;
+        public IEnumerable<DescriptiveHelpInput2> SecondaryItems
         {
             get => _items2;
             set => this.RaiseAndSetIfChanged(ref _items2, value);
@@ -273,15 +273,15 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private static IEnumerable<DescriptiveItem<T>> ToDescItems<T>(params T[] values) where T : Enum
+        private static IEnumerable<DescriptiveHelpInput2> ToDescItems(params HelpSecondInputTypes[] values)
         {
-            foreach (T item in values)
+            foreach (var item in values)
             {
-                yield return new DescriptiveItem<T>(item);
+                yield return new DescriptiveHelpInput2(item);
             }
         }
 
-        private static IEnumerable<DescriptiveItem<HelpSecondInputTypes>> GetSecondary(HelpInputTypes value)
+        private static IEnumerable<DescriptiveHelpInput2> GetSecondary(HelpInputTypes value)
         {
             if (value == HelpInputTypes.Wif || value == HelpInputTypes.Base58Prv ||
                 value == HelpInputTypes.P2pkhAddr || value == HelpInputTypes.P2shAddr ||

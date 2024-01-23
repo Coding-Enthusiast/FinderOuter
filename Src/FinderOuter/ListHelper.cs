@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using FinderOuter.Models;
+using FinderOuter.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,14 @@ namespace FinderOuter
                 {
                     yield return new DescriptiveItem<T>(item);
                 }
+            }
+        }
+
+        public static IEnumerable<DescriptiveHelpInput> GetEnumDescHelpInput()
+        {
+            foreach (HelpInputTypes item in Enum.GetValues(typeof(HelpInputTypes)))
+            {
+                yield return new DescriptiveHelpInput(item);
             }
         }
     }

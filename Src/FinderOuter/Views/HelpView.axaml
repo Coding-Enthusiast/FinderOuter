@@ -2,8 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:FinderOuter.ViewModels;assembly=FinderOuter"
+             xmlns:vm="clr-namespace:FinderOuter.ViewModels"
+             xmlns:models="clr-namespace:FinderOuter.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:CompileBindings="True"
+             x:DataType="vm:HelpViewModel"
              x:Class="FinderOuter.Views.HelpView">
 
   <Design.DataContext>
@@ -18,13 +21,6 @@
     <Style Selector="ComboBox">
       <Setter Property="PlaceholderText" Value="[blank]"/>
       <Setter Property="PlaceholderForeground" Value="Gray"/>
-      <Setter Property="ItemTemplate">
-        <Setter.Value>
-          <DataTemplate>
-            <TextBlock Text="{Binding Description}"/>
-          </DataTemplate>
-        </Setter.Value>
-      </Setter>
     </Style>
   </UserControl.Styles>
 
@@ -38,11 +34,23 @@
       <TextBlock Text="{Binding IndefiniteArticle}"/>
       <ComboBox ItemsSource="{Binding AllInputs}"
                 SelectedItem="{Binding SelectedInput}"
-                Width="320"/>
+                Width="320">
+        <ComboBox.ItemTemplate>
+          <DataTemplate DataType="{x:Type models:DescriptiveHelpInput}">
+            <TextBlock Text="{Binding Description}"/>
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
       <TextBlock Text="that is"/>
       <ComboBox ItemsSource="{Binding SecondaryItems}"
                 SelectedItem="{Binding SelectedSecondary}"
-                Width="320"/>
+                Width="320">
+        <ComboBox.ItemTemplate>
+          <DataTemplate DataType="{x:Type models:DescriptiveHelpInput2}">
+            <TextBlock Text="{Binding Description}"/>
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
     </StackPanel>
 
 

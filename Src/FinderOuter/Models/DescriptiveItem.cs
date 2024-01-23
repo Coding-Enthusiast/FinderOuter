@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
+using FinderOuter.ViewModels;
 using System;
 using System.ComponentModel;
 using System.Reflection;
@@ -24,5 +25,13 @@ namespace FinderOuter.Models
 
         public string Description { get; set; }
         public T Value { get; set; }
+    }
+
+    public class DescriptiveHelpInput(HelpInputTypes value) : DescriptiveItem<HelpInputTypes>(value)
+    {
+    }
+
+    public class DescriptiveHelpInput2(HelpSecondInputTypes value) : DescriptiveItem<HelpSecondInputTypes>(value)
+    {
     }
 }
