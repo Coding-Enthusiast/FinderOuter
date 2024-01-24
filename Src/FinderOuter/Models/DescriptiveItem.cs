@@ -34,4 +34,8 @@ namespace FinderOuter.Models
     public class DescriptiveHelpInput2(HelpSecondInputTypes value) : DescriptiveItem<HelpSecondInputTypes>(value)
     {
     }
+
+    public class DescriptiveKB(KB value): DescriptiveItem<KB>(value)
+    {
+    }
 }

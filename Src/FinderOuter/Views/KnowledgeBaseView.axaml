@@ -19,7 +19,7 @@
              SelectedItem="{Binding SelectedKB}"
              Grid.Column="0">
       <ListBox.ItemTemplate>
-        <DataTemplate DataType="{x:Type models:DescriptiveItem`1}">
+        <DataTemplate DataType="{x:Type models:DescriptiveKB}">
           <TextBlock Text="{Binding Description}"/>
         </DataTemplate>
       </ListBox.ItemTemplate>

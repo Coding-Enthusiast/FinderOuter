@@ -17,7 +17,7 @@ namespace FinderOuter.ViewModels
             Width = 850;
             Height = 500;
 
-            KBList = ListHelper.GetEnumDescItems<KB>().ToArray();
+            KBList = ListHelper.GetEnumDescKB().ToArray();
         }
 
         public KnowledgeBaseViewModel(KB kb) : this()
@@ -32,10 +32,10 @@ namespace FinderOuter.ViewModels
 
 
 
-        public DescriptiveItem<KB>[] KBList { get; }
+        public DescriptiveKB[] KBList { get; }
 
-        private DescriptiveItem<KB> _selKb;
-        public DescriptiveItem<KB> SelectedKB
+        private DescriptiveKB _selKb;
+        public DescriptiveKB SelectedKB
         {
             get => _selKb;
             set

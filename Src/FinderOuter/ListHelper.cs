@@ -36,5 +36,13 @@ namespace FinderOuter
                 yield return new DescriptiveHelpInput(item);
             }
         }
+
+        public static IEnumerable<DescriptiveKB> GetEnumDescKB()
+        {
+            foreach (KB item in Enum.GetValues(typeof(KB)))
+            {
+                yield return new DescriptiveKB(item);
+            }
+        }
     }
 }
