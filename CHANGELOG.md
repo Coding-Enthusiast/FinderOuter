@@ -1,6 +1,12 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.0.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.1.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.19.1 (2024-01-24)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.0.0...v0.19.1.0)  
+* Fix a bug in VMs where FinderOuter crashed if user entered an invalid input
+* Move to .net 8 and compile binding (UI)
+* Some cleanup and UI fixes
 
 ### Release 0.19.0 (2023-11-15)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.18.0.0...v0.19.0.0)  
