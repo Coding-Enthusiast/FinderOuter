@@ -358,17 +358,17 @@ namespace FinderOuter.ViewModels
                     $"Note the multi-thread usage (parallelism).{Environment.NewLine}" +
                     $"Estimated time: <3 sec to find, <30 sec to check all"
                 },
-                {
-                    "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK",
-                    Array.IndexOf(MissingChars, '*'),
-                    0,
-                    null,
-                    0,
-                    $"bitcoin wiki{Environment.NewLine}" +
-                    $"This example is a compressed private key missing 3 character at unknown positions.{Environment.NewLine}" +
-                    $"Note that this is a special case and it uses multi-thread (parallelism).{Environment.NewLine}" +
-                    $"Estimated time: <2 min to find, <3.5 min to check all"
-                },
+                //{
+                //    "L53fCHmQhbNp1B4JipfBtfeHZHcAibzG9oK9XfiFzxHAkz6JK",
+                //    Array.IndexOf(MissingChars, '*'),
+                //    0,
+                //    null,
+                //    0,
+                //    $"bitcoin wiki{Environment.NewLine}" +
+                //    $"This example is a compressed private key missing 3 character at unknown positions.{Environment.NewLine}" +
+                //    $"Note that this is a special case and it uses multi-thread (parallelism).{Environment.NewLine}" +
+                //    $"Estimated time: <2 min to find, <3.5 min to check all"
+                //},
                 {
                     "142viJrTYHA4TzryiEiuQkYk4Ay5Tfp***",
                     Array.IndexOf(MissingChars, '*'),
