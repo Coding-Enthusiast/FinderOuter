@@ -41,9 +41,7 @@ namespace FinderOuter.ViewModels
             PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
             RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
             ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
-            Foo = ReactiveCommand.Create<KB>(OpenKB);
         }
-        public IReactiveCommand Foo { get; }
 
 
         protected bool isChanged = false;
