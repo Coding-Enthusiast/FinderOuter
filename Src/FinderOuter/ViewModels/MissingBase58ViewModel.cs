@@ -31,8 +31,10 @@ namespace FinderOuter.ViewModels
             searchSpace = new();
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
-                x => x.Input, x => x.SelectedMissingChar,
-                x => x.Result.CurrentState, (b58, c, state) =>
+                x => x.Input,
+                x => x.SelectedMissingChar,
+                x => x.Result.CurrentState,
+                (b58, c, state) =>
                             !string.IsNullOrEmpty(b58) &&
                             InputService.IsMissingCharValid(c) &&
                             state != State.Working);
@@ -56,6 +58,8 @@ namespace FinderOuter.ViewModels
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
             AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
             AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
+
+            CopyCommand = ReactiveCommand.Create(Copy, isFindEnabled);
         }
 
 
@@ -93,6 +97,7 @@ namespace FinderOuter.ViewModels
 
         private void Start()
         {
+            CopiedList = Array.Empty<string>();
             isChanged = false;
             Index = 0;
             Max = 0;

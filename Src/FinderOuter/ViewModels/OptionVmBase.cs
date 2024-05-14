@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 
 namespace FinderOuter.ViewModels
 {
@@ -41,6 +42,9 @@ namespace FinderOuter.ViewModels
             PreviousCommand = ReactiveCommand.Create(Previous, isPrevEnabled);
             RemoveSelectedCommand = ReactiveCommand.Create(RemoveSelected, canRemove);
             ClearAllCommand = ReactiveCommand.Create(ClearAll, canAdd);
+
+            IObservable<bool> canPaste = this.WhenAnyValue(x => x.CopiedList, (item) => item != null && item.Length > 0);
+            PasteCommand = ReactiveCommand.Create<bool>(Paste, canPaste);
         }
 
 
@@ -95,6 +99,44 @@ namespace FinderOuter.ViewModels
         }
 
         public FontFamily CjkFont => FontFamily.Parse("Microsoft YaHei,Simsun,苹方-简,宋体-简");
+
+
+        public IReactiveCommand CopyCommand { get; protected set; }
+        public IReactiveCommand PasteCommand { get; protected set; }
+
+        private string[] _copied = Array.Empty<string>();
+        public string[] CopiedList
+        {
+            get => _copied;
+            set => this.RaiseAndSetIfChanged(ref _copied, value);
+        }
+
+        public void Copy()
+        {
+            if (CurrentItems is not null)
+            {
+                CopiedList = CurrentItems.ToArray();
+            }
+        }
+
+        public void Paste(bool replace)
+        {
+            if (CurrentItems is not null)
+            {
+                if (replace)
+                {
+                    CurrentItems.Clear();
+                }
+
+                foreach (var item in CopiedList)
+                {
+                    if (!CurrentItems.Contains(item))
+                    {
+                        CurrentItems.Add(item);
+                    }
+                }
+            }
+        }
 
 
         protected ObservableCollection<string>[] allItems = [];
