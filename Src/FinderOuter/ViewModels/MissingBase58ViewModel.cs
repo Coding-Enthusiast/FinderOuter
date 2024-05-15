@@ -158,7 +158,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddSimilarCommand { get; }
         private void AddSimilar()
         {
-            ToAdd = ToAdd.Trim();
+            ToAdd = ToAdd?.Trim();
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1)
             {
                 // Characters outside of Base58 charset are accepted here
@@ -194,7 +194,7 @@ namespace FinderOuter.ViewModels
         public IReactiveCommand AddExactCommand { get; }
         private void AddExact()
         {
-            ToAdd = ToAdd.Trim();
+            ToAdd = ToAdd?.Trim();
             if (!string.IsNullOrEmpty(ToAdd) && ToAdd.Length == 1 && B58SearchSpace.AllChars.Contains(ToAdd[0]))
             {
                 if (!CurrentItems.Contains(ToAdd))
