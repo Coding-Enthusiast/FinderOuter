@@ -97,26 +97,9 @@ namespace FinderOuter.ViewModels
 
         private void Start()
         {
-            CopiedList = Array.Empty<string>();
-            isChanged = false;
-            Index = 0;
-            Max = 0;
+            InitSearchSpace();
             IsProcessed = searchSpace.Process(Input, SelectedMissingChar, SelectedInputType, out string error);
-
-            if (IsProcessed)
-            {
-                allItems = new ObservableCollection<string>[searchSpace.MissCount];
-                for (int i = 0; i < allItems.Length; i++)
-                {
-                    allItems[i] = new();
-                }
-                Max = allItems.Length;
-                Index = Max == 0 ? 0 : 1;
-            }
-            else
-            {
-                Result.AddMessage(error);
-            }
+            FinishSearchSpace(searchSpace.MissCount, error);
         }
 
 

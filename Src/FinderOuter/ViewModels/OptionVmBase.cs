@@ -205,9 +205,35 @@ namespace FinderOuter.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isProcessed, value);
         }
 
+        protected void InitSearchSpace()
+        {
+            CopiedList = Array.Empty<string>();
+            isChanged = false;
+            Index = 0;
+            Max = 0;
+        }
+
+        protected void FinishSearchSpace(int missCount, string error)
+        {
+            if (IsProcessed)
+            {
+                allItems = new ObservableCollection<string>[missCount];
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i] = new();
+                }
+                Max = allItems.Length;
+                Index = Max == 0 ? 0 : 1;
+            }
+            else
+            {
+                Result.AddMessage(error);
+            }
+        }
 
         protected void ResetSearchSpace()
         {
+            CopiedList = Array.Empty<string>();
             Index = 0;
             Max = 0;
             allItems = Array.Empty<ObservableCollection<string>>();

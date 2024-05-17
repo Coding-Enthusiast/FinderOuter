@@ -146,25 +146,12 @@ namespace FinderOuter.ViewModels
 
         public void Start()
         {
-            isChanged = false;
-            Index = 0;
-            Max = 0;
+            InitSearchSpace();
             IsProcessed = searchSpace.Process(Input, SelectedMissingChar, SelectedMnemonicType, SelectedWordListType, SelectedElectrumMnType, out string error);
-
+            FinishSearchSpace(searchSpace.MissCount, error);
             if (IsProcessed)
             {
                 WordList = searchSpace.allWords;
-                allItems = new ObservableCollection<string>[searchSpace.MissCount];
-                for (int i = 0; i < allItems.Length; i++)
-                {
-                    allItems[i] = new();
-                }
-                Max = allItems.Length;
-                Index = Max == 0 ? 0 : 1;
-            }
-            else
-            {
-                Result.AddMessage(error);
             }
         }
 
