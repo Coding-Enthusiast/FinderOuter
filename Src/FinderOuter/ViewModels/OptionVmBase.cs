@@ -229,7 +229,7 @@ namespace FinderOuter.ViewModels
         }
 
 
-        private string _toAdd;
+        private string _toAdd = string.Empty;
         public string ToAdd
         {
             get => _toAdd;
