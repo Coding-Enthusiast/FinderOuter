@@ -78,21 +78,44 @@
           <TextBlock Text="{Binding CurrentItems.Count}"/>
         </StackPanel>
 
-        <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*,*" Grid.Column="0" Grid.Row="1">
-          <TextBox Text="{Binding ToAdd}" Grid.ColumnSpan="2" Grid.Row="0" MinHeight="30"/>
+        <Grid ColumnDefinitions="*,auto" RowDefinitions="*,*,*,*" Grid.Column="0" Grid.Row="1">
+          <TextBox Text="{Binding ToAdd}"
+                   MinHeight="30" Width="100"
+                   Grid.Column="0" Grid.Row="0"/>
+          <Button Content="+"
+                  Command="{Binding AddExactCommand}"
+                  ToolTip.Tip="Press enter to add"
+                  IsDefault="True"
+                  Margin="2" Height="30" Width="30"
+                  Grid.Column="1" Grid.Row="0"/>
           <Button Content="Similar letters" Command="{Binding AddSimilarCommand}"
                   Margin="2" Width="100"
                   Grid.Column="0" Grid.Row="1"/>
-          <Button Content="Exact letter" Command="{Binding AddExactCommand}"
-                  Margin="2" Width="100"
-                  Grid.Column="1" Grid.Row="1"/>
         </Grid>
 
-        <ListBox ItemsSource="{Binding CurrentItems}"
-                 SelectedItem="{Binding SelectedItem}"
-                 Height="130"
-                 Margin="3"
-                 Grid.Column="1" Grid.Row="1"/>
+        <Grid Grid.Column="1" Grid.Row="1" RowDefinitions="*,auto">
+          <ListBox ItemsSource="{Binding CurrentItems}"
+                   SelectedItem="{Binding SelectedItem}"
+                   Height="130"
+                   Margin="3"
+                   Grid.Row="0"/>
+          <Grid ColumnDefinitions="auto,*,*" Grid.Row="1">
+            <Button Content="Copy"
+                    Command="{Binding CopyCommand}"
+                    Width="65"
+                    Grid.Column="0"/>
+            <Button Content="Paste (add)"
+                    Command="{Binding PasteCommand}"
+                    CommandParameter="{x:False}"
+                    Width="100"
+                    Grid.Column="1"/>
+            <Button Content="Paste (replace)"
+                    Command="{Binding PasteCommand}"
+                    CommandParameter="{x:True}"
+                    Width="100"
+                    Grid.Column="2"/>
+          </Grid>
+        </Grid>
 
         <Grid ColumnDefinitions="auto,auto" RowDefinitions="auto,auto,auto,auto" Grid.Column="2" Grid.Row="1">
           <Button Content="Add all letters" Command="{Binding AddAllCommand}"

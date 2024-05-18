@@ -57,6 +57,8 @@ namespace FinderOuter.ViewModels
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
             AddExactCommand = ReactiveCommand.Create(AddExact, canAdd);
             AddSimilarCommand = ReactiveCommand.Create(AddSimilar, canAdd);
+
+            CopyCommand = ReactiveCommand.Create(Copy, isFindEnabled);
         }
 
         public override string OptionName => "Missing mini private key";

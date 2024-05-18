@@ -66,6 +66,8 @@ namespace FinderOuter.ViewModels
             AddStartCommand = ReactiveCommand.Create(AddStart, canAdd);
             AddEndCommand = ReactiveCommand.Create(AddEnd, canAdd);
             AddContainCommand = ReactiveCommand.Create(AddContain, canAdd);
+
+            CopyCommand = ReactiveCommand.Create(Copy, isFindEnabled);
         }
 
 

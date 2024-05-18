@@ -143,11 +143,29 @@
           <Button Content="Words containing" Command="{Binding AddContainCommand}" Grid.Column="0" Grid.Row="3"/>
         </Grid>
 
-        <ListBox ItemsSource="{Binding CurrentItems}"
-                 SelectedItem="{Binding SelectedItem}"
-                 Height="130"
-                 Margin="3"
-                 Grid.Column="1" Grid.Row="1"/>
+        <Grid Grid.Column="1" Grid.Row="1" RowDefinitions="*,auto">
+          <ListBox ItemsSource="{Binding CurrentItems}"
+                   SelectedItem="{Binding SelectedItem}"
+                   Height="130"
+                   Margin="3"
+                   Grid.Row="0"/>
+          <Grid ColumnDefinitions="auto,*,*" Grid.Row="1">
+            <Button Content="Copy"
+                    Command="{Binding CopyCommand}"
+                    Width="65"
+                    Grid.Column="0"/>
+            <Button Content="Paste (add)"
+                    Command="{Binding PasteCommand}"
+                    CommandParameter="{x:False}"
+                    Width="100"
+                    Grid.Column="1"/>
+            <Button Content="Paste (replace)"
+                    Command="{Binding PasteCommand}"
+                    CommandParameter="{x:True}"
+                    Width="100"
+                    Grid.Column="2"/>
+          </Grid>
+        </Grid>
 
         <StackPanel Orientation="Vertical" Spacing="5" Grid.Column="2" Grid.Row="1">
           <Button Content="Add all words" Command="{Binding AddAllCommand}"/>

@@ -53,6 +53,8 @@ namespace FinderOuter.ViewModels
             AddNumbersCommand = ReactiveCommand.Create(AddNumbers, canAdd);
             AddLetersCommand = ReactiveCommand.Create(AddLeters, canAdd);
             AddExactCommand = ReactiveCommand.Create(AddExact, canAddExact);
+
+            CopyCommand = ReactiveCommand.Create(Copy, isFindEnabled);
         }
 
 

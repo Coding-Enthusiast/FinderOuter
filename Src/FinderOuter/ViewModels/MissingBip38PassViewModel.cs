@@ -55,6 +55,8 @@ namespace FinderOuter.ViewModels
             AddUpperCommand = ReactiveCommand.Create(AddUpper, canAdd);
             AddNumberCommand = ReactiveCommand.Create(AddNumber, canAdd);
             AddSymbolCommand = ReactiveCommand.Create(AddSymbol, canAdd);
+
+            CopyCommand = ReactiveCommand.Create(Copy, isFindEnabled);
         }
 
 
@@ -109,7 +111,7 @@ namespace FinderOuter.ViewModels
         {
             InitSearchSpace();
             IsProcessed = searchSpace.Process(Input, PassLength, out string error);
-            FinishSearchSpace(searchSpace.MissCount, error);
+            FinishSearchSpace(searchSpace.PasswordLength, error);
         }
 
         private void AddToList(IEnumerable<string> items)
