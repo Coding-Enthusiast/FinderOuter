@@ -29,7 +29,7 @@ namespace Tests.Backend.Hashing
 
             return result;
         }
-        public static TheoryData GetProgressiveCase()
+        public static TheoryData<byte[], byte[]> GetProgressiveCase()
         {
             TheoryData<byte[], byte[]> result = new();
             int len = 1;
