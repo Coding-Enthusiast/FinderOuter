@@ -203,13 +203,11 @@ namespace Tests.Backend.Hashing
         }
         private static byte[] ComputeSingleSha(byte[] data)
         {
-            using System.Security.Cryptography.SHA256 sysSha = System.Security.Cryptography.SHA256.Create();
-            return sysSha.ComputeHash(data);
+            return System.Security.Cryptography.SHA256.HashData(data);
         }
         private static byte[] ComputeDoubleSha(byte[] data)
         {
-            using System.Security.Cryptography.SHA256 sysSha = System.Security.Cryptography.SHA256.Create();
-            return sysSha.ComputeHash(sysSha.ComputeHash(data));
+            return System.Security.Cryptography.SHA256.HashData(System.Security.Cryptography.SHA256.HashData(data));
         }
 
 
