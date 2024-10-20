@@ -156,8 +156,7 @@ namespace Tests.Backend.Hashing
         }
         private static byte[] ComputeSingleSha(byte[] data)
         {
-            using System.Security.Cryptography.SHA512 sysSha = System.Security.Cryptography.SHA512.Create();
-            return sysSha.ComputeHash(data);
+            return System.Security.Cryptography.SHA512.HashData(data);
         }
 
         [Fact]
@@ -315,6 +314,45 @@ namespace Tests.Backend.Hashing
 
                 Assert.Equal(expected, actual);
             }
+        }
+
+        [Fact]
+        public unsafe void Compress64Test()
+        {
+            int dataLen = 64;
+            byte[] data = GetRandomBytes(dataLen);
+            byte[] expected = ComputeSingleSha(data);
+
+            ulong* hPt = stackalloc ulong[Sha512Fo.UBufferSize];
+            ulong* wPt = hPt + Sha512Fo.HashStateSize;
+
+            int dIndex = 0;
+            for (int i = 0; i < 8; i++, dIndex += 8)
+            {
+                wPt[i] =
+                        ((ulong)data[dIndex] << 56) |
+                        ((ulong)data[dIndex + 1] << 48) |
+                        ((ulong)data[dIndex + 2] << 40) |
+                        ((ulong)data[dIndex + 3] << 32) |
+                        ((ulong)data[dIndex + 4] << 24) |
+                        ((ulong)data[dIndex + 5] << 16) |
+                        ((ulong)data[dIndex + 6] << 8) |
+                        data[dIndex + 7];
+            }
+            wPt[8] = 0b10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000UL;
+            for (int i = 9; i < 15; i++)
+            {
+                wPt[i] = 0;
+            }
+
+            wPt[15] = (ulong)(dataLen * 8);
+
+            Sha512Fo.Init(hPt);
+            Sha512Fo.Compress64(hPt, wPt);
+
+            byte[] actual = Sha512Fo.GetBytes(hPt);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
