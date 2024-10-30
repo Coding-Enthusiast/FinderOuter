@@ -50,7 +50,7 @@ namespace FinderOuter.Services.SearchSpaces
             }
             if (result.Length < 70)
             {
-                error = $"Input hex was expected to be 70 bytes but it is {result.Length} bytes.";
+                error = $"Input hex is expected to be at least 70 bytes but it is {result.Length} bytes.";
                 return false;
             }
 
@@ -138,6 +138,13 @@ namespace FinderOuter.Services.SearchSpaces
             AssertArray(salt, saltLen);
             AssertArray(encKey, 48);
 #endif
+
+            if (passLength < 1)
+            {
+                error = "Password length must be at least 1.";
+                return false;
+            }
+
             PasswordLength = passLength;
             Iteration = iteration;
             Salt = salt;
