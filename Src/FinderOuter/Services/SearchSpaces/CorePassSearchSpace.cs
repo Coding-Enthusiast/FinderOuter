@@ -23,6 +23,7 @@ namespace FinderOuter.Services.SearchSpaces
         /// Maximum possible password size in bytes (will be padded to be divisible by 4)
         /// </summary>
         public int MaxPasswordSize { get; private set; }
+        public byte[] Encrypted { get; private set; }
         public byte[] Salt { get; private set; }
         public byte[] XOR { get; private set; }
         public int Iteration { get; private set; }
@@ -148,6 +149,7 @@ namespace FinderOuter.Services.SearchSpaces
             PasswordLength = passLength;
             Iteration = iteration;
             Salt = salt;
+            Encrypted = encKey.SubArray(32, 16);
             XOR = encKey.SubArray(16, 16);
 
             error = string.Empty;
