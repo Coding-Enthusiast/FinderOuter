@@ -45,7 +45,6 @@ namespace FinderOuter.Services
         {
             // Compute SHA512(pass | salt) iteration times
             // AES key is first 32 bytes of hash state
-            // AES IV is the next 16 bytes
             // If decrypted result ^ XOR == 16 the password was correct
 
             using Aes aes = Aes.Create();
@@ -125,14 +124,6 @@ namespace FinderOuter.Services
                         Sha512Fo.Compress64(ptr, wPt);
                     }
 
-                    aes.IV = new byte[16]
-                    {
-                        (byte)(ptr[4] >> 56), (byte)(ptr[4] >> 48), (byte)(ptr[4] >> 40), (byte)(ptr[4] >> 32),
-                        (byte)(ptr[4] >> 24), (byte)(ptr[4] >> 16), (byte)(ptr[4] >> 8), (byte)ptr[4],
-
-                        (byte)(ptr[5] >> 56), (byte)(ptr[5] >> 48), (byte)(ptr[5] >> 40), (byte)(ptr[5] >> 32),
-                        (byte)(ptr[5] >> 24), (byte)(ptr[5] >> 16), (byte)(ptr[5] >> 8), (byte)ptr[5],
-                    };
                     aes.Key = new byte[32]
                     {
                         (byte)(ptr[0] >> 56), (byte)(ptr[0] >> 48), (byte)(ptr[0] >> 40), (byte)(ptr[0] >> 32),
