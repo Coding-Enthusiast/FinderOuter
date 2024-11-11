@@ -20,7 +20,7 @@ namespace FinderOuter.Services.SearchSpaces
         /// </summary>
         public int PasswordLength { get; private set; }
         /// <summary>
-        /// Maximum possible password size in bytes (will be padded to be divisible by 4)
+        /// Maximum possible password size in bytes
         /// </summary>
         public int MaxPasswordSize { get; private set; }
         public byte[] Encrypted { get; private set; }
@@ -30,6 +30,8 @@ namespace FinderOuter.Services.SearchSpaces
         public byte[] AllValues { get; private set; }
         public int[] PermutationLengths { get; private set; }
         public int[] PermutationSizes { get; private set; }
+
+        public string[] AllWords { get; set; }
 
 
         public bool Process(string hex, int passLength, out string error)
@@ -213,10 +215,6 @@ namespace FinderOuter.Services.SearchSpaces
                 PermutationCounts[index2++] = item.Length;
             }
 
-            while (MaxPasswordSize % 4 != 0)
-            {
-                MaxPasswordSize++;
-            }
             if (MaxPasswordSize > Sha512Fo.BlockByteSize)
             {
                 error = "Password is too long (bigger than SHA512 block size).";
