@@ -99,7 +99,7 @@ namespace FinderOuter.Services
                     {
                         totalPassLen += item.WriteValue(passBaPt + totalPassLen, passBa.Length);
                     }
-                    Debug.Assert(totalPassLen <= searchSpace.MaxPasswordSize - searchSpace.Salt.Length);
+                    Debug.Assert(totalPassLen <= searchSpace.MaxPasswordSize);
                     Buffer.MemoryCopy(saltPt, passBaPt + totalPassLen, passBa.Length, searchSpace.Salt.Length);
                     totalPassLen += searchSpace.Salt.Length;
 
