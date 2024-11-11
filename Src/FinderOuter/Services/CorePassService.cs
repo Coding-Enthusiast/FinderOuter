@@ -158,7 +158,7 @@ namespace FinderOuter.Services
                         loopState.Stop();
                         report.FoundAnyResult = true;
 
-                        char[] temp = new char[totalPassLen];
+                        char[] temp = new char[totalPassLen - searchSpace.Salt.Length];
                         for (int i = 0; i < temp.Length; i++)
                         {
                             temp[i] = (char)passBaPt[i];
