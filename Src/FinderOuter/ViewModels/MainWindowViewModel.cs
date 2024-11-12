@@ -24,6 +24,7 @@ namespace FinderOuter.ViewModels
                 new MissingBase58ViewModel(Settings),
                 new MissingMiniPrivateKeyViewModel(Settings),
                 new MissingBip38PassViewModel(Settings),
+                new CorePassViewModel(Settings),
                 new MissingMnemonicViewModel(Settings),
                 new MissingMnemonicPassViewModel(Settings),
                 new MissingBip32PathViewModel(),
@@ -105,7 +106,10 @@ namespace FinderOuter.ViewModels
                     if (item is MissingBip38PassViewModel b38)
                     {
                         b38.FileMan.StorageProvider = value;
-                        return;
+                    }
+                    else if (item is CorePassViewModel core)
+                    {
+                        core.FileMan.StorageProvider = value;
                     }
                 }
             }

@@ -40,6 +40,9 @@
     <DataTemplate DataType="{x:Type vm:MissingBip38PassViewModel}">
       <views:MissingBip38PassView/>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CorePassViewModel}">
+      <views:CorePassView/>
+    </DataTemplate>
     <DataTemplate DataType="{x:Type vm:MissingMnemonicViewModel}">
       <views:MissingMnemonicView/>
     </DataTemplate>
