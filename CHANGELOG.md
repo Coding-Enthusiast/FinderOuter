@@ -1,6 +1,12 @@
 ### Next Release (future ideas)
-[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.1.0...master)  
+[Commits after previous release](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.20.0.0...master)  
 [RoadMap](https://github.com/Coding-Enthusiast/FinderOuter/issues/47)
+
+### Release 0.20.0 (2024-11-13)
+[Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.1.0...v0.20.0.0)  
+* **New feature:** new copy and paste buttons for all search-spaces to be able to copy over lists
+* **New feature:** recovering encryption password used for bitcoin core wallet.dat files
+* Some bug fixes and code improvements
 
 ### Release 0.19.1 (2024-01-24)
 [Full Changelog](https://github.com/Coding-Enthusiast/FinderOuter/compare/v0.19.0.0...v0.19.1.0)  

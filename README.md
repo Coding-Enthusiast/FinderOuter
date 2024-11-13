@@ -36,9 +36,10 @@ Contribution is always welcome. Please report any bugs you find or any improveme
 ![Preview](/Doc/Images/MainPreview.jpg)
 
 ## Available recovery options
-#### 1. Message signature verification  
-User can enter a message signature here to verify it. In case there is a problem with the message (except being an 
-actually invalid signature), the code can search to find the common issues that some signing tools have and fix them.
+#### 1. Missing Base-16 characters
+This option is similar to previous feature but works for base-16 (hexadecimal) private keys. Since there is no checksum in this
+encoding it requires an additional input to check each permutation against. It accepts any address type and public keys.
+This option is slower in comparison because it uses ECC and that is not yet optimized.
 
 #### 2. Missing Base-58 characters
 This option can be used to recover any base-58 encoded string with a checksum that is missing some characters. For example 
@@ -47,35 +48,31 @@ It works for (1) [WIFs](https://en.bitcoin.it/wiki/Wallet_import_format) (Base-5
 (2) [Addresses](https://en.bitcoin.it/wiki/Address) (Base-58 encoded P2PKH or P2SH address) 
 (3) [BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) (Base-58 encoded encrypted private key).  
 
-There is also a "special case" for private keys missing 1, 2 or 3 characters at _unknown_ positions.
-
-#### 3. Missing Base-16 characters
-This option is similar to previous feature but works for base-16 (hexadecimal) private keys. Since there is no checksum in this
-encoding it requires an additional input to check each permutation against. It accepts any address type and public keys.
-This option is slower in comparison because it uses ECC and that is not yet optimized.
-
-#### 4. Missing mini-privatekey characters
+#### 3. Missing mini-privatekey characters
 This option is similar to 2 and 3 but works for [mini-privatekeys](https://en.bitcoin.it/wiki/Mini_private_key_format)
 (eg. SzavMBLoXU6kDrqtUVmffv). It requires the corresponding address or public key of the minikey to check
 each possible key against, as a result it is also slower since it depends on ECC and has 2 additional hashes.
 
-#### 5. Missing mnomonic (seed) words 
+#### 4. Missing BIP-38 password
+This option can recover passwords used in encrypting bitcoin private keys using the 
+[BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) proposal. The available password recovery modes 
+are the same as mnemonic passphrase option.
+
+#### 5. Missing bitcoin core wallet.dat password
+This option can recover passwords used to encrypt the bitcoin core wallet files.
+
+#### 6. Missing mnomonic (seed) words 
 This option works for both [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and Electrum mnemonics
 that have some missing words. It requires knowing one child (private/public) key or address created from that seed and the 
 exact derivation path of it.
 
-#### 6. Missing mnemonic passphrase
+#### 7. Missing mnemonic passphrase
 This option is used to recover the extension words (aka passphrase) used in mnemonics. It works for both
 [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) and Electrum mnemonics algorithms. The available
 passphrase recovery modes are:  
 a. Alphanumeric: This is when the passphrase consists of letter, numbers and symbols and is random. Example: `OT!pA?8i`  
 b. CustomChars: This mode allows user to define their own set of characters to be used in the passphrase.
 c. _soon_
-
-#### 7. Missing BIP-38 password
-This option can recover passwords used in encrypting bitcoin private keys using the 
-[BIP-38](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) proposal. The available password recovery modes 
-are the same as mnemonic passphrase option.
 
 #### 8. Missing BIP-32 derivation path
 This option could be used to find derivation path of a child key (private key, public key or the address) by having the mnemonic
