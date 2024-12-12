@@ -1443,6 +1443,7 @@ namespace FinderOuter.Services
             {
                 report.FoundAnyResult = ss.ProcessNoMissing(comparer, pass, this.path, out string message);
                 report.AddMessageSafe(message);
+                report.Finalize();
                 return;
             }
 
