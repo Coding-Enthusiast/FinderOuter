@@ -25,7 +25,9 @@ namespace FinderOuter.Services.Comparers
         {
             try
             {
+#pragma warning disable CS0612
                 using PrivateKey temp = new(data);
+#pragma warning restore CS0612
                 expectedBytes = temp.ToBytes();
                 expectedKey = new(expectedBytes, out _);
                 IsInitialized = true;

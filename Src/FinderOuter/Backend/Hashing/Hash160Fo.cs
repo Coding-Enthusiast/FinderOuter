@@ -186,7 +186,7 @@ namespace FinderOuter.Backend.Hashing
 
         public static unsafe byte[] Compress65(Span<byte> data)
         {
-            Debug.Assert(data != null && data.Length == 65);
+            Debug.Assert(data.Length == 65);
 
             uint* pt = stackalloc uint[Sha256Fo.UBufferSize];
             fixed (byte* dPt = &data[0])

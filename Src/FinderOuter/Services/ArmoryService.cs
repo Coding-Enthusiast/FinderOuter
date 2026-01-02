@@ -36,7 +36,9 @@ namespace FinderOuter.Services
         private int[] missingIndexes;
         private bool hasChainCode;
         private byte[] chainCode;
+#pragma warning disable CS0612
         private readonly BigInteger N = new SecP256k1().N;
+#pragma warning restore CS0612
 
 
 

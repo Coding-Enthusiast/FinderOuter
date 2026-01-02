@@ -60,7 +60,9 @@ namespace FinderOuter.Services
         private BigInteger wifEndStart;
         private void SetResultParallelWifEnd(int added)
         {
+#pragma warning disable CS0612
             using PrivateKey tempKey = new(wifEndStart + added);
+#pragma warning restore CS0612
             string tempWif = tempKey.ToWif(isWifEndCompressed);
             report.AddMessageSafe($"Found the key: {tempWif}");
             report.FoundAnyResult = true;
@@ -141,7 +143,9 @@ namespace FinderOuter.Services
             BigInteger diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
+#pragma warning disable CS0612
             Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve.SecP256k1 curve = new();
+#pragma warning restore CS0612
             if (start == 0 || end >= curve.N)
             {
                 report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
@@ -154,7 +158,9 @@ namespace FinderOuter.Services
             {
                 for (int i = 0; i < (int)diff; i++)
                 {
+#pragma warning disable CS0612
                     using PrivateKey tempKey = new(start + i);
+#pragma warning restore CS0612
                     string tempWif = tempKey.ToWif(compressed);
                     if (tempWif.Contains(baseWif))
                     {
