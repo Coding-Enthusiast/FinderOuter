@@ -154,7 +154,9 @@ namespace FinderOuter.Backend.ECC
 
             string actual = final.ToArray().ToBase16();
 
+#pragma warning disable CS0612
             using PrivateKey key = new(data.ToArray());
+#pragma warning restore CS0612
             string expected = key.ToPublicKey().ToByteArray(false).ToBase16();
 
             Debug.Assert(actual == expected);

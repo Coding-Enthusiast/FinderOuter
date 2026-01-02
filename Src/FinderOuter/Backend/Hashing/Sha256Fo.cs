@@ -2321,7 +2321,7 @@ namespace FinderOuter.Backend.Hashing
         /// <param name="data">65 byte data</param>
         public static unsafe byte[] CompressDouble65(Span<byte> data)
         {
-            Debug.Assert(data != null && data.Length == 65);
+            Debug.Assert(data.Length == 65);
 
             uint* pt = stackalloc uint[UBufferSize];
             fixed (byte* dPt = &data[0])
