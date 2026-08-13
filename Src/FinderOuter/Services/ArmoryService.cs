@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
@@ -68,7 +69,7 @@ namespace FinderOuter.Services
         }
 
 
-        private unsafe Scalar8x32 ComputeKey(uint* pt, byte* kPt)
+        private unsafe Scalar4x64 ComputeKey(uint* pt, byte* kPt)
         {
             uint* oPt = pt + Sha256Fo.UBufferSize;
 
@@ -179,7 +180,7 @@ namespace FinderOuter.Services
 
             // hPt is chain-code now
             ReadOnlySpan<byte> key = new(kPt, 32);
-            Scalar8x32 scalar = new(key, out bool overflow);
+            Scalar4x64 scalar = new(key, out bool overflow);
             Debug.Assert(!overflow);
 
             Span<byte> pubBa = calc.GetPubkey(scalar, false);
@@ -191,8 +192,8 @@ namespace FinderOuter.Services
                 chainXor[i] ^= chainCode[i];
             }
 
-            Scalar8x32 A = new(chainXor, out _);
-            Scalar8x32 secexp = scalar.Multiply(A);
+            Scalar4x64 A = new(chainXor, out _);
+            Scalar4x64 secexp = scalar.Multiply(A);
             return secexp;
         }
 
@@ -267,7 +268,7 @@ namespace FinderOuter.Services
 
                             if ((pt[0] & mask2) == comp2)
                             {
-                                Scalar8x32 secexp = ComputeKey(pt, kPt);
+                                Scalar4x64 secexp = ComputeKey(pt, kPt);
                                 if (comparer.Compare(secexp))
                                 {
                                     SetResult(kPt);
@@ -320,7 +321,7 @@ namespace FinderOuter.Services
                             kPt[(index / 2) + 16] |= (index % 2 == 0) ? (byte)(item2[i] << 4) : item2[i];
                         }
 
-                        Scalar8x32 secexp = ComputeKey(pt, kPt);
+                        Scalar4x64 secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);
@@ -389,7 +390,7 @@ namespace FinderOuter.Services
 
                             // Second checksum is missing so we can't compute second part's hash to reject invalid
                             // keys, instead all keys must be checked using the ICompareService instance.
-                            Scalar8x32 secexp = ComputeKey(pt, kPt);
+                            Scalar4x64 secexp = ComputeKey(pt, kPt);
                             if (comparer.Compare(secexp))
                             {
                                 SetResult(kPt);
@@ -458,7 +459,7 @@ namespace FinderOuter.Services
                         Sha256Fo.Init(pt);
                         Sha256Fo.CompressDouble16(pt);
 
-                        Scalar8x32 secexp = ComputeKey(pt, kPt);
+                        Scalar4x64 secexp = ComputeKey(pt, kPt);
                         if (comparer.Compare(secexp))
                         {
                             SetResult(kPt);

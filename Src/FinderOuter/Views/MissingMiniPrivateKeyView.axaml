@@ -14,7 +14,7 @@
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto">
     <TextBox Text="{Binding Input}"
-             Watermark="Mini-private-key (22 or 30 characters long)"
+             PlaceholderText="Mini-private-key (22 or 30 characters long)"
              Grid.Column="0"
              Grid.Row="0"/>
     <Button Classes="Help"
@@ -31,7 +31,7 @@
               Grid.Row="0"/>
 
     <TextBox Text="{Binding CompareInput}"
-             Watermark="Extra input to check against (address, or public key)"
+             PlaceholderText="Extra input to check against (address, or public key)"
              Grid.Column="0"
              Grid.Row="1"/>
     <Button Classes="Help"

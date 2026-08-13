@@ -4,7 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
@@ -279,7 +279,7 @@ namespace FinderOuter.Services
                 uPt[14] = 0;
                 uPt[15] = 1320; // (1+32+4 + 128)*8
 
-                Scalar8x32 sclrParent = new(hPt, out bool overflow);
+                Scalar4x64 sclrParent = new(hPt, out bool overflow);
                 if (overflow)
                 {
                     return false;
@@ -292,11 +292,11 @@ namespace FinderOuter.Services
                         // First _byte_ is zero
                         // private-key is the first 32 bytes (4 items) of hPt (total 33 bytes)
                         // 4 bytes index + SHA padding are also added
-                        uPt[0] = (ulong)sclrParent.b7 << 24 | (ulong)sclrParent.b6 >> 8;
-                        uPt[1] = (ulong)sclrParent.b6 << 56 | (ulong)sclrParent.b5 << 24 | (ulong)sclrParent.b4 >> 8;
-                        uPt[2] = (ulong)sclrParent.b4 << 56 | (ulong)sclrParent.b3 << 24 | (ulong)sclrParent.b2 >> 8;
-                        uPt[3] = (ulong)sclrParent.b2 << 56 | (ulong)sclrParent.b1 << 24 | (ulong)sclrParent.b0 >> 8;
-                        uPt[4] = (ulong)sclrParent.b0 << 56 |
+                        uPt[0] = sclrParent.b3 >> 8;
+                        uPt[1] = sclrParent.b3 << 56 | sclrParent.b2 >> 8;
+                        uPt[2] = sclrParent.b2 << 56 | sclrParent.b1 >> 8;
+                        uPt[3] = sclrParent.b1 << 56 | sclrParent.b0 >> 8;
+                        uPt[4] = sclrParent.b0 << 56 |
                                  (ulong)index << 24 |
                                  0b00000000_00000000_00000000_00000000_00000000_10000000_00000000_00000000UL;
                     }
@@ -373,15 +373,15 @@ namespace FinderOuter.Services
 
                     // New private key is (parentPrvKey + int(hPt)) % order
                     // TODO: this is a bottleneck and needs to be replaced by a ModularUInt256 instance
-                    sclrParent = sclrParent.Add(new Scalar8x32(hPt, out _), out _);
+                    sclrParent = sclrParent.Add(new Scalar4x64(hPt, out _), out _);
                 }
 
                 // Child extended key (private key + chianCode) should be set by adding the index to the end of the Path
                 // and have been computed already
-                hPt[0] = (ulong)sclrParent.b7 << 32 | sclrParent.b6;
-                hPt[1] = (ulong)sclrParent.b5 << 32 | sclrParent.b4;
-                hPt[2] = (ulong)sclrParent.b3 << 32 | sclrParent.b2;
-                hPt[3] = (ulong)sclrParent.b1 << 32 | sclrParent.b0;
+                hPt[0] = sclrParent.b3;
+                hPt[1] = sclrParent.b2;
+                hPt[2] = sclrParent.b1;
+                hPt[3] = sclrParent.b0;
 
                 return comparer.Compare(hPt);
             }

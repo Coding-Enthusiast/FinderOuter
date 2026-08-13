@@ -12,7 +12,7 @@ namespace Tests.Backend.Hashing
     public class Ripemd160FoTests
     {
         [Theory]
-        [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "RIPEMD160", MemberType = typeof(HashTestCaseHelper))]
+        [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), arguments: "RIPEMD160", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHashTest(byte[] message, byte[] expectedHash)
         {
             byte[] actualHash = Ripemd160Fo.ComputeHash_Static(message);

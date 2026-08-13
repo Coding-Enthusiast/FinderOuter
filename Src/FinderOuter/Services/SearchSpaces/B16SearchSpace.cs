@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Services.Comparers;
@@ -89,7 +90,7 @@ namespace FinderOuter.Services.SearchSpaces
                 return false;
             }
 
-            Scalar8x32 key = new(ba, out bool overflow);
+            Scalar4x64 key = new(ba, out bool overflow);
             if (key.IsZero || overflow)
             {
                 message = "The given key is out of range.";

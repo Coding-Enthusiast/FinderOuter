@@ -4,7 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin;
-using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Backend.Hashing;
 using FinderOuter.Models;
 using FinderOuter.Services.Comparers;
@@ -336,7 +336,7 @@ namespace FinderOuter.Services
                         decryptedResult[i + 3] ^= (byte)final[j];
                     }
 
-                    Scalar8x32 key = new(decryptedResult, out bool overflow);
+                    Scalar4x64 key = new(decryptedResult, out bool overflow);
                     if (!overflow && localComparer.Compare(comparer.Calc.MultiplyByG(key)))
                     {
                         loopState.Stop();
@@ -634,7 +634,7 @@ namespace FinderOuter.Services
 
                     // pt is now passFactor
                     // pt is now passFactor
-                    Scalar8x32 passFactor = new(pt, out bool overflow);
+                    Scalar4x64 passFactor = new(pt, out bool overflow);
                     if (overflow)
                     {
                         continue;
@@ -878,7 +878,7 @@ namespace FinderOuter.Services
                     Sha256Fo.CompressDouble24(pt);
 
                     // pt is factorb
-                    Scalar8x32 key = new Scalar8x32(pt, out _).Multiply(passFactor);
+                    Scalar4x64 key = new Scalar4x64(pt, out _).Multiply(passFactor);
 
                     if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
                     {
@@ -1162,7 +1162,7 @@ namespace FinderOuter.Services
                     Sha256Fo.Compress96SecondBlock(pt);
 
                     // pt is now passFactor
-                    Scalar8x32 passFactor = new(pt, out bool overflow);
+                    Scalar4x64 passFactor = new(pt, out bool overflow);
                     if (overflow)
                     {
                         continue;
@@ -1406,7 +1406,7 @@ namespace FinderOuter.Services
                     Sha256Fo.CompressDouble24(pt);
 
                     // pt is factorb
-                    Scalar8x32 key = new Scalar8x32(pt, out _).Multiply(passFactor);
+                    Scalar4x64 key = new Scalar4x64(pt, out _).Multiply(passFactor);
 
                     if (localComparer.Compare(localComparer.Calc.MultiplyByG(key)))
                     {

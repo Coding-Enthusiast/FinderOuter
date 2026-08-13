@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Services.Comparers;
 using System;
 using System.Collections.Generic;
@@ -115,7 +116,7 @@ namespace Tests.Services.Comparers
         [MemberData(nameof(GetCases))]
         public unsafe void Compare_PointJ_Test(PrvToAddrCompComparer comp, byte[] key, bool expected)
         {
-            Scalar8x32 sc = new(key, out bool overflow);
+            Scalar4x64 sc = new(key, out bool overflow);
             if (!overflow && !sc.IsZero)
             {
                 PointJacobian point = Helper.Calc.MultiplyByG(sc);

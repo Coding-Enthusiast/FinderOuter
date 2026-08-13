@@ -14,7 +14,7 @@ namespace Tests.Backend.Hashing
     public class Sha256FoTests
     {
         [Theory]
-        [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), parameters: "SHA256", MemberType = typeof(HashTestCaseHelper))]
+        [MemberData(nameof(HashTestCaseHelper.GetRegularHashCases), arguments: "SHA256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHashTest(byte[] message, byte[] expectedHash)
         {
             byte[] actualHash = Sha256Fo.ComputeHash(message);
@@ -56,7 +56,7 @@ namespace Tests.Backend.Hashing
         }
 
         [Theory]
-        [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
+        [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), arguments: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistShortTest(byte[] message, byte[] expected)
         {
             byte[] actual = Sha256Fo.ComputeHash(message);
@@ -64,7 +64,7 @@ namespace Tests.Backend.Hashing
         }
 
         [Theory]
-        [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), parameters: "Sha256", MemberType = typeof(HashTestCaseHelper))]
+        [MemberData(nameof(HashTestCaseHelper.GetNistShortCases), arguments: "Sha256", MemberType = typeof(HashTestCaseHelper))]
         public void ComputeHash_NistLongTest(byte[] message, byte[] expected)
         {
             byte[] actual = Sha256Fo.ComputeHash(message);

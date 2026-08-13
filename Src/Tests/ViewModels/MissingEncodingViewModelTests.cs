@@ -5,6 +5,7 @@
 
 using FinderOuter.Models;
 using FinderOuter.ViewModels;
+using ReactiveUI.Builder;
 using System;
 using System.Collections.Generic;
 
@@ -12,6 +13,13 @@ namespace Tests.ViewModels
 {
     public class MissingEncodingViewModelTests
     {
+        public MissingEncodingViewModelTests()
+        {
+            RxAppBuilder.CreateReactiveUIBuilder()
+                        .WithCoreServices()
+                        .BuildApp();
+        }
+
         [Fact]
         public void ConstructorTest()
         {

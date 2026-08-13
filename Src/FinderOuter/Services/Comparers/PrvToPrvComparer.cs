@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Backend.Hashing;
 using System;
 
@@ -19,7 +20,7 @@ namespace FinderOuter.Services.Comparers
         public bool IsInitialized { get; private set; }
 
         private byte[] expectedBytes;
-        private Scalar8x32 expectedKey;
+        private Scalar4x64 expectedKey;
 
         public bool Init(string data)
         {
@@ -54,7 +55,7 @@ namespace FinderOuter.Services.Comparers
 
         public bool Compare(byte[] key) => ((ReadOnlySpan<byte>)expectedBytes).SequenceEqual(key);
 
-        public bool Compare(in Scalar8x32 key) => key == expectedKey;
+        public bool Compare(in Scalar4x64 key) => key == expectedKey;
 
         public bool Compare(in PointJacobian point) => throw new NotImplementedException();
     }

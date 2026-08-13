@@ -20,7 +20,7 @@
 
   <Grid RowDefinitions="*,auto">
     <TextBox Text="{Binding Text}"
-             Watermark="Input string"
+             PlaceholderText="Input string"
              AcceptsReturn="True"
              Grid.Row="0"/>
 

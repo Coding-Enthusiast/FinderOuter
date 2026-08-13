@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using Avalonia.Reactive;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
@@ -33,8 +34,8 @@ namespace FinderOuter.ViewModels
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
             this.WhenAnyValue(x => x.SelectedInputType)
-                .Subscribe(x => IsMnemonic =
-                           x.Value == Bip32PathService.SeedType.BIP39 || x.Value == Bip32PathService.SeedType.Electrum);
+                .Subscribe(new AnonymousObserver<DescriptiveItem<Bip32PathService.SeedType>>(x => IsMnemonic =
+                           x.Value == Bip32PathService.SeedType.BIP39 || x.Value == Bip32PathService.SeedType.Electrum));
 
             PathService = new Bip32PathService(Result);
 

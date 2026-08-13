@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Models;
@@ -61,7 +62,7 @@ namespace FinderOuter.Services
             {
                 return false;
             }
-            Scalar8x32 temp = new(key, out bool overflow);
+            Scalar4x64 temp = new(key, out bool overflow);
             return !temp.IsZero && !overflow;
         }
 

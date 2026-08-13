@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Backend.Hashing;
 using System;
 
@@ -28,7 +29,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(uint* hPt)
         {
-            Scalar8x32 key = new(hPt, out bool overflow);
+            Scalar4x64 key = new(hPt, out bool overflow);
             if (overflow)
             {
                 return false;
@@ -42,7 +43,7 @@ namespace FinderOuter.Services.Comparers
 
         public override unsafe bool Compare(ulong* hPt)
         {
-            Scalar8x32 key = new(hPt, out bool overflow);
+            Scalar4x64 key = new(hPt, out bool overflow);
             if (overflow)
             {
                 return false;

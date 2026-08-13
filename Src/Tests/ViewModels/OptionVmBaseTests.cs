@@ -6,6 +6,7 @@
 using FinderOuter.Models;
 using FinderOuter.Services;
 using FinderOuter.ViewModels;
+using ReactiveUI.Builder;
 using System;
 using System.Collections.ObjectModel;
 
@@ -53,6 +54,14 @@ namespace Tests.ViewModels
                 object[] actual = GetNextExample();
                 Assert.Equal(expected, actual);
             }
+        }
+
+
+        public OptionVmBaseTests()
+        {
+            RxAppBuilder.CreateReactiveUIBuilder()
+                        .WithCoreServices()
+                        .BuildApp();
         }
 
 

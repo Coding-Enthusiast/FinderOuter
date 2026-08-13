@@ -3,6 +3,7 @@
              xmlns:local="clr-namespace:FinderOuter"
              xmlns:vm="clr-namespace:FinderOuter.ViewModels"
              xmlns:views="clr-namespace:FinderOuter.Views"
+             xmlns:models="clr-namespace:FinderOuter.Models"
              x:Class="FinderOuter.App"
              RequestedThemeVariant="Default">
 
@@ -65,7 +66,7 @@
     <Style Selector="ComboBox.DescriptiveItem">
       <Setter Property="ItemTemplate">
         <Setter.Value>
-          <DataTemplate>
+          <DataTemplate x:DataType="models:DescriptiveItem`1">
             <TextBlock Text="{Binding Value}"
                        ToolTip.Tip="{Binding Description}"/>
           </DataTemplate>
@@ -101,7 +102,7 @@
       <Setter Property="Margin" Value="3"/>
       <Setter Property="MinHeight" Value="45"/>
       <Setter Property="Padding" Value="5,3,5,5"/>
-      <Setter Property="UseFloatingWatermark" Value="True"/>
+      <Setter Property="UseFloatingPlaceholder" Value="True"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     <Style Selector="TextBox /template/ TextBlock">

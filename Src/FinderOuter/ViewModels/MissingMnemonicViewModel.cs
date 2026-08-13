@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using Avalonia.Reactive;
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
@@ -53,7 +54,8 @@ namespace FinderOuter.ViewModels
             IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
 
-            this.WhenAnyValue(x => x.SelectedMnemonicType).Subscribe(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum);
+            this.WhenAnyValue(x => x.SelectedMnemonicType)
+                .Subscribe(new AnonymousObserver<MnemonicTypes>(x => IsElectrumTypesVisible = x == MnemonicTypes.Electrum));
 
             SetExamples(GetExampleData());
 

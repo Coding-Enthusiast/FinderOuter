@@ -6,6 +6,7 @@
 using Autarkysoft.Bitcoin.ImprovementProposals;
 using FinderOuter.Models;
 using FinderOuter.ViewModels;
+using ReactiveUI.Builder;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -16,6 +17,14 @@ namespace Tests.ViewModels
 {
     public class MissingMnemonicViewModelTests
     {
+        public MissingMnemonicViewModelTests()
+        {
+            RxAppBuilder.CreateReactiveUIBuilder()
+                        .WithCoreServices()
+                        .BuildApp();
+        }
+
+
         [Fact]
         public void ConstructorTest()
         {

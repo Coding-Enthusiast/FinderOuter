@@ -15,7 +15,7 @@
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto">
     <TextBox Text="{Binding Input}"
              FontFamily="{Binding CjkFont}"
-             Watermark="Mnemonic (seed phrase), separate each word with a space"
+             PlaceholderText="Mnemonic (seed phrase), separate each word with a space"
              Height="86"
              Grid.Column="0"
              Grid.Row="0"/>
@@ -27,7 +27,7 @@
     </StackPanel>
 
     <TextBox Text="{Binding CompareInput}"
-             Watermark="Additional info (preferably a private key or public key, if not enter an address)"
+             PlaceholderText="Additional info (preferably a private key or public key, if not enter an address)"
              Grid.Column="0"
              Grid.Row="1"/>
     <Button Classes="Help"
@@ -46,7 +46,7 @@
     </ComboBox>
 
     <TextBox Text="{Binding KeyPath}"
-             Watermark="Complete path of the given key/address above"
+             PlaceholderText="Complete path of the given key/address above"
              Grid.Column="0"
              Grid.Row="2"/>
     <Button Classes="Help"
@@ -57,11 +57,11 @@
     <Grid ColumnDefinitions="130,*" Grid.Column="0" Grid.Row="3">
       <NumericUpDown Value="{Binding PassLength}"
                      Minimum="1"
-                     Watermark="Passphrase length"
+                     PlaceholderText="Passphrase length"
                      Grid.Column="0"
                      Grid.RowSpan="2"/>
       <TextBox Text="{Binding CustomChars}"
-               Watermark="Enter custom password characters here (no space needed)"
+               PlaceholderText="Enter custom password characters here (no space needed)"
                IsVisible="{Binding !IsCheckBoxVisible}"
                Grid.Column="1"/>
       <Button Classes="Help"

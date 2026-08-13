@@ -5,6 +5,7 @@
 
 using Autarkysoft.Bitcoin;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using Autarkysoft.Bitcoin.Encoders;
 using FinderOuter.Backend;
 using FinderOuter.Backend.Hashing;
@@ -65,7 +66,7 @@ namespace FinderOuter.Services
             report.AddMessageSafe($"Found the key: {tempWif}");
             report.FoundAnyResult = true;
         }
-        private void WifLoopMissingEnd(in Scalar8x32 smallKey, int start, long max,
+        private void WifLoopMissingEnd(in Scalar4x64 smallKey, int start, long max,
                                        ICompareService comparer, ParallelLoopState loopState)
         {
             if (loopState.IsStopped)
@@ -73,14 +74,14 @@ namespace FinderOuter.Services
                 return;
             }
 
-            Scalar8x32 toAddSc = new((uint)(start * WifEndDiv), 0, 0, 0, 0, 0, 0, 0);
-            Scalar8x32 initial = smallKey.Add(toAddSc, out bool overflow);
+            Scalar4x64 toAddSc = new((ulong)(start * WifEndDiv), 0, 0, 0);
+            Scalar4x64 initial = smallKey.Add(toAddSc, out bool overflow);
             if (overflow)
             {
                 return;
             }
             PointJacobian pt = comparer.Calc.MultiplyByG(initial);
-            Point g = Calc.G;
+            Point g = Point.G;
 
             for (int i = 0; i < max; i++)
             {
@@ -178,7 +179,7 @@ namespace FinderOuter.Services
                 return;
             }
 
-            Scalar8x32 sc = new(Base58.Decode(smallWif).SubArray(1, 32), out bool overflow);
+            Scalar4x64 sc = new(Base58.Decode(smallWif).SubArray(1, 32), out bool overflow);
 
             isWifEndCompressed = compressed;
             wifEndStart = start;

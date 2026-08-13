@@ -14,13 +14,13 @@
 
   <Grid ColumnDefinitions="*,auto" RowDefinitions="auto,auto">
     <TextBox Text="{Binding Input}"
-             Watermark="Hexadecimal with at least 70 bytes (140 chars) starting with 0x43000130"
+             PlaceholderText="Hexadecimal with at least 70 bytes (140 chars) starting with 0x43000130"
              Grid.Column="0"
              Grid.Row="0"/>
 
     <NumericUpDown Value="{Binding PassLength}"
                    Minimum="1"
-                   Watermark="Passphrase length"
+                   PlaceholderText="Passphrase length"
                    ToolTip.Tip="{Binding PassLenToolTip}"
                    Grid.Column="1"
                    Grid.Row="0"/>

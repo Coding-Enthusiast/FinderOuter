@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
+using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using FinderOuter.Services.Comparers;
 
 namespace Tests.Services.Comparers
@@ -38,7 +39,7 @@ namespace Tests.Services.Comparers
             DefaultComparer comp = new();
             Assert.True(comp.Compare(new byte[1]));
             Assert.True(comp.Compare(new PointJacobian()));
-            Assert.True(comp.Compare(new Scalar8x32()));
+            Assert.True(comp.Compare(new Scalar4x64()));
             unsafe
             {
                 uint[] arr32 = new uint[1];

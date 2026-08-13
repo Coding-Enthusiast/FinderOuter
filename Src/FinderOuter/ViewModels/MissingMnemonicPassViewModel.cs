@@ -4,10 +4,12 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using Autarkysoft.Bitcoin.ImprovementProposals;
+using Avalonia.Reactive;
 using FinderOuter.Backend;
 using FinderOuter.Models;
 using FinderOuter.Services;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -47,7 +49,7 @@ namespace FinderOuter.ViewModels
             FindCommand = ReactiveCommand.Create(Find, isFindEnabled);
 
             this.WhenAnyValue(x => x.SelectedPassRecoveryMode.Value)
-                .Subscribe(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric);
+                .Subscribe(new AnonymousObserver<PassRecoveryMode>(x => IsCheckBoxVisible = x == PassRecoveryMode.Alphanumeric));
 
             IObservable<bool> isExampleVisible = this.WhenAnyValue(x => x.Result.CurrentState, (state) => state != State.Working);
             ExampleCommand = ReactiveCommand.Create(Example, isExampleVisible);
