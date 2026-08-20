@@ -4,6 +4,7 @@
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
 using System;
+using System.Numerics;
 
 namespace FinderOuter.Backend
 {
@@ -71,5 +72,10 @@ namespace FinderOuter.Backend
             ['X', 'x'],
             ['Z', 'z'],
         ];
+
+        /// <summary>
+        /// N = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+        /// </summary>
+        public static readonly BigInteger CurveOrder = BigInteger.Parse("115792089237316195423570985008687907852837564279074904382605163141518161494337");
     }
 }

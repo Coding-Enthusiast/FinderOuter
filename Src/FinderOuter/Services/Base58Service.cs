@@ -142,8 +142,7 @@ namespace FinderOuter.Services
             BigInteger diff = end - start + 1;
             report.AddMessageSafe($"Using an optimized method checking only {diff:n0} keys.");
 
-            Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve.SecP256k1 curve = new();
-            if (start == 0 || end >= curve.N)
+            if (start == 0 || end >= ConstantsFO.CurveOrder)
             {
                 report.AddMessageSafe("There is something wrong with the given key, it is outside of valid key range.");
                 return;
