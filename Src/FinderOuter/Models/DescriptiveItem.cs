@@ -35,7 +35,7 @@ namespace FinderOuter.Models
     {
     }
 
-    public class DescriptiveKB(KB value): DescriptiveItem<KB>(value)
+    public class DescriptiveKB(KB value) : DescriptiveItem<KB>(value)
     {
     }
 }

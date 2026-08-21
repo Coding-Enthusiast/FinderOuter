@@ -3,7 +3,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file LICENCE or http://www.opensource.org/licenses/mit-license.php.
 
-using Autarkysoft.Bitcoin.Cryptography.Asymmetric.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve;
 using Autarkysoft.Bitcoin.Cryptography.EllipticCurve.Primitives;
 using Autarkysoft.Bitcoin.Encoders;
@@ -12,7 +11,7 @@ using System;
 namespace FinderOuter.Services.Comparers
 {
     /// <summary>
-    /// Converts private key to an <see cref="EllipticCurvePoint"/> and compares it with the pubkey (point).
+    /// Converts private key to an <see cref="Point"/> and compares it with the pubkey (point).
     /// </summary>
     public class PrvToPubComparer : ICompareService
     {

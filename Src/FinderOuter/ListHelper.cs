@@ -31,7 +31,7 @@ namespace FinderOuter
 
         public static IEnumerable<DescriptiveHelpInput> GetEnumDescHelpInput()
         {
-            foreach (HelpInputTypes item in Enum.GetValues(typeof(HelpInputTypes)))
+            foreach (HelpInputTypes item in Enum.GetValues<HelpInputTypes>())
             {
                 yield return new DescriptiveHelpInput(item);
             }
@@ -39,7 +39,7 @@ namespace FinderOuter
 
         public static IEnumerable<DescriptiveKB> GetEnumDescKB()
         {
-            foreach (KB item in Enum.GetValues(typeof(KB)))
+            foreach (KB item in Enum.GetValues<KB>())
             {
                 yield return new DescriptiveKB(item);
             }

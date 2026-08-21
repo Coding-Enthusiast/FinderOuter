@@ -20,11 +20,11 @@ namespace FinderOuter.ViewModels
         {
             EncodingList = new EncodingState[]
             {
-                new EncodingState(EncodingName.Base16),
-                new EncodingState(EncodingName.Base43),
-                new EncodingState(EncodingName.Base58),
-                new EncodingState(EncodingName.Base58Check),
-                new EncodingState(EncodingName.Base64),
+                new(EncodingName.Base16),
+                new(EncodingName.Base43),
+                new(EncodingName.Base58),
+                new(EncodingName.Base58Check),
+                new(EncodingName.Base64),
             };
 
             IObservable<bool> isFindEnabled = this.WhenAnyValue(
