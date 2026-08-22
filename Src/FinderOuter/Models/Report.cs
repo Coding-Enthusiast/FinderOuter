@@ -8,6 +8,7 @@ using ReactiveUI;
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FinderOuter.Models
@@ -183,7 +184,7 @@ namespace FinderOuter.Models
             updateTimer.Start();
         }
 
-        private readonly object lockObj = new();
+        private readonly Lock lockObj = new();
         public void IncrementProgress()
         {
             lock (lockObj)
